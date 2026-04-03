@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Jewel Candy - Gameplay</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary": "#5f003d",
+                    "background": "#190033",
+                    "on-tertiary-fixed": "#453900",
+                    "primary-fixed": "#ff6bb9",
+                    "on-secondary-fixed": "#004747",
+                    "tertiary": "#ffe792",
+                    "tertiary-container": "#ffd709",
+                    "surface-container-high": "#31005b",
+                    "tertiary-dim": "#efc900",
+                    "outline": "#8d61bd",
+                    "surface-container-highest": "#390069",
+                    "tertiary-fixed-dim": "#efc900",
+                    "on-tertiary-fixed-variant": "#665500",
+                    "primary-dim": "#de0093",
+                    "surface": "#190033",
+                    "surface-container": "#29004d",
+                    "secondary": "#00fbfb",
+                    "secondary-dim": "#00ecec",
+                    "on-secondary": "#005c5c",
+                    "error-container": "#a70138",
+                    "surface-container-lowest": "#000000",
+                    "surface-variant": "#390069",
+                    "primary-container": "#ff6bb9",
+                    "on-surface": "#f1dfff",
+                    "primary": "#ff86c1",
+                    "outline-variant": "#5d318b",
+                    "surface-container-low": "#20003f",
+                    "on-tertiary-container": "#5b4b00",
+                    "on-secondary-fixed-variant": "#006666",
+                    "secondary-fixed-dim": "#00ecec",
+                    "secondary-container": "#006a6a",
+                    "on-primary-fixed-variant": "#5b003a",
+                    "error-dim": "#d73357",
+                    "on-error-container": "#ffb2b9",
+                    "surface-tint": "#ff86c1",
+                    "primary-fixed-dim": "#ff49b1",
+                    "on-surface-variant": "#c696f8",
+                    "on-tertiary": "#655400",
+                    "inverse-surface": "#fff7ff",
+                    "error": "#ff6e84",
+                    "on-primary-container": "#4a002e",
+                    "inverse-primary": "#b70079",
+                    "surface-bright": "#420078",
+                    "secondary-fixed": "#00fbfb",
+                    "on-secondary-container": "#d9fffe",
+                    "on-error": "#490013",
+                    "on-primary-fixed": "#000000",
+                    "tertiary-fixed": "#ffd709",
+                    "inverse-on-surface": "#6b3f9a",
+                    "on-background": "#f1dfff",
+                    "surface-dim": "#190033"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Space Grotesk"],
+                    "body": ["Plus Jakarta Sans"],
+                    "label": ["Plus Jakarta Sans"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-vivid-game {
+            background: radial-gradient(circle at center, #3D0A6B 0%, #29004d 40%, #190033 100%);
+        }
+        .jewel-border {
+            border: 4px solid transparent;
+            background: linear-gradient(#390069, #390069) padding-box,
+                        linear-gradient(to bottom right, #ff86c1, #8d61bd, #00fbfb) border-box;
+        }
+        .gem-glow {
+            filter: drop-shadow(0 0 4px rgba(255, 134, 193, 0.6));
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body select-none overflow-hidden h-[844px] w-[390px] mx-auto relative bg-vivid-game">
+<!-- TopAppBar Shared Component -->
+<header class="fixed top-0 w-full z-50 bg-indigo-950/60 backdrop-blur-xl text-pink-400 dark:text-pink-400 border-b border-indigo-500/20 shadow-[0_0_20px_rgba(255,134,193,0.15)] flex justify-between items-center px-6 h-16 w-full max-w-full">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-pink-400 cursor-pointer hover:scale-105 transition-transform duration-300">help</span>
+<span class="font-['Space_Grotesk'] tracking-widest uppercase text-lg text-2xl font-bold italic text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-cyan-400">JEWEL CANDY</span>
+</div>
+<button class="bg-primary/20 px-4 py-1 rounded-full border border-primary/30 text-xs font-bold tracking-widest hover:scale-105 transition-transform duration-300">PAUSE</button>
+</header>
+<!-- Main Game Canvas -->
+<main class="pt-20 pb-24 px-4 flex flex-col items-center justify-between h-full">
+<!-- Stats & Hints Row -->
+<div class="w-full flex justify-between items-end mb-4">
+<div class="flex flex-col">
+<span class="text-[10px] font-bold text-tertiary uppercase tracking-wider mb-1">BEST SCORE</span>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-tertiary text-sm" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+<span class="font-headline text-xl text-tertiary font-bold tracking-tighter">1,240,500</span>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="flex flex-col items-center group cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest border border-outline/30 flex items-center justify-center shadow-lg group-active:scale-90 transition-all">
+<span class="material-symbols-outlined text-secondary">lightbulb</span>
+</div>
+<span class="text-[8px] font-bold mt-1 text-secondary">HINT</span>
+</div>
+<div class="flex flex-col items-center group cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest border border-outline/30 flex items-center justify-center shadow-lg group-active:scale-90 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">quiz</span>
+</div>
+<span class="text-[8px] font-bold mt-1 text-on-surface-variant">TUTORIAL</span>
+</div>
+</div>
+</div>
+<!-- Central Score -->
+<div class="flex flex-col items-center mb-6">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest opacity-70">CURRENT SCORE</span>
+<h1 class="font-headline text-6xl font-bold text-white drop-shadow-[0_0_12px_rgba(255,231,146,0.8)] tracking-tighter">248,310</h1>
+</div>
+<!-- Combo Strip -->
+<div class="w-full bg-gradient-to-r from-primary/30 to-secondary/30 backdrop-blur-md rounded-2xl border border-white/10 p-3 flex justify-around items-center mb-6 shadow-2xl">
+<div class="flex flex-col items-center">
+<span class="text-[9px] font-bold text-secondary-dim tracking-widest uppercase">COMBO</span>
+<span class="font-headline text-2xl font-bold text-secondary">x12</span>
+</div>
+<div class="h-8 w-px bg-white/10"></div>
+<div class="flex flex-col items-center">
+<span class="text-[9px] font-bold text-primary tracking-widest uppercase">MAX MATCH</span>
+<span class="font-headline text-2xl font-bold text-primary">05</span>
+</div>
+</div>
+<!-- 8x8 Game Board -->
+<div class="jewel-border rounded-2xl p-1 shadow-[0_0_40px_rgba(141,97,189,0.3)] w-full aspect-square">
+<div class="grid grid-cols-8 grid-rows-8 gap-1 h-full w-full">
+<!-- Row 1-8 Loop (Represented with a few items) -->
+<!-- Cell 1 -->
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center relative overflow-hidden">
+<div class="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary-dim gem-glow shadow-inner"></div>
+</div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center">
+<div class="w-6 h-6 rotate-45 bg-gradient-to-br from-secondary to-secondary-dim gem-glow shadow-inner"></div>
+</div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center">
+<div class="w-6 h-6 rounded-sm bg-gradient-to-br from-tertiary to-tertiary-dim gem-glow shadow-inner"></div>
+</div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center">
+<div class="w-6 h-6 rounded-full bg-gradient-to-br from-primary-fixed to-primary-container gem-glow shadow-inner"></div>
+</div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center">
+<div class="w-6 h-6 rotate-45 bg-gradient-to-br from-secondary to-on-secondary-container gem-glow shadow-inner"></div>
+</div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center">
+<div class="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary-dim gem-glow shadow-inner"></div>
+</div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center">
+<div class="w-6 h-6 rounded-sm bg-gradient-to-br from-tertiary to-tertiary-dim gem-glow shadow-inner"></div>
+</div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center">
+<div class="w-6 h-6 rotate-12 bg-gradient-to-br from-error to-error-dim gem-glow shadow-inner"></div>
+</div>
+<!-- Row 2 -->
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center">
+<div class="w-6 h-6 rounded-full bg-gradient-to-br from-secondary to-on-secondary-container gem-glow shadow-inner"></div>
+</div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center">
+<div class="w-6 h-6 rounded-sm bg-gradient-to-br from-tertiary to-tertiary-dim gem-glow shadow-inner"></div>
+</div>
+<!-- Selection active example -->
+<div class="bg-surface-container-highest rounded-md border-2 border-secondary ring-4 ring-secondary/20 flex items-center justify-center">
+<div class="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary-dim gem-glow shadow-inner animate-pulse"></div>
+</div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center">
+<div class="w-6 h-6 rotate-45 bg-gradient-to-br from-secondary to-secondary-dim gem-glow shadow-inner"></div>
+</div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center">
+<div class="w-6 h-6 rounded-full bg-gradient-to-br from-primary-fixed to-primary-container gem-glow shadow-inner"></div>
+</div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center">
+<div class="w-6 h-6 rounded-sm bg-gradient-to-br from-tertiary to-tertiary-dim gem-glow shadow-inner"></div>
+</div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center">
+<div class="w-6 h-6 rotate-12 bg-gradient-to-br from-error to-error-dim gem-glow shadow-inner"></div>
+</div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center">
+<div class="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary-dim gem-glow shadow-inner"></div>
+</div>
+<!-- Rows 3 to 8 omitted for brevity, fill remaining cells visually -->
+<!-- [Simulating grid fill] -->
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-sm bg-tertiary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-full bg-primary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rotate-45 bg-secondary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-full bg-primary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-sm bg-tertiary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rotate-12 bg-error/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-full bg-secondary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-sm bg-tertiary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-full bg-primary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rotate-45 bg-secondary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-sm bg-tertiary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-full bg-primary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rotate-12 bg-error/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-full bg-secondary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-sm bg-tertiary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rotate-45 bg-secondary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-full bg-primary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rotate-12 bg-error/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-sm bg-tertiary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-full bg-secondary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rotate-45 bg-secondary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-full bg-primary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-sm bg-tertiary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rotate-12 bg-error/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-full bg-secondary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-sm bg-tertiary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rotate-45 bg-secondary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-full bg-primary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-sm bg-tertiary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rotate-12 bg-error/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-full bg-secondary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-sm bg-tertiary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rotate-45 bg-secondary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-full bg-primary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-sm bg-tertiary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rotate-12 bg-error/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-full bg-secondary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-sm bg-tertiary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rotate-45 bg-secondary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-full bg-primary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-sm bg-tertiary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rotate-12 bg-error/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-full bg-secondary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-sm bg-tertiary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rotate-45 bg-secondary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-full bg-primary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rounded-sm bg-tertiary/40"></div></div>
+<div class="bg-surface-variant rounded-md border border-outline-variant/30 flex items-center justify-center"><div class="w-5 h-5 rotate-12 bg-error/40"></div></div>
+</div>
+</div>
+<!-- Bottom Time Bar -->
+<div class="w-full flex flex-col gap-2 mb-8">
+<div class="flex justify-between items-center px-2">
+<span class="text-[9px] font-extrabold text-on-surface uppercase tracking-widest">TIME REMAINING</span>
+<span class="text-xs font-headline font-bold text-primary">0:45</span>
+</div>
+<div class="w-full h-4 bg-surface-container-low rounded-full border border-outline/20 p-[2px] overflow-hidden shadow-inner">
+<div class="h-full w-3/4 rounded-full bg-gradient-to-r from-lime-400 via-tertiary to-primary shadow-[0_0_10px_rgba(255,134,193,0.5)]"></div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar Shared Component -->
+<nav class="fixed bottom-0 left-0 w-full h-20 flex justify-around items-center px-8 pb-4 bg-indigo-950/80 backdrop-blur-2xl border-t border-indigo-400/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-50 rounded-t-[3rem]">
+<!-- Active Item: Grid (Game) -->
+<div class="flex flex-col items-center justify-center bg-gradient-to-b from-pink-500/20 to-transparent text-pink-400 rounded-full p-4 shadow-[0_0_15px_rgba(255,134,193,0.4)] scale-90 transition-all duration-150">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">grid_view</span>
+</div>
+<div class="flex flex-col items-center justify-center text-indigo-300/50 p-4 hover:text-cyan-400 transition-colors duration-200">
+<span class="material-symbols-outlined">military_tech</span>
+</div>
+<div class="flex flex-col items-center justify-center text-indigo-300/50 p-4 hover:text-cyan-400 transition-colors duration-200">
+<span class="material-symbols-outlined">settings</span>
+</div>
+<div class="flex flex-col items-center justify-center text-indigo-300/50 p-4 hover:text-cyan-400 transition-colors duration-200">
+<span class="material-symbols-outlined">info</span>
+</div>
+</nav>
+</body></html>

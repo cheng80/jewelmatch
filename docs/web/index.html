@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    .hub-hero {
+      padding: 72px 24px 48px;
+      text-align: center;
+      background: linear-gradient(135deg, #1f4d8f 0%, #1976D2 55%, #4f9cff 100%);
+      color: #fff;
+    }
+    .hub-hero h1 {
+      font-size: 2.3rem;
+      letter-spacing: -0.03em;
+      margin-bottom: 10px;
+    }
+    .hub-hero p {
+      opacity: 0.9;
+    }
+    .hub-grid-wrap {
+      padding: 56px 0 70px;
+      background: #f8f9fc;
+    }
+    .hub-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+    }
+    .hub-card {
+      background: #fff;
+      border: 1px solid #e7ecf4;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 2px 14px rgba(0, 0, 0, 0.04);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .hub-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.08);
+    }
+    .hub-card h3 {
+      margin-bottom: 8px;
+      color: #132238;
+    }
+    .hub-card p {
+      color: #566477;
+      font-size: 0.93rem;
+      margin-bottom: 14px;
+    }
+    .hub-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .hub-link {
+      display: inline-flex;
+      padding: 7px 12px;
+      border: 1px solid #d7e3f7;
+      border-radius: 8px;
+      font-size: 0.83rem;
+      color: #145ec7;
+      background: #f4f8ff;
+    }
+    .hub-link:hover {
+      border-color: #aac8f5;
+      background: #eaf2ff;
+      color: #0d4ea9;
+    }
+    .hub-badge {
+      display: inline-block;
+      margin-bottom: 12px;
+      font-size: .75rem;
+      font-weight: 600;
+      color: #1a5abb;
+      background: #e9f1ff;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    @media (max-width: 860px) {
+      .hub-grid { grid-template-columns: 1fr; }
+      .hub-hero h1 { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">🌐 App Hub</a>
+      <div class="nav-right">
+        <div class="nav-links">
+          <a href="index.html" class="active" data-ko="앱 목록" data-en="Apps">앱 목록</a>
+          <a href="syncflow/index.html" data-ko="SyncFlow 페이지" data-en="SyncFlow Page">SyncFlow 페이지</a>
+          <a href="tagdo/index.html" data-ko="TagDo 페이지" data-en="TagDo Page">TagDo 페이지</a>
+          <a href="habitcell/index.html" data-ko="HabitCell 페이지" data-en="HabitCell Page">HabitCell 페이지</a>
+          <a href="glucoinsight/index.html" data-ko="GlucoInsight 페이지" data-en="GlucoInsight Page">GlucoInsight 페이지</a>
+        </div>
+        <div class="lang-switch">
+          <button class="lang-btn active" data-lang="ko">KO</button>
+          <button class="lang-btn" data-lang="en">EN</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hub-hero">
+    <h1 data-ko="앱 포털" data-en="App Portal">앱 포털</h1>
+    <p data-ko="도메인 메인에서 모든 앱 페이지를 한 번에 관리합니다."
+       data-en="Manage all app pages from one domain home.">
+      도메인 메인에서 모든 앱 페이지를 한 번에 관리합니다.
+    </p>
+  </header>
+
+  <main class="hub-grid-wrap">
+    <div class="container">
+      <div class="hub-grid">
+        <section class="hub-card">
+          <span class="hub-badge">LIVE</span>
+          <h3>SyncFlow</h3>
+          <p data-ko="실시간 경량 협업 칸반 보드 앱"
+             data-en="Real-time lightweight collaborative Kanban board app">
+            실시간 경량 협업 칸반 보드 앱
+          </p>
+          <div class="hub-links">
+            <a class="hub-link" href="syncflow/index.html" data-ko="앱 소개" data-en="Overview">앱 소개</a>
+            <a class="hub-link" href="syncflow/privacy.html" data-ko="개인정보처리방침" data-en="Privacy">개인정보처리방침</a>
+            <a class="hub-link" href="syncflow/terms.html" data-ko="이용약관" data-en="Terms">이용약관</a>
+          </div>
+        </section>
+
+        <section class="hub-card">
+          <span class="hub-badge">LIVE</span>
+          <h3>TagDo</h3>
+          <p data-ko="태그 기반 할 일 관리 앱"
+             data-en="Tag-based todo management app">
+            태그 기반 할 일 관리 앱
+          </p>
+          <div class="hub-links">
+            <a class="hub-link" href="tagdo/index.html" data-ko="앱 소개" data-en="Overview">앱 소개</a>
+            <a class="hub-link" href="tagdo/privacy.html" data-ko="개인정보처리방침" data-en="Privacy">개인정보처리방침</a>
+            <a class="hub-link" href="tagdo/terms.html" data-ko="이용약관" data-en="Terms">이용약관</a>
+            <a class="hub-link" href="https://play.google.com/store/apps/details?id=com.cheng80.tagdo" target="_blank" rel="noopener">Google Play</a>
+            <a class="hub-link" href="https://apps.apple.com/kr/app/tagdo/id6759315965" target="_blank" rel="noopener">App Store</a>
+          </div>
+        </section>
+
+        <section class="hub-card">
+          <span class="hub-badge">LIVE</span>
+          <h3>HabitCell</h3>
+          <p data-ko="일별 기록, 히트맵, Streak 분석을 제공하는 습관 추적 앱"
+             data-en="Habit tracking app with daily logs, heatmaps, and streak analytics">
+            일별 기록, 히트맵, Streak 분석을 제공하는 습관 추적 앱
+          </p>
+          <div class="hub-links">
+            <a class="hub-link" href="habitcell/index.html" data-ko="앱 소개" data-en="Overview">앱 소개</a>
+            <a class="hub-link" href="habitcell/privacy.html" data-ko="개인정보처리방침" data-en="Privacy">개인정보처리방침</a>
+            <a class="hub-link" href="habitcell/terms.html" data-ko="이용약관" data-en="Terms">이용약관</a>
+            <a class="hub-link" href="https://play.google.com/store/apps/details?id=com.cheng80.habitcell" target="_blank" rel="noopener">Google Play</a>
+            <a class="hub-link" href="https://apps.apple.com/kr/app/habitcell/id6759329455" target="_blank" rel="noopener">App Store</a>
+          </div>
+        </section>
+
+        <section class="hub-card">
+          <span class="hub-badge">BETA</span>
+          <h3>GlucoInsight</h3>
+          <p data-ko="성인 당뇨 위험도 참고 예측과 병원 찾기를 제공하는 건강관리 앱"
+             data-en="A health companion app for adult diabetes risk estimation and nearby hospital search">
+            성인 당뇨 위험도 참고 예측과 병원 찾기를 제공하는 건강관리 앱
+          </p>
+          <div class="hub-links">
+            <a class="hub-link" href="glucoinsight/index.html" data-ko="앱 소개" data-en="Overview">앱 소개</a>
+            <a class="hub-link" href="glucoinsight/privacy.html" data-ko="개인정보처리방침" data-en="Privacy">개인정보처리방침</a>
+            <a class="hub-link" href="glucoinsight/terms.html" data-ko="이용약관" data-en="Terms">이용약관</a>
+          </div>
+        </section>
+
+        <!-- [TEMPLATE] 다음 앱 출시 시 아래 주석을 해제하고 링크를 교체하세요.
+        <section class="hub-card">
+          <span class="hub-badge">COMING SOON</span>
+          <h3 data-ko="다음 앱 자리" data-en="Next App Slot">다음 앱 자리</h3>
+          <p data-ko="새 앱을 출시할 때 카드 하나를 복사해 링크만 교체하면 됩니다."
+             data-en="Duplicate this card and replace links when your new app is launched.">
+            새 앱을 출시할 때 카드 하나를 복사해 링크만 교체하면 됩니다.
+          </p>
+          <div class="hub-links">
+            <a class="hub-link" href="#" data-ko="앱 소개" data-en="Overview">앱 소개</a>
+            <a class="hub-link" href="#" data-ko="개인정보처리방침" data-en="Privacy">개인정보처리방침</a>
+            <a class="hub-link" href="#" data-ko="이용약관" data-en="Terms">이용약관</a>
+          </div>
+        </section>
+        -->
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <p>&copy; 2026 <span data-domain>cheng80.myqnapcloud.com</span>. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="privacy.html" data-ko="포털 개인정보처리방침" data-en="Portal Privacy Policy">포털 개인정보처리방침</a>
+        <a href="terms.html" data-ko="포털 이용약관" data-en="Portal Terms of Service">포털 이용약관</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/i18n.js"></script>
+</body>
+</html>

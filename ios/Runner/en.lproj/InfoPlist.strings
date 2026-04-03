@@ -1,0 +1,3 @@
+/* App display name under icon */
+CFBundleDisplayName = "Jewel Match";
+CFBundleName = "Jewel Match";

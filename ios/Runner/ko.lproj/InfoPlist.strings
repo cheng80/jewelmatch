@@ -1,0 +1,3 @@
+/* App display name under icon */
+CFBundleDisplayName = "쥬얼 매치";
+CFBundleName = "쥬얼 매치";

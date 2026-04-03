@@ -1,0 +1,3 @@
+/* App display name under icon */
+CFBundleDisplayName = "宝石消除";
+CFBundleName = "宝石消除";
