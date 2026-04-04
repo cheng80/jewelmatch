@@ -356,9 +356,14 @@ class MatchGameHud extends PositionComponent
 
   double _timeRatio() {
     if (!game.isTimedMode) return 1;
-    final sec = MatchBoardGame.timedRoundSeconds;
-    if (sec <= 0) return 0;
-    return (game.timeRemaining / sec).clamp(0.0, 1.0);
+    final initial = MatchBoardGame.timedRoundSeconds;
+    if (initial <= 0) return 0;
+    final t = game.timeRemaining;
+    // 보너스로 시작 분(120초)을 넘기면 바는 가득 찬 상태로 유지
+    if (t >= initial) {
+      return 1.0;
+    }
+    return (t / initial).clamp(0.0, 1.0);
   }
 
   @override

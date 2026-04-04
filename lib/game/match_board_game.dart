@@ -1,3 +1,5 @@
+import 'dart:math' show min;
+
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +27,11 @@ class MatchBoardGame extends FlameGame {
       onNoMoves: () {
         overlays.add('NoMoves');
       },
+      timedModeTimeRewardScale: timedModeTimeRewardScale,
+      timedModeBonusBaseUnits: timedModeBonusBaseUnits,
+      timedModeBonusPerComboTierUnits: timedModeBonusPerComboTierUnits,
+      onTimedModeTimeBonus: isTimedMode ? _applyTimedModeTimeBonus : null,
+      onInvalidSwap: _playInvalidSwapSfx,
     );
     board.onIntroFillComplete = (BoardFillIntroKind kind) {
       overlays.remove('IntroBlock');
@@ -34,14 +41,31 @@ class MatchBoardGame extends FlameGame {
     };
     if (isTimedMode) {
       timeRemaining = timedRoundSeconds;
+      _lastFlooredSecondForTimeTic = timeRemaining.floor();
     }
   }
 
   final EdgeInsets safeAreaPadding;
   final JewelGameMode gameMode;
 
-  /// 타임 모드 한 라운드 초 (클래식 느낌에 맞춰 조정 가능).
+  /// 타임 모드 시작 시 남은 시간(초). 매치·콤보 보상으로 늘어날 수 있다.
   static const double timedRoundSeconds = 120;
+
+  /// 타임 모드에서 [timeRemaining] 상한(초). 이보다 많이 쌓이는 보상은 버린다.
+  static const double timedMaxTimeSeconds = 300;
+
+  /// 레벨/난이도용 **시간 보상 비율** (유일한 배율 노브).  
+  /// 실제 추가 초 = `round((기준합) * 이 값)` — [timedModeBonusBaseUnits] 등과 함께 조정.
+  static const double timedModeTimeRewardScale = 1.0;
+
+  /// 매치 1단계 기준 보상(정수 초). 콤보 단계 보상은 [timedModeBonusPerComboTierUnits]와 합산 후 스케일·반올림.
+  static const int timedModeBonusBaseUnits = 1;
+
+  /// 콤보 2단계부터 (combo-1)에 곱해 더하는 정수 초 단위.
+  static const int timedModeBonusPerComboTierUnits = 1;
+
+  /// 남은 시간이 이 초 이하로 떨어지면 매 정수 초마다 [sfxTimeTic] 재생.
+  static const int timedLowTimeTickMaxSeconds = 10;
 
   late final MatchBoardLogic board;
 
@@ -71,6 +95,9 @@ class MatchBoardGame extends FlameGame {
   bool _boardSeededFromLayout = false;
 
   double timeRemaining = 0;
+
+  /// [timeRemaining]의 정수 초(내림) — 저시간 틱이 중복되지 않도록 추적.
+  int _lastFlooredSecondForTimeTic = -1;
 
   bool get isTimedMode => gameMode == JewelGameMode.timed;
 
@@ -272,7 +299,7 @@ class MatchBoardGame extends FlameGame {
     _lastSavedScore = board.score;
     pauseEngine();
     overlays.add('TimeUp');
-    SoundManager.playSfx(AssetPaths.sfxClear);
+    SoundManager.playSfx(AssetPaths.sfxTimeUp);
   }
 
   /// 같은 모드로 점수·타이머·보드 초기화.
@@ -287,6 +314,7 @@ class MatchBoardGame extends FlameGame {
     _lastSavedScore = -1;
     if (isTimedMode) {
       timeRemaining = timedRoundSeconds;
+      _lastFlooredSecondForTimeTic = timeRemaining.floor();
     }
     board.generateFreshBoard();
     _syncIntroInputBlock();
@@ -304,6 +332,17 @@ class MatchBoardGame extends FlameGame {
         !timeUp &&
         !board.introFillInProgress) {
       timeRemaining -= dt;
+      final floored = timeRemaining.floor();
+      if (timeRemaining > 0 &&
+          floored >= 1 &&
+          floored <= timedLowTimeTickMaxSeconds) {
+        if (_lastFlooredSecondForTimeTic >= 0 &&
+            floored < _lastFlooredSecondForTimeTic) {
+          SoundManager.playSfx(AssetPaths.sfxTimeTic);
+        }
+      }
+      _lastFlooredSecondForTimeTic = floored;
+
       if (timeRemaining <= 0) {
         timeRemaining = 0;
         _triggerTimeUp();
@@ -364,5 +403,22 @@ class MatchBoardGame extends FlameGame {
     board.generateFreshBoard();
     overlays.remove('NoMoves');
     _syncIntroInputBlock();
+  }
+
+  /// [seconds]는 정수 초. [timedMaxTimeSeconds]까지 남은 여유(`room`)만큼만 가산하고,
+  /// 보상 초 중 **초과분은 제외**(버림)한다.
+  void _playInvalidSwapSfx() {
+    SoundManager.playSfx(AssetPaths.sfxFail);
+  }
+
+  void _applyTimedModeTimeBonus(int seconds) {
+    if (!isTimedMode || timeUp || seconds <= 0) return;
+    final cap = timedMaxTimeSeconds;
+    final room = cap - timeRemaining;
+    if (room <= 0) {
+      return;
+    }
+    final applied = min(seconds.toDouble(), room);
+    timeRemaining += applied;
   }
 }

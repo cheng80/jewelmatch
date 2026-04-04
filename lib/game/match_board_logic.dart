@@ -101,6 +101,11 @@ class MatchBoardLogic {
     required this.cols,
     this.colorCount = 6,
     this.onNoMoves,
+    this.timedModeTimeRewardScale = 1.0,
+    this.timedModeBonusBaseUnits = 1,
+    this.timedModeBonusPerComboTierUnits = 1,
+    this.onTimedModeTimeBonus,
+    this.onInvalidSwap,
   }) {
     // `setGeometry`는 `generateFreshBoard`보다 먼저 호출될 수 있으므로
     // 빈 격자를 바로 준비해 둔다.
@@ -111,6 +116,21 @@ class MatchBoardLogic {
   final int cols;
   final int colorCount;
   final void Function()? onNoMoves;
+
+  /// 타임 모드 전용: 매치 제거 단계마다 **정수 초**만큼만 호출한다.
+  final void Function(int secondsAdded)? onTimedModeTimeBonus;
+
+  /// [MatchBoardGame.timedModeTimeRewardScale] 전달.
+  final double timedModeTimeRewardScale;
+
+  /// 기준 보상(정수 초). [MatchBoardGame.timedModeBonusBaseUnits]와 동기화.
+  final int timedModeBonusBaseUnits;
+
+  /// 콤보 단계당 가산(정수 초). [MatchBoardGame.timedModeBonusPerComboTierUnits]와 동기화.
+  final int timedModeBonusPerComboTierUnits;
+
+  /// 매치가 나오지 않아 스왑이 되돌아갈 때 (잘못된 스왑).
+  final void Function()? onInvalidSwap;
 
   double boardX = 0;
   double boardY = 0;
@@ -819,6 +839,19 @@ class MatchBoardLogic {
       final base = scoreBase + max(0, removed - 3) * scoreExtraPerGem;
       final comboBonus = max(1, combo);
       score += (base * comboBonus).round();
+
+      final raw = (timedModeBonusBaseUnits +
+              max(0, combo - 1) * timedModeBonusPerComboTierUnits) *
+          timedModeTimeRewardScale;
+      // 타임 보상: 정수 초만. raw>0인데 반올림이 0이 되면 최소 1초(보상 0초 금지).
+      // raw<=0(예: 배율 0)이면 콜백 없음 — 의도적 무보상.
+      if (onTimedModeTimeBonus != null && raw > 0) {
+        var bonusSec = raw.round();
+        if (bonusSec < 1) {
+          bonusSec = 1;
+        }
+        onTimedModeTimeBonus!(bonusSec);
+      }
     }
     return removed;
   }
@@ -1086,6 +1119,7 @@ class MatchBoardLogic {
       swapCells(ar, ac, br, bc);
       lastActionText = 'bad swap';
       lockInput(invalidSwapLock);
+      onInvalidSwap?.call();
       return false;
     }
 

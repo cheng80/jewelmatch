@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -128,21 +129,23 @@ class _SettingViewState extends State<SettingView> {
                   });
                 },
               ),
-              const Divider(height: 1),
-              _SectionTitle(icon: Icons.star, title: context.tr('rateApp')),
-              ListTile(
-                leading: const Icon(Icons.star_border, color: Colors.amber),
-                title: Text(context.tr('rateApp')),
-                onTap: () async {
-                  final result = await InAppReviewService.openStoreListing();
-                  if (!context.mounted) return;
-                  if (result == false) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(context.tr('rateAppAfterRelease'))),
-                    );
-                  }
-                },
-              ),
+              if (!kIsWeb) ...[
+                const Divider(height: 1),
+                _SectionTitle(icon: Icons.star, title: context.tr('rateApp')),
+                ListTile(
+                  leading: const Icon(Icons.star_border, color: Colors.amber),
+                  title: Text(context.tr('rateApp')),
+                  onTap: () async {
+                    final result = await InAppReviewService.openStoreListing();
+                    if (!context.mounted) return;
+                    if (result == false) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(context.tr('rateAppAfterRelease'))),
+                      );
+                    }
+                  },
+                ),
+              ],
               const Divider(height: 1),
               _SectionTitle(icon: Icons.public, title: context.tr('language')),
               ListTile(

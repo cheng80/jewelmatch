@@ -69,7 +69,7 @@ main()
          └─ appRouter
             └─ initialLocation = "/"
                └─ TitleView.build()
-                  ├─ _StarryBackground
+                  ├─ StarryBackground
                   ├─ "심플" -> context.go("/game?mode=simple")
                   ├─ "타임" -> context.go("/game?mode=timed")
                   └─ "설정" -> context.push("/setting")
@@ -140,7 +140,7 @@ GameView.build()
 - 앱 제목 설정
 - 디버그 배너 제거
 - 다국어 delegate / locale 연결
-- 기본 다크 테마 설정
+- `buildAppTheme()`(Jewel Candy Lumina 팔레트 + 앱 폰트)
 - `appRouter` 주입
 - 웹에서 첫 포인터 입력 시 `SoundManager.unlockForWeb()` 호출
 
@@ -152,14 +152,12 @@ GameView.build()
 - `/game` -> `GameView`
 - `/setting` -> `SettingView`
 
-`/game`은 query parameter `mode`를 읽는다.
+`/game`은 query parameter `mode`를 읽는다 (`JewelGameMode.fromQuery`).
 
-- `mode=0`
-  - 숫자 모드
-- `mode=1`
-  - 알파벳 모드
+- `mode=simple` 또는 생략: 심플(무제한)
+- `mode=timed`: 타임 어택
 
-즉 같은 게임 화면을 재사용하되, 모드만 바꾸는 구조다.
+같은 `GameView`·`MatchBoardGame`을 쓰고 모드만 바꾼다.
 
 ### 3-4. `lib/views/title_view.dart`
 
@@ -198,7 +196,7 @@ Flame 게임 셸이다.
 
 - `FlameGame` 상속
 - `MatchBoardLogic`를 생성자에서 생성(타이머·빈 격자 준비), `onLoad`보다 먼저 올 수 있는 리사이즈에도 안전
-- `onLoad`: `SpaceBg` → `MatchGameHud`(viewport) → `MatchBoardRenderer`(world) 순 추가 (1~50 시절과 동일한 레이어 순서 철학)
+- `onLoad`: `SpaceBg` → `MatchGameHud`(viewport) → `MatchBoardRenderer`(world) 순 추가 (**backdrop → viewport → world**)
 - `onGameResize` → `_syncLayout`: `layoutRef`·타일 크기 유효성 검사 후 `setGeometry`, **`_boardSeededFromLayout`가 false일 때만** `generateFreshBoard()` (이후 리사이즈는 idle 시 좌표 스냅)
 - Simple/Timed 모드별 타이머·베스트 저장 연동
 
@@ -247,142 +245,22 @@ UI / Game
       └─ GetStorage
 ```
 
-## 4. 게임 규칙과 보드 배치
-
-### 4-0. 현재 매치-3 (8×8)
+## 4. 매치-3 규칙과 보드 배치 (8×8)
 
 - 인접 보석 두 칸을 스왑해 3개 이상 직선 매치를 만든다.
 - 매치 제거 → 중력 낙하 → 빈 칸 리필. 연쇄 시 콤보.
-- **Simple**: 제한 시간 없음. 움직일 수 없을 때 `NoMoves` 등 종료/UI 처리.
-- **Timed**: 라운드 시간(예: 120초) 종료 시 `TimeUp` 등.
+- **Simple**: 제한 시간 없음. 움직일 수 없을 때 `NoMoves` 오버레이 등.
+- **Timed**: 매치 제거 단계마다 `raw = (기준합) * timedModeTimeRewardScale` 후 정수화. `raw > 0`이면 `max(1, round(raw))`로 **0초 보상을 막음**; `raw <= 0`이면 보상 콜백 없음. 가산은 `min(보상, 상한까지 여유)`로 **초과분 제외**.
 - 베스트 스코어는 모드별 키(`best_match_simple` / `best_match_timed`)로 저장.
 
 보드 픽셀 배치는 `MatchBoardGame._syncLayout`에서 `layoutRef`로 타일 크기를 구하고, `MatchBoardLogic.setGeometry`로 각 보석의 목표 좌표를 갱신한다. **초기 보석 채우기**는 레이아웃이 유효해진 뒤 **한 번만** `generateFreshBoard()`로 수행한다.
-
----
-
-> **보관:** 아래 **4-1 ~ 4-5**는 과거 **1~50 / 알파벳** 그리드 모드 분석 원문이다. 구현 파일은 제거되었으나 좌표·셔플 개념 참고용으로 남긴다.
-
-### 4-1. (레거시) 게임 규칙
-
-- 숫자 모드
-  - `1`부터 `50`까지 순서대로 누른다.
-- 알파벳 모드
-  - `A`부터 `Z`까지 순서대로 누른다.
-- 정답을 누르면
-  - 큐브가 회전하며 사라진다.
-  - 다음 목표 값으로 진행한다.
-- 오답을 누르면
-  - 큐브가 좌우로 흔들린다.
-  - 진행 상태는 유지된다.
-- 5초 동안 정답을 누르지 못하면
-  - 현재 정답 큐브가 깜박여 힌트를 준다.
-- 마지막 값을 누르면
-  - 게임이 종료된다.
-  - 결과 시간과 베스트 스코어를 보여준다.
-
-즉 사용자는 "현재 힌트에 적힌 값"을 계속 찾아서 순서대로 제거해야 한다.
-
-### 4-2. 1차 / 2차 테이블 개념
-
-현재 게임은 전체 값을 한 번에 25칸에 다 올리지 않는다.
-
-```text
-숫자 모드
-├─ 1차 테이블: 1 ~ 25
-└─ 2차 테이블: 26 ~ 50
-
-알파벳 모드
-├─ 1차 테이블: A ~ Y (1 ~ 25에 대응)
-└─ 2차 테이블: Z (26에 대응)
-```
-
-초기 화면에는 항상 1차 테이블만 25칸에 셔플되어 보인다.  
-이후 정답을 맞출 때마다 같은 칸에 2차 테이블 값이 순서대로 보충된다.
-
-### 4-3. 실제 배치 절차
-
-그리드를 준비할 때 순서는 다음과 같다.
-
-```text
-_prepareGrid()
-├─ currentNumber = 1
-├─ 타이머 / 힌트 상태 초기화
-├─ shuffledFirst = shuffle(1차 테이블)
-├─ shuffledSecond = shuffle(2차 테이블)
-└─ _createGrid()
-   ├─ 5×5 칸 인덱스 0~24 순회
-   ├─ 각 칸에 shuffledFirst[i]를 배치
-   └─ CubeButton(gridIndex = i) 생성
-```
-
-즉 처음 25칸은 모두 1차 테이블 값이다.
-
-```text
-gridIndex 0  -> shuffledFirst[0]
-gridIndex 1  -> shuffledFirst[1]
-...
-gridIndex 24 -> shuffledFirst[24]
-```
-
-### 4-4. 정답 큐브가 사라진 뒤 교체 방식
-
-정답 큐브를 누르면 그 칸은 그냥 비워지는 것이 아니라, 2차 테이블이 남아 있으면 새 값이 채워진다.
-
-```text
-정답 탭
-├─ cube.animateCorrect()
-└─ onComplete
-   ├─ if (_nextSecondIndex < shuffledSecond.length)
-   │  ├─ nextId = shuffledSecond[_nextSecondIndex]
-   │  ├─ _nextSecondIndex++
-   │  └─ 같은 gridIndex 위치에 새 CubeButton 생성
-   └─ else
-      └─ 더 채울 값이 없으므로 빈 칸 유지
-```
-
-중요한 점은 다음과 같다.
-
-- 2차 큐브는 "정답 순서"로 채워지는 것이 아니다.
-- 2차 큐브도 별도 셔플된 순서로 공급된다.
-- 다만 사용자가 눌러야 하는 목표 값 `currentNumber`는 항상 순차 증가한다.
-
-즉 화면에 새로 등장하는 값의 위치와 등장 순서는 랜덤이지만,  
-사용자가 눌러야 하는 값 자체는 항상 순서대로 정해져 있다.
-
-### 4-5. 5×5 배치 수식
-
-그리드는 safe area 안쪽에서 들어갈 수 있는 최대 정사각형 영역을 구한 뒤, 그 안에 5×5로 배치한다.
-
-```text
-layoutRef = min(안전영역 내부 가용 너비, 안전영역 내부 가용 높이)
-cubeSize  = layoutRef / (5 + spacingRatio * 6)
-spacing   = cubeSize * spacingRatio
-step      = cubeSize + spacing
-```
-
-각 큐브의 좌표는 다음처럼 계산한다.
-
-```text
-row = gridIndex ~/ 5
-col = gridIndex % 5
-
-x = gridLeft + col * step + cubeSize / 2
-y = gridTop  + spacing + row * step + cubeSize / 2
-```
-
-즉:
-
-- 큐브 위치는 `gridIndex`만 알면 다시 계산할 수 있다.
-- 창 크기가 바뀌어도 `gridIndex`를 기준으로 같은 칸 위치를 재계산한다.
-- 그래서 리사이즈 시에도 "배치 순서"는 유지되고, 화면상의 크기와 좌표만 다시 맞춘다.
 
 ## 5. 게임 화면 진입 뒤 Flame 내부 생성 순서
 
 `GameView`에서 `GameWidget.controlled`가 만들어진 다음, `gameFactory`가 `MatchBoardGame`을 생성한다.  
 Flame이 `MatchBoardGame.onLoad()`를 호출한다.
 
-`onLoad()`의 실제 순서는 다음과 같다 (1~50 시절과 동일한 **backdrop → viewport → world** 레이어 순서).
+`onLoad()`의 실제 순서는 다음과 같다 (**backdrop → viewport → world**).
 
 ```text
 MatchBoardGame.onLoad()
@@ -444,7 +322,7 @@ MatchBoardGame
    - 타임 패널, 힌트, pause 버튼이 여기서 그려짐
 ```
 
-템플릿과 다른 점은 다음과 같다.
+일반적인 Flame 예제(world 중심 카메라)와 다른 점은 다음과 같다.
 
 - 현재는 `world 중심 원점`을 쓰지 않는다.
 - `camera.viewfinder.anchor = Anchor.topLeft`로 맞춘다.
@@ -455,7 +333,7 @@ MatchBoardGame
   - `viewport`
     - 화면 고정 UI
 
-### 5-1. safe area를 어떻게 쓰는가
+### 6-1. safe area를 어떻게 쓰는가
 
 현재 프로젝트에서 safe area는 디버그 선을 그리기 위한 값이 아니다.  
 오직 "게임 UI와 게임 오브젝트가 침범하지 않아야 하는 배치 기준"으로만 사용한다.
@@ -480,7 +358,7 @@ safeContentCenter = safeContentLeft + safeContentWidth / 2
 
 상단 HUD와 그리드도 이 내부 영역을 기준으로 계산한다.
 
-### 5-2. HUD와 그리드 배치 기준
+### 6-2. HUD와 그리드 배치 기준
 
 상단 배치 기준:
 
@@ -545,8 +423,6 @@ Pause 버튼 탭
 - **NoMoves**: 더 이상 유효한 스왑이 없을 때 오버레이. 베스트 갱신은 모드별 점수 저장 API 사용.
 - **TimeUp**: Timed 모드 시간 소진 시 오버레이.
 
-과거 **Clear** 오버레이(1~50 클리어)는 현재 빌드에 없다.
-
 ## 9. 웹 레이아웃 정책
 
 웹에서는 게임이 전체 브라우저에 맞춰 자유롭게 늘어나지 않는다.  
@@ -576,19 +452,19 @@ Pause 버튼 탭
 
 ## 10. 화면별 요약
 
-### 9-1. TitleView
+### 10-1. TitleView
 
 - 전체 화면 우주 배경
 - SafeArea 안에 제목/버튼/버전 텍스트 배치
 - 메뉴 BGM 재생
 
-### 9-2. SettingView
+### 10-2. SettingView
 
 - `AppBar`
 - SafeArea 안의 스크롤 설정 목록
 - BGM / SFX / 화면 꺼짐 방지 / 언어 설정
 
-### 9-3. GameView
+### 10-3. GameView
 
 - 앱에서는 전체 화면 게임
 - 웹에서는 중앙 세로 프레임 게임
@@ -608,7 +484,7 @@ Pause 버튼 탭
 3. 좌표계는 top-left 기반 화면형 레이아웃으로 단순화
    - safe area는 침범 금지 기준으로만 사용
 
-즉 이 프로젝트는 템플릿과 같은 출발점에서 왔지만, 현재는 다음에 더 가깝다.
+현재 구조를 한 줄로 요약하면 다음과 같다.
 
 ```text
 모바일 세로형 매치-3 게임

@@ -35,7 +35,7 @@ class SoundManager {
       FlameAudio.audioCache.load(AssetPaths.sfxCollect),
       FlameAudio.audioCache.load(AssetPaths.sfxFail),
       FlameAudio.audioCache.load(AssetPaths.sfxBtnSnd),
-      FlameAudio.audioCache.load(AssetPaths.sfxClear),
+      FlameAudio.audioCache.load(AssetPaths.sfxTimeUp),
     ]);
   }
 

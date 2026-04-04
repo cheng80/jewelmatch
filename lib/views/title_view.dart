@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -26,7 +27,9 @@ class _TitleViewState extends State<TitleView>
     WidgetsBinding.instance.addObserver(this);
     SoundManager.playBgm(AssetPaths.bgmMenu);
     Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) InAppReviewService.maybeRequestReviewOnTitleIfEligible();
+      if (mounted && !kIsWeb) {
+        InAppReviewService.maybeRequestReviewOnTitleIfEligible();
+      }
     });
   }
 
