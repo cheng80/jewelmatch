@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import '../services/game_settings.dart';
+import '../services/ranking_service.dart';
 import 'components/match_board_renderer.dart';
 import 'components/match_game_hud.dart';
 import 'components/space_bg.dart';
@@ -48,15 +49,15 @@ class MatchBoardGame extends FlameGame {
   final EdgeInsets safeAreaPadding;
   final JewelGameMode gameMode;
 
-  /// 타임 모드 시작 시 남은 시간(초). 매치·콤보 보상으로 늘어날 수 있다.
-  static const double timedRoundSeconds = 120;
+  /// 타임 모드 시작 시 남은 시간(초).
+  static const double timedRoundSeconds = 60;
 
   /// 타임 모드에서 [timeRemaining] 상한(초). 이보다 많이 쌓이는 보상은 버린다.
-  static const double timedMaxTimeSeconds = 300;
+  static const double timedMaxTimeSeconds = 90;
 
-  /// 레벨/난이도용 **시간 보상 비율** (유일한 배율 노브).  
-  /// 실제 추가 초 = `round((기준합) * 이 값)` — [timedModeBonusBaseUnits] 등과 함께 조정.
-  static const double timedModeTimeRewardScale = 1.0;
+  /// 레벨/난이도용 **시간 보상 비율**.
+  /// 실제 추가 초 = `round((기준합) * 이 값)` — 0.5면 보상이 절반.
+  static const double timedModeTimeRewardScale = 0.6;
 
   /// 매치 1단계 기준 보상(정수 초). 콤보 단계 보상은 [timedModeBonusPerComboTierUnits]와 합산 후 스케일·반올림.
   static const int timedModeBonusBaseUnits = 1;
@@ -71,6 +72,10 @@ class MatchBoardGame extends FlameGame {
 
   MatchGameHud? _hud;
   final Map<String, String> _localeStrings = {};
+
+  /// 타임 모드: 서버 1위 이름·점수 (비동기 fetch 완료 후 갱신).
+  String? rankingTop1Name;
+  int? rankingTop1Score;
 
   String localeString(String key, String fallback) =>
       _localeStrings[key] ?? fallback;
@@ -156,11 +161,23 @@ class MatchBoardGame extends FlameGame {
     _hud = MatchGameHud(
       onPausePressed: pauseGame,
       onHintPressed: requestHint,
-      onTutorialPressed: onTutorialPressed,
+      onTutorialPressed: showHowToPlay,
     );
     camera.viewport.add(_hud!);
 
     world.add(MatchBoardRenderer(logic: board));
+
+    if (isTimedMode) {
+      _fetchTop1();
+    }
+  }
+
+  Future<void> _fetchTop1() async {
+    final top = await RankingService.fetchTop1();
+    if (top != null) {
+      rankingTop1Name = top.name;
+      rankingTop1Score = top.score;
+    }
   }
 
   double get hudScale => (size.x < size.y ? size.x : size.y) * _hudScaleRatio;
@@ -307,6 +324,7 @@ class MatchBoardGame extends FlameGame {
     overlays.remove('TimeUp');
     overlays.remove('PauseMenu');
     overlays.remove('NoMoves');
+    overlays.remove('HowToPlay');
     timeUp = false;
     board.score = 0;
     board.lastCombo = 0;
@@ -373,6 +391,31 @@ class MatchBoardGame extends FlameGame {
     }
   }
 
+  /// 스와이프 입력: 시작 좌표(px)에서 [dr]/[dc] 방향으로 1칸 스왑 시도.
+  void handleBoardSwipe(double startX, double startY, int dr, int dc) {
+    SoundManager.unlockForWeb();
+    if (!isPlaying ||
+        timeUp ||
+        board.inputLocked ||
+        board.introFillInProgress) {
+      return;
+    }
+    board.clearHint();
+    final cell = board.pixelToCell(startX, startY);
+    if (cell == null) return;
+    final fromRow = cell.x;
+    final fromCol = cell.y;
+    final toRow = fromRow + dr;
+    final toCol = fromCol + dc;
+    if (!board.isInside(toRow, toCol)) return;
+    board.selected = null;
+    final prevState = board.state;
+    board.trySwap(fromRow, fromCol, toRow, toCol);
+    if (prevState == 'idle' && board.state != 'idle') {
+      SoundManager.playSfx(AssetPaths.sfxCollect);
+    }
+  }
+
   void requestHint() {
     SoundManager.unlockForWeb();
     if (!isPlaying ||
@@ -390,8 +433,21 @@ class MatchBoardGame extends FlameGame {
   /// 힌트 디밍만 해제 (보드 탭 외 UI 탭 등).
   void dismissHint() => board.clearHint();
 
-  /// 튜토리얼 다시보기 — 추후 오버레이 연결 예정.
-  void onTutorialPressed() {}
+  void showHowToPlay() {
+    if (!isPlaying || timeUp) return;
+    isPlaying = false;
+    SoundManager.pauseBgm();
+    pauseEngine();
+    overlays.add('HowToPlay');
+  }
+
+  void closeHowToPlay() {
+    if (timeUp) return;
+    SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
+    resumeEngine();
+    overlays.remove('HowToPlay');
+    isPlaying = true;
+  }
 
   void shuffleBoard() {
     board.shuffle();

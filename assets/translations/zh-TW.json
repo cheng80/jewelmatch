@@ -41,5 +41,22 @@
   "modeTimed": "限時",
   "timeLeft": "剩餘時間",
   "unlimitedMode": "無時限",
-  "timeUpTitle": "時間到！"
+  "timeUpTitle": "時間到！",
+  "enterName": "輸入名稱",
+  "startGame": "開始",
+  "cancel": "取消",
+  "rankSuccess": "🏆 第{rank}名！ ({score}分)",
+  "rankNotInTop": "未進入排行榜",
+  "rankSubmitFailed": "伺服器連線失敗",
+  "howToPlayTitle": "遊戲說明",
+  "howToPlayGoal": "🎯 目標",
+  "howToPlayGoalDesc": "將3個或更多相同的寶石排成一行或一列即可消除並獲得分數。",
+  "howToPlayMatch": "💎 配對範例",
+  "howToPlayMatchDesc": "三顆相同寶石排成一排即為配對！邊框內的寶石將被消除。",
+  "howToPlaySwap": "👆 操作方式",
+  "howToPlaySwapDesc": "透過點擊-點擊或滑動來交換相鄰的寶石。如果無法配對則會換回。",
+  "howToPlayCombo": "🔥 連擊",
+  "howToPlayComboDesc": "寶石消除後新寶石落下產生連鎖配對即為連擊！連擊越多分數越高。",
+  "howToPlayHint": "💡 提示",
+  "howToPlayHintDesc": "卡住了？點擊燈泡按鈕查看可交換的寶石對。"
 }

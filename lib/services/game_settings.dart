@@ -69,6 +69,13 @@ class GameSettings {
     return null;
   }
 
+  /// 타임 어택 랭킹용 플레이어 이름. 한 번도 입력한 적 없으면 'GUEST'.
+  static String get playerName =>
+      StorageHelper.read<String>(StorageKeys.playerName) ?? 'GUEST';
+
+  static set playerName(String v) =>
+      StorageHelper.write(StorageKeys.playerName, v);
+
   /// [score]가 해당 모드 기록보다 크면 저장.
   static void saveBestMatchScoreIfBetter(JewelGameMode mode, int score) {
     final cur = getBestMatchScore(mode);

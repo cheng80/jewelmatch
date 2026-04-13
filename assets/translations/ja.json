@@ -41,5 +41,22 @@
   "modeTimed": "タイム",
   "timeLeft": "残り時間",
   "unlimitedMode": "制限なし",
-  "timeUpTitle": "タイムアップ！"
+  "timeUpTitle": "タイムアップ！",
+  "enterName": "名前を入力",
+  "startGame": "スタート",
+  "cancel": "キャンセル",
+  "rankSuccess": "🏆 {rank}位！ ({score}点)",
+  "rankNotInTop": "ランキング圏外です",
+  "rankSubmitFailed": "サーバー接続失敗",
+  "howToPlayTitle": "遊び方",
+  "howToPlayGoal": "🎯 目標",
+  "howToPlayGoalDesc": "同じ種類のジェムを縦または横に3つ以上並べると消えてスコアが入ります。",
+  "howToPlayMatch": "💎 マッチ例",
+  "howToPlayMatchDesc": "同じジェムが3つ並ぶとマッチ！枠内のジェムがマッチ対象です。",
+  "howToPlaySwap": "👆 操作方法",
+  "howToPlaySwapDesc": "隣接するジェムをタップ-タップまたはスワイプで入れ替えます。マッチしない場合は戻ります。",
+  "howToPlayCombo": "🔥 コンボ",
+  "howToPlayComboDesc": "ジェムが消えた後、新しいジェムが落ちて連鎖マッチが起きるとコンボ！コンボが多いほど高得点。",
+  "howToPlayHint": "💡 ヒント",
+  "howToPlayHintDesc": "詰まったら電球ボタンで交換可能なペアを確認しましょう。"
 }

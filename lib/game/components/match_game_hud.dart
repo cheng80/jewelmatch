@@ -16,7 +16,7 @@ import '../match_board_game.dart';
 /// 상단 한 줄(일시정지·힌트·베스트·우측 튜토리얼) 배치는 형제 프로젝트
 /// `flame_tab_order/lib/game/components/game_hud.dart`(1~50)와 같은 패턴을 참고한다.
 class MatchGameHud extends PositionComponent
-    with HasGameReference<MatchBoardGame>, TapCallbacks {
+    with HasGameReference<MatchBoardGame>, TapCallbacks, DragCallbacks {
   MatchGameHud({
     required this.onPausePressed,
     required this.onHintPressed,
@@ -26,6 +26,17 @@ class MatchGameHud extends PositionComponent
   final VoidCallback onPausePressed;
   final VoidCallback onHintPressed;
   final VoidCallback onTutorialPressed;
+
+  /// 스와이프 감지: 드래그 시작 위치(캔버스 좌표, trySwap 셀 판정용).
+  Vector2? _dragStartCanvas;
+  /// 드래그 시작 이후 누적 변위.
+  Vector2 _dragDelta = Vector2.zero();
+  /// 드래그가 보드 영역에서 시작됐는지.
+  bool _dragOnBoard = false;
+  /// 이 드래그에서 이미 스와이프가 발동됐는지 (1회만).
+  bool _dragConsumed = false;
+  /// 방향 판정 최소 이동 거리(px). 이보다 짧으면 탭으로 폴백.
+  static const double _swipeThreshold = 14.0;
 
   late TextPainter _scoreLabel;
   late TextPainter _scoreValue;
@@ -163,18 +174,49 @@ class MatchGameHud extends PositionComponent
       textDirection: ui.TextDirection.ltr,
     )..layout();
 
+    final isTimedMode = game.isTimedMode;
+    final top1Name = game.rankingTop1Name;
+    final top1Score = game.rankingTop1Score;
     final best = _cachedBest;
-    _bestLabel = TextPainter(
-      text: TextSpan(
-        text: game.localeString('bestScore', 'Best'),
-        style: _ts(size: 12 * t, color: JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.95)),
-      ),
-      textDirection: ui.TextDirection.ltr,
-    )..layout();
+
+    String bestLabelText;
+    String bestValueText;
+    if (isTimedMode && top1Name != null && top1Score != null) {
+      bestValueText = _fmt.format(top1Score);
+      _bestLabel = TextPainter(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: '👑 ',
+              style: TextStyle(
+                fontFamily: 'sans-serif',
+                fontSize: 12 * t,
+                color: JewelCandyLuminaTheme.tertiaryGold,
+              ),
+            ),
+            TextSpan(
+              text: top1Name,
+              style: _ts(size: 12 * t, color: JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.95)),
+            ),
+          ],
+        ),
+        textDirection: ui.TextDirection.ltr,
+      )..layout();
+    } else {
+      bestLabelText = game.localeString('bestScore', 'Best');
+      bestValueText = best != null ? _fmt.format(best) : '—';
+      _bestLabel = TextPainter(
+        text: TextSpan(
+          text: bestLabelText,
+          style: _ts(size: 12 * t, color: JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.95)),
+        ),
+        textDirection: ui.TextDirection.ltr,
+      )..layout();
+    }
 
     _bestValue = TextPainter(
       text: TextSpan(
-        text: best != null ? _fmt.format(best) : '—',
+        text: bestValueText,
         style: _ts(
           size: 17 * t,
           color: JewelCandyLuminaTheme.goldStrong,
@@ -513,11 +555,21 @@ class MatchGameHud extends PositionComponent
           final r = _timeRatio();
           final fillW = inner.width * r;
           if (fillW > 0.5) {
-            final fillRect =
-                Rect.fromLTWH(inner.left, inner.top, fillW, inner.height);
-            final fillR = RRect.fromRectAndRadius(
+            final rad = inner.height / 2;
+            canvas.save();
+            canvas.clipRRect(innerR);
+            final fillRect = Rect.fromLTWH(
+              inner.left,
+              inner.top,
+              fillW,
+              inner.height,
+            );
+            final fillR = RRect.fromRectAndCorners(
               fillRect,
-              Radius.circular(inner.height / 2),
+              topLeft: Radius.circular(rad),
+              bottomLeft: Radius.circular(rad),
+              topRight: Radius.circular(fillW >= inner.width - 1 ? rad : 0),
+              bottomRight: Radius.circular(fillW >= inner.width - 1 ? rad : 0),
             );
             final low = r < 0.2;
             canvas.drawRRect(
@@ -529,6 +581,7 @@ class MatchGameHud extends PositionComponent
                       : JewelCandyLuminaTheme.timeBarFillVibrant,
                 ).createShader(fillRect),
             );
+            canvas.restore();
           }
         } else {
           canvas.drawRRect(
@@ -660,27 +713,96 @@ class MatchGameHud extends PositionComponent
   @override
   void onTapDown(TapDownEvent event) {
     final p = event.localPosition;
-    if (_pauseRect.contains(Offset(p.x, p.y))) {
-      game.dismissHint();
-      onPausePressed();
-      return;
-    }
-    if (_hintRect.contains(Offset(p.x, p.y))) {
-      onHintPressed();
-      return;
-    }
-    if (_tutorialRect.contains(Offset(p.x, p.y))) {
-      game.dismissHint();
-      onTutorialPressed();
-      return;
-    }
+    if (_handleUiButtonTap(p)) return;
     final bt = game.board.boardY;
     final bb = game.boardPixelBottom;
-    final py = p.y;
-    if (py < bt || py > bb) {
+    if (p.y < bt || p.y > bb) {
       game.dismissHint();
       return;
     }
     game.handleBoardTap(event.canvasPosition.x, event.canvasPosition.y);
+  }
+
+  // ── 스와이프(드래그) ──
+
+  @override
+  void onDragStart(DragStartEvent event) {
+    super.onDragStart(event);
+    _resetDrag();
+    final p = event.localPosition;
+    if (_isUiButton(p)) return;
+    final bt = game.board.boardY;
+    final bb = game.boardPixelBottom;
+    if (p.y < bt || p.y > bb) return;
+    _dragStartCanvas = event.canvasPosition.clone();
+    _dragDelta = Vector2.zero();
+    _dragOnBoard = true;
+  }
+
+  @override
+  void onDragUpdate(DragUpdateEvent event) {
+    super.onDragUpdate(event);
+    if (!_dragOnBoard || _dragConsumed || _dragStartCanvas == null) return;
+    _dragDelta += event.localDelta;
+    if (_dragDelta.length < _swipeThreshold) return;
+
+    _dragConsumed = true;
+    final dx = _dragDelta.x.abs();
+    final dy = _dragDelta.y.abs();
+    int dr = 0, dc = 0;
+    if (dx >= dy) {
+      dc = _dragDelta.x > 0 ? 1 : -1;
+    } else {
+      dr = _dragDelta.y > 0 ? 1 : -1;
+    }
+    game.handleBoardSwipe(_dragStartCanvas!.x, _dragStartCanvas!.y, dr, dc);
+  }
+
+  @override
+  void onDragEnd(DragEndEvent event) {
+    super.onDragEnd(event);
+    if (_dragOnBoard && !_dragConsumed && _dragStartCanvas != null) {
+      game.handleBoardTap(_dragStartCanvas!.x, _dragStartCanvas!.y);
+    }
+    _resetDrag();
+  }
+
+  @override
+  void onDragCancel(DragCancelEvent event) {
+    super.onDragCancel(event);
+    _resetDrag();
+  }
+
+  void _resetDrag() {
+    _dragStartCanvas = null;
+    _dragDelta = Vector2.zero();
+    _dragOnBoard = false;
+    _dragConsumed = false;
+  }
+
+  bool _isUiButton(Vector2 p) {
+    final o = Offset(p.x, p.y);
+    return _pauseRect.contains(o) ||
+        _hintRect.contains(o) ||
+        _tutorialRect.contains(o);
+  }
+
+  bool _handleUiButtonTap(Vector2 p) {
+    final o = Offset(p.x, p.y);
+    if (_pauseRect.contains(o)) {
+      game.dismissHint();
+      onPausePressed();
+      return true;
+    }
+    if (_hintRect.contains(o)) {
+      onHintPressed();
+      return true;
+    }
+    if (_tutorialRect.contains(o)) {
+      game.dismissHint();
+      onTutorialPressed();
+      return true;
+    }
+    return false;
   }
 }

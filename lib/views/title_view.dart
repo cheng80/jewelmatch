@@ -7,6 +7,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../app_config.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
+import '../services/game_settings.dart';
 import '../theme/jewel_candy_lumina_theme.dart';
 import '../widgets/starry_background.dart';
 import '../services/in_app_review_service.dart';
@@ -53,6 +54,74 @@ class _TitleViewState extends State<TitleView>
       case AppLifecycleState.inactive:
         break;
     }
+  }
+
+  Future<void> _showNameDialog(BuildContext context) async {
+    final controller = TextEditingController(text: GameSettings.playerName);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor:
+            JewelCandyLuminaTheme.surfaceContainer.withValues(alpha: 0.97),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: JewelCandyLuminaTheme.borderPause,
+            width: 2,
+          ),
+        ),
+        title: Text(
+          context.tr('enterName'),
+          style: TextStyle(
+            color: JewelCandyLuminaTheme.secondaryCyan,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: TextField(
+          controller: controller,
+          maxLength: 20,
+          autofocus: true,
+          style: const TextStyle(color: Colors.white, fontSize: 20),
+          decoration: InputDecoration(
+            hintText: 'GUEST',
+            hintStyle: TextStyle(color: Colors.white38),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(
+                  color: JewelCandyLuminaTheme.tertiaryGold),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(
+                  color: JewelCandyLuminaTheme.secondaryCyan, width: 2),
+            ),
+          ),
+          onSubmitted: (v) => Navigator.of(ctx).pop(v),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              context.tr('cancel'),
+              style: TextStyle(color: Colors.white54),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            child: Text(
+              context.tr('startGame'),
+              style: TextStyle(
+                color: JewelCandyLuminaTheme.tertiaryGold,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (result == null || !mounted) return;
+    final name = result.trim().isEmpty ? 'GUEST' : result.trim();
+    GameSettings.playerName = name;
+    if (!mounted) return;
+    context.go('${RoutePaths.game}?mode=timed');
   }
 
   /// 우주 배경 위에 제목·버튼을 배치한다.
@@ -127,7 +196,7 @@ class _TitleViewState extends State<TitleView>
                           onPressed: () {
                             SoundManager.unlockForWeb();
                             SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                            context.go('${RoutePaths.game}?mode=timed');
+                            _showNameDialog(context);
                           },
                         ),
                         const SizedBox(height: 20),

@@ -41,5 +41,22 @@
   "modeTimed": "限时",
   "timeLeft": "剩余时间",
   "unlimitedMode": "无时限",
-  "timeUpTitle": "时间到！"
+  "timeUpTitle": "时间到！",
+  "enterName": "输入名称",
+  "startGame": "开始",
+  "cancel": "取消",
+  "rankSuccess": "🏆 第{rank}名！ ({score}分)",
+  "rankNotInTop": "未进入排行榜",
+  "rankSubmitFailed": "服务器连接失败",
+  "howToPlayTitle": "游戏说明",
+  "howToPlayGoal": "🎯 目标",
+  "howToPlayGoalDesc": "将3个或更多相同的宝石排成一行或一列即可消除并获得分数。",
+  "howToPlayMatch": "💎 匹配示例",
+  "howToPlayMatchDesc": "三颗相同宝石排成一排即为匹配！边框内的宝石将被消除。",
+  "howToPlaySwap": "👆 操作方式",
+  "howToPlaySwapDesc": "通过点击-点击或滑动来交换相邻的宝石。如果无法匹配则会换回。",
+  "howToPlayCombo": "🔥 连击",
+  "howToPlayComboDesc": "宝石消除后新宝石落下产生连锁匹配即为连击！连击越多分数越高。",
+  "howToPlayHint": "💡 提示",
+  "howToPlayHintDesc": "卡住了？点击灯泡按钮查看可交换的宝石对。"
 }

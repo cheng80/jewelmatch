@@ -41,5 +41,22 @@
   "modeTimed": "타임",
   "timeLeft": "남은 시간",
   "unlimitedMode": "무제한",
-  "timeUpTitle": "시간 종료!"
+  "timeUpTitle": "시간 종료!",
+  "enterName": "이름 입력",
+  "startGame": "시작",
+  "cancel": "취소",
+  "rankSuccess": "🏆 {rank}위! ({score}점)",
+  "rankNotInTop": "랭킹에 들지 못하였습니다",
+  "rankSubmitFailed": "서버 연결 실패",
+  "howToPlayTitle": "게임 방법",
+  "howToPlayGoal": "🎯 목표",
+  "howToPlayGoalDesc": "같은 종류의 보석을 가로 또는 세로로 3개 이상 나란히 맞추면 보석이 사라지고 점수를 얻습니다.",
+  "howToPlayMatch": "💎 매치 예시",
+  "howToPlayMatchDesc": "같은 보석 3개가 연속으로 나란히 있으면 매치! 테두리 안의 보석들이 매치됩니다.",
+  "howToPlaySwap": "👆 조작 방법",
+  "howToPlaySwapDesc": "인접한 보석을 탭-탭 또는 스와이프로 자리를 바꿀 수 있습니다. 매치가 되지 않으면 되돌아갑니다.",
+  "howToPlayCombo": "🔥 콤보",
+  "howToPlayComboDesc": "보석이 사라진 후 위에서 새 보석이 내려오면서 연쇄 매치가 발생하면 콤보! 콤보가 높을수록 더 많은 점수를 획득합니다.",
+  "howToPlayHint": "💡 힌트",
+  "howToPlayHintDesc": "막히면 전구 버튼을 눌러 교환 가능한 보석 쌍을 확인하세요."
 }

@@ -41,5 +41,22 @@
   "modeTimed": "Timed",
   "timeLeft": "Time",
   "unlimitedMode": "Untimed",
-  "timeUpTitle": "Time's up!"
+  "timeUpTitle": "Time's up!",
+  "enterName": "Enter Name",
+  "startGame": "Start",
+  "cancel": "Cancel",
+  "rankSuccess": "🏆 Rank #{rank}! ({score} pts)",
+  "rankNotInTop": "Did not make the ranking",
+  "rankSubmitFailed": "Server connection failed",
+  "howToPlayTitle": "How to Play",
+  "howToPlayGoal": "🎯 Goal",
+  "howToPlayGoalDesc": "Match 3 or more identical gems in a row or column to clear them and earn points.",
+  "howToPlayMatch": "💎 Match Example",
+  "howToPlayMatchDesc": "Three identical gems lined up make a match! The gems inside the border are matched.",
+  "howToPlaySwap": "👆 Controls",
+  "howToPlaySwapDesc": "Swap adjacent gems by tap-tap or swipe. If no match is made, the gems swap back.",
+  "howToPlayCombo": "🔥 Combo",
+  "howToPlayComboDesc": "When new gems fall and create chain matches, that's a combo! Higher combos earn more points.",
+  "howToPlayHint": "💡 Hint",
+  "howToPlayHintDesc": "Stuck? Tap the light bulb button to highlight a swappable pair."
 }
