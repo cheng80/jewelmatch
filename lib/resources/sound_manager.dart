@@ -15,16 +15,57 @@ class SoundManager {
   static bool _webUnlocked = false;
   static String? _pendingBgm;
 
+  /// 웹 전용 효과음 [AudioPlayer] 풀.
+  ///
+  /// - 플레이어 1개만 쓰면 연속 `play()`에 앞선 음이 끊긴다(크롬에서 특히 체감).
+  /// - 매 재생마다 새 인스턴스를 만들면 `await`가 길어져 스와이프 제스처와 어긋나
+  ///   재생이 막히는 경우가 있어, 미리 구성한 소규모 풀에서 라운드로빈으로 할당한다.
+  static const int _webSfxPoolSize = 6;
+  static List<AudioPlayer>? _webSfxPool;
+  static int _webSfxPoolIndex = 0;
+  static Future<void>? _webSfxPoolReady;
+
   /// 웹: 첫 사용자 상호작용 시 호출. 대기 중인 BGM 재생.
   /// playBgm(path) 대신 playBgmIfUnmuted() 사용: 이미 _currentBgm이 설정된 상태에서
   /// playBgm(path)를 호출하면 _currentBgm == path로 early return되어 실제 재생이 안 됨.
+  ///
+  /// 포인터다운마다 호출되며, 웹 효과음용 플레이어 풀([_ensureWebSfxPool])을 한 번만 채운다.
   static void unlockForWeb() {
-    if (!kIsWeb || _webUnlocked) return;
-    _webUnlocked = true;
-    if (_pendingBgm != null) {
-      _pendingBgm = null;
-      playBgmIfUnmuted();
+    if (!kIsWeb) return;
+    if (!_webUnlocked) {
+      _webUnlocked = true;
+      if (_pendingBgm != null) {
+        _pendingBgm = null;
+        playBgmIfUnmuted();
+      }
     }
+    unawaited(_ensureWebSfxPool());
+  }
+
+  static Future<void> _ensureWebSfxPool() async {
+    if (_webSfxPool != null && _webSfxPool!.length == _webSfxPoolSize) {
+      await _webSfxPoolReady;
+      return;
+    }
+    if (_webSfxPoolReady != null) {
+      await _webSfxPoolReady;
+      return;
+    }
+    _webSfxPoolReady = () async {
+      final ctx = AudioContextConfig(
+        focus: AudioContextConfigFocus.mixWithOthers,
+      ).build();
+      final pool = <AudioPlayer>[];
+      for (var i = 0; i < _webSfxPoolSize; i++) {
+        final p = AudioPlayer()..audioCache = FlameAudio.audioCache;
+        await p.setReleaseMode(ReleaseMode.release);
+        await p.setPlayerMode(PlayerMode.mediaPlayer);
+        await p.setAudioContext(ctx);
+        pool.add(p);
+      }
+      _webSfxPool = pool;
+    }();
+    await _webSfxPoolReady;
   }
 
   /// 게임·메뉴 BGM과 효과음을 미리 로드한다. 앱 시작 시 호출.
@@ -123,15 +164,12 @@ class SoundManager {
 
   static Future<void> _playSfxWeb(String path, double volume) async {
     try {
-      final player = AudioPlayer()..audioCache = FlameAudio.audioCache;
-      await player.setReleaseMode(ReleaseMode.release);
-      await player.setPlayerMode(PlayerMode.mediaPlayer);
-      await player.setAudioContext(
-        AudioContextConfig(
-          focus: AudioContextConfigFocus.mixWithOthers,
-        ).build(),
-      );
-      await player.play(AssetSource(path), volume: volume);
+      await _ensureWebSfxPool();
+      final pool = _webSfxPool;
+      if (pool == null || pool.isEmpty) return;
+      final i = _webSfxPoolIndex % pool.length;
+      _webSfxPoolIndex++;
+      await pool[i].play(AssetSource(path), volume: volume);
     } catch (_) {}
   }
 }

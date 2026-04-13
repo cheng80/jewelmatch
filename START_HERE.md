@@ -22,6 +22,7 @@
 | 5 | [`docs/code-flow-analysis.md`](docs/code-flow-analysis.md) | `main` → `GameView` → `MatchBoardGame` 초기화·파일 역할 |
 | 6 | [`docs/web_build.md`](docs/web_build.md) | Web `--base-href`·배포 시 주의 (서브패스 `/match/` 등) |
 | 7 | [`docs/audio_aisfx_prompts.md`](docs/audio_aisfx_prompts.md) | SFX·BGM 파일명·프롬프트·코드 매핑 변경 시 |
+| 8 | [`docs/web_audio_flutter_flame.md`](docs/web_audio_flutter_flame.md) | **다른 프로젝트 참고** — Flutter Web + `flame_audio` 효과음 묵음·스와이프·연속 재생 |
 
 ---
 
@@ -79,7 +80,7 @@
 | HUD | `lib/game/components/match_game_hud.dart` |
 | 렌더 | `lib/game/components/match_board_renderer.dart` |
 | 파티클 | `lib/game/components/particle_burst.dart` |
-| 사운드 | `lib/resources/sound_manager.dart`, `asset_paths.dart` |
+| 사운드 | `lib/resources/sound_manager.dart`, `asset_paths.dart` — 웹 이슈는 [`docs/web_audio_flutter_flame.md`](docs/web_audio_flutter_flame.md) |
 | 랭킹 API·클라이언트 | `lib/services/ranking_service.dart`, 서버 `matchranking/ranking.php` |
 
 ---

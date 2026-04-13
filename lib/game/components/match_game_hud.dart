@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../resources/asset_paths.dart';
+import '../../resources/sound_manager.dart';
 import '../../services/game_settings.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../match_board_game.dart';
@@ -728,6 +729,9 @@ class MatchGameHud extends PositionComponent
   @override
   void onDragStart(DragStartEvent event) {
     super.onDragStart(event);
+    // 웹: 스와이프는 onDragUpdate에서 효과음이 나가므로, 제스처 시작 시점에
+    // SoundManager.unlockForWeb + 효과음 플레이어 준비가 이어지도록 한다(탭 경로와 동일하게).
+    SoundManager.unlockForWeb();
     _resetDrag();
     final p = event.localPosition;
     if (_isUiButton(p)) return;
