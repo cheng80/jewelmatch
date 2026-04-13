@@ -104,7 +104,10 @@ Web 배포·서브패스 설정: [`docs/web_build.md`](docs/web_build.md)
 
 | 문서 | 내용 |
 |------|------|
+| [`START_HERE.md`](START_HERE.md) | **세션 시작 시 먼저 읽기** — 우선 작업·문서 순서 |
+| [`docs/jewel_match_execution_checklist.md`](docs/jewel_match_execution_checklist.md) | 진행·배포 체크리스트 |
 | [`docs/code-flow-analysis.md`](docs/code-flow-analysis.md) | 초기화·레이아웃·Flame 계층 |
 | [`docs/game_flow.md`](docs/game_flow.md) | 매치-3 플레이 흐름 요약 |
 | [`docs/web_build.md`](docs/web_build.md) | Web 빌드·배포 |
+| [`docs/audio_aisfx_prompts.md`](docs/audio_aisfx_prompts.md) | SFX·BGM 프롬프트·파일 매핑 |
 | [`docs/STORE_METADATA_PLAY_APPSTORE_2026.md`](docs/STORE_METADATA_PLAY_APPSTORE_2026.md) | 스토어 메타데이터 초안 |
