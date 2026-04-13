@@ -12,6 +12,11 @@
 - [x] 매치 이벤트 SFX: `ComboHit`·`BigMatch`·`SpecialGem` — 우선순위 기반 단일 재생
 - [x] 매치 파티클: `ParticleBurst` — 3매치(기본) / 4+·콤보·특수(화려) 3단계
 - [x] 스프라이트시트 사전 로드 + `FadeTransition` 전환 → 장면 전환 버벅임 제거
+- [x] MVVM 리팩터링: `flutter_riverpod` 도입, `SettingsNotifier`·`RankingNotifier`, 오버레이 파일 분리, 공통 위젯 추출
+- [x] `StarryBackground` GlobalKey 싱글톤 — App 레벨 1개만 배치, 전환 시 재생성 비용 0
+- [x] 모든 라우트 `FadeTransition` + `endOfFrame` 대기 패턴 적용 (타이틀·게임·설정)
+- [x] `GameView` 비율 프레임: `kIsWeb` 대신 화면 비율 기반 → 태블릿에서도 비율 유지
+- [x] `PackageInfo` 캐싱 (`FutureBuilder` 제거)
 - [ ] (선택) 밸런스·난이도 튜닝 기록을 `game_flow.md` 또는 별도 GDD에 반영
 
 ## 오디오·에셋
@@ -32,7 +37,7 @@
 - [x] `PhoneFrameScaffold` + `PhoneFrame` 도입 — 고정 논리 해상도 `390×750` + `FittedBox`
 - [x] `TitleView`·`SettingView`에 `PhoneFrameScaffold` 적용 → 비율·폰트·간격 유지
 - [x] `GameView`는 Flame 자체 `LayoutBuilder` 스케일링 — `FittedBox` 미적용
-- [x] `StarryBackground` 중복 생성 제거 — Scaffold 바깥 1개만 유지
+- [x] `StarryBackground` GlobalKey 싱글톤 — `App` 레벨 1개만 (Scaffold 바깥·모든 뷰 공유)
 - [ ] 웹 브라우저 리사이즈·키보드·분할 화면에서 비율 유지 최종 확인
 
 ## Web 빌드·배포

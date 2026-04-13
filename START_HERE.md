@@ -35,13 +35,14 @@
 - **파티클:** 매치 시 `ParticleBurst` Flame 컴포넌트로 방사형 파티클 — 3매치(기본), 4+매치·콤보·특수 보석(화려) 3단계 (`lib/game/components/particle_burst.dart`).
 - **타임 모드 랭킹 (서버):** PHP 단일 파일 [`matchranking/ranking.php`](matchranking/ranking.php) — 상위 30명 JSON 저장. **플러터 웹 빌드 출력(`match/` 등)과 분리**해 NAS에 두면 배포 시 랭킹 데이터가 지워지지 않는다. 클라이언트는 `lib/services/ranking_service.dart` (`http`).
 - **타임 모드 UX:** 타이틀에서 **이름 입력** 후 진입 (`GameSettings.playerName`, 기본·저장값 `GUEST`). HUD **베스트 영역**에 서버 **1위 이름·점수**. **TimeUp** 시 점수 제출 → 순위 또는 미달 메시지. 심플 모드는 로컬 베스트만.
-- **TimeUp 오버레이:** 스크림 위 **「시간 종료」** 스케일·바운스 연출 후 점수·랭킹 패널 (`game_view.dart` `_TimeUpOverlay`).
-- **도움말(?):** `HowToPlay` 오버레이 — 일시정지와 동일하게 엔진·BGM 정지, 보석 스프라이트로 매치 예시, **설명만 스크롤**·하단 **계속하기** 고정 (`showHowToPlay` / `closeHowToPlay`, `match_board_game.dart`).
-- **반응형 프레임:** `PhoneFrameScaffold` + `PhoneFrame` — 고정 논리 해상도 `390×750` + `FittedBox` 스케일링. 웹·태블릿에서 비율 유지, 바깥은 `StarryBackground`로 채운다 (`lib/widgets/phone_frame_scaffold.dart`). `GameView`는 Flame 자체 캔버스이므로 `FittedBox` 없이 `LayoutBuilder` 스케일링만 적용.
-- **웹:** `flutter build web` 시 **`--base-href`는 실제 서빙 URL과 반드시 일치** (`docs/web_build.md`). 예: `/match/` 또는 배포 정책에 맞는 경로.
-- **웹 UX:** `kIsWeb`이면 설정 **「평점 남기기」** 숨김, 타이틀 **자동 인앱 리뷰 요청** 생략 (`setting_view.dart`, `title_view.dart`).
-- **저장:** `get_storage` — 설정·베스트 스코어·**플레이어 이름** 등 (`GameSettings`, `StorageHelper`, `StorageKeys` in `app_config.dart`). (루미 프로젝트와 달리 **복잡한 이어하기 세이브 스키마 없음**.)
-- **전환 최적화:** `Juwel.png` 스프라이트시트를 `main.dart`에서 `Flame.images`로 사전 로드, `GoRouter`에서 `FadeTransition` 전환 적용 → 타이틀→게임 전환 시 버벅임 제거.
+- **오버레이 (MVVM):** `lib/views/overlays/`에 분리 — `TimeUpOverlay`(ConsumerStatefulWidget, `RankingNotifier` 연동), `PauseMenuOverlay`(ConsumerWidget, `SettingsNotifier` 연동), `NoMovesOverlay`, `HowToPlayOverlay`. 공통 위젯: `LuminaGradientButton`·`LuminaOutlinedButton`·`LuminaOverlayCard` (`lib/widgets/`).
+- **MVVM + Riverpod:** `flutter_riverpod` 도입 (코드젠 미사용). `SettingsNotifier`(설정·볼륨·화면 꺼짐), `RankingNotifier`(점수 제출·결과 상태)를 `lib/vm/`에서 관리. View에서 비즈니스 로직 분리.
+- **반응형 프레임:** `PhoneFrameScaffold` + `PhoneFrame` — 고정 논리 해상도 `390×750` + `FittedBox` 스케일링. 웹·태블릿에서 비율 유지. `GameView`는 **화면 비율 기반**으로 프레임 적용 여부 결정 (`screenRatio > refRatio`이면 프레임 적용, 일반 폰이면 전체 확장).
+- **StarryBackground 싱글톤:** `App` 레벨에서 `StarryBackground.instance`(GlobalKey)를 **1개만** 생성. 모든 화면이 투명 배경으로 이 위에 쌓이므로 전환 시 재생성 비용 0. 각 View·`PhoneFrameScaffold`에서 중복 생성하지 않음.
+- **전환 최적화:** 모든 라우트에 `FadeTransition` 적용 (타이틀 400ms, 게임 500ms, 설정 350ms). `GameView`·`TitleView`는 `endOfFrame` 대기 후 콘텐츠 마운트 — 페이드 전환과 무거운 초기화가 같은 프레임에 겹치지 않도록 분리. `PackageInfo` 캐싱으로 `FutureBuilder` 제거.
+- **웹:** `flutter build web` 시 **`--base-href`는 실제 서빙 URL과 반드시 일치** (`docs/web_build.md`).
+- **웹 UX:** `kIsWeb`이면 설정 **「평점 남기기」** 숨김, 타이틀 **자동 인앱 리뷰 요청** 생략.
+- **저장:** `get_storage` — 설정·베스트 스코어·**플레이어 이름** 등 (`GameSettings`, `StorageHelper`, `StorageKeys` in `app_config.dart`).
 
 ---
 
@@ -68,6 +69,10 @@
 |:---|:---|
 | 라우팅 | `lib/router.dart` |
 | 타이틀·게임·설정 화면 | `lib/views/title_view.dart`, `game_view.dart`, `setting_view.dart` |
+| **오버레이 (분리됨)** | `lib/views/overlays/` — `time_up_overlay.dart`, `pause_menu_overlay.dart`, `no_moves_overlay.dart`, `how_to_play_overlay.dart` |
+| **ViewModel (Riverpod)** | `lib/vm/settings_notifier.dart`, `ranking_notifier.dart` |
+| **공통 위젯** | `lib/widgets/lumina_buttons.dart`, `lumina_overlay_card.dart`, `phone_frame_scaffold.dart` |
+| **배경 싱글톤** | `lib/widgets/starry_background.dart` (`StarryBackground.instance`) |
 | **반응형 프레임** | `lib/widgets/phone_frame_scaffold.dart` (`PhoneFrameScaffold` + `PhoneFrame`) |
 | Flame 게임 엔트리 | `lib/game/match_board_game.dart` |
 | 매치 로직 | `lib/game/match_board_logic.dart` |
@@ -95,6 +100,7 @@
 
 > 작업할 때마다 한두 줄씩 추가·정리한다. (날짜는 ISO 형식 권장.)
 
+- **2026-04-13 (3):** MVVM 리팩터링 — `flutter_riverpod` 도입, `SettingsNotifier`·`RankingNotifier`(`lib/vm/`), 오버레이 4개 `lib/views/overlays/`로 분리, 공통 위젯 `LuminaGradientButton`·`LuminaOutlinedButton`·`LuminaOverlayCard`(`lib/widgets/`). `SettingView`를 `ConsumerWidget`으로 전환. `game_view.dart` 909줄→95줄. `StarryBackground`를 `GlobalKey` 싱글톤으로 `App` 레벨에 1개만 배치. 모든 라우트에 `FadeTransition` 적용. `GameView`·`TitleView`에 `endOfFrame` 대기 패턴 적용하여 전환 버벅임 제거. `GameView` 비율 프레임을 `kIsWeb` 대신 화면 비율 기반으로 전환하여 태블릿 지원. `PackageInfo` 캐싱.
 - **2026-04-13 (2):** `PhoneFrameScaffold` + `PhoneFrame` 도입 — `390×750` 고정 논리 해상도 + `FittedBox` 스케일링. TitleView·SettingView 적용, GameView는 Flame 자체 `LayoutBuilder` 스케일링 유지. `StarryBackground` 중복 생성 제거. 매치 이벤트 SFX(`ComboHit`·`BigMatch`·`SpecialGem`) 추가, 3단계 `ParticleBurst` 파티클 시스템 구현. 스프라이트시트 사전 로드·FadeTransition 전환으로 장면 전환 최적화.
 - **2026-04-13:** 탭+스와이프, 타임 랭킹(`matchranking`·`RankingService`), 이름·HUD 1위·TimeUp 제출, TimeUp 연출, HowToPlay(?)·스크롤 레이아웃·다국어·웹/랭킹 디렉토리 분리.
 - **2026-04-04:** `START_HERE.md` / `jewel_match_execution_checklist.md` 도입. 웹에서 평점 메뉴·타이틀 자동 리뷰 비활성화 반영.

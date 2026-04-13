@@ -13,7 +13,15 @@ final GoRouter appRouter = GoRouter(
   routes: [
     GoRoute(
       path: RoutePaths.title,
-      builder: (context, state) => const TitleView(),
+      pageBuilder: (context, state) {
+        return CustomTransitionPage(
+          key: state.pageKey,
+          child: const TitleView(),
+          transitionDuration: const Duration(milliseconds: 400),
+          transitionsBuilder: (context, animation, _, child) =>
+              FadeTransition(opacity: animation, child: child),
+        );
+      },
     ),
     GoRoute(
       path: RoutePaths.game,
@@ -32,7 +40,15 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: RoutePaths.setting,
-      builder: (context, state) => const SettingView(),
+      pageBuilder: (context, state) {
+        return CustomTransitionPage(
+          key: state.pageKey,
+          child: const SettingView(),
+          transitionDuration: const Duration(milliseconds: 350),
+          transitionsBuilder: (context, animation, _, child) =>
+              FadeTransition(opacity: animation, child: child),
+        );
+      },
     ),
   ],
 );

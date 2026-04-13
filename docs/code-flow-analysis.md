@@ -10,19 +10,28 @@
 
 1. 앱 시작/부트스트랩
    - `lib/main.dart`
-   - `lib/app.dart`
+   - `lib/app.dart` — `StarryBackground.instance`를 앱 루트에 1개만 배치
 2. 라우팅/화면 전환
-   - `lib/router.dart`
+   - `lib/router.dart` — 모든 라우트에 `FadeTransition` 적용
    - `lib/views/title_view.dart`
    - `lib/views/game_view.dart`
-   - `lib/views/setting_view.dart`
-3. 게임 코어
+   - `lib/views/setting_view.dart` — `ConsumerWidget` (Riverpod)
+   - `lib/views/overlays/` — `time_up_overlay.dart`, `pause_menu_overlay.dart`, `no_moves_overlay.dart`, `how_to_play_overlay.dart`
+3. ViewModel (Riverpod)
+   - `lib/vm/settings_notifier.dart` — 설정 상태·SoundManager·WakelockPlus
+   - `lib/vm/ranking_notifier.dart` — 타임 모드 점수 제출·결과 상태
+4. 게임 코어
    - `lib/game/match_board_game.dart`
    - `lib/game/match_board_logic.dart`
    - `lib/game/components/match_board_renderer.dart`
    - `lib/game/components/match_game_hud.dart`
    - `lib/game/components/space_bg.dart`
-4. 공통 서비스
+5. 공통 위젯
+   - `lib/widgets/lumina_buttons.dart` — `LuminaGradientButton`, `LuminaOutlinedButton`, `LuminaRoundButton`
+   - `lib/widgets/lumina_overlay_card.dart` — 오버레이 공통 카드 프레임
+   - `lib/widgets/phone_frame_scaffold.dart` — 반응형 프레임
+   - `lib/widgets/starry_background.dart` — GlobalKey 싱글톤 배경
+6. 공통 서비스
    - `lib/resources/sound_manager.dart`
    - `lib/services/game_settings.dart`
    - `lib/utils/storage_helper.dart`
@@ -31,22 +40,24 @@
 
 ```text
 Flutter App Shell
-├─ main.dart
-├─ App(MaterialApp.router)
-├─ GoRouter
-│  ├─ TitleView
-│  ├─ GameView
-│  └─ SettingView
+├─ main.dart (ProviderScope → EasyLocalization → App)
+├─ App
+│  └─ Directionality → Stack
+│     ├─ StarryBackground.instance (GlobalKey 싱글톤 — 앱 전역 1개)
+│     └─ MaterialApp.router
+│        └─ GoRouter (모든 라우트 FadeTransition)
+│           ├─ TitleView (endOfFrame 대기 후 마운트)
+│           ├─ GameView (endOfFrame 대기 후 GameWidget 마운트)
+│           └─ SettingView (ConsumerWidget → SettingsNotifier)
+├─ lib/vm/ (ViewModel)
+│  ├─ SettingsNotifier
+│  └─ RankingNotifier
 └─ GameView 내부
    └─ Flame GameWidget
       └─ MatchBoardGame
-         ├─ camera.backdrop
-         │  └─ SpaceBg
-         ├─ camera.viewport
-         │  └─ MatchGameHud
-         │     └─ 일시정지 / 스코어·콤보·타임 UI
-         └─ world
-            └─ MatchBoardRenderer (보석 스프라이트)
+         ├─ camera.backdrop → SpaceBg
+         ├─ camera.viewport → MatchGameHud
+         └─ world → MatchBoardRenderer
 ```
 
 보드 데이터·매치/낙하/스왑 로직은 `MatchBoardLogic`에 있고, 렌더만 `MatchBoardRenderer`가 담당한다.
@@ -137,11 +148,9 @@ GameView.build()
 
 `MaterialApp.router`를 생성하는 앱 루트다.
 
-- 앱 제목 설정
-- 디버그 배너 제거
-- 다국어 delegate / locale 연결
-- `buildAppTheme()`(Jewel Candy Lumina 팔레트 + 앱 폰트)
-- `appRouter` 주입
+- `Directionality` + `Stack`으로 `StarryBackground.instance`를 앱 최상단에 1개만 배치
+- `MaterialApp.router` 위에 깔리므로 모든 화면에서 별 배경이 비쳐 보임
+- 앱 제목·디버그 배너·다국어·테마·라우터 설정
 - 웹에서 첫 포인터 입력 시 `SoundManager.unlockForWeb()` 호출
 
 ### 3-3. `lib/router.dart`
@@ -174,21 +183,11 @@ GameView.build()
 
 Flame을 Flutter에 연결하는 핵심 화면이다.
 
-- `initState()`
-  - 게임 BGM 재생 시작
-- `build()`
-  - `GameWidget<MatchBoardGame>.controlled(...)` 생성
-  - `gameFactory`로 `MatchBoardGame` 인스턴스 생성 및 `setLocaleStrings`로 HUD 문구 주입
-  - `overlayBuilderMap`으로 `PauseMenu`, `NoMoves`, `TimeUp` 연결
-
-또한 웹에서는 전체 화면에 게임을 직접 늘리지 않고:
-
-- 세로형 기준 크기 `390×750`
-- 최소/최대 스케일 범위 적용
-- 중앙 정렬된 게임 프레임
-- 남는 좌우는 우주 배경
-
-구조로 처리한다.
+- `initState()`: 게임 BGM 시작 + `endOfFrame` 대기 후 `_ready = true`
+- `didChangeDependencies()`: `GameWidget` 1회만 생성·캐싱 (`build`에서 매번 생성하지 않음)
+- `build()`: `_ready` 전까지 빈 화면 → 페이드 전환과 Flame 초기화 프레임 분리
+- `overlayBuilderMap`으로 분리된 오버레이 연결: `PauseMenuOverlay`, `NoMovesOverlay`, `TimeUpOverlay`, `HowToPlayOverlay`
+- **비율 프레임**: `kIsWeb` 대신 **화면 비율**(`screenRatio > refRatio + 0.05`)로 판단 → 태블릿에서도 프레임 적용. 일반 폰이면 `SizedBox.expand` 전체 확장.
 
 ### 3-6. `lib/game/match_board_game.dart`
 
@@ -428,50 +427,53 @@ Pause 버튼 탭
 ### 9-1. 위젯 구조
 
 ```text
-PhoneFrameScaffold
-└─ Scaffold(backgroundColor: black)
-   └─ Stack
-      ├─ StarryBackground (전체 화면 — 여백 포함)
-      └─ SafeArea
-         └─ Center
-            └─ PhoneFrame
-               └─ LayoutBuilder
-                  ├─ fittedScale = min(가로비, 세로비)
-                  ├─ SizedBox(390*scale, 750*scale)
-                  └─ FittedBox(contain)
-                     └─ SizedBox(390, 750) + MediaQuery(size override)
-                        └─ 실제 화면 콘텐츠
+App (app.dart)
+└─ Stack
+   ├─ StarryBackground.instance (GlobalKey 싱글톤 — 앱 전역 1개)
+   └─ MaterialApp.router
+      └─ PhoneFrameScaffold (각 View에서 사용)
+         └─ Scaffold(backgroundColor: transparent)  ← 투명이라 앱 배경이 비침
+            └─ SafeArea
+               └─ Center
+                  └─ PhoneFrame
+                     └─ LayoutBuilder
+                        ├─ fittedScale = min(가로비, 세로비)
+                        ├─ SizedBox(390*scale, 750*scale)
+                        └─ FittedBox(contain)
+                           └─ SizedBox(390, 750) + MediaQuery(size override)
+                              └─ 실제 화면 콘텐츠
 ```
 
+- `StarryBackground`는 `App` 레벨에서 `GlobalKey` 싱글톤으로 **1개만** 생성. 화면 전환 시 재생성 비용 없음.
+- `PhoneFrameScaffold`의 `Scaffold`는 `backgroundColor: transparent` — 앱 배경이 비쳐 보임.
 - 콘텐츠는 **항상 390×750 기준**으로 레이아웃 → 폰트·간격·버튼 비율 유지.
 - `FittedBox`가 통째로 스케일링 → 웹·태블릿에서 비율이 변하지 않는다.
-- `StarryBackground`는 `PhoneFrameScaffold` 바깥에 1개만 — 각 뷰 내부에서 중복 생성하지 않는다.
 
 ### 9-2. GameView는 별도
 
 `GameView`는 Flame `GameWidget`이 자체 캔버스 크기를 관리하므로 `FittedBox`에 넣지 않는다.
 
 ```text
-GameView (웹)
-└─ Scaffold
-   └─ Stack
-      ├─ StarryBackground (여백용)
-      └─ Center
-         └─ LayoutBuilder
-            ├─ fittedScale = min(가로비, 세로비)
-            └─ SizedBox(390*scale, 750*scale)
-               └─ ClipRRect(28) → GameWidget
+GameView
+└─ Scaffold(backgroundColor: transparent)  ← 앱 배경이 비침
+   └─ Center
+      └─ LayoutBuilder
+         ├─ screenRatio = 가로 / 세로
+         ├─ needsFrame = screenRatio > refRatio + 0.05
+         │  └─ true (웹/태블릿): SizedBox(390*scale, 750*scale) → ClipRRect → GameWidget
+         └─ false (일반 폰): SizedBox.expand → GameWidget
 ```
 
-모바일에서는 `Scaffold(body: GameWidget)` 전체 화면.
+- `kIsWeb` 대신 **화면 비율**로 프레임 적용 여부를 결정 → 태블릿에서도 비율 유지.
+- `endOfFrame` 대기 후 `GameWidget`을 마운트하여 페이드 전환과 Flame 초기화 프레임 분리.
 
 ### 9-3. 적용 현황
 
-| 화면 | 방식 | StarryBackground |
-|------|------|-----------------|
-| TitleView | `PhoneFrameScaffold(child: Column)` | Scaffold 바깥 1개 |
-| SettingView | `PhoneFrameScaffold(child: Scaffold+AppBar)` | Scaffold 바깥 1개 |
-| GameView | 자체 LayoutBuilder 스케일링 | 웹: 바깥 1개 + Flame SpaceBg (프레임 안) |
+| 화면 | 방식 | StarryBackground | 전환 최적화 |
+|------|------|-----------------|------------|
+| TitleView | `PhoneFrameScaffold(child: Column)` | App 레벨 싱글톤 공유 | `endOfFrame` 대기 후 콘텐츠 마운트 |
+| SettingView | `PhoneFrameScaffold(child: Scaffold+AppBar)` (`ConsumerWidget`) | App 레벨 싱글톤 공유 | FadeTransition 350ms |
+| GameView | 비율 기반 LayoutBuilder 스케일링 | App 레벨 싱글톤 공유 + Flame SpaceBg (프레임 안) | `endOfFrame` 대기 후 GameWidget 마운트 |
 
 ## 10. 화면별 요약
 
@@ -499,12 +501,14 @@ GameView (웹)
 
 ## 11. 성능 최적화 — 우주 배경
 
-우주 배경은 두 종류가 있다. `PhoneFrameScaffold` 도입 이후 Flutter 위젯 배경은 Scaffold 바깥에서 1개만 생성되며, 각 뷰 내부에서 중복 생성하지 않는다.
+우주 배경은 두 종류가 있다. Flutter 위젯 배경은 `App` 레벨에서 `GlobalKey` 싱글톤으로 **앱 전역 1개만** 생성된다.
 
 | 파일 | 용도 | 컨텍스트 |
 |------|------|----------|
-| `lib/widgets/starry_background.dart` | Flutter 위젯 배경 | `PhoneFrameScaffold` 바깥 1개 (TitleView·SettingView), GameView 웹 여백 |
+| `lib/widgets/starry_background.dart` | Flutter 위젯 배경 | `App.build()` → `StarryBackground.instance` (GlobalKey 싱글톤, 앱 전역 1개) |
 | `lib/game/components/space_bg.dart` | Flame 컴포넌트 배경 | MatchBoardGame backdrop (프레임 안) |
+
+`StarryBackground`의 생성자는 `private`이므로 외부에서 새 인스턴스를 만들 수 없다. `StarryBackground.instance`만 사용해야 한다.
 
 ### 11-1. 문제점 (리팩터 전)
 

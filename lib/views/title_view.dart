@@ -22,16 +22,33 @@ class TitleView extends StatefulWidget {
 
 class _TitleViewState extends State<TitleView>
     with WidgetsBindingObserver {
+  bool _ready = false;
+
+  /// PackageInfo는 변하지 않으므로 앱 전역 캐싱.
+  static PackageInfo? _cachedPackageInfo;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     SoundManager.playBgm(AssetPaths.bgmMenu);
+    _cachePackageInfo();
+    _scheduleReady();
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted && !kIsWeb) {
         InAppReviewService.maybeRequestReviewOnTitleIfEligible();
       }
     });
+  }
+
+  Future<void> _scheduleReady() async {
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    setState(() => _ready = true);
+  }
+
+  Future<void> _cachePackageInfo() async {
+    _cachedPackageInfo ??= await PackageInfo.fromPlatform();
   }
 
   @override
@@ -122,14 +139,19 @@ class _TitleViewState extends State<TitleView>
     if (result == null || !mounted) return;
     final name = result.trim().isEmpty ? 'GUEST' : result.trim();
     GameSettings.playerName = name;
+    await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
     context.go('${RoutePaths.game}?mode=timed');
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!_ready) {
+      return const Scaffold(backgroundColor: Colors.transparent);
+    }
     final content = _TitleContent(
       onShowNameDialog: () => _showNameDialog(context),
+      packageInfo: _cachedPackageInfo,
     );
 
     return PhoneFrameScaffold(child: content);
@@ -137,9 +159,10 @@ class _TitleViewState extends State<TitleView>
 }
 
 class _TitleContent extends StatelessWidget {
-  const _TitleContent({required this.onShowNameDialog});
+  const _TitleContent({required this.onShowNameDialog, this.packageInfo});
 
   final VoidCallback onShowNameDialog;
+  final PackageInfo? packageInfo;
 
   @override
   Widget build(BuildContext context) {
@@ -219,22 +242,15 @@ class _TitleContent extends StatelessWidget {
               const Spacer(flex: 1),
               Padding(
                 padding: const EdgeInsets.only(top: 8),
-                child: FutureBuilder<PackageInfo>(
-                  future: PackageInfo.fromPlatform(),
-                  builder: (context, snapshot) {
-                    final v = snapshot.data;
-                    final text = v != null
-                        ? 'Ver ${v.version}+${v.buildNumber}'
-                        : 'Ver';
-                    return Text(
-                      text,
-                      style: TextStyle(
-                        color: JewelCandyLuminaTheme.outlineBright
-                            .withValues(alpha: 0.65),
-                        fontSize: 12,
-                      ),
-                    );
-                  },
+                child: Text(
+                  packageInfo != null
+                      ? 'Ver ${packageInfo!.version}+${packageInfo!.buildNumber}'
+                      : 'Ver',
+                  style: TextStyle(
+                    color: JewelCandyLuminaTheme.outlineBright
+                        .withValues(alpha: 0.65),
+                    fontSize: 12,
+                  ),
                 ),
               ),
               const Spacer(flex: 2),

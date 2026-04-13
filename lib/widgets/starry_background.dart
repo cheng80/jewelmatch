@@ -2,13 +2,22 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-/// 전체 화면 우주 배경. 웹에서 게임 영역 밖을 채우기 위해 사용.
+/// 전체 화면 우주 배경. 앱 전역에서 단일 인스턴스만 사용한다.
+///
+/// [StarryBackground.instance]를 통해 항상 같은 [GlobalKey]를 가진
+/// 위젯을 반환하므로, 위젯 트리 어디에 넣어도 State(AnimationController 등)가
+/// 최초 1회만 생성되고 재활용된다.
 ///
 /// - 그라데이션과 별을 3 그룹으로 나눠 각각 [RepaintBoundary]로 래스터 캐싱.
 /// - 깜빡임은 [FadeTransition](GPU 컴포지터 alpha)으로만 처리하므로
 ///   paint()가 최초 1회 이후 다시 호출되지 않는다.
 class StarryBackground extends StatefulWidget {
-  const StarryBackground({super.key});
+  const StarryBackground._({super.key});
+
+  static final _globalKey = GlobalKey<_StarryBackgroundState>();
+
+  /// 앱 전역 싱글톤 위젯. 항상 이것을 사용할 것.
+  static final Widget instance = StarryBackground._(key: _globalKey);
 
   @override
   State<StarryBackground> createState() => _StarryBackgroundState();

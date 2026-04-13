@@ -48,6 +48,8 @@ dependencies:
   easy_localization: ^3.0.8
   intl: ^0.20.2
 
+  flutter_riverpod: ^2.6.1
+
   package_info_plus: ^9.0.0
   in_app_review: ^2.0.11
   http: ^1.6.0

@@ -1,55 +1,22 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../resources/sound_manager.dart';
 import '../theme/jewel_candy_lumina_theme.dart';
 import '../widgets/phone_frame_scaffold.dart';
-import '../services/game_settings.dart';
 import '../services/in_app_review_service.dart';
+import '../vm/settings_notifier.dart';
 
-/// 설정 화면. 볼륨, 음소거, 화면 꺼짐 방지 설정.
-class SettingView extends StatefulWidget {
+/// 설정 화면. SettingsNotifier를 통해 볼륨·음소거·화면 꺼짐 방지를 관리한다.
+class SettingView extends ConsumerWidget {
   const SettingView({super.key});
 
   @override
-  State<SettingView> createState() => _SettingViewState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(settingsProvider);
+    final notifier = ref.read(settingsProvider.notifier);
 
-class _SettingViewState extends State<SettingView> {
-  late double _bgmVolume;
-  late double _sfxVolume;
-  late bool _bgmMuted;
-  late bool _sfxMuted;
-  late bool _keepScreenOn;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSettings();
-  }
-
-  void _loadSettings() {
-    setState(() {
-      _bgmVolume = GameSettings.bgmVolume;
-      _sfxVolume = GameSettings.sfxVolume;
-      _bgmMuted = GameSettings.bgmMuted;
-      _sfxMuted = GameSettings.sfxMuted;
-      _keepScreenOn = GameSettings.keepScreenOn;
-    });
-  }
-
-  void _applyKeepScreenOn() {
-    if (GameSettings.keepScreenOn) {
-      WakelockPlus.enable();
-    } else {
-      WakelockPlus.disable();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
     final scaffold = Scaffold(
       appBar: AppBar(
         title: Text(context.tr('settings')),
@@ -68,14 +35,8 @@ class _SettingViewState extends State<SettingView> {
               ),
               _MuteSwitch(
                 label: context.tr('keepScreenOn'),
-                value: _keepScreenOn,
-                onChanged: (v) {
-                  setState(() {
-                    _keepScreenOn = v;
-                    GameSettings.keepScreenOn = v;
-                    _applyKeepScreenOn();
-                  });
-                },
+                value: s.keepScreenOn,
+                onChanged: notifier.setKeepScreenOn,
               ),
               const Divider(height: 1),
               _SectionTitle(
@@ -84,51 +45,25 @@ class _SettingViewState extends State<SettingView> {
               ),
               _VolumeSlider(
                 label: context.tr('bgmVolume'),
-                value: _bgmVolume,
-                enabled: !_bgmMuted,
-                onChanged: (v) {
-                  setState(() {
-                    _bgmVolume = v;
-                    GameSettings.bgmVolume = v;
-                    SoundManager.applyBgmVolume();
-                  });
-                },
+                value: s.bgmVolume,
+                enabled: !s.bgmMuted,
+                onChanged: notifier.setBgmVolume,
               ),
               _MuteSwitch(
                 label: context.tr('bgm'),
-                value: _bgmMuted,
-                onChanged: (v) {
-                  setState(() {
-                    _bgmMuted = v;
-                    GameSettings.bgmMuted = v;
-                    if (v) {
-                      SoundManager.pauseBgm();
-                    } else {
-                      SoundManager.playBgmIfUnmuted();
-                    }
-                  });
-                },
+                value: s.bgmMuted,
+                onChanged: notifier.setBgmMuted,
               ),
               _VolumeSlider(
                 label: context.tr('sfxVolume'),
-                value: _sfxVolume,
-                enabled: !_sfxMuted,
-                onChanged: (v) {
-                  setState(() {
-                    _sfxVolume = v;
-                    GameSettings.sfxVolume = v;
-                  });
-                },
+                value: s.sfxVolume,
+                enabled: !s.sfxMuted,
+                onChanged: notifier.setSfxVolume,
               ),
               _MuteSwitch(
                 label: context.tr('sfx'),
-                value: _sfxMuted,
-                onChanged: (v) {
-                  setState(() {
-                    _sfxMuted = v;
-                    GameSettings.sfxMuted = v;
-                  });
-                },
+                value: s.sfxMuted,
+                onChanged: notifier.setSfxMuted,
               ),
               if (!kIsWeb) ...[
                 const Divider(height: 1),

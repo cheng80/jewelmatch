@@ -2,11 +2,11 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-import 'starry_background.dart';
-
 const double kPhoneFrameRefW = 390.0;
 const double kPhoneFrameRefH = 750.0;
 
+/// 고정 비율 프레임 래퍼. StarryBackground는 App 레벨에서 1개만 관리하므로
+/// 여기서는 Scaffold 배경을 투명으로 두어 앱 배경이 비쳐 보이게 한다.
 class PhoneFrameScaffold extends StatelessWidget {
   const PhoneFrameScaffold({
     super.key,
@@ -21,16 +21,10 @@ class PhoneFrameScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final framedChild = Center(child: PhoneFrame(child: child));
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          const Positioned.fill(child: StarryBackground()),
-          if (useSafeArea)
-            SafeArea(child: framedChild)
-          else
-            Positioned.fill(child: framedChild),
-        ],
-      ),
+      backgroundColor: Colors.transparent,
+      body: useSafeArea
+          ? SafeArea(child: framedChild)
+          : framedChild,
     );
   }
 }
