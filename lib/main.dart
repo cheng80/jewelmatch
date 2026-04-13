@@ -1,10 +1,12 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flame/flame.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'app.dart';
+import 'resources/asset_paths.dart';
 import 'resources/sound_manager.dart';
 import 'services/game_settings.dart';
 import 'services/in_app_review_service.dart';
@@ -20,7 +22,10 @@ void main() async {
   await EasyLocalization.ensureInitialized();
   await StorageHelper.init();
   await InAppReviewService.saveFirstLaunchDateIfNeeded();
-  await SoundManager.preload();
+  await Future.wait([
+    SoundManager.preload(),
+    Flame.images.load(AssetPaths.juwelSpriteSheet),
+  ]);
   _applyKeepScreenOn();
   runApp(
     EasyLocalization(

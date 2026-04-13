@@ -1,35 +1,52 @@
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 /// 우주 배경 컴포넌트.
-/// 그라데이션 배경 위에 크기와 밝기가 다른 별들을 그린다.
+///
+/// - 그라데이션 배경을 [ui.Picture]로 캐싱 → 매 프레임 drawPicture 1회.
+/// - 별 120개를 3 그룹으로 나눠 각 그룹을 [ui.Picture]로 캐싱.
+/// - 깜빡임은 그룹 단위 sin alpha로만 처리 → drawPicture 3회 + saveLayer 3회.
+/// - 총 draw 호출: 4회/프레임 (기존 ~240회 → 4회).
 class SpaceBg extends PositionComponent with HasGameReference {
   static const int _starCount = 120;
-  final Random _rng = Random();
+  static const int _groupCount = 3;
 
-  late List<_Star> _stars;
-  late Paint _bgPaint;
+  ui.Picture? _bgPicture;
+  final List<ui.Picture> _starPictures = [];
+  final List<double> _groupPhases = [];
+  final List<double> _groupSpeeds = [];
 
-  /// 배경 그라데이션과 별 목록 초기화.
+  double _time = 0;
+  Vector2 _lastSize = Vector2.zero();
+
   @override
   Future<void> onLoad() async {
-    _initSizeAndStars();
+    _rebuild();
     priority = -1;
   }
 
-  /// 창 크기 변경 시 배경 크기·별 위치 재계산.
   @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
-    _initSizeAndStars();
+    if (size != _lastSize) _rebuild();
   }
 
-  void _initSizeAndStars() {
+  void _rebuild() {
     size = game.size;
-    // Jewel Candy Lumina: 보라–마젠타–딥블루, 칙칙한 회색 톤 제거
-    _bgPaint = Paint()
+    _lastSize = size.clone();
+    _buildBgPicture();
+    _buildStarPictures();
+  }
+
+  void _buildBgPicture() {
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    final rect = Rect.fromLTWH(0, 0, size.x, size.y);
+
+    final paint = Paint()
       ..shader = const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
@@ -40,29 +57,56 @@ class SpaceBg extends PositionComponent with HasGameReference {
           Color(0xFF4A148C),
           Color(0xFF190033),
         ],
-      ).createShader(Rect.fromLTWH(0, 0, size.x, size.y));
+      ).createShader(rect);
+    canvas.drawRect(rect, paint);
 
-    _stars = List.generate(_starCount, (_) => _createStar());
+    _bgPicture = recorder.endRecording();
   }
 
-  /// 랜덤 위치·크기·속도·색상의 별 하나를 생성한다.
-  _Star _createStar() {
-    // 반지름 0.3~2.1, 위치 랜덤.
-    final radius = _rng.nextDouble() * 1.8 + 0.3;
-    return _Star(
-      x: _rng.nextDouble() * size.x,
-      y: _rng.nextDouble() * size.y,
-      radius: radius,
-      baseAlpha: _rng.nextDouble() * 0.5 + 0.3,
-      twinkleSpeed: _rng.nextDouble() * 2.0 + 0.5,
-      twinkleOffset: _rng.nextDouble() * 2 * pi,
-      color: _starColor(),
-    );
+  void _buildStarPictures() {
+    _starPictures.clear();
+    _groupPhases.clear();
+    _groupSpeeds.clear();
+
+    final rng = Random(42);
+    final groups = List.generate(_groupCount, (_) => <_Star>[]);
+
+    for (var i = 0; i < _starCount; i++) {
+      groups[i % _groupCount].add(_Star(
+        x: rng.nextDouble() * size.x,
+        y: rng.nextDouble() * size.y,
+        radius: rng.nextDouble() * 1.8 + 0.3,
+        alpha: rng.nextDouble() * 0.5 + 0.3,
+        color: _starColor(rng),
+      ));
+    }
+
+    for (var g = 0; g < _groupCount; g++) {
+      _groupPhases.add(rng.nextDouble() * 2 * pi);
+      _groupSpeeds.add(rng.nextDouble() * 0.4 + 0.3);
+
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+
+      for (final star in groups[g]) {
+        final paint = Paint()..color = star.color.withValues(alpha: star.alpha);
+        canvas.drawCircle(Offset(star.x, star.y), star.radius, paint);
+
+        if (star.radius > 1.2) {
+          final glowPaint = Paint()
+            ..color = star.color.withValues(alpha: star.alpha * 0.15)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+          canvas.drawCircle(
+              Offset(star.x, star.y), star.radius * 2.5, glowPaint);
+        }
+      }
+
+      _starPictures.add(recorder.endRecording());
+    }
   }
 
-  /// 확률에 따라 별 색상을 반환한다. 70% 흰색, 15% 하늘색, 10% 노랑, 5% 분홍.
-  Color _starColor() {
-    final roll = _rng.nextDouble();
+  Color _starColor(Random rng) {
+    final roll = rng.nextDouble();
     if (roll < 0.55) return Colors.white;
     if (roll < 0.7) return const Color(0xFF00FBFB);
     if (roll < 0.82) return const Color(0xFFFF86C1);
@@ -70,55 +114,45 @@ class SpaceBg extends PositionComponent with HasGameReference {
     return const Color(0xFFE1BEE7);
   }
 
-  /// 각 별의 time을 누적하여 깜박임 주기에 사용.
   @override
   void update(double dt) {
     super.update(dt);
-    for (final star in _stars) {
-      star.time += dt;
-    }
+    _time += dt;
   }
 
-  /// 그라데이션 배경 위에 크기·밝기가 다른 별들을 그린다. 큰 별은 글로우 효과.
   @override
   void render(Canvas canvas) {
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.x, size.y), _bgPaint);
+    if (_bgPicture == null) return;
 
-    for (final star in _stars) {
-      // sin으로 별마다 다른 속도/오프셋의 깜박임.
-      final twinkle = sin(star.time * star.twinkleSpeed + star.twinkleOffset);
-      final alpha = (star.baseAlpha + twinkle * 0.3).clamp(0.05, 1.0);
-      final paint = Paint()..color = star.color.withValues(alpha: alpha);
-      canvas.drawCircle(Offset(star.x, star.y), star.radius, paint);
+    canvas.drawPicture(_bgPicture!);
 
-      // 큰 별은 블러로 글로우 효과.
-      if (star.radius > 1.2) {
-        final glowPaint = Paint()
-          ..color = star.color.withValues(alpha: alpha * 0.15)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-        canvas.drawCircle(Offset(star.x, star.y), star.radius * 2.5, glowPaint);
-      }
+    final rect = Rect.fromLTWH(0, 0, size.x, size.y);
+    for (var g = 0; g < _groupCount; g++) {
+      final alpha =
+          (0.7 + 0.3 * sin(_time * _groupSpeeds[g] + _groupPhases[g]))
+              .clamp(0.4, 1.0);
+      canvas.saveLayer(
+        rect,
+        Paint()..color = Color.fromRGBO(255, 255, 255, alpha),
+      );
+      canvas.drawPicture(_starPictures[g]);
+      canvas.restore();
     }
   }
 }
 
 class _Star {
-  final double x;
-  final double y;
-  final double radius;
-  final double baseAlpha;
-  final double twinkleSpeed;
-  final double twinkleOffset;
-  final Color color;
-  double time = 0;
-
-  _Star({
+  const _Star({
     required this.x,
     required this.y,
     required this.radius,
-    required this.baseAlpha,
-    required this.twinkleSpeed,
-    required this.twinkleOffset,
+    required this.alpha,
     required this.color,
   });
+
+  final double x;
+  final double y;
+  final double radius;
+  final double alpha;
+  final Color color;
 }

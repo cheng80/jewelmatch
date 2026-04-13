@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flame/components.dart';
+import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
 
 import '../../resources/asset_paths.dart';
@@ -40,7 +41,7 @@ class MatchBoardRenderer extends PositionComponent
   Future<void> onLoad() async {
     await super.onLoad();
     try {
-      final img = await game.images.load(AssetPaths.juwelSpriteSheet);
+      final img = await Flame.images.load(AssetPaths.juwelSpriteSheet);
       for (var i = 0; i < 7; i++) {
         _sheetSprites[i] = Sprite(
           img,

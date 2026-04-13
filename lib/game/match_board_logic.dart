@@ -132,6 +132,15 @@ class MatchBoardLogic {
   /// 매치가 나오지 않아 스왑이 되돌아갈 때 (잘못된 스왑).
   final void Function()? onInvalidSwap;
 
+  /// 보석 제거 직후 호출. 파티클·SFX 등 연출용.
+  /// [bigMatch]: 4개 이상 매치 그룹 존재, [hasSpecial]: 특수 보석 발동 포함.
+  void Function(
+    List<({int row, int col, int color})> cells,
+    bool bigMatch,
+    bool hasSpecial,
+    int combo,
+  )? onGemsRemoved;
+
   double boardX = 0;
   double boardY = 0;
   double tileSize = 56;
@@ -156,6 +165,9 @@ class MatchBoardLogic {
   bool inputLocked = false;
   double lockTimer = 0;
   final List<FlashEffect> flashEffects = [];
+
+  /// 직전 매치 데이터 — 파티클 판정(bigMatch 여부)에 사용.
+  MatchData? _lastMatchData;
 
   MoveInfo? pendingMoveInfo;
   Map<String, bool>? pendingRemovalSet;
@@ -822,6 +834,8 @@ class MatchBoardLogic {
 
   int removeMarkedGems(Map<String, bool> removalSet) {
     var removed = 0;
+    var hasSpecial = false;
+    final removedCells = <({int row, int col, int color})>[];
     for (final key in removalSet.keys) {
       final parts = key.split(':');
       if (parts.length != 2) continue;
@@ -830,6 +844,8 @@ class MatchBoardLogic {
       final gem = getGem(row, col);
       if (gem != null) {
         removed++;
+        if (_isSpecial(gem.kind)) hasSpecial = true;
+        removedCells.add((row: row, col: col, color: gem.color));
         addFlashEffect(row, col);
         cells[row][col] = null;
       }
@@ -851,6 +867,11 @@ class MatchBoardLogic {
           bonusSec = 1;
         }
         onTimedModeTimeBonus!(bonusSec);
+      }
+
+      if (onGemsRemoved != null && removedCells.isNotEmpty) {
+        final bigMatch = _lastMatchData?.groups.any((g) => g.length >= 4) ?? false;
+        onGemsRemoved!(removedCells, bigMatch, hasSpecial, combo);
       }
     }
     return removed;
@@ -927,6 +948,8 @@ class MatchBoardLogic {
     if (combo > maxCombo) {
       maxCombo = combo;
     }
+
+    _lastMatchData = matchData;
 
     final mi = pendingMoveInfo;
     final spawns = classifyMatchGroups(

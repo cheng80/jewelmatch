@@ -3,7 +3,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 /// 전체 화면 우주 배경. 웹에서 게임 영역 밖을 채우기 위해 사용.
-/// SpaceBg와 동일한 그라데이션·별 스타일.
+///
+/// - 그라데이션과 별을 3 그룹으로 나눠 각각 [RepaintBoundary]로 래스터 캐싱.
+/// - 깜빡임은 [FadeTransition](GPU 컴포지터 alpha)으로만 처리하므로
+///   paint()가 최초 1회 이후 다시 호출되지 않는다.
 class StarryBackground extends StatefulWidget {
   const StarryBackground({super.key});
 
@@ -13,17 +16,29 @@ class StarryBackground extends StatefulWidget {
 
 class _StarryBackgroundState extends State<StarryBackground>
     with SingleTickerProviderStateMixin {
-  List<_Star> _stars = [];
-  Size _lastSize = Size.zero;
-  late AnimationController _controller;
+  late final AnimationController _controller;
+  late final List<Animation<double>> _groupAnimations;
+
+  static const _groupCount = 3;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 10),
-    )..repeat();
+      duration: const Duration(seconds: 6),
+    )..repeat(reverse: true);
+
+    _groupAnimations = List.generate(_groupCount, (i) {
+      final start = i / (_groupCount * 2);
+      final end = start + 0.6;
+      return Tween<double>(begin: 0.4, end: 1.0).animate(
+        CurvedAnimation(
+          parent: _controller,
+          curve: Interval(start, end.clamp(0.0, 1.0), curve: Curves.easeInOut),
+        ),
+      );
+    });
   }
 
   @override
@@ -32,58 +47,54 @@ class _StarryBackgroundState extends State<StarryBackground>
     super.dispose();
   }
 
-  void _initStars(Size size) {
-    final rng = Random(42);
-    _stars = List.generate(120, (_) {
-      return _Star(
-        x: rng.nextDouble() * size.width,
-        y: rng.nextDouble() * size.height,
-        radius: rng.nextDouble() * 1.8 + 0.3,
-        baseAlpha: rng.nextDouble() * 0.5 + 0.3,
-        twinkleSpeed: rng.nextDouble() * 2.0 + 0.5,
-        twinkleOffset: rng.nextDouble() * 2 * pi,
-        color: _starColor(rng),
-      );
-    });
-  }
-
-  Color _starColor(Random rng) {
-    final roll = rng.nextDouble();
-    if (roll < 0.7) return Colors.white;
-    if (roll < 0.85) return const Color(0xFFAADDFF);
-    if (roll < 0.95) return const Color(0xFFFFEEAA);
-    return const Color(0xFFFFAAAA);
-  }
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = Size(constraints.maxWidth, constraints.maxHeight);
-        if (_stars.isEmpty || size != _lastSize) {
-          _lastSize = size;
-          _initStars(size);
-        }
-        return AnimatedBuilder(
-          animation: _controller,
-          builder: (context, _) {
-            return CustomPaint(
-              size: size,
-              painter: _StarryPainter(_stars, _controller.value),
-            );
-          },
+        final groups = _StarPool.groups(_groupCount);
+
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: RepaintBoundary(
+                child: CustomPaint(
+                  size: size,
+                  painter: const _GradientPainter(),
+                  isComplex: true,
+                  willChange: false,
+                ),
+              ),
+            ),
+            for (var i = 0; i < _groupCount; i++)
+              Positioned.fill(
+                child: FadeTransition(
+                  opacity: _groupAnimations[i],
+                  child: RepaintBoundary(
+                    child: CustomPaint(
+                      size: size,
+                      painter: _StarGroupPainter(stars: groups[i]),
+                      isComplex: true,
+                      willChange: false,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         );
       },
     );
   }
 }
 
-class _StarryPainter extends CustomPainter {
-  _StarryPainter(this.stars, this.time);
-  final List<_Star> stars;
-  final double time;
+// ---------------------------------------------------------------------------
+// Painters
+// ---------------------------------------------------------------------------
 
-  static const _gradientColors = [
+class _GradientPainter extends CustomPainter {
+  const _GradientPainter();
+
+  static const _colors = [
     Color(0xFF05051A),
     Color(0xFF0A0A2E),
     Color(0xFF12123A),
@@ -93,56 +104,101 @@ class _StarryPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final bgPaint = Paint()
+    final paint = Paint()
       ..shader = const LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: _gradientColors,
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
+        colors: _colors,
+      ).createShader(Offset.zero & size);
+    canvas.drawRect(Offset.zero & size, paint);
+  }
 
+  @override
+  bool shouldRepaint(covariant _GradientPainter oldDelegate) => false;
+}
+
+class _StarGroupPainter extends CustomPainter {
+  const _StarGroupPainter({required this.stars});
+
+  final List<_Star> stars;
+
+  @override
+  void paint(Canvas canvas, Size size) {
     for (final star in stars) {
-      final twinkle =
-          sin(time * 2 * pi * star.twinkleSpeed + star.twinkleOffset);
-      final alpha =
-          (star.baseAlpha + twinkle * 0.3).clamp(0.05, 1.0).toDouble();
-      final paint = Paint()..color = star.color.withValues(alpha: alpha);
-      canvas.drawCircle(Offset(star.x, star.y), star.radius, paint);
+      final x = star.nx * size.width;
+      final y = star.ny * size.height;
+      final paint = Paint()..color = star.color.withValues(alpha: star.alpha);
+      canvas.drawCircle(Offset(x, y), star.radius, paint);
 
       if (star.radius > 1.2) {
         final glowPaint = Paint()
-          ..color = star.color.withValues(alpha: alpha * 0.15)
+          ..color = star.color.withValues(alpha: star.alpha * 0.15)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-        canvas.drawCircle(
-          Offset(star.x, star.y),
-          star.radius * 2.5,
-          glowPaint,
-        );
+        canvas.drawCircle(Offset(x, y), star.radius * 2.5, glowPaint);
       }
     }
   }
 
   @override
-  bool shouldRepaint(covariant _StarryPainter oldDelegate) =>
-      oldDelegate.time != time;
+  bool shouldRepaint(covariant _StarGroupPainter oldDelegate) =>
+      !identical(oldDelegate.stars, stars);
+}
+
+// ---------------------------------------------------------------------------
+// Star data pool — 정규화 좌표(0~1), 1회만 생성
+// ---------------------------------------------------------------------------
+
+class _StarPool {
+  _StarPool._();
+
+  static List<List<_Star>>? _cached;
+  static int _cachedGroupCount = 0;
+
+  static List<List<_Star>> groups(int groupCount) {
+    if (_cached != null && _cachedGroupCount == groupCount) return _cached!;
+    _cachedGroupCount = groupCount;
+    _cached = _generate(groupCount);
+    return _cached!;
+  }
+
+  static List<List<_Star>> _generate(int groupCount) {
+    final rng = Random(42);
+    final groups = List.generate(groupCount, (_) => <_Star>[]);
+
+    for (var i = 0; i < 120; i++) {
+      groups[i % groupCount].add(_Star(
+        nx: rng.nextDouble(),
+        ny: rng.nextDouble(),
+        radius: rng.nextDouble() * 1.8 + 0.3,
+        alpha: rng.nextDouble() * 0.5 + 0.3,
+        color: _starColor(rng),
+      ));
+    }
+
+    return groups;
+  }
+
+  static Color _starColor(Random rng) {
+    final roll = rng.nextDouble();
+    if (roll < 0.7) return Colors.white;
+    if (roll < 0.85) return const Color(0xFFAADDFF);
+    if (roll < 0.95) return const Color(0xFFFFEEAA);
+    return const Color(0xFFFFAAAA);
+  }
 }
 
 class _Star {
-  final double x;
-  final double y;
-  final double radius;
-  final double baseAlpha;
-  final double twinkleSpeed;
-  final double twinkleOffset;
-  final Color color;
-
-  _Star({
-    required this.x,
-    required this.y,
+  const _Star({
+    required this.nx,
+    required this.ny,
     required this.radius,
-    required this.baseAlpha,
-    required this.twinkleSpeed,
-    required this.twinkleOffset,
+    required this.alpha,
     required this.color,
   });
+
+  final double nx;
+  final double ny;
+  final double radius;
+  final double alpha;
+  final Color color;
 }

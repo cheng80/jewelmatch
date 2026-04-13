@@ -10,6 +10,15 @@ class AssetPaths {
   static const String sfxFail = 'sfx/Fail.mp3';
   static const String sfxBtnSnd = 'sfx/BtnSnd.mp3';
 
+  /// 콤보 2단계 이상 연쇄 시 상승 차임.
+  static const String sfxComboHit = 'sfx/ComboHit.mp3';
+
+  /// 4개 이상 매치 시 화려한 버스트.
+  static const String sfxBigMatch = 'sfx/BigMatch.mp3';
+
+  /// 특수 보석(스트라이프/폭탄/하이퍼) 발동 시.
+  static const String sfxSpecialGem = 'sfx/SpecialGem.mp3';
+
   /// 타임 모드 시간 종료(`TimeUp` 오버레이). 클리어/승리 스팅이 아닌 **타임 오버** 톤용.
   static const String sfxTimeUp = 'sfx/TimeUp.wav';
 

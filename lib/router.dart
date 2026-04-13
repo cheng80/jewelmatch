@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'app_config.dart';
@@ -16,11 +17,17 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: RoutePaths.game,
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final mode = JewelGameMode.fromQuery(
           state.uri.queryParameters['mode'],
         );
-        return GameView(gameMode: mode);
+        return CustomTransitionPage(
+          key: state.pageKey,
+          child: GameView(gameMode: mode),
+          transitionDuration: const Duration(milliseconds: 500),
+          transitionsBuilder: (context, animation, _, child) =>
+              FadeTransition(opacity: animation, child: child),
+        );
       },
     ),
     GoRoute(

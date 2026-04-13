@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../app_config.dart';
 import '../game/jewel_game_mode.dart';
 import '../game/match_board_game.dart';
+import '../widgets/phone_frame_scaffold.dart';
 import '../widgets/starry_background.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
@@ -42,11 +43,6 @@ class _GameViewState extends State<GameView> {
     SoundManager.playBgm(AssetPaths.bgmMain);
   }
 
-  static const double _mobileRefW = 390.0;
-  static const double _mobileRefH = 750.0;
-  static const double _webMinScale = 0.83;
-  static const double _webMaxScale = 1.5;
-
   @override
   Widget build(BuildContext context) {
     final mediaPadding = MediaQuery.of(context).padding;
@@ -77,42 +73,30 @@ class _GameViewState extends State<GameView> {
 
     if (kIsWeb) {
       return Scaffold(
+        backgroundColor: Colors.black,
         body: Stack(
           children: [
-            Positioned.fill(child: StarryBackground()),
-            Center(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final fittedScale = min(
-                    constraints.maxWidth / _mobileRefW,
-                    constraints.maxHeight / _mobileRefH,
-                  );
-                  final scale = fittedScale < _webMinScale
-                      ? fittedScale
-                      : fittedScale.clamp(_webMinScale, _webMaxScale);
-                  final gameW = _mobileRefW * scale;
-                  final gameH = _mobileRefH * scale;
-                  return SizedBox(
-                    width: gameW,
-                    height: gameH,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(28),
-                        boxShadow: [
-                          BoxShadow(
-                            color: JewelCandyLuminaTheme.primaryDeep.withValues(alpha: 0.45),
-                            blurRadius: 28,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
+            const Positioned.fill(child: StarryBackground()),
+            Positioned.fill(
+              child: Center(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final fittedScale = min(
+                      constraints.maxWidth / kPhoneFrameRefW,
+                      constraints.maxHeight / kPhoneFrameRefH,
+                    );
+                    final w = kPhoneFrameRefW * fittedScale;
+                    final h = kPhoneFrameRefH * fittedScale;
+                    return SizedBox(
+                      width: w,
+                      height: h,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(28),
                         child: gameWidget,
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
           ],

@@ -217,14 +217,12 @@ Flame 게임 셸이다.
 
 ### 3-10. `lib/game/components/space_bg.dart`
 
-배경 컴포넌트다.
+배경 컴포넌트다. `camera.backdrop`에 올라간다.
 
-- 우주 배경 그라데이션
-- 별 위치 생성
-- 별 반짝임 갱신
-- 화면 전체 배경 렌더링
-
-이 컴포넌트는 `camera.backdrop`에 올라간다.
+- 그라데이션 배경을 `ui.Picture`로 1회 녹화·캐싱
+- 별 120개를 3 그룹으로 나눠 각 그룹을 `ui.Picture`로 1회 녹화·캐싱
+- 매 프레임 `render()`에서는 `drawPicture` 4회 + 그룹별 `saveLayer` alpha 변경만 수행
+- 깜빡임은 그룹 단위 sin alpha로 처리 (기존 drawCircle 240회/프레임 → drawPicture 4회/프레임)
 
 ### 3-11. 설정/사운드/저장소
 
@@ -423,59 +421,150 @@ Pause 버튼 탭
 - **NoMoves**: 더 이상 유효한 스왑이 없을 때 오버레이. 베스트 갱신은 모드별 점수 저장 API 사용.
 - **TimeUp**: Timed 모드 시간 소진 시 오버레이.
 
-## 9. 웹 레이아웃 정책
+## 9. 반응형 프레임 — PhoneFrameScaffold
 
-웹에서는 게임이 전체 브라우저에 맞춰 자유롭게 늘어나지 않는다.  
-현재 정책은 "세로형 모바일 게임 프레임"을 중앙에 유지하는 것이다.
+모든 화면(게임 제외)은 `PhoneFrameScaffold` + `PhoneFrame`을 통해 **고정 논리 해상도 `390×750`** 안에서 레이아웃한다.
+
+### 9-1. 위젯 구조
 
 ```text
-브라우저 전체
-├─ 바깥 배경 = StarryBackground()
-└─ 중앙 게임 프레임
-   ├─ 기준 크기 = 390 x 750
-   ├─ fittedScale = min(가로비, 세로비)
-   ├─ 최소 스케일 = 0.83
-   ├─ 최대 스케일 = 1.5
-   └─ SizedBox(width: 390*scale, height: 750*scale)
+PhoneFrameScaffold
+└─ Scaffold(backgroundColor: black)
+   └─ Stack
+      ├─ StarryBackground (전체 화면 — 여백 포함)
+      └─ SafeArea
+         └─ Center
+            └─ PhoneFrame
+               └─ LayoutBuilder
+                  ├─ fittedScale = min(가로비, 세로비)
+                  ├─ SizedBox(390*scale, 750*scale)
+                  └─ FittedBox(contain)
+                     └─ SizedBox(390, 750) + MediaQuery(size override)
+                        └─ 실제 화면 콘텐츠
 ```
 
-의미는 다음과 같다.
+- 콘텐츠는 **항상 390×750 기준**으로 레이아웃 → 폰트·간격·버튼 비율 유지.
+- `FittedBox`가 통째로 스케일링 → 웹·태블릿에서 비율이 변하지 않는다.
+- `StarryBackground`는 `PhoneFrameScaffold` 바깥에 1개만 — 각 뷰 내부에서 중복 생성하지 않는다.
 
-- 큰 화면
-  - 게임 프레임은 최대 스케일까지 커진다.
-- 작은 화면
-  - 프레임이 전체적으로 줄어든다.
-- 남는 좌우 영역
-  - 우주 배경만 확장된다.
+### 9-2. GameView는 별도
 
-즉 웹에서도 "세로형 모바일 게임처럼 보이는 느낌"을 유지하려는 구조다.
+`GameView`는 Flame `GameWidget`이 자체 캔버스 크기를 관리하므로 `FittedBox`에 넣지 않는다.
+
+```text
+GameView (웹)
+└─ Scaffold
+   └─ Stack
+      ├─ StarryBackground (여백용)
+      └─ Center
+         └─ LayoutBuilder
+            ├─ fittedScale = min(가로비, 세로비)
+            └─ SizedBox(390*scale, 750*scale)
+               └─ ClipRRect(28) → GameWidget
+```
+
+모바일에서는 `Scaffold(body: GameWidget)` 전체 화면.
+
+### 9-3. 적용 현황
+
+| 화면 | 방식 | StarryBackground |
+|------|------|-----------------|
+| TitleView | `PhoneFrameScaffold(child: Column)` | Scaffold 바깥 1개 |
+| SettingView | `PhoneFrameScaffold(child: Scaffold+AppBar)` | Scaffold 바깥 1개 |
+| GameView | 자체 LayoutBuilder 스케일링 | 웹: 바깥 1개 + Flame SpaceBg (프레임 안) |
 
 ## 10. 화면별 요약
 
 ### 10-1. TitleView
 
-- 전체 화면 우주 배경
-- SafeArea 안에 제목/버튼/버전 텍스트 배치
+- `PhoneFrameScaffold` 안의 `Column` + `Spacer` 비율 배치
+- `390×750` 고정 해상도에서 제목/버튼/버전 텍스트의 간격·크기 유지
 - 메뉴 BGM 재생
 
 ### 10-2. SettingView
 
-- `AppBar`
+- `PhoneFrameScaffold` 안의 `Scaffold` + `AppBar`
 - SafeArea 안의 스크롤 설정 목록
 - BGM / SFX / 화면 꺼짐 방지 / 언어 설정
 
 ### 10-3. GameView
 
-- 앱에서는 전체 화면 게임
-- 웹에서는 중앙 세로 프레임 게임
+- 모바일: 전체 화면 게임
+- 웹: 중앙 세로 프레임 (자체 LayoutBuilder 스케일링)
 - 오버레이:
   - PauseMenu
   - NoMoves
   - TimeUp
+  - HowToPlay
 
-## 11. 정리
+## 11. 성능 최적화 — 우주 배경
 
-현재 프로젝트의 핵심은 다음 세 가지다.
+우주 배경은 두 종류가 있다. `PhoneFrameScaffold` 도입 이후 Flutter 위젯 배경은 Scaffold 바깥에서 1개만 생성되며, 각 뷰 내부에서 중복 생성하지 않는다.
+
+| 파일 | 용도 | 컨텍스트 |
+|------|------|----------|
+| `lib/widgets/starry_background.dart` | Flutter 위젯 배경 | `PhoneFrameScaffold` 바깥 1개 (TitleView·SettingView), GameView 웹 여백 |
+| `lib/game/components/space_bg.dart` | Flame 컴포넌트 배경 | MatchBoardGame backdrop (프레임 안) |
+
+### 11-1. 문제점 (리팩터 전)
+
+두 파일 모두 매 프레임 `paint()` / `render()`에서 별 120개를 개별 `drawCircle`로 그리고 있었다.
+
+```text
+매 프레임 비용 (리팩터 전)
+├─ LinearGradient 셰이더 생성 + drawRect
+├─ drawCircle × 120 (별 본체)
+├─ drawCircle × ~40 (큰 별 글로우, MaskFilter.blur)
+└─ sin 계산 × 120 (깜빡임 alpha)
+   → 총 ~240 draw 호출/프레임
+```
+
+### 11-2. 최적화 전략
+
+**공통 원칙**: 정적인 그리기를 캐싱하고, 깜빡임은 alpha 변경만으로 처리한다.
+
+#### `StarryBackground` (Flutter 위젯)
+
+```text
+Stack
+├─ _GradientPainter (RepaintBoundary) → 1회 paint, 래스터 캐시
+├─ FadeTransition (그룹 0) → RepaintBoundary → _StarGroupPainter (1회 paint)
+├─ FadeTransition (그룹 1) → RepaintBoundary → _StarGroupPainter (1회 paint)
+└─ FadeTransition (그룹 2) → RepaintBoundary → _StarGroupPainter (1회 paint)
+```
+
+- 별을 3 그룹으로 나눠 각각 `RepaintBoundary`로 래스터 캐싱
+- 깜빡임은 `FadeTransition`(GPU 컴포지터 alpha)으로만 처리
+- **paint() 재호출 0회/프레임**, draw 호출 0회/프레임
+- 별 좌표는 정규화(0~1)로 저장 → 리사이즈 시 데이터 재생성 불필요
+
+#### `SpaceBg` (Flame 컴포넌트)
+
+```text
+render()
+├─ drawPicture(_bgPicture)        → 캐싱된 그라데이션
+├─ saveLayer + drawPicture(그룹0) → 캐싱된 별 + alpha
+├─ saveLayer + drawPicture(그룹1) → 캐싱된 별 + alpha
+└─ saveLayer + drawPicture(그룹2) → 캐싱된 별 + alpha
+```
+
+- Flame에서는 `FadeTransition`을 쓸 수 없으므로 `ui.Picture`로 녹화·캐싱
+- 매 프레임 `drawPicture` 4회 + `saveLayer` alpha 변경 3회
+- 깜빡임은 그룹 단위 sin alpha로 처리
+
+### 11-3. 결과 비교
+
+| 항목 | 리팩터 전 | 리팩터 후 |
+|------|----------|----------|
+| draw 호출/프레임 | ~240회 | **4회** (Picture) |
+| sin 계산/프레임 | 120회 | **3회** (그룹 단위) |
+| paint()/render() 빌드 비용 | drawCircle 120+ | drawPicture 4 |
+| 별 데이터 재생성 | 리사이즈 시 | 리사이즈 시 (동일) |
+| 시각적 차이 | 별마다 개별 깜빡임 | 그룹 단위 깜빡임 (3그룹이면 충분히 자연스러움) |
+
+## 12. 정리
+
+현재 프로젝트의 핵심은 다음 네 가지다.
 
 1. 앱 셸 구조는 Flutter 표준 방식 유지
    - `main -> App -> Router -> View`
@@ -483,6 +572,8 @@ Pause 버튼 탭
    - `backdrop / viewport / world`
 3. 좌표계는 top-left 기반 화면형 레이아웃으로 단순화
    - safe area는 침범 금지 기준으로만 사용
+4. 배경 렌더링은 캐싱 기반 최적화 적용
+   - 정적 페인트를 래스터/Picture로 캐싱하고 깜빡임은 alpha만 변경
 
 현재 구조를 한 줄로 요약하면 다음과 같다.
 
@@ -494,6 +585,7 @@ Pause 버튼 탭
 + 첫 유효 레이아웃에서만 보드 시드
 + safe area 기반 배치
 + 웹에서는 중앙 세로 프레임 유지
++ 배경 캐싱 최적화 (RepaintBoundary / ui.Picture)
 ```
 
 다음에 구조를 더 발전시킬 때도 아래 원칙을 유지하면 파악이 쉽다.

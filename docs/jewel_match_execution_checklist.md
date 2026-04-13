@@ -9,6 +9,9 @@
 - [x] 일시정지·NoMoves·TimeUp 오버레이 흐름 (`docs/game_flow.md` 기준)
 - [x] 타임 모드: 매치 보상 초·저시간 `TimeTic`·타임 오버 `TimeUp` SFX
 - [x] 무효 스왑 `Fail` SFX
+- [x] 매치 이벤트 SFX: `ComboHit`·`BigMatch`·`SpecialGem` — 우선순위 기반 단일 재생
+- [x] 매치 파티클: `ParticleBurst` — 3매치(기본) / 4+·콤보·특수(화려) 3단계
+- [x] 스프라이트시트 사전 로드 + `FadeTransition` 전환 → 장면 전환 버벅임 제거
 - [ ] (선택) 밸런스·난이도 튜닝 기록을 `game_flow.md` 또는 별도 GDD에 반영
 
 ## 오디오·에셋
@@ -24,6 +27,14 @@
 - [x] 웹: `kIsWeb`일 때 설정의「평점 남기기」비표시, 타이틀 자동 리뷰 요청 생략
 - [ ] iOS `AppConfig.appStoreId` 등 스토어 연동 값 출시 전 입력 (App Store Connect 등에서 설정)
 
+## 반응형 프레임·레이아웃
+
+- [x] `PhoneFrameScaffold` + `PhoneFrame` 도입 — 고정 논리 해상도 `390×750` + `FittedBox`
+- [x] `TitleView`·`SettingView`에 `PhoneFrameScaffold` 적용 → 비율·폰트·간격 유지
+- [x] `GameView`는 Flame 자체 `LayoutBuilder` 스케일링 — `FittedBox` 미적용
+- [x] `StarryBackground` 중복 생성 제거 — Scaffold 바깥 1개만 유지
+- [ ] 웹 브라우저 리사이즈·키보드·분할 화면에서 비율 유지 최종 확인
+
 ## Web 빌드·배포
 
 - [x] `docs/web_build.md` — `--base-href`와 배포 폴더 관계 문서화
@@ -33,6 +44,8 @@
 ## 문서·코드 동기화
 
 - [x] `README.md` — 디렉터리·라우팅·문서 링크
+- [x] 우주 배경 성능 최적화 리팩터 → `docs/code-flow-analysis.md` §11 갱신
+- [x] `PhoneFrameScaffold` 도입·파티클·SFX → `code-flow-analysis.md` §9·§10 갱신
 - [ ] 큰 리팩터·기능 추가 시 `docs/code-flow-analysis.md`, `docs/game_flow.md` 갱신
 - [ ] 세션 종료 시 **`START_HERE.md` §3·§6** 및 본 체크리스트 갱신
 

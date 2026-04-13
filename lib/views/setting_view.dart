@@ -5,6 +5,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../resources/sound_manager.dart';
 import '../theme/jewel_candy_lumina_theme.dart';
+import '../widgets/phone_frame_scaffold.dart';
 import '../services/game_settings.dart';
 import '../services/in_app_review_service.dart';
 
@@ -49,7 +50,7 @@ class _SettingViewState extends State<SettingView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final scaffold = Scaffold(
       appBar: AppBar(
         title: Text(context.tr('settings')),
       ),
@@ -188,6 +189,8 @@ class _SettingViewState extends State<SettingView> {
         ),
       ),
     );
+
+    return PhoneFrameScaffold(child: scaffold);
   }
 }
 

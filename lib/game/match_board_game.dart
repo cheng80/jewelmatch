@@ -10,6 +10,7 @@ import '../services/game_settings.dart';
 import '../services/ranking_service.dart';
 import 'components/match_board_renderer.dart';
 import 'components/match_game_hud.dart';
+import 'components/particle_burst.dart';
 import 'components/space_bg.dart';
 import 'jewel_game_mode.dart';
 import 'match_board_logic.dart';
@@ -40,6 +41,7 @@ class MatchBoardGame extends FlameGame {
         SoundManager.playSfx(AssetPaths.sfxStart);
       }
     };
+    board.onGemsRemoved = _spawnParticles;
     if (isTimedMode) {
       timeRemaining = timedRoundSeconds;
       _lastFlooredSecondForTimeTic = timeRemaining.floor();
@@ -465,6 +467,71 @@ class MatchBoardGame extends FlameGame {
   /// 보상 초 중 **초과분은 제외**(버림)한다.
   void _playInvalidSwapSfx() {
     SoundManager.playSfx(AssetPaths.sfxFail);
+  }
+
+  /// 매치 제거 시 파티클 스폰 + 추가 SFX.
+  void _spawnParticles(
+    List<({int row, int col, int color})> cells,
+    bool bigMatch,
+    bool hasSpecial,
+    int combo,
+  ) {
+    // SFX: 특수 보석 > 4+매치 > 콤보 순으로 우선도 (중복 방지)
+    if (hasSpecial) {
+      SoundManager.playSfx(AssetPaths.sfxSpecialGem);
+    } else if (bigMatch) {
+      SoundManager.playSfx(AssetPaths.sfxBigMatch);
+    } else if (combo >= 2) {
+      SoundManager.playSfx(AssetPaths.sfxComboHit);
+    }
+
+    final ts = board.tileSize;
+    final half = ts / 2;
+
+    final bool intense = combo >= 3 || (bigMatch && combo >= 2);
+    final bool medium = !intense && (bigMatch || combo >= 2);
+
+    final int count;
+    final double speed;
+    final double size;
+    final double life;
+    final bool glow;
+    if (intense) {
+      count = 28;
+      speed = 1.8;
+      size = 1.7;
+      life = 0.75;
+      glow = true;
+    } else if (medium) {
+      count = 18;
+      speed = 1.4;
+      size = 1.35;
+      life = 0.6;
+      glow = true;
+    } else {
+      count = 12;
+      speed = 1.0;
+      size = 1.0;
+      life = 0.5;
+      glow = false;
+    }
+
+    for (final c in cells) {
+      final px = board.boardX + c.col * ts + half;
+      final py = board.boardY + c.row * ts + half;
+      final color = c.color >= 1 && c.color <= MatchBoardLogic.palette.length
+          ? MatchBoardLogic.palette[c.color - 1]
+          : Colors.white;
+      world.add(ParticleBurst(
+        center: Vector2(px, py),
+        baseColor: color,
+        count: count,
+        lifetime: life,
+        speedScale: speed,
+        sizeScale: size,
+        withGlow: glow,
+      ));
+    }
   }
 
   void _applyTimedModeTimeBonus(int seconds) {
