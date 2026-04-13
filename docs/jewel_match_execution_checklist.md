@@ -22,12 +22,12 @@
 
 - [x] 설정: 볼륨·음소거·화면 켜짐·언어
 - [x] 웹: `kIsWeb`일 때 설정의「평점 남기기」비표시, 타이틀 자동 리뷰 요청 생략
-- [ ] iOS `AppConfig.appStoreId` 등 스토어 연동 값 출시 전 입력 (`docs/STORE_METADATA_*` 참고)
+- [ ] iOS `AppConfig.appStoreId` 등 스토어 연동 값 출시 전 입력 (App Store Connect 등에서 설정)
 
 ## Web 빌드·배포
 
 - [x] `docs/web_build.md` — `--base-href`와 배포 폴더 관계 문서화
-- [ ] 실제 서버 경로(`/jewelmatch/`, `/match/` 등)에 맞춰 **빌드 시 `--base-href`를 동일하게** 맞출 것
+- [ ] 실제 서버 경로(예: `/match/`)에 맞춰 **빌드 시 `--base-href`를 동일하게** 맞출 것
 - [ ] 배포 후 정적 파일·라우팅·첫 로드·사운드(unlock) 스모크 테스트
 
 ## 문서·코드 동기화

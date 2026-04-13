@@ -23,9 +23,6 @@
 | 6 | [`docs/web_build.md`](docs/web_build.md) | Web `--base-href`·배포 시 주의 (서브패스) |
 | 7 | [`docs/audio_aisfx_prompts.md`](docs/audio_aisfx_prompts.md) | SFX·BGM 파일명·프롬프트·코드 매핑 변경 시 |
 
-스토어 문구·메타데이터만 다룰 때: [`docs/STORE_METADATA_PLAY_APPSTORE_2026.md`](docs/STORE_METADATA_PLAY_APPSTORE_2026.md)  
-정적 웹(약관 등): [`docs/web/README.md`](docs/web/README.md)
-
 ---
 
 ## 2. 현재 프로젝트 상태 (요약)
@@ -34,7 +31,7 @@
 - **모드:** 심플(무제한) / 타임 어택 — `GoRouter` 쿼리 `mode=simple` · `mode=timed`.
 - **코어:** `MatchBoardLogic`(보드·스왑·매치·낙하) + `MatchBoardRenderer`(그리기) + `MatchGameHud`(HUD·일시정지·타임바 등).
 - **오디오:** `SoundManager` — BGM(메뉴/메인), SFX 프리로드. 타임 모드 저시간 `TimeTic`, 무효 스왑 `Fail`, 타임 오버 `TimeUp` 등 (`asset_paths.dart`·`audio_aisfx_prompts.md`).
-- **웹:** `flutter build web` 시 **`--base-href`는 실제 서빙 URL과 반드시 일치** (`docs/web_build.md`). 예: `/jewelmatch/` 또는 배포 정책에 맞는 경로.
+- **웹:** `flutter build web` 시 **`--base-href`는 실제 서빙 URL과 반드시 일치** (`docs/web_build.md`). 예: `/match/` 또는 배포 정책에 맞는 경로.
 - **웹 UX:** `kIsWeb`이면 설정 **「평점 남기기」** 숨김, 타이틀 **자동 인앱 리뷰 요청** 생략 (`setting_view.dart`, `title_view.dart`).
 - **저장:** `get_storage` — 설정·베스트 스코어 등 (`GameSettings`, `StorageHelper`). (루미 프로젝트와 달리 **복잡한 이어하기 세이브 스키마 없음**.)
 

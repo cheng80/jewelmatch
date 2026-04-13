@@ -95,10 +95,9 @@ flutter run
 | 플랫폼 | 명령 |
 |--------|------|
 | Android / iOS | `flutter build apk` / `flutter build ios` |
-| Web | `flutter build web --release --base-href "/jewelmatch/"` |
+| Web | `flutter build web --release --base-href "/match/"` |
 
-Web 배포·서브패스 설정: [`docs/web_build.md`](docs/web_build.md)  
-스토어용 정적 페이지(소개·약관): [`docs/web/README.md`](docs/web/README.md)
+Web 배포·서브패스 설정: [`docs/web_build.md`](docs/web_build.md)
 
 ## 문서
 
@@ -110,4 +109,3 @@ Web 배포·서브패스 설정: [`docs/web_build.md`](docs/web_build.md)
 | [`docs/game_flow.md`](docs/game_flow.md) | 매치-3 플레이 흐름 요약 |
 | [`docs/web_build.md`](docs/web_build.md) | Web 빌드·배포 |
 | [`docs/audio_aisfx_prompts.md`](docs/audio_aisfx_prompts.md) | SFX·BGM 프롬프트·파일 매핑 |
-| [`docs/STORE_METADATA_PLAY_APPSTORE_2026.md`](docs/STORE_METADATA_PLAY_APPSTORE_2026.md) | 스토어 메타데이터 초안 |
