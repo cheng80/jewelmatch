@@ -1,5 +1,7 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async' show unawaited;
+
 import 'package:flame_audio/flame_audio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../services/game_settings.dart';
 import 'asset_paths.dart';
@@ -103,12 +105,33 @@ class SoundManager {
 
   /// 효과음 재생. 음소거 시 무시, 볼륨은 GameSettings.sfxVolume 적용.
   /// 웹: unlock 전이면 무시 (카운트다운 등 자동 재생 방지).
+  ///
+  /// 웹에서는 [FlameAudio.play] 기본값인 `PlayerMode.lowLatency`(Web Audio)가
+  /// 특정 MP3 인코딩에서만 재생 실패하는 경우가 있어, 효과음은 `mediaPlayer` 모드로 통일한다.
   static void playSfx(String path) {
     if (GameSettings.sfxMuted) return;
     if (kIsWeb && !_webUnlocked) return;
+    final vol = GameSettings.sfxVolume;
+    if (kIsWeb) {
+      unawaited(_playSfxWeb(path, vol));
+      return;
+    }
     try {
-      final vol = GameSettings.sfxVolume;
       FlameAudio.play(path, volume: vol);
+    } catch (_) {}
+  }
+
+  static Future<void> _playSfxWeb(String path, double volume) async {
+    try {
+      final player = AudioPlayer()..audioCache = FlameAudio.audioCache;
+      await player.setReleaseMode(ReleaseMode.release);
+      await player.setPlayerMode(PlayerMode.mediaPlayer);
+      await player.setAudioContext(
+        AudioContextConfig(
+          focus: AudioContextConfigFocus.mixWithOthers,
+        ).build(),
+      );
+      await player.play(AssetSource(path), volume: volume);
     } catch (_) {}
   }
 }
