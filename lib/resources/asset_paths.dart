@@ -8,6 +8,8 @@ class AssetPaths {
   static const String sfxStart = 'sfx/Start.mp3';
   static const String sfxCollect = 'sfx/Collect.mp3';
   static const String sfxFail = 'sfx/Fail.mp3';
+  /// 클리어 등에 사용할 수 있는 SFX (`assets/audio/sfx/Clear.mp3`).
+  static const String sfxClear = 'sfx/Clear.mp3';
   static const String sfxBtnSnd = 'sfx/BtnSnd.mp3';
 
   /// 콤보 2단계 이상 연쇄 시 상승 차임.

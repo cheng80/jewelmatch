@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-import '../app_config.dart';
+import '../app_config.dart' show AppConfig, RoutePaths;
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import '../services/game_settings.dart';
@@ -238,6 +238,25 @@ class _TitleContent extends StatelessWidget {
                   SoundManager.playSfx(AssetPaths.sfxBtnSnd);
                   context.push(RoutePaths.setting);
                 },
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () {
+                  SoundManager.unlockForWeb();
+                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                  context.push(RoutePaths.sfxTest);
+                },
+                child: Text(
+                  '효과음 단독 검증',
+                  style: TextStyle(
+                    color: JewelCandyLuminaTheme.outlineBright
+                        .withValues(alpha: 0.85),
+                    fontSize: 16,
+                    decoration: TextDecoration.underline,
+                    decorationColor: JewelCandyLuminaTheme.outlineBright
+                        .withValues(alpha: 0.45),
+                  ),
+                ),
               ),
               const Spacer(flex: 1),
               Padding(

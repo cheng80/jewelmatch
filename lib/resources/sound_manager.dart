@@ -4,6 +4,7 @@ import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/foundation.dart';
 
 import '../services/game_settings.dart';
+import '../utils/sfx_play_log.dart';
 import 'asset_paths.dart';
 
 /// 앱 전역 사운드 관리. BGM·효과음 재생, 볼륨·음소거 적용.
@@ -18,9 +19,9 @@ class SoundManager {
   /// 웹 전용 효과음 [AudioPlayer] 풀.
   ///
   /// - 플레이어 1개만 쓰면 연속 `play()`에 앞선 음이 끊긴다(크롬에서 특히 체감).
-  /// - 매 재생마다 새 인스턴스를 만들면 `await`가 길어져 스와이프 제스처와 어긋나
-  ///   재생이 막히는 경우가 있어, 미리 구성한 소규모 풀에서 라운드로빈으로 할당한다.
-  static const int _webSfxPoolSize = 6;
+  /// - 풀을 너무 크게 잡으면 iOS Safari에서 동시 `<audio>` 제한으로 `NotAllowedError`가 난다.
+  /// - [playSfx]→[play] 호출은 **await 없이** 이어지도록 해 WebKit의 사용자 제스처 정책에 맞춘다.
+  static const int _webSfxPoolSize = 3;
   static List<AudioPlayer>? _webSfxPool;
   static int _webSfxPoolIndex = 0;
   static Future<void>? _webSfxPoolReady;
@@ -44,7 +45,6 @@ class SoundManager {
 
   static Future<void> _ensureWebSfxPool() async {
     if (_webSfxPool != null && _webSfxPool!.length == _webSfxPoolSize) {
-      await _webSfxPoolReady;
       return;
     }
     if (_webSfxPoolReady != null) {
@@ -77,6 +77,7 @@ class SoundManager {
       FlameAudio.audioCache.load(AssetPaths.sfxStart),
       FlameAudio.audioCache.load(AssetPaths.sfxCollect),
       FlameAudio.audioCache.load(AssetPaths.sfxFail),
+      FlameAudio.audioCache.load(AssetPaths.sfxClear),
       FlameAudio.audioCache.load(AssetPaths.sfxBtnSnd),
       FlameAudio.audioCache.load(AssetPaths.sfxComboHit),
       FlameAudio.audioCache.load(AssetPaths.sfxBigMatch),
@@ -150,26 +151,58 @@ class SoundManager {
   /// 웹에서는 [FlameAudio.play] 기본값인 `PlayerMode.lowLatency`(Web Audio)가
   /// 특정 MP3 인코딩에서만 재생 실패하는 경우가 있어, 효과음은 `mediaPlayer` 모드로 통일한다.
   static void playSfx(String path) {
-    if (GameSettings.sfxMuted) return;
-    if (kIsWeb && !_webUnlocked) return;
-    final vol = GameSettings.sfxVolume;
-    if (kIsWeb) {
-      unawaited(_playSfxWeb(path, vol));
+    if (GameSettings.sfxMuted) {
+      SfxPlayLog.append('playSfx SKIP sfxMuted path=$path');
       return;
     }
+    if (kIsWeb && !_webUnlocked) {
+      SfxPlayLog.append('playSfx SKIP webLocked path=$path');
+      return;
+    }
+    final vol = GameSettings.sfxVolume;
+    if (kIsWeb) {
+      SfxPlayLog.append('playSfx web → path=$path vol=${vol.toStringAsFixed(2)}');
+      _playSfxWeb(path, vol);
+      return;
+    }
+    SfxPlayLog.append('playSfx native → path=$path vol=${vol.toStringAsFixed(2)}');
     try {
       FlameAudio.play(path, volume: vol);
-    } catch (_) {}
+    } catch (e, _) {
+      SfxPlayLog.append('playSfx native ERROR path=$path err=$e');
+    }
   }
 
-  static Future<void> _playSfxWeb(String path, double volume) async {
-    try {
-      await _ensureWebSfxPool();
-      final pool = _webSfxPool;
-      if (pool == null || pool.isEmpty) return;
-      final i = _webSfxPoolIndex % pool.length;
-      _webSfxPoolIndex++;
-      await pool[i].play(AssetSource(path), volume: volume);
-    } catch (_) {}
+  /// WebKit(Safari): `play()`가 포인터 핸들러와 **같은 동기 스택**에서 시작돼야
+  /// `NotAllowedError`를 피하는 경우가 많다. 풀이 이미 있으면 `await` 없이 곧바로
+  /// [AudioPlayer.play]를 호출한다.
+  static void _playSfxWeb(String path, double volume) {
+    if (_webSfxPool != null && _webSfxPool!.length == _webSfxPoolSize) {
+      _fireWebPoolPlay(path, volume);
+      return;
+    }
+    unawaited(_ensureWebSfxPool().then((_) {
+      _fireWebPoolPlay(path, volume);
+    }).catchError((Object e, StackTrace _) {
+      SfxPlayLog.append('playSfx web ensure ERROR path=$path err=$e');
+    }));
+  }
+
+  static void _fireWebPoolPlay(String path, double volume) {
+    final pool = _webSfxPool;
+    if (pool == null || pool.isEmpty) {
+      SfxPlayLog.append('playSfx web ERROR empty pool path=$path');
+      return;
+    }
+    final i = _webSfxPoolIndex % pool.length;
+    _webSfxPoolIndex++;
+    SfxPlayLog.append('playSfx web pool[$i] play start path=$path');
+    unawaited(
+      pool[i].play(AssetSource(path), volume: volume).then((_) {
+        SfxPlayLog.append('playSfx web pool[$i] play completed path=$path');
+      }).catchError((Object e, StackTrace _) {
+        SfxPlayLog.append('playSfx web ERROR path=$path err=$e');
+      }),
+    );
   }
 }
