@@ -45,8 +45,7 @@ flutter build web --release --base-href "/match/" --analyze-size
 ```bash
 # 빌드 후 match 폴더 생성 및 복사
 flutter build web --release --base-href "/match/"
-mkdir -p match
-cp -r build/web/* match/
+mkdir -p match && cp -r build/web/* match/                         
 ```
 
 `match/` 폴더를 업로드하면 `https://example.com/match/` 에서 서비스됩니다.
