@@ -261,6 +261,12 @@ Flame 게임 셸이다.
 - `storage_helper.dart`
   - `GetStorage` 래퍼
 
+현재 Riverpod 연결 원칙은 다음과 같다.
+
+- `SettingView`와 `PauseMenuOverlay`는 `settingsProvider` 전체를 보지 않고 `select`로 필요한 필드만 구독한다
+- BGM / SFX 슬라이더는 draft 상태를 즉시 UI에 반영하고, `onChangeEnd`에서만 `GameSettings`에 commit한다
+- `TimeUpOverlay`는 `rankingProvider` 전체 대신 `isSubmitting`, `rankMessage`만 선택 구독해 랭킹 문구 영역만 다시 그린다
+
 ### 3-12. `lib/views/overlays/how_to_play_overlay.dart` / `lib/widgets/sprite_sheet_frame.dart`
 
 튜토리얼 오버레이와 스프라이트 프레임 미리보기다.

@@ -31,7 +31,7 @@ class RankingSubmitState {
 /// 타임 모드 종료 시 랭킹 제출을 담당하는 Notifier.
 ///
 /// View에서 `ref.read(rankingProvider.notifier).submit(...)` 호출.
-/// 결과는 `ref.watch(rankingProvider)`로 UI에 반영.
+/// 결과는 필요한 필드만 `select`로 구독해 UI에 반영한다.
 class RankingNotifier extends Notifier<RankingSubmitState> {
   @override
   RankingSubmitState build() => const RankingSubmitState();
@@ -74,5 +74,6 @@ class RankingNotifier extends Notifier<RankingSubmitState> {
   }
 }
 
-final rankingProvider =
-    NotifierProvider<RankingNotifier, RankingSubmitState>(RankingNotifier.new);
+final rankingProvider = NotifierProvider<RankingNotifier, RankingSubmitState>(
+  RankingNotifier.new,
+);

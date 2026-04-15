@@ -45,6 +45,4 @@ class RoutePaths {
   static const String title = '/';
   static const String game = '/game';
   static const String setting = '/setting';
-  /// 모바일 브라우저 등에서 효과음 단독 재생 여부를 검증하는 디버그·QA 페이지.
-  static const String sfxTest = '/sfx-test';
 }

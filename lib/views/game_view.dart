@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flame/game.dart';
@@ -9,6 +11,7 @@ import '../game/match_board_game.dart';
 import '../utils/sfx_play_log.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import '../widgets/sfx_play_log_panel.dart';
+import '../widgets/sprite_sheet_frame.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import 'overlays/time_up_overlay.dart';
@@ -28,10 +31,13 @@ class GameView extends StatefulWidget {
 }
 
 class _GameViewState extends State<GameView> {
+  static const Duration _minLoadingOverlay = Duration(milliseconds: 350);
+
   /// Flame GameWidget — initState가 아닌 didChangeDependencies에서 1회만 생성.
   /// build()에서 매번 생성하면 rebuild마다 엔진이 재초기화된다.
   Widget? _gameWidget;
-  bool _ready = false;
+  bool _gameMounted = false;
+  bool _loadingVisible = true;
 
   @override
   void initState() {
@@ -53,11 +59,20 @@ class _GameViewState extends State<GameView> {
   }
 
   /// 페이드 전환(500ms)과 Flame 초기화가 같은 프레임에 겹치지 않도록
-  /// 첫 프레임 렌더 후 GameWidget을 마운트한다.
+  /// 첫 프레임 렌더 후 GameWidget을 마운트하고, 짧은 로딩 오버레이 뒤에 노출한다.
   Future<void> _scheduleGameMount() async {
+    final startedAt = DateTime.now();
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
-    setState(() => _ready = true);
+    setState(() => _gameMounted = true);
+
+    final remain = _minLoadingOverlay - DateTime.now().difference(startedAt);
+    if (remain > Duration.zero) {
+      await Future<void>.delayed(remain);
+    }
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    setState(() => _loadingVisible = false);
   }
 
   @override
@@ -96,9 +111,9 @@ class _GameViewState extends State<GameView> {
 
   @override
   Widget build(BuildContext context) {
-    final content = _ready ? _gameWidget! : const SizedBox.shrink();
+    final content = _gameMounted ? _gameWidget! : const SizedBox.shrink();
     final showSfxLog =
-        AppConfig.debugLog && widget.gameMode == JewelGameMode.simple && _ready;
+        AppConfig.debugLog && widget.gameMode == JewelGameMode.simple && _gameMounted;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -111,6 +126,14 @@ class _GameViewState extends State<GameView> {
               clipBehavior: Clip.none,
               children: [
                 content,
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  child: _loadingVisible
+                      ? GameLoadingOverlay(gameMode: widget.gameMode)
+                      : const SizedBox.shrink(),
+                ),
                 if (showSfxLog)
                   const Positioned(
                     left: 10,
@@ -121,6 +144,128 @@ class _GameViewState extends State<GameView> {
                   ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class GameLoadingOverlay extends StatefulWidget {
+  const GameLoadingOverlay({super.key, required this.gameMode});
+
+  final JewelGameMode gameMode;
+
+  @override
+  State<GameLoadingOverlay> createState() => _GameLoadingOverlayState();
+}
+
+class _GameLoadingOverlayState extends State<GameLoadingOverlay>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = widget.gameMode == JewelGameMode.timed
+        ? const Color(0xFFFFD54F)
+        : const Color(0xFF22E6FF);
+
+    return ColoredBox(
+      color: Colors.black.withValues(alpha: 0.12),
+      child: Center(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: const Color(0xCC2A0A4D),
+            borderRadius: BorderRadius.circular(34),
+            border: Border.all(color: accent.withValues(alpha: 0.8), width: 2.5),
+            boxShadow: [
+              BoxShadow(
+                color: accent.withValues(alpha: 0.18),
+                blurRadius: 24,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, _) {
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _loadingGem(0, 0.0),
+                        const SizedBox(width: 10),
+                        _loadingGem(3, 0.33),
+                        const SizedBox(width: 10),
+                        _loadingGem(6, 0.66),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 18),
+                const SizedBox(
+                  width: 34,
+                  height: 34,
+                  child: CircularProgressIndicator(strokeWidth: 3.2),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '불러오는 중...',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _loadingGem(int frameIndex, double phaseOffset) {
+    final t = (_controller.value + phaseOffset) % 1.0;
+    final pulse = 0.35 + 0.65 * (0.5 + 0.5 * (1 - (t * 2 - 1).abs()));
+    final scale = 0.9 + pulse * 0.18;
+    return Opacity(
+      opacity: pulse.clamp(0.45, 1.0),
+      child: Transform.scale(
+        scale: scale,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: Colors.white.withValues(alpha: 0.12 * pulse),
+                blurRadius: 10 + pulse * 10,
+              ),
+            ],
+          ),
+          child: SpriteSheetFrame(
+            assetPath: 'assets/images/${AssetPaths.jewelSpriteSheet}',
+            frameIndex: frameIndex,
+            frameSize: 128,
+            size: 46,
           ),
         ),
       ),

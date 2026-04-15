@@ -22,11 +22,13 @@
 - [x] 튜토리얼 스프라이트 프리뷰를 원본 픽셀 기준 프레임 크롭으로 통일 (`SpriteSheetFrame`)
 - [x] 파티클 퍼짐 반경·입자 수·수명·글로우 강도 축소로 GPU 부담 완화
 - [x] MVVM 리팩터링: `flutter_riverpod` 도입, `SettingsNotifier`·`RankingNotifier`, 오버레이 파일 분리, 공통 위젯 추출
+- [x] Riverpod 구독 범위 최적화: `select`로 필요한 필드만 구독 (`SettingView` / `PauseMenuOverlay` / `TimeUpOverlay`)
+- [x] 볼륨 슬라이더 draft/commit 분리로 드래그 중 `GetStorage`/설정 연속 쓰기 제거
 - [x] `StarryBackground` GlobalKey 싱글톤 — App 레벨 1개만 배치, 전환 시 재생성 비용 0
 - [x] 모든 라우트 `FadeTransition` + `endOfFrame` 대기 패턴 적용 (타이틀·게임·설정)
 - [x] `GameView` 비율 프레임: `kIsWeb` 대신 화면 비율 기반 → 태블릿에서도 비율 유지
 - [x] `PackageInfo` 캐싱 (`FutureBuilder` 제거)
-- [ ] HUD 콤보 스트립 라벨/숫자 세로 간격 미세조정 마무리
+- [x] HUD 콤보 스트립 라벨/숫자 세로 간격 미세조정 마무리
 - [ ] (선택) 밸런스·난이도 튜닝 기록을 `game_flow.md` 또는 별도 GDD에 반영
 
 ## 오디오·에셋
@@ -64,10 +66,15 @@
 - [x] 우주 배경 성능 최적화 리팩터 → `docs/code-flow-analysis.md` §11 갱신
 - [x] `PhoneFrameScaffold` 도입·파티클·SFX → `code-flow-analysis.md` §9·§10 갱신
 - [x] 렌더링 최적화/에셋 구조 변경 사항을 `START_HERE.md`, `docs/code-flow-analysis.md`에 반영
-- [ ] 큰 리팩터·기능 추가 시 `docs/code-flow-analysis.md`, `docs/game_flow.md` 갱신
-- [x] 세션 종료 시 **`START_HERE.md` §3·§6** 및 본 체크리스트 갱신
+- [x] 최근 Riverpod 최적화/로딩 오버레이/오디오 정책 변경 사항을 관련 문서에 반영
 
 ## 테스트·품질
 
 - [x] `flutter test` 기본 위젯/게임 스모크
 - [ ] 필요 시 통합 테스트·골든·웹 E2E 범위 확장
+
+## 후속 최적화 점검
+
+- [ ] 전체 화면 기준 `ConsumerWidget` / `setState` 범위를 다시 점검해 불필요한 rebuild 구간 추가 축소
+- [ ] Flutter DevTools 기준으로 초기 진입·게임 플레이 중 rebuild hotspot / frame drop 구간 계측
+- [ ] 계측 결과를 바탕으로 HUD / 오버레이 / 타이틀뷰의 추가 분리 또는 provider 세분화 여부 판단

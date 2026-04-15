@@ -1,5 +1,6 @@
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:async';
 
 import '../services/game_settings.dart';
 import '../utils/sfx_play_log.dart';
@@ -13,6 +14,8 @@ class SoundManager {
   static String? _currentBgm;
   static bool _webUnlocked = false;
   static String? _pendingBgm;
+  static Timer? _pendingComboTimer;
+  static String? _pendingComboPath;
 
   /// 웹: 첫 사용자 상호작용 시 호출. 대기 중인 BGM 재생.
   /// playBgm(path) 대신 playBgmIfUnmuted() 사용: 이미 _currentBgm이 설정된 상태에서
@@ -42,6 +45,22 @@ class SoundManager {
       FlameAudio.audioCache.load(AssetPaths.sfxSpecialGem),
       FlameAudio.audioCache.load(AssetPaths.sfxTimeUp),
     ]);
+  }
+
+  static bool _isHigherPriorityThanCombo(String path) {
+    return path == AssetPaths.sfxSpecialGem ||
+        path == AssetPaths.sfxBigMatch ||
+        path == AssetPaths.sfxTimeUp;
+  }
+
+  static void _cancelPendingComboIfNeeded(String path) {
+    if (_pendingComboTimer == null) return;
+    if (_isHigherPriorityThanCombo(path)) {
+      _pendingComboTimer?.cancel();
+      _pendingComboTimer = null;
+      _pendingComboPath = null;
+      SfxPlayLog.append('combo delayed SFX canceled by higher priority path=$path');
+    }
   }
 
   /// BGM 재생. 음소거 시에는 _currentBgm만 갱신하고 재생하지 않음.
@@ -114,6 +133,7 @@ class SoundManager {
       SfxPlayLog.append('playSfx SKIP webLocked path=$path');
       return;
     }
+    _cancelPendingComboIfNeeded(path);
     final vol = GameSettings.sfxVolume;
     SfxPlayLog.append(
       'playSfx ${kIsWeb ? 'web' : 'native'} → path=$path vol=${vol.toStringAsFixed(2)}',
@@ -125,5 +145,33 @@ class SoundManager {
         'playSfx ${kIsWeb ? 'web' : 'native'} ERROR path=$path err=$e',
       );
     }
+  }
+
+  /// 콤보 강조음은 모바일 웹에서 앞선 SFX와 너무 붙으면 누락될 수 있어
+  /// 아주 짧게 지연 후 재생하고, 그 사이 상위 우선순위 SFX가 오면 취소한다.
+  static void playComboSfxDelayed(String path) {
+    if (GameSettings.sfxMuted) {
+      SfxPlayLog.append('playComboSfxDelayed SKIP sfxMuted path=$path');
+      return;
+    }
+    if (kIsWeb && !_webUnlocked) {
+      SfxPlayLog.append('playComboSfxDelayed SKIP webLocked path=$path');
+      return;
+    }
+    _pendingComboTimer?.cancel();
+    _pendingComboPath = path;
+    final delay = kIsWeb
+        ? const Duration(milliseconds: 70)
+        : const Duration(milliseconds: 40);
+    SfxPlayLog.append(
+      'playComboSfxDelayed schedule path=$path delayMs=${delay.inMilliseconds}',
+    );
+    _pendingComboTimer = Timer(delay, () {
+      final pending = _pendingComboPath;
+      _pendingComboTimer = null;
+      _pendingComboPath = null;
+      if (pending == null) return;
+      playSfx(pending);
+    });
   }
 }

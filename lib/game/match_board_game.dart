@@ -399,11 +399,7 @@ class MatchBoardGame extends FlameGame {
         board.introFillInProgress) {
       return;
     }
-    final prevState = board.state;
     board.handleTap(x, y);
-    if (prevState == 'idle' && board.state != 'idle') {
-      SoundManager.playSfx(AssetPaths.sfxCollect);
-    }
   }
 
   /// 스와이프 입력: 시작 좌표(px)에서 [dr]/[dc] 방향으로 1칸 스왑 시도.
@@ -423,11 +419,7 @@ class MatchBoardGame extends FlameGame {
     final toCol = fromCol + dc;
     if (!board.isInside(toRow, toCol)) return;
     board.selected = null;
-    final prevState = board.state;
     board.trySwap(fromRow, fromCol, toRow, toCol);
-    if (prevState == 'idle' && board.state != 'idle') {
-      SoundManager.playSfx(AssetPaths.sfxCollect);
-    }
   }
 
   void requestHint() {
@@ -487,13 +479,15 @@ class MatchBoardGame extends FlameGame {
     bool hasSpecial,
     int combo,
   ) {
-    // SFX: 특수 보석 > 4+매치 > 콤보 순으로 우선도 (중복 방지)
+    // SFX: 특수 보석 > 4+매치 > 콤보 > 일반 매치 순으로 1개만 재생.
     if (hasSpecial) {
       SoundManager.playSfx(AssetPaths.sfxSpecialGem);
     } else if (bigMatch) {
       SoundManager.playSfx(AssetPaths.sfxBigMatch);
     } else if (combo >= 2) {
-      SoundManager.playSfx(AssetPaths.sfxComboHit);
+      SoundManager.playComboSfxDelayed(AssetPaths.sfxComboHit);
+    } else {
+      SoundManager.playSfx(AssetPaths.sfxCollect);
     }
 
     final ts = board.tileSize;

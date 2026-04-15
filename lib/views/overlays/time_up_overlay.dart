@@ -39,13 +39,17 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
 
     _titleScale = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween(begin: 0.0, end: 1.35)
-            .chain(CurveTween(curve: Curves.easeOutExpo)),
+        tween: Tween(
+          begin: 0.0,
+          end: 1.35,
+        ).chain(CurveTween(curve: Curves.easeOutExpo)),
         weight: 30,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: 1.35, end: 1.0)
-            .chain(CurveTween(curve: Curves.bounceOut)),
+        tween: Tween(
+          begin: 1.35,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.bounceOut)),
         weight: 70,
       ),
     ]).animate(_titleCtrl);
@@ -65,7 +69,9 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
 
   void _submitScore() {
     if (!widget.game.isTimedMode) return;
-    ref.read(rankingProvider.notifier).submit(
+    ref
+        .read(rankingProvider.notifier)
+        .submit(
           score: widget.game.board.score,
           trRankSuccess: context.tr('rankSuccess'),
           trRankNotInTop: context.tr('rankNotInTop'),
@@ -81,8 +87,6 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
 
   @override
   Widget build(BuildContext context) {
-    final rankState = ref.watch(rankingProvider);
-
     if (!_showPanel) {
       return ColoredBox(
         color: JewelCandyLuminaTheme.overlayScrim,
@@ -106,8 +110,9 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
                         blurRadius: 30,
                       ),
                       Shadow(
-                        color: JewelCandyLuminaTheme.primaryPink
-                            .withValues(alpha: 0.8),
+                        color: JewelCandyLuminaTheme.primaryPink.withValues(
+                          alpha: 0.8,
+                        ),
                         blurRadius: 60,
                       ),
                       Shadow(
@@ -145,8 +150,7 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
           Text(
             context.tr('gameResult'),
             style: TextStyle(
-              color: JewelCandyLuminaTheme.tertiaryGold
-                  .withValues(alpha: 0.95),
+              color: JewelCandyLuminaTheme.tertiaryGold.withValues(alpha: 0.95),
               fontSize: 22,
             ),
           ),
@@ -160,25 +164,7 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
           ),
           if (widget.game.isTimedMode) ...[
             const SizedBox(height: 12),
-            if (rankState.isSubmitting)
-              SizedBox(
-                height: 24,
-                width: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: JewelCandyLuminaTheme.secondaryCyan,
-                ),
-              )
-            else if (rankState.rankMessage != null)
-              Text(
-                rankState.rankMessage!,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: JewelCandyLuminaTheme.tertiaryGold,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+            const _RankStatusSection(),
           ],
           const SizedBox(height: 24),
           LuminaGradientButton(
@@ -200,6 +186,45 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RankStatusSection extends ConsumerWidget {
+  const _RankStatusSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isSubmitting = ref.watch(
+      rankingProvider.select((state) => state.isSubmitting),
+    );
+    final rankMessage = ref.watch(
+      rankingProvider.select((state) => state.rankMessage),
+    );
+
+    if (isSubmitting) {
+      return SizedBox(
+        height: 24,
+        width: 24,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: JewelCandyLuminaTheme.secondaryCyan,
+        ),
+      );
+    }
+
+    if (rankMessage == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Text(
+      rankMessage,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        color: JewelCandyLuminaTheme.tertiaryGold,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
       ),
     );
   }

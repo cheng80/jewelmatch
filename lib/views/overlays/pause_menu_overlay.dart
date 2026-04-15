@@ -19,9 +19,6 @@ class PauseMenuOverlay extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final s = ref.watch(settingsProvider);
-    final notifier = ref.read(settingsProvider.notifier);
-
     final sliderTheme = SliderThemeData(
       activeTrackColor: JewelCandyLuminaTheme.secondaryCyan,
       inactiveTrackColor: Colors.white24,
@@ -61,25 +58,7 @@ class PauseMenuOverlay extends ConsumerWidget {
                 fontSize: 20,
               ),
             ),
-            SliderTheme(
-              data: sliderTheme,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Slider(
-                      value: s.bgmMuted ? 0.0 : s.bgmVolume,
-                      onChanged: s.bgmMuted
-                          ? null
-                          : (v) => notifier.setBgmVolume(v),
-                    ),
-                  ),
-                  Switch(
-                    value: s.bgmMuted,
-                    onChanged: (v) => notifier.setBgmMuted(v),
-                  ),
-                ],
-              ),
-            ),
+            _PauseBgmControls(sliderTheme: sliderTheme),
             Text(
               context.tr('sfx'),
               style: TextStyle(
@@ -88,25 +67,7 @@ class PauseMenuOverlay extends ConsumerWidget {
                 fontSize: 20,
               ),
             ),
-            SliderTheme(
-              data: sliderTheme,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Slider(
-                      value: s.sfxMuted ? 0.0 : s.sfxVolume,
-                      onChanged: s.sfxMuted
-                          ? null
-                          : (v) => notifier.setSfxVolume(v),
-                    ),
-                  ),
-                  Switch(
-                    value: s.sfxMuted,
-                    onChanged: (v) => notifier.setSfxMuted(v),
-                  ),
-                ],
-              ),
-            ),
+            _PauseSfxControls(sliderTheme: sliderTheme),
             const SizedBox(height: 24),
             LuminaGradientButton(
               colors: JewelCandyLuminaTheme.buttonPrimaryPink,
@@ -126,6 +87,68 @@ class PauseMenuOverlay extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PauseBgmControls extends ConsumerWidget {
+  const _PauseBgmControls({required this.sliderTheme});
+
+  final SliderThemeData sliderTheme;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final volume = ref.watch(settingsProvider.select((s) => s.bgmVolume));
+    final muted = ref.watch(settingsProvider.select((s) => s.bgmMuted));
+    final notifier = ref.read(settingsProvider.notifier);
+    return SliderTheme(
+      data: sliderTheme,
+      child: Row(
+        children: [
+          Expanded(
+            child: Slider(
+              value: muted ? 0.0 : volume,
+              onChanged: muted ? null : notifier.setBgmVolumeDraft,
+              onChangeEnd: muted ? null : (_) => notifier.commitBgmVolume(),
+            ),
+          ),
+          Switch(
+            value: muted,
+            onChanged: notifier.setBgmMuted,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PauseSfxControls extends ConsumerWidget {
+  const _PauseSfxControls({required this.sliderTheme});
+
+  final SliderThemeData sliderTheme;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final volume = ref.watch(settingsProvider.select((s) => s.sfxVolume));
+    final muted = ref.watch(settingsProvider.select((s) => s.sfxMuted));
+    final notifier = ref.read(settingsProvider.notifier);
+    return SliderTheme(
+      data: sliderTheme,
+      child: Row(
+        children: [
+          Expanded(
+            child: Slider(
+              value: muted ? 0.0 : volume,
+              onChanged: muted ? null : notifier.setSfxVolumeDraft,
+              onChangeEnd: muted ? null : (_) => notifier.commitSfxVolume(),
+            ),
+          ),
+          Switch(
+            value: muted,
+            onChanged: notifier.setSfxMuted,
+          ),
+        ],
       ),
     );
   }

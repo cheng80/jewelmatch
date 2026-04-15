@@ -14,9 +14,6 @@ class SettingView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final s = ref.watch(settingsProvider);
-    final notifier = ref.read(settingsProvider.notifier);
-
     final scaffold = Scaffold(
       appBar: AppBar(
         title: Text(context.tr('settings')),
@@ -33,38 +30,16 @@ class SettingView extends ConsumerWidget {
                 icon: Icons.phone_android,
                 title: context.tr('sectionScreen'),
               ),
-              _MuteSwitch(
-                label: context.tr('keepScreenOn'),
-                value: s.keepScreenOn,
-                onChanged: notifier.setKeepScreenOn,
-              ),
+              const _KeepScreenOnTile(),
               const Divider(height: 1),
               _SectionTitle(
                 icon: Icons.volume_up,
                 title: context.tr('sectionSound'),
               ),
-              _VolumeSlider(
-                label: context.tr('bgmVolume'),
-                value: s.bgmVolume,
-                enabled: !s.bgmMuted,
-                onChanged: notifier.setBgmVolume,
-              ),
-              _MuteSwitch(
-                label: context.tr('bgm'),
-                value: s.bgmMuted,
-                onChanged: notifier.setBgmMuted,
-              ),
-              _VolumeSlider(
-                label: context.tr('sfxVolume'),
-                value: s.sfxVolume,
-                enabled: !s.sfxMuted,
-                onChanged: notifier.setSfxVolume,
-              ),
-              _MuteSwitch(
-                label: context.tr('sfx'),
-                value: s.sfxMuted,
-                onChanged: notifier.setSfxMuted,
-              ),
+              const _BgmVolumeTile(),
+              const _BgmMuteTile(),
+              const _SfxVolumeTile(),
+              const _SfxMuteTile(),
               if (!kIsWeb) ...[
                 const Divider(height: 1),
                 _SectionTitle(icon: Icons.star, title: context.tr('rateApp')),
@@ -168,12 +143,14 @@ class _VolumeSlider extends StatelessWidget {
     required this.value,
     required this.enabled,
     required this.onChanged,
+    required this.onChangeEnd,
   });
 
   final String label;
   final double value;
   final bool enabled;
   final ValueChanged<double> onChanged;
+  final ValueChanged<double> onChangeEnd;
 
   @override
   Widget build(BuildContext context) {
@@ -186,7 +163,11 @@ class _VolumeSlider extends StatelessWidget {
           overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
           trackShape: const RoundedRectSliderTrackShape(),
         ),
-        child: Slider(value: value, onChanged: enabled ? onChanged : null),
+        child: Slider(
+          value: value,
+          onChanged: enabled ? onChanged : null,
+          onChangeEnd: enabled ? onChangeEnd : null,
+        ),
       ),
     );
   }
@@ -213,6 +194,90 @@ class _MuteSwitch extends StatelessWidget {
       title: Text(label),
       value: value,
       onChanged: onChanged,
+    );
+  }
+}
+
+class _KeepScreenOnTile extends ConsumerWidget {
+  const _KeepScreenOnTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final value =
+        ref.watch(settingsProvider.select((s) => s.keepScreenOn));
+    final notifier = ref.read(settingsProvider.notifier);
+    return _MuteSwitch(
+      label: context.tr('keepScreenOn'),
+      value: value,
+      onChanged: notifier.setKeepScreenOn,
+    );
+  }
+}
+
+class _BgmVolumeTile extends ConsumerWidget {
+  const _BgmVolumeTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final value = ref.watch(settingsProvider.select((s) => s.bgmVolume));
+    final enabled =
+        !ref.watch(settingsProvider.select((s) => s.bgmMuted));
+    final notifier = ref.read(settingsProvider.notifier);
+    return _VolumeSlider(
+      label: context.tr('bgmVolume'),
+      value: value,
+      enabled: enabled,
+      onChanged: notifier.setBgmVolumeDraft,
+      onChangeEnd: (_) => notifier.commitBgmVolume(),
+    );
+  }
+}
+
+class _BgmMuteTile extends ConsumerWidget {
+  const _BgmMuteTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final value = ref.watch(settingsProvider.select((s) => s.bgmMuted));
+    final notifier = ref.read(settingsProvider.notifier);
+    return _MuteSwitch(
+      label: context.tr('bgm'),
+      value: value,
+      onChanged: notifier.setBgmMuted,
+    );
+  }
+}
+
+class _SfxVolumeTile extends ConsumerWidget {
+  const _SfxVolumeTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final value = ref.watch(settingsProvider.select((s) => s.sfxVolume));
+    final enabled =
+        !ref.watch(settingsProvider.select((s) => s.sfxMuted));
+    final notifier = ref.read(settingsProvider.notifier);
+    return _VolumeSlider(
+      label: context.tr('sfxVolume'),
+      value: value,
+      enabled: enabled,
+      onChanged: notifier.setSfxVolumeDraft,
+      onChangeEnd: (_) => notifier.commitSfxVolume(),
+    );
+  }
+}
+
+class _SfxMuteTile extends ConsumerWidget {
+  const _SfxMuteTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final value = ref.watch(settingsProvider.select((s) => s.sfxMuted));
+    final notifier = ref.read(settingsProvider.notifier);
+    return _MuteSwitch(
+      label: context.tr('sfx'),
+      value: value,
+      onChanged: notifier.setSfxMuted,
     );
   }
 }

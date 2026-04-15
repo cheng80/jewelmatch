@@ -49,7 +49,11 @@ class _TitleViewState extends State<TitleView>
   }
 
   Future<void> _cachePackageInfo() async {
-    _cachedPackageInfo ??= await PackageInfo.fromPlatform();
+    if (_cachedPackageInfo == null) {
+      _cachedPackageInfo = await PackageInfo.fromPlatform();
+    }
+    if (!mounted) return;
+    setState(() {});
   }
 
   @override
@@ -264,23 +268,6 @@ class _TitleContent extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 8),
-              TextButton(
-                onPressed: () {
-                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                  context.push(RoutePaths.sfxTest);
-                },
-                child: Text(
-                  '효과음 단독 검증',
-                  style: TextStyle(
-                    color: JewelCandyLuminaTheme.outlineBright
-                        .withValues(alpha: 0.85),
-                    fontSize: 16,
-                    decoration: TextDecoration.underline,
-                    decorationColor: JewelCandyLuminaTheme.outlineBright
-                        .withValues(alpha: 0.45),
-                  ),
-                ),
-              ),
               const Spacer(flex: 1),
               Padding(
                 padding: const EdgeInsets.only(top: 8),

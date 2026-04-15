@@ -50,18 +50,32 @@ class SettingsNotifier extends Notifier<SettingsState> {
     );
   }
 
-  void setBgmVolume(double v) {
-    GameSettings.bgmVolume = v;
-    SoundManager.applyBgmVolume();
+  void setBgmVolumeDraft(double v) {
+    if (state.bgmVolume == v) return;
     state = state.copyWith(bgmVolume: v);
+    if (!state.bgmMuted) {
+      SoundManager.applyBgmVolume();
+    }
   }
 
-  void setSfxVolume(double v) {
-    GameSettings.sfxVolume = v;
+  void commitBgmVolume() {
+    GameSettings.bgmVolume = state.bgmVolume;
+    if (!state.bgmMuted) {
+      SoundManager.applyBgmVolume();
+    }
+  }
+
+  void setSfxVolumeDraft(double v) {
+    if (state.sfxVolume == v) return;
     state = state.copyWith(sfxVolume: v);
   }
 
+  void commitSfxVolume() {
+    GameSettings.sfxVolume = state.sfxVolume;
+  }
+
   void setBgmMuted(bool v) {
+    if (state.bgmMuted == v) return;
     GameSettings.bgmMuted = v;
     if (v) {
       SoundManager.pauseBgm();
@@ -72,11 +86,13 @@ class SettingsNotifier extends Notifier<SettingsState> {
   }
 
   void setSfxMuted(bool v) {
+    if (state.sfxMuted == v) return;
     GameSettings.sfxMuted = v;
     state = state.copyWith(sfxMuted: v);
   }
 
   void setKeepScreenOn(bool v) {
+    if (state.keepScreenOn == v) return;
     GameSettings.keepScreenOn = v;
     if (v) {
       WakelockPlus.enable();
