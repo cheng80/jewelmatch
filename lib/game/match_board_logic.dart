@@ -14,6 +14,7 @@ enum BoardFillIntroKind {
 enum GemKind { normal, row, col, bomb, hyper }
 
 /// 단일 보석 인스턴스 (논리 격자 + 화면 보간 좌표).
+/// 오브젝트 풀링을 위해 [reset]으로 필드를 재설정할 수 있다.
 class BoardGem {
   BoardGem({
     required this.id,
@@ -36,6 +37,29 @@ class BoardGem {
   double y;
   double targetX;
   double targetY;
+
+  /// 풀에서 꺼낸 인스턴스를 새 보석처럼 재설정한다.
+  void reset({
+    required int id,
+    required int color,
+    required GemKind kind,
+    required int row,
+    required int col,
+    required double x,
+    required double y,
+    required double targetX,
+    required double targetY,
+  }) {
+    this.id = id;
+    this.color = color;
+    this.kind = kind;
+    this.row = row;
+    this.col = col;
+    this.x = x;
+    this.y = y;
+    this.targetX = targetX;
+    this.targetY = targetY;
+  }
 }
 
 /// 제거 순간 플래시 이펙트.
@@ -178,6 +202,54 @@ class MatchBoardLogic {
 
   final Random _random = Random();
 
+  /// BoardGem 오브젝트 풀. 제거된 보석을 여기 반납하고, 생성 시 재활용한다.
+  final List<BoardGem> _gemPool = [];
+
+  /// 풀에서 꺼내거나 새로 생성한 BoardGem을 반환한다.
+  BoardGem _acquireGem({
+    required int id,
+    required int color,
+    required GemKind kind,
+    required int row,
+    required int col,
+    required double x,
+    required double y,
+    required double targetX,
+    required double targetY,
+  }) {
+    if (_gemPool.isNotEmpty) {
+      final gem = _gemPool.removeLast();
+      gem.reset(
+        id: id,
+        color: color,
+        kind: kind,
+        row: row,
+        col: col,
+        x: x,
+        y: y,
+        targetX: targetX,
+        targetY: targetY,
+      );
+      return gem;
+    }
+    return BoardGem(
+      id: id,
+      color: color,
+      kind: kind,
+      row: row,
+      col: col,
+      x: x,
+      y: y,
+      targetX: targetX,
+      targetY: targetY,
+    );
+  }
+
+  /// 제거된 보석을 풀에 반납한다.
+  void _releaseGem(BoardGem gem) {
+    _gemPool.add(gem);
+  }
+
   /// 첫 보드·재시작 시 낙하 인트로 연출 중이면 true.
   bool introFillInProgress = false;
 
@@ -224,6 +296,11 @@ class MatchBoardLogic {
       row >= 0 && row < rows && col >= 0 && col < cols;
 
   void resetCells() {
+    for (final row in cells) {
+      for (final gem in row) {
+        if (gem != null) _releaseGem(gem);
+      }
+    }
     cells.clear();
     for (var r = 0; r < rows; r++) {
       cells.add(List<BoardGem?>.filled(cols, null, growable: false));
@@ -340,7 +417,7 @@ class MatchBoardLogic {
     if (spawnOffsetRows > 0) {
       gy = t.dy - spawnOffsetRows * tileSize;
     }
-    return BoardGem(
+    return _acquireGem(
       id: _nextId(),
       color: color,
       kind: kind,
@@ -848,6 +925,7 @@ class MatchBoardLogic {
         removedCells.add((row: row, col: col, color: gem.color));
         addFlashEffect(row, col);
         cells[row][col] = null;
+        _releaseGem(gem);
       }
     }
 

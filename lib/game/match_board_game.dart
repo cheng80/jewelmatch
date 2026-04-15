@@ -71,6 +71,7 @@ class MatchBoardGame extends FlameGame {
   static const int timedLowTimeTickMaxSeconds = 10;
 
   late final MatchBoardLogic board;
+  late final ParticlePool _particlePool;
 
   MatchGameHud? _hud;
   final Map<String, String> _localeStrings = {};
@@ -168,6 +169,8 @@ class MatchBoardGame extends FlameGame {
     camera.viewport.add(_hud!);
 
     world.add(MatchBoardRenderer(logic: board));
+
+    _particlePool = ParticlePool(world);
 
     if (isTimedMode) {
       _fetchTop1();
@@ -522,7 +525,7 @@ class MatchBoardGame extends FlameGame {
       final color = c.color >= 1 && c.color <= MatchBoardLogic.palette.length
           ? MatchBoardLogic.palette[c.color - 1]
           : Colors.white;
-      world.add(ParticleBurst(
+      _particlePool.spawn(
         center: Vector2(px, py),
         baseColor: color,
         count: count,
@@ -530,7 +533,7 @@ class MatchBoardGame extends FlameGame {
         speedScale: speed,
         sizeScale: size,
         withGlow: glow,
-      ));
+      );
     }
   }
 
