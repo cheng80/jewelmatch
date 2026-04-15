@@ -439,16 +439,27 @@ class MatchGameHud extends PositionComponent
 
     final bestBlockW = math.max(_bestLabel.width, _bestValue.width);
     final gapBestTutorial = layout * 0.1;
-    final bestRight = (onRankingPressed != null && _rankingRect.width > 0)
-        ? _rankingRect.left - gapBestTutorial
-        : _tutorialRect.left - gapBestTutorial;
-    final bestLeft = bestRight - bestBlockW;
+    // 튜토리얼 왼쪽까지가 베스트 영역 오른쪽 끝. 랭킹 버튼 추가 시 bestRight를 왼쪽으로 당기면
+    // 블록 전체가 일시정지·힌트 위로 겹친다 → 오른쪽 끝은 항상 튜토리얼 기준.
+    final bestRight = _tutorialRect.left - gapBestTutorial;
+    final minLeft = (_rankingRect.width > 0)
+        ? _rankingRect.right + gapBestTutorial
+        : _hintRect.right + gapBestTutorial;
+    var bestLeft = bestRight - bestBlockW;
+    if (bestLeft < minLeft) {
+      bestLeft = minLeft;
+    }
     final bestTop = top + (row1H - (_bestLabel.height + 4 + _bestValue.height)) / 2;
+    final slotTop = top;
+    final slotBottom = top + row1H;
+    canvas.save();
+    canvas.clipRect(Rect.fromLTRB(minLeft, slotTop, bestRight, slotBottom));
     _bestLabel.paint(canvas, Offset(bestLeft + (bestBlockW - _bestLabel.width) / 2, bestTop));
     _bestValue.paint(
       canvas,
       Offset(bestLeft + (bestBlockW - _bestValue.width) / 2, bestTop + _bestLabel.height + 4),
     );
+    canvas.restore();
 
     _drawTutorialButton(canvas);
 
