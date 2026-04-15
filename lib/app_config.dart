@@ -10,6 +10,7 @@ class AppConfig {
   static const String gameTitle = 'Jewel';
   static const String gameTitleSub = 'Match';
   static const String gameSubtitle = '같은 보석을 모아보세요!';
+  static const bool debugLog = false;
 }
 
 /// 로컬 저장소(GetStorage) 키 상수.

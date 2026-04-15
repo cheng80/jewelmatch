@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
+import '../app_config.dart';
 import '../game/jewel_game_mode.dart';
 import '../game/match_board_game.dart';
 import '../utils/sfx_play_log.dart';
@@ -37,7 +38,7 @@ class _GameViewState extends State<GameView> {
   @override
   void initState() {
     super.initState();
-    if (widget.gameMode == JewelGameMode.simple) {
+    if (AppConfig.debugLog && widget.gameMode == JewelGameMode.simple) {
       SfxPlayLog.enabled = true;
       SfxPlayLog.clear();
     }
@@ -47,7 +48,7 @@ class _GameViewState extends State<GameView> {
 
   @override
   void dispose() {
-    if (widget.gameMode == JewelGameMode.simple) {
+    if (AppConfig.debugLog && widget.gameMode == JewelGameMode.simple) {
       SfxPlayLog.enabled = false;
     }
     super.dispose();
@@ -99,7 +100,7 @@ class _GameViewState extends State<GameView> {
   Widget build(BuildContext context) {
     final content = _ready ? _gameWidget! : const SizedBox.shrink();
     final showSfxLog =
-        widget.gameMode == JewelGameMode.simple && _ready;
+        AppConfig.debugLog && widget.gameMode == JewelGameMode.simple && _ready;
 
     final mq = MediaQuery.of(context);
     final logHeight = min(148.0, mq.size.height * 0.2);

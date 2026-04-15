@@ -40,6 +40,7 @@ class App extends StatelessWidget {
     if (kIsWeb) {
       root = Listener(
         onPointerDown: (_) => SoundManager.unlockForWeb(),
+        onPointerUp: (_) => SoundManager.unlockForWeb(),
         behavior: HitTestBehavior.translucent,
         child: root,
       );

@@ -33,6 +33,7 @@ class SoundManager {
   /// 포인터다운마다 호출되며, 웹 효과음용 플레이어 풀([_ensureWebSfxPool])을 한 번만 채운다.
   static void unlockForWeb() {
     if (!kIsWeb) return;
+    _primeWebAudioSync();
     if (!_webUnlocked) {
       _webUnlocked = true;
       if (_pendingBgm != null) {
@@ -68,6 +69,40 @@ class SoundManager {
     await _webSfxPoolReady;
   }
 
+  /// 웹 첫 제스처에서 이미 준비된 플레이어로 0볼륨 SFX를 한 번 흘려
+  /// 브라우저 자동재생 잠금을 푸는 시도.
+  ///
+  /// 핵심은 `play()` 호출이 사용자 제스처와 같은 동기 스택에서 시작되는 것이다.
+  static void _primeWebAudioSync() {
+    final pool = _webSfxPool;
+    if (pool != null && pool.length == _webSfxPoolSize) {
+      final i = _webSfxPoolIndex % pool.length;
+      _webSfxPoolIndex++;
+      unawaited(
+        pool[i].play(AssetSource(AssetPaths.sfxBtnSnd), volume: 0).catchError((
+          Object e,
+          StackTrace _,
+        ) {
+          SfxPlayLog.append('web unlock prime ERROR err=$e');
+        }),
+      );
+      return;
+    }
+    unawaited(
+      _ensureWebSfxPool().then((_) {
+        final readyPool = _webSfxPool;
+        if (readyPool == null || readyPool.isEmpty) return null;
+        final i = _webSfxPoolIndex % readyPool.length;
+        _webSfxPoolIndex++;
+        return readyPool[i]
+            .play(AssetSource(AssetPaths.sfxBtnSnd), volume: 0)
+            .catchError((Object e, StackTrace _) {
+              SfxPlayLog.append('web unlock ensure ERROR err=$e');
+            });
+      }),
+    );
+  }
+
   /// 게임·메뉴 BGM과 효과음을 미리 로드한다. 앱 시작 시 호출.
   static Future<void> preload() async {
     await Future.wait([
@@ -84,6 +119,9 @@ class SoundManager {
       FlameAudio.audioCache.load(AssetPaths.sfxSpecialGem),
       FlameAudio.audioCache.load(AssetPaths.sfxTimeUp),
     ]);
+    if (kIsWeb) {
+      await _ensureWebSfxPool();
+    }
   }
 
   /// BGM 재생. 음소거 시에는 _currentBgm만 갱신하고 재생하지 않음.
