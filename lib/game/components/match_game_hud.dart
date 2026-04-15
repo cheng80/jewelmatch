@@ -22,11 +22,15 @@ class MatchGameHud extends PositionComponent
     required this.onPausePressed,
     required this.onHintPressed,
     required this.onTutorialPressed,
+    this.onRankingPressed,
   });
 
   final VoidCallback onPausePressed;
   final VoidCallback onHintPressed;
   final VoidCallback onTutorialPressed;
+
+  /// 타임 모드 전용: 힌트 오른쪽 랭킹 버튼. `null`이면 그리지 않는다.
+  final VoidCallback? onRankingPressed;
 
   /// 스와이프 감지: 드래그 시작 위치(캔버스 좌표, trySwap 셀 판정용).
   Vector2? _dragStartCanvas;
@@ -52,6 +56,7 @@ class MatchGameHud extends PositionComponent
 
   late Rect _pauseRect;
   late Rect _hintRect;
+  late Rect _rankingRect;
   late Rect _tutorialRect;
   late TextPainter _tutorialGlyph;
   late Rect _timeBarRect;
@@ -137,6 +142,17 @@ class MatchGameHud extends PositionComponent
       btn,
       btn,
     );
+
+    if (onRankingPressed != null) {
+      _rankingRect = Rect.fromLTWH(
+        _hintRect.right + gapBtn,
+        top + (row1H - btn) / 2,
+        btn,
+        btn,
+      );
+    } else {
+      _rankingRect = Rect.zero;
+    }
 
     _tutorialRect = Rect.fromLTWH(
       right - barPad - btn,
@@ -423,7 +439,9 @@ class MatchGameHud extends PositionComponent
 
     final bestBlockW = math.max(_bestLabel.width, _bestValue.width);
     final gapBestTutorial = layout * 0.1;
-    final bestRight = _tutorialRect.left - gapBestTutorial;
+    final bestRight = (onRankingPressed != null && _rankingRect.width > 0)
+        ? _rankingRect.left - gapBestTutorial
+        : _tutorialRect.left - gapBestTutorial;
     final bestLeft = bestRight - bestBlockW;
     final bestTop = top + (row1H - (_bestLabel.height + 4 + _bestValue.height)) / 2;
     _bestLabel.paint(canvas, Offset(bestLeft + (bestBlockW - _bestLabel.width) / 2, bestTop));
@@ -607,6 +625,9 @@ class MatchGameHud extends PositionComponent
     }
 
     _drawHintButton(canvas);
+    if (onRankingPressed != null && _rankingRect.width > 0) {
+      _drawRankingButton(canvas);
+    }
     _drawPause(canvas);
   }
 
@@ -665,6 +686,47 @@ class MatchGameHud extends PositionComponent
     );
     final glint = Paint()..color = Colors.white.withValues(alpha: 0.35);
     canvas.drawCircle(Offset(c.dx - w * 0.05, c.dy - w * 0.1), w * 0.04, glint);
+  }
+
+  /// 랭킹 — 트로피 실루엣 (힌트 전구와 구분).
+  void _drawRankingButton(Canvas canvas) {
+    final r = _rankingRect;
+    if (r.isEmpty) return;
+    final rr = RRect.fromRectAndRadius(r, Radius.circular(r.width * 0.25));
+    canvas.drawRRect(
+      rr,
+      Paint()..color = JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.18),
+    );
+    canvas.drawRRect(
+      rr,
+      Paint()
+        ..color = JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.88)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5,
+    );
+    final c = r.center;
+    final w = r.width;
+    final cup = Paint()..color = JewelCandyLuminaTheme.goldStrong;
+    final path = Path()
+      ..moveTo(c.dx - w * 0.22, c.dy + w * 0.12)
+      ..lineTo(c.dx - w * 0.18, c.dy - w * 0.02)
+      ..quadraticBezierTo(c.dx - w * 0.2, c.dy - w * 0.2, c.dx, c.dy - w * 0.22)
+      ..quadraticBezierTo(c.dx + w * 0.2, c.dy - w * 0.2, c.dx + w * 0.18, c.dy - w * 0.02)
+      ..lineTo(c.dx + w * 0.22, c.dy + w * 0.12)
+      ..lineTo(c.dx + w * 0.14, c.dy + w * 0.1)
+      ..lineTo(c.dx - w * 0.14, c.dy + w * 0.1)
+      ..close();
+    canvas.drawPath(path, cup);
+    canvas.drawRect(
+      Rect.fromCenter(
+        center: Offset(c.dx, c.dy + w * 0.16),
+        width: w * 0.36,
+        height: w * 0.08,
+      ),
+      Paint()..color = const Color(0xFF8D6E63),
+    );
+    canvas.drawCircle(Offset(c.dx - w * 0.2, c.dy - w * 0.18), w * 0.06, cup);
+    canvas.drawCircle(Offset(c.dx + w * 0.2, c.dy - w * 0.18), w * 0.06, cup);
   }
 
   void _drawPause(Canvas canvas) {
@@ -788,6 +850,9 @@ class MatchGameHud extends PositionComponent
     final o = Offset(p.x, p.y);
     return _pauseRect.contains(o) ||
         _hintRect.contains(o) ||
+        (onRankingPressed != null &&
+            _rankingRect.width > 0 &&
+            _rankingRect.contains(o)) ||
         _tutorialRect.contains(o);
   }
 
@@ -800,6 +865,13 @@ class MatchGameHud extends PositionComponent
     }
     if (_hintRect.contains(o)) {
       onHintPressed();
+      return true;
+    }
+    if (onRankingPressed != null &&
+        _rankingRect.width > 0 &&
+        _rankingRect.contains(o)) {
+      game.dismissHint();
+      onRankingPressed!();
       return true;
     }
     if (_tutorialRect.contains(o)) {
