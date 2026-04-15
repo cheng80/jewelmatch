@@ -12,7 +12,7 @@
 - [x] 매치 이벤트 SFX: `ComboHit`·`BigMatch`·`SpecialGem` — 우선순위 기반 단일 재생
 - [x] 매치 파티클: `ParticleBurst` — 3매치(기본) / 4+·콤보·특수(화려) 3단계
 - [x] 스프라이트시트 사전 로드 + `FadeTransition` 전환 → 장면 전환 버벅임 제거
-- [x] 웹 오디오 정책 단순화: 앱 루트 첫 포인터다운 unlock + pending BGM만 유지
+- [x] 웹 오디오 기준점 확정: `SoundManager`의 웹 SFX 풀링/prime 실험 코드 유지 상태를 현재 기준 실험 버전으로 기록
 - [x] 보드 크롬/슬롯 배경 `ui.Picture` 캐싱 (`MatchBoardRenderer`)
 - [x] 보드 클리핑 최소화: 낙하/리필/인트로 구간에서만 `clipRRect`
 - [x] HUD `TextPainter`/`Paint` 재사용 캐싱 (`MatchGameHud`)

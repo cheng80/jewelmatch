@@ -22,7 +22,7 @@
 | 5 | [`docs/code-flow-analysis.md`](docs/code-flow-analysis.md) | `main` → `GameView` → `MatchBoardGame` 초기화·파일 역할 |
 | 6 | [`docs/web_build.md`](docs/web_build.md) | Web `--base-href`·배포 시 주의 (서브패스 `/match/` 등) |
 | 7 | [`docs/audio_aisfx_prompts.md`](docs/audio_aisfx_prompts.md) | SFX·BGM 파일명·프롬프트·코드 매핑 변경 시 |
-| 8 | [`docs/web_audio_flutter_flame.md`](docs/web_audio_flutter_flame.md) | Web 오디오 정책 메모 — 현재는 **최소 unlock 정책**, 고급 대응은 참고용 |
+| 8 | [`docs/web_audio_flutter_flame.md`](docs/web_audio_flutter_flame.md) | Web 오디오 정책 메모 — 현재 기준은 **웹 SFX 풀링/prime 실험 코드 유지 상태(완전 안정은 아님)** |
 
 ---
 
@@ -35,6 +35,7 @@
   - 보석 시트는 `Jewel.png` `128×128` 기준이며 하이퍼는 2번째 프레임이다.
   - 특수 보석 시트는 `Special.png` `128×128` 기준이며 순서는 `col / row / bomb`다.
   - 설정/랭킹 UI는 Riverpod `select` 기반으로 구독 범위를 줄인 상태다.
+  - 웹 오디오는 현재 `SoundManager`의 웹 SFX 풀링/prime 실험 코드가 **기준점**이며, 가장 안정적이지만 완전 해결은 아니다.
 
 ---
 

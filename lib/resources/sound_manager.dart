@@ -16,16 +16,25 @@ class SoundManager {
   static String? _pendingBgm;
   static Timer? _pendingComboTimer;
   static String? _pendingComboPath;
+  static final Map<String, AudioPool> _webSfxPools = {};
+  static bool _webPrimeInFlight = false;
+  static DateTime? _lastWebPrimeAt;
 
   /// 웹: 첫 사용자 상호작용 시 호출. 대기 중인 BGM 재생.
-  /// playBgm(path) 대신 playBgmIfUnmuted() 사용: 이미 _currentBgm이 설정된 상태에서
-  /// playBgm(path)를 호출하면 _currentBgm == path로 early return되어 실제 재생이 안 됨.
+  /// 현재는 "첫 1회 unlock"이 아니라 포인터다운마다 재-priming을 허용한다.
+  /// 모바일 웹에서 드래그 뒤 AudioContext가 다시 suspend 되는 경우가 있어
+  /// 이후 제스처에서도 BGM/SFX 복구 시도를 해 준다.
   static void unlockForWeb() {
-    if (!kIsWeb || _webUnlocked) return;
+    if (!kIsWeb) return;
     _webUnlocked = true;
+    unawaited(_primeWebSfxPools());
     if (_pendingBgm != null) {
       _pendingBgm = null;
-      playBgmIfUnmuted();
+      unawaited(playBgmIfUnmuted());
+      return;
+    }
+    if (_currentBgm != null && !FlameAudio.bgm.isPlaying && !GameSettings.bgmMuted) {
+      unawaited(playBgmIfUnmuted());
     }
   }
 
@@ -45,6 +54,81 @@ class SoundManager {
       FlameAudio.audioCache.load(AssetPaths.sfxSpecialGem),
       FlameAudio.audioCache.load(AssetPaths.sfxTimeUp),
     ]);
+    if (kIsWeb) {
+      await _initWebSfxPools();
+    }
+  }
+
+  static Future<void> _initWebSfxPools() async {
+    if (_webSfxPools.isNotEmpty) return;
+    _webSfxPools[AssetPaths.sfxBtnSnd] = await FlameAudio.createPool(
+      AssetPaths.sfxBtnSnd,
+      minPlayers: 1,
+      maxPlayers: 2,
+    );
+    _webSfxPools[AssetPaths.sfxCollect] = await FlameAudio.createPool(
+      AssetPaths.sfxCollect,
+      minPlayers: 1,
+      maxPlayers: 3,
+    );
+    _webSfxPools[AssetPaths.sfxFail] = await FlameAudio.createPool(
+      AssetPaths.sfxFail,
+      minPlayers: 1,
+      maxPlayers: 1,
+    );
+    _webSfxPools[AssetPaths.sfxComboHit] = await FlameAudio.createPool(
+      AssetPaths.sfxComboHit,
+      minPlayers: 1,
+      maxPlayers: 3,
+    );
+    _webSfxPools[AssetPaths.sfxBigMatch] = await FlameAudio.createPool(
+      AssetPaths.sfxBigMatch,
+      minPlayers: 1,
+      maxPlayers: 1,
+    );
+    _webSfxPools[AssetPaths.sfxSpecialGem] = await FlameAudio.createPool(
+      AssetPaths.sfxSpecialGem,
+      minPlayers: 1,
+      maxPlayers: 1,
+    );
+    _webSfxPools[AssetPaths.sfxTimeTic] = await FlameAudio.createPool(
+      AssetPaths.sfxTimeTic,
+      minPlayers: 1,
+      maxPlayers: 1,
+    );
+    _webSfxPools[AssetPaths.sfxTimeUp] = await FlameAudio.createPool(
+      AssetPaths.sfxTimeUp,
+      minPlayers: 1,
+      maxPlayers: 1,
+    );
+    _webSfxPools[AssetPaths.sfxStart] = await FlameAudio.createPool(
+      AssetPaths.sfxStart,
+      minPlayers: 1,
+      maxPlayers: 1,
+    );
+  }
+
+  static Future<void> _primeWebSfxPools() async {
+    if (!kIsWeb || _webSfxPools.isEmpty || _webPrimeInFlight) return;
+    final now = DateTime.now();
+    if (_lastWebPrimeAt != null &&
+        now.difference(_lastWebPrimeAt!) < const Duration(milliseconds: 300)) {
+      return;
+    }
+    _webPrimeInFlight = true;
+    _lastWebPrimeAt = now;
+    try {
+      for (final entry in _webSfxPools.entries) {
+        try {
+          final stop = await entry.value.start(volume: 0);
+          await stop();
+        } catch (e, _) {
+          SfxPlayLog.append('primeWebSfxPool ERROR path=${entry.key} err=$e');
+        }
+      }
+    } finally {
+      _webPrimeInFlight = false;
+    }
   }
 
   static bool _isHigherPriorityThanCombo(String path) {
@@ -139,6 +223,11 @@ class SoundManager {
       'playSfx ${kIsWeb ? 'web' : 'native'} → path=$path vol=${vol.toStringAsFixed(2)}',
     );
     try {
+      final webPool = kIsWeb ? _webSfxPools[path] : null;
+      if (webPool != null) {
+        unawaited(webPool.start(volume: vol));
+        return;
+      }
       FlameAudio.play(path, volume: vol);
     } catch (e, _) {
       SfxPlayLog.append(
