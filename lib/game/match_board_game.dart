@@ -509,21 +509,21 @@ class MatchBoardGame extends FlameGame {
     final bool glow;
     if (intense) {
       count = 28;
-      speed = 1.8;
-      size = 1.7;
-      life = 0.75;
+      speed = 1.38;
+      size = 1.38;
+      life = 0.62;
       glow = true;
     } else if (medium) {
       count = 18;
-      speed = 1.4;
-      size = 1.35;
-      life = 0.6;
+      speed = 1.1;
+      size = 1.14;
+      life = 0.52;
       glow = true;
     } else {
       count = 12;
-      speed = 1.0;
-      size = 1.0;
-      life = 0.5;
+      speed = 0.9;
+      size = 0.9;
+      life = 0.46;
       glow = false;
     }
 

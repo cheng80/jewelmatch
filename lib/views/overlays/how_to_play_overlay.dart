@@ -7,6 +7,7 @@ import '../../resources/asset_paths.dart';
 import '../../resources/sound_manager.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../../widgets/lumina_buttons.dart';
+import '../../widgets/sprite_sheet_frame.dart';
 
 /// "?" 버튼으로 열리는 게임 설명 오버레이.
 class HowToPlayOverlay extends StatelessWidget {
@@ -147,25 +148,31 @@ class HowToPlayOverlay extends StatelessWidget {
   }
 
   Widget _gemClip(int sheetCol) {
-    return SizedBox(
-      width: _gemSize,
-      height: _gemSize,
-      child: ClipRect(
-        child: OverflowBox(
-          maxWidth: _gemSize * 7,
-          maxHeight: _gemSize,
-          alignment: Alignment.centerLeft,
-          child: Transform.translate(
-            offset: Offset(-_gemSize * sheetCol, 0),
-            child: Image.asset(
-              'assets/images/sprites/Juwel.png',
-              width: _gemSize * 7,
-              height: _gemSize,
-              fit: BoxFit.contain,
-            ),
-          ),
-        ),
-      ),
+    return _sheetFrameClip(
+      assetPath: 'assets/images/${AssetPaths.jewelSpriteSheet}',
+      frameCount: 7,
+      frameIndex: sheetCol,
+    );
+  }
+
+  Widget _specialGemClip(int sheetCol) {
+    return _sheetFrameClip(
+      assetPath: 'assets/images/${AssetPaths.specialSpriteSheet}',
+      frameCount: 3,
+      frameIndex: sheetCol,
+    );
+  }
+
+  Widget _sheetFrameClip({
+    required String assetPath,
+    required int frameCount,
+    required int frameIndex,
+  }) {
+    return SpriteSheetFrame(
+      assetPath: assetPath,
+      frameIndex: frameIndex,
+      frameSize: 128,
+      size: _gemSize,
     );
   }
 
@@ -251,7 +258,7 @@ class HowToPlayOverlay extends StatelessWidget {
   Widget _specialGemCard(
     BuildContext context, {
     required GemKind kind,
-    required int gemSheetCol,
+    int? gemSheetCol,
     required String title,
     required String desc,
   }) {
@@ -296,30 +303,29 @@ class HowToPlayOverlay extends StatelessWidget {
 
   Widget _specialGemPreview({
     required GemKind kind,
-    required int gemSheetCol,
+    int? gemSheetCol,
   }) {
+    final specialSheetCol = switch (kind) {
+      GemKind.col => 0,
+      GemKind.row => 1,
+      GemKind.bomb => 2,
+      GemKind.normal || GemKind.hyper => null,
+    };
+
     return SizedBox(
       width: 52,
       height: 52,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SizedBox(
-            width: 44,
-            height: 44,
-            child: FittedBox(
-              fit: BoxFit.contain,
-              child: _gemClip(gemSheetCol),
+      child: specialSheetCol != null
+          ? Padding(
+              padding: const EdgeInsets.all(4),
+              child: _specialGemClip(specialSheetCol),
+            )
+          : Padding(
+              padding: const EdgeInsets.all(4),
+              child: gemSheetCol == null
+                  ? const SizedBox.shrink()
+                  : _gemClip(gemSheetCol),
             ),
-          ),
-          IgnorePointer(
-            child: CustomPaint(
-              size: const Size(52, 52),
-              painter: _SpecialGemMarkPainter(kind),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -483,92 +489,5 @@ class HowToPlayOverlay extends StatelessWidget {
       ),
       child: _gemClip(sheetCol),
     );
-  }
-}
-
-class _SpecialGemMarkPainter extends CustomPainter {
-  const _SpecialGemMarkPainter(this.kind);
-
-  final GemKind kind;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2;
-    final cy = size.height / 2;
-    final ts = size.width;
-
-    switch (kind) {
-      case GemKind.normal:
-        break;
-      case GemKind.row:
-        final p = Paint()
-          ..color = Colors.white.withValues(alpha: 0.92)
-          ..strokeWidth = 2.4
-          ..style = PaintingStyle.stroke;
-        canvas.drawLine(Offset(cx - ts * 0.18, cy), Offset(cx + ts * 0.18, cy), p);
-        canvas.drawLine(
-          Offset(cx - ts * 0.18, cy - 4),
-          Offset(cx + ts * 0.18, cy - 4),
-          p,
-        );
-        canvas.drawLine(
-          Offset(cx - ts * 0.18, cy + 4),
-          Offset(cx + ts * 0.18, cy + 4),
-          p,
-        );
-      case GemKind.col:
-        final p = Paint()
-          ..color = Colors.white.withValues(alpha: 0.92)
-          ..strokeWidth = 2.4
-          ..style = PaintingStyle.stroke;
-        canvas.drawLine(Offset(cx, cy - ts * 0.18), Offset(cx, cy + ts * 0.18), p);
-        canvas.drawLine(
-          Offset(cx - 4, cy - ts * 0.18),
-          Offset(cx - 4, cy + ts * 0.18),
-          p,
-        );
-        canvas.drawLine(
-          Offset(cx + 4, cy - ts * 0.18),
-          Offset(cx + 4, cy + ts * 0.18),
-          p,
-        );
-      case GemKind.bomb:
-        final p = Paint()
-          ..color = Colors.white.withValues(alpha: 0.9)
-          ..strokeWidth = 2.0
-          ..style = PaintingStyle.stroke;
-        canvas.drawCircle(Offset(cx, cy), ts * 0.12, p);
-        for (final off in [
-          Offset(0, -ts * 0.16),
-          Offset(ts * 0.12, -ts * 0.08),
-          Offset(ts * 0.12, ts * 0.1),
-          Offset(-ts * 0.12, ts * 0.1),
-          Offset(-ts * 0.12, -ts * 0.08),
-        ]) {
-          canvas.drawLine(Offset(cx, cy), Offset(cx + off.dx, cy + off.dy), p);
-        }
-      case GemKind.hyper:
-        final p = Paint()
-          ..color = Colors.white.withValues(alpha: 0.95)
-          ..strokeWidth = 2.6
-          ..style = PaintingStyle.stroke;
-        canvas.drawLine(Offset(cx - ts * 0.16, cy), Offset(cx + ts * 0.16, cy), p);
-        canvas.drawLine(Offset(cx, cy - ts * 0.16), Offset(cx, cy + ts * 0.16), p);
-        canvas.drawLine(
-          Offset(cx - ts * 0.11, cy - ts * 0.11),
-          Offset(cx + ts * 0.11, cy + ts * 0.11),
-          p,
-        );
-        canvas.drawLine(
-          Offset(cx - ts * 0.11, cy + ts * 0.11),
-          Offset(cx + ts * 0.11, cy - ts * 0.11),
-          p,
-        );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _SpecialGemMarkPainter oldDelegate) {
-    return oldDelegate.kind != kind;
   }
 }

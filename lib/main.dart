@@ -25,7 +25,8 @@ void main() async {
   await InAppReviewService.saveFirstLaunchDateIfNeeded();
   await Future.wait([
     SoundManager.preload(),
-    Flame.images.load(AssetPaths.juwelSpriteSheet),
+    Flame.images.load(AssetPaths.jewelSpriteSheet),
+    Flame.images.load(AssetPaths.specialSpriteSheet),
   ]);
   _applyKeepScreenOn();
   runApp(

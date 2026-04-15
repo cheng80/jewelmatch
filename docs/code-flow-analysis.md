@@ -211,9 +211,36 @@ Flame 게임 셸이다.
 
 `MatchBoardLogic`의 보석을 그리는 `world` 컴포넌트.
 
+- 보드 프레임/슬롯 배경을 `ui.Picture`로 캐싱해 재사용
+- 기본 보석은 `assets/images/sprites/Jewel.png`를 사용
+- 특수 보석(col / row / bomb)은 `assets/images/sprites/Special.png`의 전용 프레임을 사용
+- 하이퍼 보석은 `Jewel.png`의 **2번째 프레임(인덱스 1)** 을 그대로 사용
+- 현재 스프라이트 기준 셀 크기는 모두 `128×128`
+- 예전 `ColorFilter.matrix` 기반 하이퍼 틴트는 제거되었고, 런타임 필터 대신 준비된 스프라이트를 직접 그린다
+
+현재 렌더 에셋 매핑은 다음과 같다.
+
+| 용도 | 파일 | 프레임 순서 |
+|:---|:---|:---|
+| 일반 보석 + 하이퍼 | `assets/images/sprites/Jewel.png` | 7프레임, 각 `128×128` |
+| 하이퍼 보석 | `assets/images/sprites/Jewel.png` | **2번째 프레임** |
+| 특수 보석 `col` | `assets/images/sprites/Special.png` | **1번째 프레임** |
+| 특수 보석 `row` | `assets/images/sprites/Special.png` | **2번째 프레임** |
+| 특수 보석 `bomb` | `assets/images/sprites/Special.png` | **3번째 프레임** |
+
+참고:
+
+- `AssetPaths.jewelSpriteSheet` → `sprites/Jewel.png`
+- `AssetPaths.specialSpriteSheet` → `sprites/Special.png`
+- 튜토리얼 오버레이(`HowToPlayOverlay`)도 동일한 시트 기준으로 프리뷰를 표시한다
+
 ### 3-9. `lib/game/components/match_game_hud.dart`
 
 상단 패널(스코어·베스트·콤보·타임)·일시정지 버튼. `camera.viewport`에 올린다.
+
+- `TextPainter`와 다수의 `Paint`를 캐싱해 프레임당 텍스트 레이아웃/객체 재생성을 줄인다
+- 콤보 스트립(`combo` / `max combo`)은 별도 그라데이션 박스로 렌더한다
+- 최근 수정으로 라벨과 숫자 위치를 수동 조정하고 있으며, 세로 간격은 아직 미세조정 중이다
 
 ### 3-10. `lib/game/components/space_bg.dart`
 
@@ -233,6 +260,14 @@ Flame 게임 셸이다.
   - BGM / 효과음 / 웹 unlock 처리
 - `storage_helper.dart`
   - `GetStorage` 래퍼
+
+### 3-12. `lib/views/overlays/how_to_play_overlay.dart` / `lib/widgets/sprite_sheet_frame.dart`
+
+튜토리얼 오버레이와 스프라이트 프레임 미리보기다.
+
+- `HowToPlayOverlay`는 특수 보석/생성 예시를 별도 카드로 보여준다
+- `SpriteSheetFrame` 위젯은 원본 PNG를 `ui.Image`로 읽고, `drawImageRect`로 고정 크기 프레임을 정확히 잘라 보여준다
+- 현재 튜토리얼 프리뷰는 `Jewel.png`, `Special.png` 모두 이 공용 위젯을 사용하므로 `128×128` 프레임 경계를 화면 비율이 아니라 원본 픽셀 기준으로 유지한다
 
 구조는 다음과 같다.
 

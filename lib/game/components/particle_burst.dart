@@ -23,6 +23,9 @@ class ParticleBurst extends PositionComponent {
   final List<_Particle> _particles = [];
   double _elapsed = 0;
   bool _active = false;
+  final Paint _particlePaint = Paint();
+  static const MaskFilter _glowBlur =
+      MaskFilter.blur(BlurStyle.normal, 4);
 
   static final Random _rng = Random();
 
@@ -90,7 +93,7 @@ class ParticleBurst extends PositionComponent {
       p.reset(
         dx: cos(angle) * speed,
         dy: sin(angle) * speed,
-        radius: (_rng.nextDouble() * 3.5 + 1.2) * _sizeScale,
+        radius: (_rng.nextDouble() * 2.8 + 1.0) * _sizeScale,
         color: tweaked,
       );
     }
@@ -124,18 +127,25 @@ class ParticleBurst extends PositionComponent {
     if (!_active) return;
     final progress = (_elapsed / _lifetime).clamp(0.0, 1.0);
     final alpha = progress < 0.2 ? 1.0 : 1.0 - ((progress - 0.2) / 0.8);
-    final paint = Paint();
+    final showGlow = _withGlow && progress < 0.72;
     for (var i = 0; i < _count; i++) {
       final p = _particles[i];
       final r = p.radius * (1.0 - progress * 0.3);
-      paint.color = p.color.withValues(alpha: alpha);
-      canvas.drawCircle(Offset(p.x, p.y), r, paint);
-      if (_withGlow && r > 1.5) {
-        paint
-          ..color = p.color.withValues(alpha: alpha * 0.3)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
-        canvas.drawCircle(Offset(p.x, p.y), r * 2.5, paint);
-        paint.maskFilter = null;
+      if (showGlow && r > 1.6) {
+        // blur를 크게 늘리지 않고도 가장자리를 조금 더 부드럽게 보이게 하는 저비용 halo
+        _particlePaint
+          ..color = p.color.withValues(alpha: alpha * 0.12)
+          ..maskFilter = null;
+        canvas.drawCircle(Offset(p.x, p.y), r * 1.65, _particlePaint);
+      }
+      _particlePaint.color = p.color.withValues(alpha: alpha);
+      canvas.drawCircle(Offset(p.x, p.y), r, _particlePaint);
+      if (showGlow && r > 2.0) {
+        _particlePaint
+          ..color = p.color.withValues(alpha: alpha * 0.22)
+          ..maskFilter = _glowBlur;
+        canvas.drawCircle(Offset(p.x, p.y), r * 2.0, _particlePaint);
+        _particlePaint.maskFilter = null;
       }
     }
   }

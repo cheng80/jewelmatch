@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame/flame.dart';
@@ -10,7 +11,7 @@ import '../match_board_game.dart';
 import '../match_board_logic.dart';
 
 /// 매치 보드 격자·보석·플래시·선택 표시.
-/// `Juwel.png`(1792×256, 7프레임×256) 스프라이트 시트 사용.
+/// `Jewel.png`(896×128, 7프레임×128) + `Special.png`(384×128, 3프레임×128) 사용.
 ///
 /// 힌트: [MatchBoardLogic.showHint]가 고른 **한 쌍**만, 보석 위에 흰색 펄스(느리게 깜박임).
 /// 다른 칸에는 오버레이를 그리지 않는다.
@@ -22,11 +23,17 @@ class MatchBoardRenderer extends PositionComponent
 
   static const double _slotRadiusRatio = 0.18;
 
-  /// 스프라이트 시트 열 0~6 (각 256×256).
+  /// 기본 보석 스프라이트 시트 열 0~6 (각 128×128).
   final List<Sprite?> _sheetSprites = List<Sprite?>.filled(7, null);
+  final Map<GemKind, Sprite?> _specialSprites = <GemKind, Sprite?>{};
 
-  static const double _frameW = 256;
-  static const double _frameH = 256;
+  static const double _frameW = 128;
+  static const double _frameH = 128;
+  static const List<GemKind> _specialSheetKinds = <GemKind>[
+    GemKind.col,
+    GemKind.row,
+    GemKind.bomb,
+  ];
 
   /// 힌트 펄스 위상 속도(낮을수록 느리게 한 박자).
   static const double _hintPulseHz = 0.32;
@@ -37,11 +44,31 @@ class MatchBoardRenderer extends PositionComponent
   /// 게임 색상 1~6 → 시트 열 인덱스 (시트 순서: 빨강, 은백, 초록, 노랑, 보라, 주황, 파랑).
   static const List<int> _sheetColByColor1based = [0, 6, 3, 2, 4, 5];
 
+  ui.Picture? _boardChromePicture;
+  double? _cachedTileSize;
+  double? _cachedBoardX;
+  double? _cachedBoardY;
+  final Paint _flashPaint = Paint();
+  final Paint _selectionPaint = Paint()
+    ..color = JewelCandyLuminaTheme.secondaryCyan
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 3;
+  final Paint _hintPulsePaint = Paint();
+  final Paint _normalSpritePaint = Paint()..filterQuality = FilterQuality.medium;
+  final Paint _proceduralShadowPaint = Paint();
+  final Paint _proceduralGradientPaint = Paint();
+  final Paint _proceduralStrokePaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.2;
+  final Paint _proceduralHighlightPaint = Paint();
+  final Vector2 _spriteRenderPosition = Vector2.zero();
+  final Vector2 _spriteRenderSize = Vector2.zero();
+
   @override
   Future<void> onLoad() async {
     await super.onLoad();
     try {
-      final img = await Flame.images.load(AssetPaths.juwelSpriteSheet);
+      final img = await Flame.images.load(AssetPaths.jewelSpriteSheet);
       for (var i = 0; i < 7; i++) {
         _sheetSprites[i] = Sprite(
           img,
@@ -54,6 +81,27 @@ class MatchBoardRenderer extends PositionComponent
         _sheetSprites[i] = null;
       }
     }
+    try {
+      final img = await Flame.images.load(AssetPaths.specialSpriteSheet);
+      for (var i = 0; i < _specialSheetKinds.length; i++) {
+        _specialSprites[_specialSheetKinds[i]] = Sprite(
+          img,
+          srcPosition: Vector2(i * _frameW, 0),
+          srcSize: Vector2(_frameW, _frameH),
+        );
+      }
+    } catch (_) {
+      for (final kind in _specialSheetKinds) {
+        _specialSprites[kind] = null;
+      }
+    }
+    _rebuildBoardChromePicture();
+  }
+
+  @override
+  void onRemove() {
+    _boardChromePicture?.dispose();
+    super.onRemove();
   }
 
   @override
@@ -79,19 +127,50 @@ class MatchBoardRenderer extends PositionComponent
     return _sheetColByColor1based[c - 1];
   }
 
-  @override
-  void render(Canvas canvas) {
+  Sprite? _specialSpriteFor(GemKind kind) {
+    return _specialSprites[kind];
+  }
+
+  void _ensureBoardChromePicture() {
     final ts = logic.tileSize;
-    final bw = logic.cols * ts;
-    final bh = logic.rows * ts;
     final bx = logic.boardX;
     final by = logic.boardY;
+    if (_boardChromePicture != null &&
+        _cachedTileSize == ts &&
+        _cachedBoardX == bx &&
+        _cachedBoardY == by) {
+      return;
+    }
+    _rebuildBoardChromePicture();
+  }
 
+  void _rebuildBoardChromePicture() {
+    _boardChromePicture?.dispose();
+    final ts = logic.tileSize;
+    final bx = logic.boardX;
+    final by = logic.boardY;
+    if (ts <= 0) {
+      _boardChromePicture = null;
+      _cachedTileSize = ts;
+      _cachedBoardX = bx;
+      _cachedBoardY = by;
+      return;
+    }
+
+    final bw = logic.cols * ts;
+    final bh = logic.rows * ts;
     final outerRect = Rect.fromLTWH(bx - 8, by - 8, bw + 16, bh + 16);
     final outerR = RRect.fromRectAndRadius(
       outerRect,
       const Radius.circular(14),
     );
+    final innerR = RRect.fromRectAndRadius(
+      Rect.fromLTWH(bx, by, bw, bh),
+      const Radius.circular(10),
+    );
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
     canvas.drawRRect(
       outerR,
       Paint()
@@ -101,39 +180,62 @@ class MatchBoardRenderer extends PositionComponent
           colors: JewelCandyLuminaTheme.boardFrameGradient,
         ).createShader(outerRect),
     );
-
-    final innerR = RRect.fromRectAndRadius(
-      Rect.fromLTWH(bx, by, bw, bh),
-      const Radius.circular(10),
-    );
     canvas.drawRRect(
       innerR,
       Paint()..color = JewelCandyLuminaTheme.boardInner,
     );
 
+    const pad = 3.0;
+    final fillPaint = Paint()..color = JewelCandyLuminaTheme.boardSlotFill;
+    final strokePaint = Paint()
+      ..color = JewelCandyLuminaTheme.boardSlotStroke
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    final slotRadius = Radius.circular(ts * _slotRadiusRatio);
     for (var r = 0; r < logic.rows; r++) {
       for (var c = 0; c < logic.cols; c++) {
         final x = bx + c * ts;
         final y = by + r * ts;
-        const pad = 3.0;
         final sr = RRect.fromRectAndRadius(
           Rect.fromLTWH(x + pad, y + pad, ts - pad * 2, ts - pad * 2),
-          Radius.circular(ts * _slotRadiusRatio),
+          slotRadius,
         );
-        canvas.drawRRect(sr, Paint()..color = JewelCandyLuminaTheme.boardSlotFill);
-        canvas.drawRRect(
-          sr,
-          Paint()
-            ..color = JewelCandyLuminaTheme.boardSlotStroke
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.2,
-        );
+        canvas.drawRRect(sr, fillPaint);
+        canvas.drawRRect(sr, strokePaint);
       }
     }
 
-    // 보드 안쪽만 보이게 — 인트로 시 보석이 위에서 내려올 때 윗줄 밖은 마스크 처리.
-    canvas.save();
-    canvas.clipRRect(innerR);
+    _boardChromePicture = recorder.endRecording();
+    _cachedTileSize = ts;
+    _cachedBoardX = bx;
+    _cachedBoardY = by;
+  }
+
+  @override
+  void render(Canvas canvas) {
+    _ensureBoardChromePicture();
+    final ts = logic.tileSize;
+    final bw = logic.cols * ts;
+    final bh = logic.rows * ts;
+    final bx = logic.boardX;
+    final by = logic.boardY;
+
+    final innerR = RRect.fromRectAndRadius(
+      Rect.fromLTWH(bx, by, bw, bh),
+      const Radius.circular(10),
+    );
+    if (_boardChromePicture != null) {
+      canvas.drawPicture(_boardChromePicture!);
+    }
+
+    final needsBoardClip = logic.introFillInProgress ||
+        logic.state == 'falling' ||
+        logic.state == 'refilling';
+    if (needsBoardClip) {
+      // 보드 밖에서 내려오는 낙하/리필 연출일 때만 클립한다.
+      canvas.save();
+      canvas.clipRRect(innerR);
+    }
 
     for (final fx in logic.flashEffects) {
       final a = (fx.timer / MatchBoardLogic.flashDuration).clamp(0.0, 1.0) *
@@ -142,9 +244,10 @@ class MatchBoardRenderer extends PositionComponent
         Rect.fromLTWH(fx.x + 4, fx.y + 4, fx.size - 8, fx.size - 8),
         Radius.circular(ts * 0.12),
       );
+      _flashPaint.color = Colors.white.withValues(alpha: a);
       canvas.drawRRect(
         fr,
-        Paint()..color = Colors.white.withValues(alpha: a),
+        _flashPaint,
       );
     }
 
@@ -168,14 +271,13 @@ class MatchBoardRenderer extends PositionComponent
           Rect.fromLTWH(x + 2, y + 2, ts - 4, ts - 4),
           Radius.circular(ts * 0.15),
         ),
-        Paint()
-          ..color = JewelCandyLuminaTheme.secondaryCyan
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 3,
+        _selectionPaint,
       );
     }
 
-    canvas.restore();
+    if (needsBoardClip) {
+      canvas.restore();
+    }
   }
 
   /// 힌트로 고른 두 칸만, 보석 **위에** 흰색 펄스(다른 칸은 건드리지 않음).
@@ -192,13 +294,12 @@ class MatchBoardRenderer extends PositionComponent
     final t = (_hintPulseTime * _hintPulseHz) % 1.0;
     final alpha =
         0.14 + 0.42 * (0.5 + 0.5 * math.cos(t * 2 * math.pi));
-    final pulse = Paint()
-      ..color = Color.lerp(
-        JewelCandyLuminaTheme.secondaryCyan,
-        JewelCandyLuminaTheme.primaryPink,
-        0.35,
-      )!
-          .withValues(alpha: alpha);
+    _hintPulsePaint.color = Color.lerp(
+      JewelCandyLuminaTheme.secondaryCyan,
+      JewelCandyLuminaTheme.primaryPink,
+      0.35,
+    )!
+        .withValues(alpha: alpha);
     final radius = Radius.circular(ts * _slotRadiusRatio);
     const pad = 3.0;
 
@@ -210,7 +311,7 @@ class MatchBoardRenderer extends PositionComponent
           Rect.fromLTWH(x + pad, y + pad, ts - pad * 2, ts - pad * 2),
           radius,
         ),
-        pulse,
+        _hintPulsePaint,
       );
     }
 
@@ -225,33 +326,19 @@ class MatchBoardRenderer extends PositionComponent
     final drawH = ts * 0.82;
     final ox = x + (ts - drawW) / 2;
     final oy = y + (ts - drawH) / 2;
-
-    final col = _spriteColumnFor(gem);
-    final sprite = _sheetSprites[col];
+    final sprite = _specialSpriteFor(gem.kind) ?? _sheetSprites[_spriteColumnFor(gem)];
     if (sprite != null) {
-      final hyper = gem.kind == GemKind.hyper;
-      final paint = Paint()..filterQuality = FilterQuality.medium;
-      if (hyper) {
-        paint.colorFilter = const ColorFilter.matrix(<double>[
-          1.12, 0, 0, 0, 35,
-          0, 1.08, 0, 0, 35,
-          0, 0, 1.28, 0, 45,
-          0, 0, 0, 1, 0,
-        ]);
-      }
+      _spriteRenderPosition.setValues(ox, oy);
+      _spriteRenderSize.setValues(drawW, drawH);
       sprite.render(
         canvas,
-        position: Vector2(ox, oy),
-        size: Vector2(drawW, drawH),
-        overridePaint: paint,
+        position: _spriteRenderPosition,
+        size: _spriteRenderSize,
+        overridePaint: _normalSpritePaint,
       );
     } else {
       _drawGemProcedural(canvas, gem, ts);
     }
-
-    final cx = x + ts / 2;
-    final cy = y + ts / 2;
-    _drawSpecialMark(canvas, gem.kind, cx, cy, ts);
   }
 
   void _drawGemProcedural(Canvas canvas, BoardGem gem, double ts) {
@@ -276,7 +363,7 @@ class MatchBoardRenderer extends PositionComponent
     );
     canvas.drawRRect(
       shadow,
-      Paint()..color = Colors.black.withValues(alpha: 0.28),
+      _proceduralShadowPaint..color = Colors.black.withValues(alpha: 0.28),
     );
 
     final outer = RRect.fromRectAndRadius(
@@ -289,7 +376,7 @@ class MatchBoardRenderer extends PositionComponent
     );
     canvas.drawRRect(
       outer,
-      Paint()
+      _proceduralGradientPaint
         ..shader = LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -302,10 +389,7 @@ class MatchBoardRenderer extends PositionComponent
 
     canvas.drawRRect(
       outer,
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.14)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.2,
+      _proceduralStrokePaint..color = Colors.white.withValues(alpha: 0.14),
     );
 
     final hi = RRect.fromRectAndRadius(
@@ -318,57 +402,7 @@ class MatchBoardRenderer extends PositionComponent
     );
     canvas.drawRRect(
       hi,
-      Paint()..color = Colors.white.withValues(alpha: 0.32),
+      _proceduralHighlightPaint..color = Colors.white.withValues(alpha: 0.32),
     );
-  }
-
-  void _drawSpecialMark(
-      Canvas canvas, GemKind kind, double cx, double cy, double ts) {
-    switch (kind) {
-      case GemKind.normal:
-        break;
-      case GemKind.row:
-        final p = Paint()
-          ..color = Colors.white.withValues(alpha: 0.92)
-          ..strokeWidth = 2.5
-          ..style = PaintingStyle.stroke;
-        canvas.drawLine(Offset(cx - ts * 0.18, cy), Offset(cx + ts * 0.18, cy), p);
-        canvas.drawLine(Offset(cx - ts * 0.18, cy - 4), Offset(cx + ts * 0.18, cy - 4), p);
-        canvas.drawLine(Offset(cx - ts * 0.18, cy + 4), Offset(cx + ts * 0.18, cy + 4), p);
-      case GemKind.col:
-        final p = Paint()
-          ..color = Colors.white.withValues(alpha: 0.92)
-          ..strokeWidth = 2.5
-          ..style = PaintingStyle.stroke;
-        canvas.drawLine(Offset(cx, cy - ts * 0.18), Offset(cx, cy + ts * 0.18), p);
-        canvas.drawLine(Offset(cx - 4, cy - ts * 0.18), Offset(cx - 4, cy + ts * 0.18), p);
-        canvas.drawLine(Offset(cx + 4, cy - ts * 0.18), Offset(cx + 4, cy + ts * 0.18), p);
-      case GemKind.bomb:
-        final p = Paint()
-          ..color = Colors.white.withValues(alpha: 0.9)
-          ..strokeWidth = 2.2
-          ..style = PaintingStyle.stroke;
-        canvas.drawCircle(Offset(cx, cy), ts * 0.12, p);
-        for (final off in [
-          Offset(0, -ts * 0.16),
-          Offset(ts * 0.12, -ts * 0.08),
-          Offset(ts * 0.12, ts * 0.1),
-          Offset(-ts * 0.12, ts * 0.1),
-          Offset(-ts * 0.12, -ts * 0.08),
-        ]) {
-          canvas.drawLine(Offset(cx, cy), Offset(cx + off.dx, cy + off.dy), p);
-        }
-      case GemKind.hyper:
-        final p = Paint()
-          ..color = Colors.white.withValues(alpha: 0.95)
-          ..strokeWidth = 2.8
-          ..style = PaintingStyle.stroke;
-        canvas.drawLine(Offset(cx - ts * 0.16, cy), Offset(cx + ts * 0.16, cy), p);
-        canvas.drawLine(Offset(cx, cy - ts * 0.16), Offset(cx, cy + ts * 0.16), p);
-        canvas.drawLine(Offset(cx - ts * 0.11, cy - ts * 0.11),
-            Offset(cx + ts * 0.11, cy + ts * 0.11), p);
-        canvas.drawLine(Offset(cx - ts * 0.11, cy + ts * 0.11),
-            Offset(cx + ts * 0.11, cy - ts * 0.11), p);
-    }
   }
 }

@@ -33,7 +33,7 @@
   "playGame": "플레이",
   "score": "점수",
   "combo": "콤보",
-  "maxComboLabel": "최대",
+  "maxComboLabel": "최대 콤보",
   "noMovesTitle": "더 이상 이동할 수 없습니다",
   "shuffleBoard": "셔플",
   "newBoard": "새 보드",

@@ -33,7 +33,11 @@
 - **입력:** HUD에서 **탭-탭 스왑**와 **스와이프(인접 한 칸)** 모두 지원 (`match_game_hud.dart`).
 - **코어:** `MatchBoardLogic`(보드·스왑·매치·낙하) + `MatchBoardRenderer`(그리기) + `MatchGameHud`(HUD·일시정지·타임바 등).
 - **오디오:** `SoundManager` — BGM(메뉴/메인), SFX 프리로드. 타임 모드 저시간 `TimeTic`, 무효 스왑 `Fail`, 타임 오버 `TimeUp`, 매치 이벤트 SFX(`ComboHit`·`BigMatch`·`SpecialGem`) 등 (`asset_paths.dart`·`audio_aisfx_prompts.md`). 웹은 **첫 포인터다운 1회 unlock + pending BGM**만 유지하고, 그 이후 SFX/BGM은 네이티브와 같은 `FlameAudio` 경로를 사용.
-- **파티클:** 매치 시 `ParticleBurst` Flame 컴포넌트로 방사형 파티클 — 3매치(기본), 4+매치·콤보·특수 보석(화려) 3단계 (`lib/game/components/particle_burst.dart`).
+- **파티클:** 매치 시 `ParticleBurst` Flame 컴포넌트로 방사형 파티클 — 3매치(기본), 4+매치·콤보·특수 보석(화려) 3단계 (`lib/game/components/particle_burst.dart`). 최근 조정으로 입자 수·퍼짐 반경·수명·글로우 강도를 줄여 GPU 부담을 낮췄다.
+- **보석 스프라이트 규칙:** `assets/images/sprites/Jewel.png`는 `896×128`(7프레임, 셀당 `128×128`), `assets/images/sprites/Special.png`는 `384×128`(3프레임, 셀당 `128×128`). 현재 렌더 기준은 `Jewel.png` 2번째 프레임이 **하이퍼 보석**, `Special.png`는 순서대로 **col / row / bomb**. `ColorFilter.matrix`는 제거되었고, 특수 보석은 전용 프레임을 직접 사용한다 (`asset_paths.dart`, `match_board_renderer.dart`).
+- **렌더 최적화:** `MatchBoardRenderer`는 보드 프레임/슬롯 배경을 `ui.Picture`로 캐싱하고, 보드 `clipRRect`는 낙하·리필·인트로 구간에서만 건다. `MatchGameHud`는 텍스트 레이아웃과 `Paint`를 캐싱해 프레임당 재계산을 줄였다.
+- **튜토리얼 프리뷰:** `HowToPlayOverlay`는 공용 [`SpriteSheetFrame`](lib/widgets/sprite_sheet_frame.dart) 위젯으로 스프라이트 시트의 `128×128` 프레임을 원본 픽셀 기준으로 잘라 보여준다.
+- **디버그 측정:** 개발 모드에서는 우측 상단에 `PerformanceOverlay` 기반 FPS/프레임 오버레이가 표시된다.
 - **타임 모드 랭킹 (서버):** PHP 단일 파일 [`matchranking/ranking.php`](matchranking/ranking.php) — 상위 30명 JSON 저장. **플러터 웹 빌드 출력(`match/` 등)과 분리**해 NAS에 두면 배포 시 랭킹 데이터가 지워지지 않는다. 클라이언트는 `lib/services/ranking_service.dart` (`http`).
 - **타임 모드 UX:** 타이틀에서 **이름 입력** 후 진입 (`GameSettings.playerName`, 기본·저장값 `GUEST`). HUD **베스트 영역**에 서버 **1위 이름·점수**. **TimeUp** 시 점수 제출 → 순위 또는 미달 메시지. 심플 모드는 로컬 베스트만.
 - **오버레이 (MVVM):** `lib/views/overlays/`에 분리 — `TimeUpOverlay`(ConsumerStatefulWidget, `RankingNotifier` 연동), `PauseMenuOverlay`(ConsumerWidget, `SettingsNotifier` 연동), `NoMovesOverlay`, `HowToPlayOverlay`. 공통 위젯: `LuminaGradientButton`·`LuminaOutlinedButton`·`LuminaOverlayCard` (`lib/widgets/`).
@@ -54,7 +58,8 @@
 1. **[`docs/jewel_match_execution_checklist.md`](docs/jewel_match_execution_checklist.md)** 의 미체크 항목 — 특히 Web 배포 경로·`--base-href`·에셋 경로 정합.
 2. **랭킹:** NAS `matchranking/` 경로·`ranking_data.json` 쓰기 권한·`RankingService` base URL이 실제 배포와 일치하는지.
 3. **`lib/resources/asset_paths.dart`** 와 `assets/audio/` 실제 파일명·확장자(mp3/wav) 불일치 시 런타임 로드 오류.
-4. 큰 기능/리팩터 후 **`docs/code-flow-analysis.md`**, **`docs/game_flow.md`** 동기화 여부.
+4. HUD 콤보 스트립(`combo` / `max combo`) 라벨-숫자 세로 간격 미세조정.
+5. 큰 기능/리팩터 후 **`docs/code-flow-analysis.md`**, **`docs/game_flow.md`** 동기화 여부.
 
 단기적으로 자주 나오는 작업:
 
@@ -106,6 +111,8 @@
 - **2026-04-13:** 탭+스와이프, 타임 랭킹(`matchranking`·`RankingService`), 이름·HUD 1위·TimeUp 제출, TimeUp 연출, HowToPlay(?)·스크롤 레이아웃·다국어·웹/랭킹 디렉토리 분리.
 - **2026-04-04:** `START_HERE.md` / `jewel_match_execution_checklist.md` 도입. 웹에서 평점 메뉴·타이틀 자동 리뷰 비활성화 반영.
 - **2026-04-15:** 웹 오디오 정책 단순화. `SoundManager`에서 웹 전용 SFX 풀, `mediaPlayer` 분기, 0볼륨 prime, 드래그 시작 보조 unlock 제거. 현재 기준은 앱 루트 첫 포인터다운의 `unlockForWeb()` 1회 + `_pendingBgm` 재생 보류만 유지.
+- **2026-04-16:** 렌더링 최적화 진행. `MatchBoardRenderer` 보드 크롬/슬롯 `ui.Picture` 캐싱, 낙하·리필 시에만 보드 클립, `MatchGameHud` 텍스트/페인트 캐싱, 개발 모드 FPS 오버레이 추가. 파티클은 입자 수·퍼짐 반경·수명·글로우를 줄여 과한 GPU 비용을 완화.
+- **2026-04-16:** 보석 에셋 구조 변경. `Juwel.png` → `Jewel.png`로 교체하고 프레임 크기를 `128×128` 기준으로 축소. `Special.png` 3프레임(`col / row / bomb`) 도입. 하이퍼 보석은 `Jewel.png` 2번째 프레임을 그대로 사용하며, 기존 `ColorFilter.matrix` 기반 하이퍼 틴트 경로는 제거. 튜토리얼은 공용 `SpriteSheetFrame`으로 원본 픽셀 기준 프레임 크롭을 사용.
 
 ---
 

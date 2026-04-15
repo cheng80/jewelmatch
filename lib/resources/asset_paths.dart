@@ -31,6 +31,9 @@ class AssetPaths {
   /// 폰트 family 이름 (pubspec.yaml에 등록된 이름과 동일)
   static const String fontAngduIpsul140 = 'HUAngduIpsul140';
 
-  /// 7열×256px 보석 스프라이트 시트 (색은 코드에서 열 인덱스로 매핑)
-  static const String juwelSpriteSheet = 'sprites/Juwel.png';
+  /// 7열×128px 보석 스프라이트 시트 (색은 코드에서 열 인덱스로 매핑)
+  static const String jewelSpriteSheet = 'sprites/Jewel.png';
+
+  /// 3열×128px 특수 보석 시트 (순서: col, row, bomb)
+  static const String specialSpriteSheet = 'sprites/Special.png';
 }

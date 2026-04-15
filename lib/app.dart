@@ -35,6 +35,18 @@ class App extends StatelessWidget {
           const Positioned.fill(child: ColoredBox(color: Colors.black)),
           Positioned.fill(child: StarryBackground.instance),
           Positioned.fill(child: app),
+          if (kDebugMode)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: IgnorePointer(
+                child: SizedBox(
+                  width: 220,
+                  height: 140,
+                  child: PerformanceOverlay.allEnabled(),
+                ),
+              ),
+            ),
         ],
       ),
     );

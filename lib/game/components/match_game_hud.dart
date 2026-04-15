@@ -63,6 +63,44 @@ class MatchGameHud extends PositionComponent
 
   double _scoreBlockTop = 0;
   int? _cachedBest;
+  double? _cachedHudTextScale;
+  int? _cachedScore;
+  int? _cachedTimedSeconds;
+  int? _cachedDisplayedCombo;
+  int? _cachedMaxCombo;
+  bool? _cachedTimedModeForText;
+  final Paint _comboGradientPaint = Paint();
+  final Paint _comboStrokePaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.4;
+  final Paint _timeBarBgPaint = Paint();
+  final Paint _timeBarStrokePaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.4;
+  final Paint _timeFillPaint = Paint();
+  final Paint _untimedFillPaint = Paint();
+  final Paint _tutorialFillPaint = Paint();
+  final Paint _tutorialStrokePaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.4;
+  final Paint _hintFillPaint = Paint();
+  final Paint _hintStrokePaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.5;
+  final Paint _hintBulbPaint = Paint();
+  final Paint _hintBasePaint = Paint();
+  final Paint _hintGlintPaint = Paint();
+  final Paint _rankingFillPaint = Paint();
+  final Paint _rankingStrokePaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.5;
+  final Paint _rankingCupPaint = Paint();
+  final Paint _rankingBasePaint = Paint();
+  final Paint _pauseFillPaint = Paint();
+  final Paint _pauseStrokePaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.2;
+  final Paint _pauseBarPaint = Paint();
 
   final _fmt = NumberFormat.decimalPattern();
 
@@ -119,6 +157,12 @@ class MatchGameHud extends PositionComponent
     final g = game;
     final scale = g.hudScale;
     _cachedBest = GameSettings.getBestMatchScore(g.gameMode);
+    _cachedHudTextScale = g.hudTextScale;
+    _cachedScore = null;
+    _cachedTimedSeconds = null;
+    _cachedDisplayedCombo = null;
+    _cachedMaxCombo = null;
+    _cachedTimedModeForText = null;
 
     final top = g.safeAreaPadding.top + 10;
     final left = g.safeContentLeft;
@@ -244,18 +288,7 @@ class MatchGameHud extends PositionComponent
 
     _rebuildTimeBarText();
     _rebuildComboPainters();
-
-    _scoreValue = TextPainter(
-      text: TextSpan(
-        text: _fmt.format(game.board.score),
-        style: _ts(
-          size: 40 * t,
-          color: const Color(0xFFFFFDE7),
-          weight: FontWeight.bold,
-        ),
-      ),
-      textDirection: ui.TextDirection.ltr,
-    )..layout();
+    _rebuildScoreValue();
 
     _tutorialGlyph = TextPainter(
       text: TextSpan(
@@ -272,8 +305,10 @@ class MatchGameHud extends PositionComponent
 
   void _rebuildTimeBarText() {
     final t = game.hudTextScale;
+    _cachedTimedModeForText = game.isTimedMode;
     if (game.isTimedMode) {
       final s = game.timeRemaining.ceil().clamp(0, 99999);
+      _cachedTimedSeconds = s;
       final m = s ~/ 60;
       final r = s % 60;
       final txt = '$m:${r.toString().padLeft(2, '0')}';
@@ -304,6 +339,7 @@ class MatchGameHud extends PositionComponent
         textDirection: ui.TextDirection.ltr,
       )..layout();
     } else {
+      _cachedTimedSeconds = null;
       _timeInBar = TextPainter(
         text: TextSpan(
           text: game.localeString('unlimitedMode', 'Untimed'),
@@ -330,6 +366,8 @@ class MatchGameHud extends PositionComponent
     final t = game.hudTextScale;
     final cur = _displayCurrentCombo();
     final mx = game.board.maxCombo;
+    _cachedDisplayedCombo = cur;
+    _cachedMaxCombo = mx;
     final sh = _hudLegibilityShadows();
 
     _comboLeftLabel = TextPainter(
@@ -385,14 +423,12 @@ class MatchGameHud extends PositionComponent
     )..layout();
   }
 
-  @override
-  void update(double dt) {
-    super.update(dt);
+  void _rebuildScoreValue() {
     final t = game.hudTextScale;
-
+    _cachedScore = game.board.score;
     _scoreValue = TextPainter(
       text: TextSpan(
-        text: _fmt.format(game.board.score),
+        text: _fmt.format(_cachedScore),
         style: _ts(
           size: 40 * t,
           color: const Color(0xFFFFFDE7),
@@ -401,15 +437,40 @@ class MatchGameHud extends PositionComponent
       ),
       textDirection: ui.TextDirection.ltr,
     )..layout();
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    final currentHudTextScale = game.hudTextScale;
+    if (_cachedHudTextScale != currentHudTextScale) {
+      _layout();
+      return;
+    }
+
+    if (_cachedScore != game.board.score) {
+      _rebuildScoreValue();
+    }
 
     final latestBest = GameSettings.getBestMatchScore(game.gameMode);
     if (latestBest != _cachedBest) {
       _cachedBest = latestBest;
       _rebuildStaticPainters();
+      return;
     }
 
-    _rebuildTimeBarText();
-    _rebuildComboPainters();
+    final timedModeChanged = _cachedTimedModeForText != game.isTimedMode;
+    final currentTimedSeconds =
+        game.isTimedMode ? game.timeRemaining.ceil().clamp(0, 99999) : null;
+    if (timedModeChanged || _cachedTimedSeconds != currentTimedSeconds) {
+      _rebuildTimeBarText();
+    }
+
+    final displayedCombo = _displayCurrentCombo();
+    final maxCombo = game.board.maxCombo;
+    if (_cachedDisplayedCombo != displayedCombo || _cachedMaxCombo != maxCombo) {
+      _rebuildComboPainters();
+    }
   }
 
   double _timeRatio() {
@@ -477,19 +538,17 @@ class MatchGameHud extends PositionComponent
       );
       canvas.drawRRect(
         comboBg,
-        Paint()
+        _comboGradientPaint
           ..shader = LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
             colors: JewelCandyLuminaTheme.comboStripGradient,
           ).createShader(_comboRect),
       );
+      _comboStrokePaint.color = Colors.white.withValues(alpha: 0.22);
       canvas.drawRRect(
         comboBg,
-        Paint()
-          ..color = Colors.white.withValues(alpha: 0.22)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.4,
+        _comboStrokePaint,
       );
 
       final halfW = _comboRect.width / 2;
@@ -506,12 +565,13 @@ class MatchGameHud extends PositionComponent
         _comboRect.height,
       );
 
-      final gapLabelValue = math.max(9.0, layout * 0.11);
+      final gapLabelValue = math.max(5.0, layout * 0.06);
       final lh = _comboLeftLabel.height + gapLabelValue + _comboLeftValue.height;
       final rh = _comboRightLabel.height + gapLabelValue + _comboRightValue.height;
       final blockH = math.max(lh, rh);
-      final minPad = layout * 0.14;
-      var padTop = (_comboRect.height - blockH) / 2;
+      final labelTopInset = layout * 0.02;
+      final minPad = layout * 0.22;
+      var padTop = (_comboRect.height - blockH) / 2 + layout * 0.025;
       if (padTop < minPad) {
         padTop = minPad;
       }
@@ -521,8 +581,8 @@ class MatchGameHud extends PositionComponent
         padTop =
             ((_comboRect.height - blockH) / 2).clamp(0.0, maxPadTop);
       }
-      final ly0 = _comboRect.top + padTop + (blockH - lh) / 2;
-      final ry0 = _comboRect.top + padTop + (blockH - rh) / 2;
+      final ly0 = _comboRect.top + padTop + (blockH - lh) / 2 + labelTopInset;
+      final ry0 = _comboRect.top + padTop + (blockH - rh) / 2 + labelTopInset;
       _comboLeftLabel.paint(
         canvas,
         Offset(leftCol.center.dx - _comboLeftLabel.width / 2, ly0),
@@ -555,14 +615,13 @@ class MatchGameHud extends PositionComponent
       );
       canvas.drawRRect(
         barBg,
-        Paint()..color = JewelCandyLuminaTheme.surfaceContainer,
+        _timeBarBgPaint..color = JewelCandyLuminaTheme.surfaceContainer,
       );
+      _timeBarStrokePaint.color =
+          JewelCandyLuminaTheme.outlineBright.withValues(alpha: 0.55);
       canvas.drawRRect(
         barBg,
-        Paint()
-          ..color = JewelCandyLuminaTheme.outlineBright.withValues(alpha: 0.55)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.4,
+        _timeBarStrokePaint,
       );
 
       // 고정 inset(3)은 타임바가 낮을 때 inner 높이가 음수가 되어 셰이더/ RRect 가 실패할 수 있음
@@ -603,7 +662,7 @@ class MatchGameHud extends PositionComponent
             final low = r < 0.2;
             canvas.drawRRect(
               fillR,
-              Paint()
+              _timeFillPaint
                 ..shader = LinearGradient(
                   colors: low
                       ? JewelCandyLuminaTheme.timeBarFillCritical
@@ -613,11 +672,11 @@ class MatchGameHud extends PositionComponent
             canvas.restore();
           }
         } else {
+          _untimedFillPaint.color =
+              JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.14);
           canvas.drawRRect(
             innerR,
-            Paint()
-              ..color =
-                  JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.14),
+            _untimedFillPaint,
           );
         }
 
@@ -644,16 +703,17 @@ class MatchGameHud extends PositionComponent
   void _drawTutorialButton(Canvas canvas) {
     final r = _tutorialRect;
     final rr = RRect.fromRectAndRadius(r, Radius.circular(r.width * 0.25));
+    _tutorialFillPaint.color =
+        JewelCandyLuminaTheme.primaryPink.withValues(alpha: 0.22);
     canvas.drawRRect(
       rr,
-      Paint()..color = JewelCandyLuminaTheme.primaryPink.withValues(alpha: 0.22),
+      _tutorialFillPaint,
     );
+    _tutorialStrokePaint.color =
+        JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.75);
     canvas.drawRRect(
       rr,
-      Paint()
-        ..color = JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.75)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.4,
+      _tutorialStrokePaint,
     );
     _tutorialGlyph.paint(
       canvas,
@@ -668,21 +728,21 @@ class MatchGameHud extends PositionComponent
   void _drawHintButton(Canvas canvas) {
     final r = _hintRect;
     final rr = RRect.fromRectAndRadius(r, Radius.circular(r.width * 0.25));
+    _hintFillPaint.color = JewelCandyLuminaTheme.goldStrong.withValues(alpha: 0.2);
     canvas.drawRRect(
       rr,
-      Paint()..color = JewelCandyLuminaTheme.goldStrong.withValues(alpha: 0.2),
+      _hintFillPaint,
     );
+    _hintStrokePaint.color =
+        JewelCandyLuminaTheme.goldStrong.withValues(alpha: 0.85);
     canvas.drawRRect(
       rr,
-      Paint()
-        ..color = JewelCandyLuminaTheme.goldStrong.withValues(alpha: 0.85)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5,
+      _hintStrokePaint,
     );
     final c = r.center;
     final w = r.width;
-    final bulbPaint = Paint()..color = JewelCandyLuminaTheme.goldStrong;
-    canvas.drawCircle(Offset(c.dx, c.dy - w * 0.06), w * 0.17, bulbPaint);
+    _hintBulbPaint.color = JewelCandyLuminaTheme.goldStrong;
+    canvas.drawCircle(Offset(c.dx, c.dy - w * 0.06), w * 0.17, _hintBulbPaint);
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromCenter(
@@ -692,10 +752,11 @@ class MatchGameHud extends PositionComponent
         ),
         Radius.circular(w * 0.04),
       ),
-      Paint()..color = const Color(0xFF8D6E63),
+      _hintBasePaint..color = const Color(0xFF8D6E63),
     );
-    final glint = Paint()..color = Colors.white.withValues(alpha: 0.35);
-    canvas.drawCircle(Offset(c.dx - w * 0.05, c.dy - w * 0.1), w * 0.04, glint);
+    _hintGlintPaint.color = Colors.white.withValues(alpha: 0.35);
+    canvas.drawCircle(
+        Offset(c.dx - w * 0.05, c.dy - w * 0.1), w * 0.04, _hintGlintPaint);
   }
 
   /// 랭킹 — 트로피 실루엣 (힌트 전구와 구분).
@@ -703,20 +764,21 @@ class MatchGameHud extends PositionComponent
     final r = _rankingRect;
     if (r.isEmpty) return;
     final rr = RRect.fromRectAndRadius(r, Radius.circular(r.width * 0.25));
+    _rankingFillPaint.color =
+        JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.18);
     canvas.drawRRect(
       rr,
-      Paint()..color = JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.18),
+      _rankingFillPaint,
     );
+    _rankingStrokePaint.color =
+        JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.88);
     canvas.drawRRect(
       rr,
-      Paint()
-        ..color = JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.88)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5,
+      _rankingStrokePaint,
     );
     final c = r.center;
     final w = r.width;
-    final cup = Paint()..color = JewelCandyLuminaTheme.goldStrong;
+    _rankingCupPaint.color = JewelCandyLuminaTheme.goldStrong;
     final path = Path()
       ..moveTo(c.dx - w * 0.22, c.dy + w * 0.12)
       ..lineTo(c.dx - w * 0.18, c.dy - w * 0.02)
@@ -726,39 +788,42 @@ class MatchGameHud extends PositionComponent
       ..lineTo(c.dx + w * 0.14, c.dy + w * 0.1)
       ..lineTo(c.dx - w * 0.14, c.dy + w * 0.1)
       ..close();
-    canvas.drawPath(path, cup);
+    canvas.drawPath(path, _rankingCupPaint);
     canvas.drawRect(
       Rect.fromCenter(
         center: Offset(c.dx, c.dy + w * 0.16),
         width: w * 0.36,
         height: w * 0.08,
       ),
-      Paint()..color = const Color(0xFF8D6E63),
+      _rankingBasePaint..color = const Color(0xFF8D6E63),
     );
-    canvas.drawCircle(Offset(c.dx - w * 0.2, c.dy - w * 0.18), w * 0.06, cup);
-    canvas.drawCircle(Offset(c.dx + w * 0.2, c.dy - w * 0.18), w * 0.06, cup);
+    canvas.drawCircle(
+        Offset(c.dx - w * 0.2, c.dy - w * 0.18), w * 0.06, _rankingCupPaint);
+    canvas.drawCircle(
+        Offset(c.dx + w * 0.2, c.dy - w * 0.18), w * 0.06, _rankingCupPaint);
   }
 
   void _drawPause(Canvas canvas) {
     final r = _pauseRect;
     final rr = RRect.fromRectAndRadius(r, Radius.circular(r.width * 0.25));
+    _pauseFillPaint.color =
+        JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.2);
     canvas.drawRRect(
       rr,
-      Paint()..color = JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.2),
+      _pauseFillPaint,
     );
+    _pauseStrokePaint.color =
+        JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.65);
     canvas.drawRRect(
       rr,
-      Paint()
-        ..color = JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.65)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.2,
+      _pauseStrokePaint,
     );
     final barW = r.width * 0.14;
     final barH = r.width * 0.45;
     final gap = r.width * 0.12;
     final cx = r.center.dx;
     final cy = r.center.dy;
-    final paint = Paint()..color = const Color(0xFFFFFDE7);
+    _pauseBarPaint.color = const Color(0xFFFFFDE7);
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromCenter(
@@ -768,7 +833,7 @@ class MatchGameHud extends PositionComponent
         ),
         Radius.circular(barW * 0.3),
       ),
-      paint,
+      _pauseBarPaint,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
@@ -779,7 +844,7 @@ class MatchGameHud extends PositionComponent
         ),
         Radius.circular(barW * 0.3),
       ),
-      paint,
+      _pauseBarPaint,
     );
   }
 
