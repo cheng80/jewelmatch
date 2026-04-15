@@ -165,6 +165,7 @@ class MatchBoardGame extends FlameGame {
       onPausePressed: pauseGame,
       onHintPressed: requestHint,
       onTutorialPressed: showHowToPlay,
+      onRankingPressed: isTimedMode ? pauseForRankingPopup : null,
     );
     camera.viewport.add(_hud!);
 
@@ -289,6 +290,24 @@ class MatchBoardGame extends FlameGame {
     SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
     resumeEngine();
     overlays.remove('PauseMenu');
+    overlays.remove('RankingList');
+    isPlaying = true;
+  }
+
+  /// 타임 모드 HUD 랭킹 버튼: 게임 일시정지 + 랭킹 팝업.
+  void pauseForRankingPopup() {
+    if (!isTimedMode || !isPlaying || timeUp) return;
+    isPlaying = false;
+    SoundManager.pauseBgm();
+    pauseEngine();
+    overlays.add('RankingList');
+  }
+
+  void closeRankingPopup() {
+    if (timeUp) return;
+    overlays.remove('RankingList');
+    SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
+    resumeEngine();
     isPlaying = true;
   }
 
@@ -330,6 +349,7 @@ class MatchBoardGame extends FlameGame {
     overlays.remove('PauseMenu');
     overlays.remove('NoMoves');
     overlays.remove('HowToPlay');
+    overlays.remove('RankingList');
     timeUp = false;
     board.score = 0;
     board.lastCombo = 0;

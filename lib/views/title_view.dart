@@ -10,6 +10,7 @@ import '../resources/sound_manager.dart';
 import '../services/game_settings.dart';
 import '../theme/jewel_candy_lumina_theme.dart';
 import '../widgets/phone_frame_scaffold.dart';
+import '../widgets/ranking_list_popup.dart';
 import '../services/in_app_review_service.dart';
 
 /// 타이틀 화면. 심플/타임 모드 선택 후 게임 진입, 설정.
@@ -136,11 +137,11 @@ class _TitleViewState extends State<TitleView>
         ],
       ),
     );
-    if (result == null || !mounted) return;
+    if (result == null || !context.mounted) return;
     final name = result.trim().isEmpty ? 'GUEST' : result.trim();
     GameSettings.playerName = name;
     await WidgetsBinding.instance.endOfFrame;
-    if (!mounted) return;
+    if (!context.mounted) return;
     context.go('${RoutePaths.game}?mode=timed');
   }
 
@@ -240,6 +241,37 @@ class _TitleContent extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 12),
+              TextButton(
+                onPressed: () {
+                  SoundManager.unlockForWeb();
+                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                  showDialog<void>(
+                    context: context,
+                    barrierDismissible: true,
+                    builder: (ctx) => Dialog(
+                      backgroundColor: Colors.transparent,
+                      insetPadding: EdgeInsets.zero,
+                      child: RankingListPopup(
+                        onClose: () {
+                          SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                          Navigator.of(ctx).pop();
+                        },
+                      ),
+                    ),
+                  );
+                },
+                child: Text(
+                  context.tr('rankingTitle'),
+                  style: TextStyle(
+                    color: JewelCandyLuminaTheme.outlineBright
+                        .withValues(alpha: 0.85),
+                    fontSize: 16,
+                    decoration: TextDecoration.underline,
+                    decorationColor: JewelCandyLuminaTheme.outlineBright
+                        .withValues(alpha: 0.45),
+                  ),
+                ),
+              ),
               TextButton(
                 onPressed: () {
                   SoundManager.unlockForWeb();
