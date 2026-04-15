@@ -215,7 +215,6 @@ class _TitleContent extends StatelessWidget {
                 label: context.tr('modeSimple'),
                 gradientColors: JewelCandyLuminaTheme.buttonPrimaryPink,
                 onPressed: () {
-                  SoundManager.unlockForWeb();
                   SoundManager.playSfx(AssetPaths.sfxBtnSnd);
                   context.go('${RoutePaths.game}?mode=simple');
                 },
@@ -225,7 +224,6 @@ class _TitleContent extends StatelessWidget {
                 label: context.tr('modeTimed'),
                 gradientColors: JewelCandyLuminaTheme.buttonRetryMagOr,
                 onPressed: () {
-                  SoundManager.unlockForWeb();
                   SoundManager.playSfx(AssetPaths.sfxBtnSnd);
                   onShowNameDialog();
                 },
@@ -235,46 +233,39 @@ class _TitleContent extends StatelessWidget {
                 label: context.tr('settings'),
                 gradientColors: JewelCandyLuminaTheme.buttonShuffleCyanLime,
                 onPressed: () {
-                  SoundManager.unlockForWeb();
                   SoundManager.playSfx(AssetPaths.sfxBtnSnd);
                   context.push(RoutePaths.setting);
                 },
               ),
-              const SizedBox(height: 12),
-              TextButton(
+              const SizedBox(height: 16),
+              _RoundButton(
+                label: context.tr('rankingTitle'),
+                gradientColors: const [
+                  JewelCandyLuminaTheme.tertiaryGold,
+                  JewelCandyLuminaTheme.goldStrong,
+                ],
                 onPressed: () {
-                  SoundManager.unlockForWeb();
                   SoundManager.playSfx(AssetPaths.sfxBtnSnd);
                   showDialog<void>(
                     context: context,
                     barrierDismissible: true,
-                    builder: (ctx) => Dialog(
-                      backgroundColor: Colors.transparent,
-                      insetPadding: EdgeInsets.zero,
-                      child: RankingListPopup(
-                        onClose: () {
-                          SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                          Navigator.of(ctx).pop();
-                        },
+                    builder: (ctx) => Material(
+                      color: Colors.transparent,
+                      child: PhoneFrame(
+                        child: RankingListPopup(
+                          onClose: () {
+                            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                            Navigator.of(ctx).pop();
+                          },
+                        ),
                       ),
                     ),
                   );
                 },
-                child: Text(
-                  context.tr('rankingTitle'),
-                  style: TextStyle(
-                    color: JewelCandyLuminaTheme.outlineBright
-                        .withValues(alpha: 0.85),
-                    fontSize: 16,
-                    decoration: TextDecoration.underline,
-                    decorationColor: JewelCandyLuminaTheme.outlineBright
-                        .withValues(alpha: 0.45),
-                  ),
-                ),
               ),
+              const SizedBox(height: 8),
               TextButton(
                 onPressed: () {
-                  SoundManager.unlockForWeb();
                   SoundManager.playSfx(AssetPaths.sfxBtnSnd);
                   context.push(RoutePaths.sfxTest);
                 },
@@ -316,18 +307,23 @@ class _RoundButton extends StatelessWidget {
     required this.label,
     required this.gradientColors,
     required this.onPressed,
+    this.width = 236,
+    this.height = 62,
+    this.fontSize = 28,
+    this.letterSpacing = 5,
   });
 
   final String label;
   final List<Color> gradientColors;
   final VoidCallback onPressed;
+  final double width;
+  final double height;
+  final double fontSize;
+  final double letterSpacing;
 
   /// 게임 화면과 동일한 Lumina 그라데이션·테두리·그림자 둥근 버튼.
   @override
   Widget build(BuildContext context) {
-    const width = 260.0;
-    const height = 68.0;
-    const fontSize = 32.0;
     final base = gradientColors.first;
     final darkerColor = HSLColor.fromColor(gradientColors.last)
         .withLightness(
@@ -376,11 +372,21 @@ class _RoundButton extends StatelessWidget {
               fontSize: fontSize,
               fontWeight: FontWeight.bold,
               color: Colors.white,
-              letterSpacing: 6,
+              letterSpacing: letterSpacing,
               shadows: [
                 Shadow(
+                  color: base.withValues(alpha: 0.5),
+                  blurRadius: 14,
+                ),
+                Shadow(
                   color: darkerColor.withValues(alpha: 0.85),
-                  offset: const Offset(1, 1),
+                  offset: const Offset(0, 2),
+                  blurRadius: 4,
+                ),
+                Shadow(
+                  color: JewelCandyLuminaTheme.primaryDeep
+                      .withValues(alpha: 0.45),
+                  offset: const Offset(1.5, 1.5),
                   blurRadius: 0,
                 ),
               ],

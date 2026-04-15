@@ -97,7 +97,6 @@ class _SfxTile extends StatelessWidget {
         icon: const Icon(Icons.play_arrow, color: Colors.white),
         tooltip: '이 효과음만 재생',
         onPressed: () {
-          SoundManager.unlockForWeb();
           SoundManager.playSfx(entry.path);
         },
       ),

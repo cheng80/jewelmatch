@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../theme/jewel_candy_lumina_theme.dart';
@@ -15,6 +17,8 @@ class LuminaOverlayCard extends StatelessWidget {
     this.horizontalMargin = 24,
     this.horizontalPadding = 32,
     this.verticalPadding = 28,
+    this.maxCardWidth = 342,
+    this.maxHeightFactor = 0.88,
     this.scrollable = false,
   });
 
@@ -24,44 +28,61 @@ class LuminaOverlayCard extends StatelessWidget {
   final double horizontalMargin;
   final double horizontalPadding;
   final double verticalPadding;
+  final double maxCardWidth;
+  final double maxHeightFactor;
 
   /// true이면 카드 내부를 SingleChildScrollView로 감싼다 (PauseMenu 등).
   final bool scrollable;
 
   @override
   Widget build(BuildContext context) {
-    final card = Container(
-      margin: EdgeInsets.symmetric(horizontal: horizontalMargin),
-      padding: EdgeInsets.symmetric(
-        horizontal: horizontalPadding,
-        vertical: verticalPadding,
-      ),
-      decoration: BoxDecoration(
-        color: JewelCandyLuminaTheme.surfaceContainer.withValues(alpha: 0.97),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: borderColor ?? JewelCandyLuminaTheme.borderPause,
-          width: 3,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: (shadowColor ?? JewelCandyLuminaTheme.primaryDeep)
-                .withValues(alpha: 0.4),
-            blurRadius: 22,
-          ),
-        ],
-      ),
-      child: child,
-    );
-
-    Widget inner = card;
-    if (scrollable) {
-      inner = SingleChildScrollView(child: card);
-    }
-
     return ColoredBox(
       color: JewelCandyLuminaTheme.overlayScrim,
-      child: Center(child: inner),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final availableWidth = math.max(
+            0.0,
+            constraints.maxWidth - (horizontalMargin * 2),
+          );
+          final cardWidth = math.min(maxCardWidth, availableWidth);
+          final cardMaxHeight = constraints.maxHeight * maxHeightFactor;
+
+          Widget cardChild = child;
+          if (scrollable) {
+            cardChild = SingleChildScrollView(child: child);
+          }
+
+          return Center(
+            child: Container(
+              width: cardWidth,
+              constraints: BoxConstraints(maxHeight: cardMaxHeight),
+              margin: EdgeInsets.symmetric(horizontal: horizontalMargin),
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: verticalPadding,
+              ),
+              decoration: BoxDecoration(
+                color: JewelCandyLuminaTheme.surfaceContainer.withValues(
+                  alpha: 0.97,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: borderColor ?? JewelCandyLuminaTheme.borderPause,
+                  width: 3,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (shadowColor ?? JewelCandyLuminaTheme.primaryDeep)
+                        .withValues(alpha: 0.4),
+                    blurRadius: 22,
+                  ),
+                ],
+              ),
+              child: cardChild,
+            ),
+          );
+        },
+      ),
     );
   }
 }

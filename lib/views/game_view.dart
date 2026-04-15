@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flame/game.dart';
@@ -102,54 +100,29 @@ class _GameViewState extends State<GameView> {
     final showSfxLog =
         AppConfig.debugLog && widget.gameMode == JewelGameMode.simple && _ready;
 
-    final mq = MediaQuery.of(context);
-    final logHeight = min(148.0, mq.size.height * 0.2);
-
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Stack(
-        fit: StackFit.expand,
-        clipBehavior: Clip.none,
-        children: [
-          Center(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final screenRatio = constraints.maxWidth / constraints.maxHeight;
-                final refRatio = kPhoneFrameRefW / kPhoneFrameRefH;
-                final needsFrame = screenRatio > refRatio + 0.05;
-
-                if (!needsFrame) {
-                  return SizedBox.expand(child: content);
-                }
-
-                final fittedScale = min(
-                  constraints.maxWidth / kPhoneFrameRefW,
-                  constraints.maxHeight / kPhoneFrameRefH,
-                );
-                final w = kPhoneFrameRefW * fittedScale;
-                final h = kPhoneFrameRefH * fittedScale;
-                return SizedBox(
-                  width: w,
-                  height: h,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(kIsWeb ? 28 : 0),
-                    child: content,
+      body: Center(
+        child: PhoneFrame(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(kIsWeb ? 28 : 0),
+            child: Stack(
+              fit: StackFit.expand,
+              clipBehavior: Clip.none,
+              children: [
+                content,
+                if (showSfxLog)
+                  const Positioned(
+                    left: 10,
+                    right: 10,
+                    bottom: 6,
+                    height: 148,
+                    child: SfxPlayLogPanel(),
                   ),
-                );
-              },
+              ],
             ),
           ),
-          // Positioned는 Stack의 직접 자식이어야 한다. LayoutBuilder 안에 두면
-          // 전체 화면을 덮어 게임 입력을 막고, 하단 정렬도 깨진다.
-          if (showSfxLog)
-            Positioned(
-              left: 10,
-              right: 10,
-              bottom: mq.padding.bottom + 6,
-              height: logHeight,
-              child: const SfxPlayLogPanel(),
-            ),
-        ],
+        ),
       ),
     );
   }

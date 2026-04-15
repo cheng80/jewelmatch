@@ -111,6 +111,7 @@ class MatchBoardGame extends FlameGame {
 
   /// 상단 1열: 일시정지 + 최고 기록만.
   static const double hudTopBarScale = 0.54;
+
   /// 큰 점수 블록 (라벨 + 숫자).
   static const double hudMainScoreBlockScale = 1.38;
   double get hudTopBarHeight => hudScale * hudTopBarScale;
@@ -118,8 +119,10 @@ class MatchBoardGame extends FlameGame {
 
   /// 점수 숫자 아래 ~ 콤보 줄까지 간격.
   double get hudGapScoreToCombo => hudScale * 0.1;
+
   /// 콤보(현재·최대) 고정 줄 높이 — 점수 블록과 보드 사이.
   double get hudComboStripHeight => hudScale * 0.88;
+
   /// 콤보 줄과 보드 사이 간격.
   double get hudGapBeforeBoard => hudScale * 0.22;
 
@@ -136,9 +139,7 @@ class MatchBoardGame extends FlameGame {
 
   /// [layoutRef] 계산 시 보드 아래에 확보할 높이 (타임바 + 간격만).
   double get bottomChromeHeight =>
-      hudGapBelowBoard +
-      hudBottomTimeBarHeight +
-      hudGapBelowTimeBar;
+      hudGapBelowBoard + hudBottomTimeBarHeight + hudGapBelowTimeBar;
 
   /// 상단: 안전영역 + 상단바 + 점수 블록 + 콤보 줄 + 보드 전 간격.
   double get topChromeHeight =>
@@ -190,15 +191,13 @@ class MatchBoardGame extends FlameGame {
 
   /// 레이아웃용 [hudScale]은 50~100대라 그대로 `fontSize`에 곱하면 글자가 비정상적으로 커진다.
   static const double _hudLayoutRef = 72.0;
-  double get hudTextScale =>
-      (hudScale / _hudLayoutRef).clamp(0.68, 1.42);
+  double get hudTextScale => (hudScale / _hudLayoutRef).clamp(0.68, 1.42);
 
   double get panelCenterY => safeAreaPadding.top + hudScale * 0.62;
 
   double get safeContentLeft => safeAreaPadding.left + size.x * 0.03;
 
-  double get safeContentRight =>
-      size.x - safeAreaPadding.right - size.x * 0.03;
+  double get safeContentRight => size.x - safeAreaPadding.right - size.x * 0.03;
 
   double get safeContentWidth =>
       (safeContentRight - safeContentLeft).clamp(0.0, double.infinity);
@@ -209,12 +208,9 @@ class MatchBoardGame extends FlameGame {
 
   double get layoutRef {
     final availW = safeContentWidth;
-    final maxGridH = (size.y -
-            safeAreaPadding.bottom -
-            gridTopY -
-            bottomChromeHeight -
-            12)
-        .clamp(0.0, double.infinity);
+    final maxGridH =
+        (size.y - safeAreaPadding.bottom - gridTopY - bottomChromeHeight - 12)
+            .clamp(0.0, double.infinity);
     return availW < maxGridH ? availW : maxGridH;
   }
 
@@ -370,10 +366,7 @@ class MatchBoardGame extends FlameGame {
   void update(double dt) {
     board.update(dt);
 
-    if (isTimedMode &&
-        isPlaying &&
-        !timeUp &&
-        !board.introFillInProgress) {
+    if (isTimedMode && isPlaying && !timeUp && !board.introFillInProgress) {
       timeRemaining -= dt;
       final floored = timeRemaining.floor();
       if (timeRemaining > 0 &&
@@ -392,9 +385,7 @@ class MatchBoardGame extends FlameGame {
       }
     }
 
-    if (!timeUp &&
-        board.state == 'idle' &&
-        board.score != _lastSavedScore) {
+    if (!timeUp && board.state == 'idle' && board.score != _lastSavedScore) {
       GameSettings.saveBestMatchScoreIfBetter(gameMode, board.score);
       _lastSavedScore = board.score;
     }
@@ -402,7 +393,6 @@ class MatchBoardGame extends FlameGame {
   }
 
   void handleBoardTap(double x, double y) {
-    SoundManager.unlockForWeb();
     if (!isPlaying ||
         timeUp ||
         board.inputLocked ||
@@ -418,7 +408,6 @@ class MatchBoardGame extends FlameGame {
 
   /// 스와이프 입력: 시작 좌표(px)에서 [dr]/[dc] 방향으로 1칸 스왑 시도.
   void handleBoardSwipe(double startX, double startY, int dr, int dc) {
-    SoundManager.unlockForWeb();
     if (!isPlaying ||
         timeUp ||
         board.inputLocked ||
@@ -442,7 +431,6 @@ class MatchBoardGame extends FlameGame {
   }
 
   void requestHint() {
-    SoundManager.unlockForWeb();
     if (!isPlaying ||
         timeUp ||
         board.inputLocked ||

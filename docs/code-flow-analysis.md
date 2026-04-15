@@ -151,7 +151,8 @@ GameView.build()
 - `Directionality` + `Stack`으로 `StarryBackground.instance`를 앱 최상단에 1개만 배치
 - `MaterialApp.router` 위에 깔리므로 모든 화면에서 별 배경이 비쳐 보임
 - 앱 제목·디버그 배너·다국어·테마·라우터 설정
-- 웹에서 첫 포인터 입력 시 `SoundManager.unlockForWeb()` 호출
+- 웹에서 첫 포인터다운 시 `SoundManager.unlockForWeb()` 호출
+- `unlockForWeb()`는 웹 오디오 잠금을 한 번 풀고, 잠금 전 요청된 BGM이 있으면 재생한다
 
 ### 3-3. `lib/router.dart`
 

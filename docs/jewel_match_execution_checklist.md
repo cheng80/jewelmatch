@@ -23,6 +23,7 @@
 
 - [x] `AssetPaths` + `SoundManager.preload` 정합 (경로 깨지면 앱 기동 실패)
 - [x] BGM: 메뉴·메인 경로·포맷(wav/mp3)과 실제 파일 일치 확인
+- [x] 웹 오디오 정책 단순화: 앱 루트 첫 포인터다운 `unlockForWeb()` + pending BGM만 유지, 웹 전용 SFX 풀/prime/드래그 보조 unlock 제거
 - [x] `docs/audio_aisfx_prompts.md` — AISFX / Soundverse 프롬프트 정리
 - [ ] 교체한 `TimeUp` 등 SFX가 의도한 톤인지 인게임에서 최종 청취
 

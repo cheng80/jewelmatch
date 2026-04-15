@@ -22,7 +22,7 @@
 | 5 | [`docs/code-flow-analysis.md`](docs/code-flow-analysis.md) | `main` → `GameView` → `MatchBoardGame` 초기화·파일 역할 |
 | 6 | [`docs/web_build.md`](docs/web_build.md) | Web `--base-href`·배포 시 주의 (서브패스 `/match/` 등) |
 | 7 | [`docs/audio_aisfx_prompts.md`](docs/audio_aisfx_prompts.md) | SFX·BGM 파일명·프롬프트·코드 매핑 변경 시 |
-| 8 | [`docs/web_audio_flutter_flame.md`](docs/web_audio_flutter_flame.md) | **다른 프로젝트 참고** — Flutter Web + `flame_audio` 효과음 묵음·스와이프·연속 재생 |
+| 8 | [`docs/web_audio_flutter_flame.md`](docs/web_audio_flutter_flame.md) | Web 오디오 정책 메모 — 현재는 **최소 unlock 정책**, 고급 대응은 참고용 |
 
 ---
 
@@ -32,7 +32,7 @@
 - **모드:** 심플(무제한) / 타임 어택 — `GoRouter` 쿼리 `mode=simple` · `mode=timed`.
 - **입력:** HUD에서 **탭-탭 스왑**와 **스와이프(인접 한 칸)** 모두 지원 (`match_game_hud.dart`).
 - **코어:** `MatchBoardLogic`(보드·스왑·매치·낙하) + `MatchBoardRenderer`(그리기) + `MatchGameHud`(HUD·일시정지·타임바 등).
-- **오디오:** `SoundManager` — BGM(메뉴/메인), SFX 프리로드. 타임 모드 저시간 `TimeTic`, 무효 스왑 `Fail`, 타임 오버 `TimeUp`, 매치 이벤트 SFX(`ComboHit`·`BigMatch`·`SpecialGem`) 등 (`asset_paths.dart`·`audio_aisfx_prompts.md`).
+- **오디오:** `SoundManager` — BGM(메뉴/메인), SFX 프리로드. 타임 모드 저시간 `TimeTic`, 무효 스왑 `Fail`, 타임 오버 `TimeUp`, 매치 이벤트 SFX(`ComboHit`·`BigMatch`·`SpecialGem`) 등 (`asset_paths.dart`·`audio_aisfx_prompts.md`). 웹은 **첫 포인터다운 1회 unlock + pending BGM**만 유지하고, 그 이후 SFX/BGM은 네이티브와 같은 `FlameAudio` 경로를 사용.
 - **파티클:** 매치 시 `ParticleBurst` Flame 컴포넌트로 방사형 파티클 — 3매치(기본), 4+매치·콤보·특수 보석(화려) 3단계 (`lib/game/components/particle_burst.dart`).
 - **타임 모드 랭킹 (서버):** PHP 단일 파일 [`matchranking/ranking.php`](matchranking/ranking.php) — 상위 30명 JSON 저장. **플러터 웹 빌드 출력(`match/` 등)과 분리**해 NAS에 두면 배포 시 랭킹 데이터가 지워지지 않는다. 클라이언트는 `lib/services/ranking_service.dart` (`http`).
 - **타임 모드 UX:** 타이틀에서 **이름 입력** 후 진입 (`GameSettings.playerName`, 기본·저장값 `GUEST`). HUD **베스트 영역**에 서버 **1위 이름·점수**. **TimeUp** 시 점수 제출 → 순위 또는 미달 메시지. 심플 모드는 로컬 베스트만.
@@ -105,6 +105,7 @@
 - **2026-04-13 (2):** `PhoneFrameScaffold` + `PhoneFrame` 도입 — `390×750` 고정 논리 해상도 + `FittedBox` 스케일링. TitleView·SettingView 적용, GameView는 Flame 자체 `LayoutBuilder` 스케일링 유지. `StarryBackground` 중복 생성 제거. 매치 이벤트 SFX(`ComboHit`·`BigMatch`·`SpecialGem`) 추가, 3단계 `ParticleBurst` 파티클 시스템 구현. 스프라이트시트 사전 로드·FadeTransition 전환으로 장면 전환 최적화.
 - **2026-04-13:** 탭+스와이프, 타임 랭킹(`matchranking`·`RankingService`), 이름·HUD 1위·TimeUp 제출, TimeUp 연출, HowToPlay(?)·스크롤 레이아웃·다국어·웹/랭킹 디렉토리 분리.
 - **2026-04-04:** `START_HERE.md` / `jewel_match_execution_checklist.md` 도입. 웹에서 평점 메뉴·타이틀 자동 리뷰 비활성화 반영.
+- **2026-04-15:** 웹 오디오 정책 단순화. `SoundManager`에서 웹 전용 SFX 풀, `mediaPlayer` 분기, 0볼륨 prime, 드래그 시작 보조 unlock 제거. 현재 기준은 앱 루트 첫 포인터다운의 `unlockForWeb()` 1회 + `_pendingBgm` 재생 보류만 유지.
 
 ---
 

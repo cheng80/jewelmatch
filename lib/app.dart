@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -23,6 +24,7 @@ class App extends StatelessWidget {
       supportedLocales: context.supportedLocales,
       locale: context.locale,
       theme: buildAppTheme(),
+      scrollBehavior: const _AppScrollBehavior(),
       routerConfig: appRouter,
     );
 
@@ -40,11 +42,23 @@ class App extends StatelessWidget {
     if (kIsWeb) {
       root = Listener(
         onPointerDown: (_) => SoundManager.unlockForWeb(),
-        onPointerUp: (_) => SoundManager.unlockForWeb(),
         behavior: HitTestBehavior.translucent,
         child: root,
       );
     }
     return root;
   }
+}
+
+class _AppScrollBehavior extends MaterialScrollBehavior {
+  const _AppScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+    PointerDeviceKind.unknown,
+  };
 }

@@ -1,4 +1,4 @@
-# Flutter Web + Flame(`flame_audio`) 효과음 트러블슈팅
+# Flutter Web + Flame(`flame_audio`) 오디오 정책 메모
 
 다른 프로젝트에서 **웹(특히 데스크톱 크롬)** 과 **모바일(Safari 등)** 에서 오디오 동작이 다르거나, 효과음만 이상할 때 참고하는 전용 문서다.  
 이 저장소의 구현 기준은 `lib/resources/sound_manager.dart` 및 아래에 인용한 파일들이다.
@@ -25,61 +25,55 @@
 
 ---
 
-## 3. 이 프로젝트에서 쓰는 대응 요약
+## 3. 현재 프로젝트 정책
 
-### 3.1 웹 효과음: `PlayerMode.mediaPlayer`
+현재 프로젝트는 웹 오디오 대응을 **최소 unlock 정책**으로 유지한다.
 
-웹(`kIsWeb`)에서는 효과음만 `mediaPlayer` 모드(HTML5 `<audio>`에 가까운 경로)로 통일한다.  
-BGM은 기존처럼 `FlameAudio.bgm` 을 쓴다.
+- 앱 루트 `Listener`의 **첫 `onPointerDown`** 에서 `SoundManager.unlockForWeb()` 호출
+- `unlockForWeb()`는 `_webUnlocked = true`로 전환하고, 잠금 전 요청된 BGM이 있으면 재생
+- 웹에서도 SFX/BGM 재생 API는 네이티브와 동일하게 `FlameAudio.play(...)`, `FlameAudio.bgm.play(...)` 경로 사용
+- 웹 잠금 전에는 `playSfx()` / `playBgmIfUnmuted()`가 return 하여 자동 재생만 막음
 
-구현: `SoundManager._playSfxWeb` → 풀에 담긴 `AudioPlayer`에 `play(AssetSource(...))`.
+즉, 이 저장소는 더 이상 웹 전용 SFX 풀, `mediaPlayer` 분기, 0볼륨 prime, 드래그 시작 추가 unlock을 기본 정책으로 쓰지 않는다.
 
-### 3.2 웹 효과음 풀 + 라운드로빈
+### 3.1 현재 코드에서 확인할 파일
 
-- 상수: `_webSfxPoolSize` (기본 **6**).
-- 미리 `setReleaseMode` / `setPlayerMode(mediaPlayer)` / `setAudioContext(mixWithOthers)` 로 구성해 두고, 재생마다 **다음 플레이어**에 할당한다.
-- 같은 프레임에 **풀 크기보다 많은** 효과음이 겹치면 여전히 끊길 수 있으니, 필요 시 숫자만 올린다.
+- `lib/resources/sound_manager.dart`
+  - `_webUnlocked`, `_pendingBgm`
+  - `unlockForWeb()`
+  - `playBgm()` / `playBgmIfUnmuted()` / `playSfx()`
+- `lib/app.dart`
+  - 웹일 때 전역 `Listener`
+  - `onPointerDown: (_) => SoundManager.unlockForWeb()`
 
-### 3.3 `unlockForWeb()` 패턴
+### 3.2 장단점
 
-- **금지:** `if (!kIsWeb || _webUnlocked) return;` 처럼 **한 번만** 호출되게 해서, 이후 포인터에서는 **풀 준비가 전혀 안 도는** 형태.
-- **권장:** 웹이면 매번 `unawaited(_ensureWebSfxPool());` 를 태워, 첫 잠금 해제 후에도 풀 생성이 이어지게 한다 (실제 생성은 한 번만).
+- 장점:
+  - 구조가 단순하다.
+  - 모바일/네이티브와 동작 모델이 가깝다.
+  - 웹 전용 예외 처리가 적어 유지보수가 쉽다.
+- 단점:
+  - 드래그/스와이프 경로의 제스처 타이밍 문제를 별도 보정하지 않는다.
+  - 브라우저/MP3 인코딩 조합에 따라 일부 웹 효과음이 불안정할 수 있다.
+  - 동시 재생이 많은 경우 단일 기본 경로의 한계가 드러날 수 있다.
 
-첫 사용자 입력 전 BGM·자동 재생은 기존처럼 `_webUnlocked` 로 막고, 효과음은 `playSfx` 안에서 `!_webUnlocked` 이면 return 유지.
-
-### 3.4 앱 루트에서 포인터다운으로 잠금 해제
-
-`lib/app.dart` (웹일 때):
-
-- `Listener` + `onPointerDown: (_) => SoundManager.unlockForWeb()`  
-- `behavior: HitTestBehavior.translucent` 로 자식이 포인터를 소비해도 상위에서 받을 수 있게 한다.
-
-### 3.5 Flame `DragCallbacks` 로만 효과음이 나가는 경우
-
-스와이프는 `onTapDown` 이 아니라 **`onDragUpdate`** 에서만 `playSfx` 가 나갈 수 있다.  
-그때는 **`onDragStart` 맨 앞**에서 `SoundManager.unlockForWeb()` 을 한 번 더 호출해 제스처 시작과 잠금 해제·풀 준비를 맞춘다.
-
-이 저장소: `lib/game/components/match_game_hud.dart` 의 `onDragStart`.
-
-### 3.6 에셋(MP3) 정규화 (선택)
+### 3.3 에셋(MP3) 정규화 (선택)
 
 웹 호환을 위해 `ffmpeg` 로 **44.1 kHz 스테레오·`libmp3lame`** 등으로 통일할 수 있다.  
 스크립트: `tools/reencode_mp3_web.py` (폴더 단위 일괄 재인코딩).
 
 ---
 
-## 4. 다른 프로젝트로 옮길 때 체크리스트
+## 4. 문제가 다시 생기면 고려할 고급 대응
 
-1. **`sound_manager.dart`**
-   - 웹: `mediaPlayer` + **풀** + `unlockForWeb` 에서 `ensure` 호출 구조.
-2. **`app.dart` (또는 루트)**
-   - 웹: 전역 `Listener` + `unlockForWeb` (위 3.4).
-3. **드래그/스와이프 전용 입력**
-   - 해당 컴포넌트 `onDragStart`(또는 동등 지점)에 `unlockForWeb` (위 3.5).
-4. **버튼·라우트**
-   - 이미 `unlockForWeb` + `playSfx` 를 쓰는 곳은 유지해도 된다 (중복 호출은 부담 적음).
+현재 저장소에서는 제거했지만, 아래 대응은 다른 프로젝트 또는 회귀 발생 시 다시 검토할 수 있다.
 
-대부분의 정책은 **`sound_manager.dart` 한 파일**에 넣을 수 있고, **제스처 경로가 Flame 드래그와만 묶인 경우**에만 HUD 등 **한두 파일**을 더 본다.
+1. 웹 SFX만 `PlayerMode.mediaPlayer` 로 분기
+2. 웹 전용 `AudioPlayer` 풀 + 라운드로빈 재생
+3. 첫 제스처 시 0볼륨 SFX prime
+4. 드래그/스와이프 시작 지점의 추가 `unlockForWeb()`
+
+이런 대응은 묵음, 드래그 시 미재생, 동시 재생 끊김이 실제로 재현될 때만 넣는 편이 낫다.
 
 ---
 
@@ -87,9 +81,8 @@ BGM은 기존처럼 `FlameAudio.bgm` 을 쓴다.
 
 | 파일 | 역할 |
 |------|------|
-| `lib/resources/sound_manager.dart` | 웹 풀·`playSfx`·`unlockForWeb` |
+| `lib/resources/sound_manager.dart` | 최소 unlock 정책·`playSfx`·pending BGM |
 | `lib/app.dart` | 웹 `Listener` → `unlockForWeb` |
-| `lib/game/components/match_game_hud.dart` | `onDragStart` → `unlockForWeb` |
 | `tools/reencode_mp3_web.py` | MP3 일괄 재인코딩 (선택) |
 
 ---
@@ -101,4 +94,4 @@ BGM은 기존처럼 `FlameAudio.bgm` 을 쓴다.
 
 ---
 
-*최종 정리: 웹은 “**잠금 해제 시점** + **재생 경로(mediaPlayer)** + **동시 재생(풀)**” 세 가지를 같이 맞추는 것이 안전하다.*
+*최종 정리: 현재 저장소는 웹에서 “**첫 포인터다운 unlock + pending BGM 보류**”만 유지하는 최소 정책을 사용한다. 추가 대응은 실제 브라우저 이슈가 재현될 때만 다시 도입한다.*

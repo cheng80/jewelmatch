@@ -42,6 +42,7 @@ class PauseMenuOverlay extends ConsumerWidget {
         data: Theme.of(context).copyWith(switchTheme: switchTheme),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
               context.tr('paused'),

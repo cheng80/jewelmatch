@@ -38,7 +38,6 @@ class _RankingListPopupState extends State<RankingListPopup> {
 
     return LuminaOverlayCard(
       borderColor: JewelCandyLuminaTheme.secondaryCyan,
-      scrollable: true,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -74,6 +73,8 @@ class _RankingListPopupState extends State<RankingListPopup> {
                 constraints: BoxConstraints(maxHeight: listMaxH),
                 child: ListView.separated(
                   shrinkWrap: true,
+                  primary: false,
+                  physics: const ClampingScrollPhysics(),
                   itemCount: list.length,
                   separatorBuilder: (context, _) => const Divider(
                     height: 1,
@@ -83,8 +84,9 @@ class _RankingListPopupState extends State<RankingListPopup> {
                     final e = list[i];
                     final rank = i + 1;
                     return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           SizedBox(
                             width: 40,
@@ -100,22 +102,30 @@ class _RankingListPopupState extends State<RankingListPopup> {
                             ),
                           ),
                           Expanded(
-                            child: Text(
-                              e.name,
-                              style: const TextStyle(
-                                color: Color(0xFFFFFDE7),
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Text(
-                            fmt.format(e.score),
-                            style: TextStyle(
-                              color: JewelCandyLuminaTheme.secondaryCyan,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  e.name,
+                                  style: const TextStyle(
+                                    color: Color(0xFFFFFDE7),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  fmt.format(e.score),
+                                  style: TextStyle(
+                                    color:
+                                        JewelCandyLuminaTheme.secondaryCyan,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
