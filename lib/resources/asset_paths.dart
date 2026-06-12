@@ -8,6 +8,7 @@ class AssetPaths {
   static const String sfxStart = 'sfx/Start.mp3';
   static const String sfxCollect = 'sfx/Collect.mp3';
   static const String sfxFail = 'sfx/Fail.mp3';
+
   /// 클리어 등에 사용할 수 있는 SFX (`assets/audio/sfx/Clear.mp3`).
   static const String sfxClear = 'sfx/Clear.mp3';
   static const String sfxBtnSnd = 'sfx/BtnSnd.mp3';
@@ -34,6 +35,7 @@ class AssetPaths {
   /// 7열×128px 보석 스프라이트 시트 (색은 코드에서 열 인덱스로 매핑)
   static const String jewelSpriteSheet = 'sprites/Jewel.png';
 
-  /// 3열×128px 특수 보석 시트 (순서: col, row, bomb)
+  /// 3열×128px 특수 보석 시트 (순서: legacy col, legacy row, flame)
+  /// Star/Supernova는 일반 보석 스프라이트 위에 런타임 오버레이로 표시한다.
   static const String specialSpriteSheet = 'sprites/Special.png';
 }

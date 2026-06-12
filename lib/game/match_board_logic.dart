@@ -11,8 +11,8 @@ enum BoardFillIntroKind {
   shuffleRefill,
 }
 
-/// 보석 종류. Love2D `board.lua`의 `kind` 문자열에 대응한다.
-enum GemKind { normal, row, col, bomb, hyper }
+/// 보석 종류. `row`/`col`은 예전 저장 상태 호환용으로 유지한다.
+enum GemKind { normal, row, col, bomb, star, hyper, supernova }
 
 /// 단일 보석 인스턴스 (논리 격자 + 화면 보간 좌표).
 /// 오브젝트 풀링을 위해 [reset]으로 필드를 재설정할 수 있다.
@@ -118,6 +118,29 @@ class SpecialSpawn {
   final int color;
 }
 
+class SpecialEffectShake {
+  const SpecialEffectShake({required this.intensity, required this.duration});
+
+  final double intensity;
+  final double duration;
+}
+
+class SpecialEffectEvent {
+  SpecialEffectEvent({
+    required this.effectKind,
+    required this.origin,
+    required this.affectedCells,
+    required this.shake,
+    this.triggerColor,
+  });
+
+  final GemKind effectKind;
+  final Point<int> origin;
+  final List<Point<int>> affectedCells;
+  final SpecialEffectShake shake;
+  final int? triggerColor;
+}
+
 /// 8×8 등 격자 매치-3 보드 로직 (스왑, 연쇄, 특수 보석, 중력, 리필).
 /// 좌표는 **0 기반** row, col 이다.
 class MatchBoardLogic {
@@ -206,6 +229,7 @@ class MatchBoardLogic {
 
   /// BoardGem 오브젝트 풀. 제거된 보석을 여기 반납하고, 생성 시 재활용한다.
   final List<BoardGem> _gemPool = [];
+  final List<SpecialEffectEvent> _specialEffectEvents = [];
 
   /// 풀에서 꺼내거나 새로 생성한 BoardGem을 반환한다.
   BoardGem _acquireGem({
@@ -294,6 +318,30 @@ class MatchBoardLogic {
 
   String _cellKey(int row, int col) => '$row:$col';
 
+  SpecialEffectShake _shakeForSpecial(GemKind kind) {
+    switch (kind) {
+      case GemKind.row:
+      case GemKind.col:
+        return const SpecialEffectShake(intensity: 2.6, duration: 0.22);
+      case GemKind.bomb:
+        return const SpecialEffectShake(intensity: 4.8, duration: 0.30);
+      case GemKind.star:
+        return const SpecialEffectShake(intensity: 4.2, duration: 0.26);
+      case GemKind.hyper:
+        return const SpecialEffectShake(intensity: 5.4, duration: 0.36);
+      case GemKind.supernova:
+        return const SpecialEffectShake(intensity: 7.2, duration: 0.46);
+      case GemKind.normal:
+        return const SpecialEffectShake(intensity: 0, duration: 0);
+    }
+  }
+
+  List<SpecialEffectEvent> consumeSpecialEffectEvents() {
+    final events = List<SpecialEffectEvent>.unmodifiable(_specialEffectEvents);
+    _specialEffectEvents.clear();
+    return events;
+  }
+
   bool isInside(int row, int col) =>
       row >= 0 && row < rows && col >= 0 && col < cols;
 
@@ -304,6 +352,7 @@ class MatchBoardLogic {
       }
     }
     cells.clear();
+    _specialEffectEvents.clear();
     for (var r = 0; r < rows; r++) {
       cells.add(List<BoardGem?>.filled(cols, null, growable: false));
     }
@@ -663,6 +712,7 @@ class MatchBoardLogic {
 
     final spawns = <SpecialSpawn>[];
     final reserved = <String, bool>{};
+    final consumed = <String, bool>{};
 
     final rowGroups = matchData.groups
         .where((g) => g.direction == 'row')
@@ -693,18 +743,37 @@ class MatchBoardLogic {
               SpecialSpawn(
                 row: overlap.x,
                 col: overlap.y,
-                kind: GemKind.bomb,
+                kind: GemKind.star,
                 color: g.color,
               ),
             );
             reserved[key] = true;
+            consumed.addAll(merged);
           }
         }
       }
     }
 
     for (final group in matchData.groups) {
-      if (group.length >= 5) {
+      if (group.cells.any((c) => consumed.containsKey(_cellKey(c.x, c.y)))) {
+        continue;
+      }
+      if (group.length >= 6) {
+        final spawn = pickSpawnCell(group, movedCells);
+        final key = _cellKey(spawn.x, spawn.y);
+        if (!reserved.containsKey(key)) {
+          final g = getGem(spawn.x, spawn.y)!;
+          spawns.add(
+            SpecialSpawn(
+              row: spawn.x,
+              col: spawn.y,
+              kind: GemKind.supernova,
+              color: g.color,
+            ),
+          );
+          reserved[key] = true;
+        }
+      } else if (group.length == 5) {
         final spawn = pickSpawnCell(group, movedCells);
         final key = _cellKey(spawn.x, spawn.y);
         if (!reserved.containsKey(key)) {
@@ -722,19 +791,19 @@ class MatchBoardLogic {
     }
 
     for (final group in matchData.groups) {
+      if (group.cells.any((c) => consumed.containsKey(_cellKey(c.x, c.y)))) {
+        continue;
+      }
       if (group.length == 4) {
         final spawn = pickSpawnCell(group, movedCells);
         final key = _cellKey(spawn.x, spawn.y);
         if (!reserved.containsKey(key)) {
           final g = getGem(spawn.x, spawn.y)!;
-          final stripeKind = group.direction == 'row'
-              ? GemKind.row
-              : GemKind.col;
           spawns.add(
             SpecialSpawn(
               row: spawn.x,
               col: spawn.y,
-              kind: stripeKind,
+              kind: GemKind.bomb,
               color: g.color,
             ),
           );
@@ -846,6 +915,19 @@ class MatchBoardLogic {
     enqueueTriggeredSpecial(queue, queued, row, col, triggerColor);
   }
 
+  void _recordSpecialEffect(MatchChainItem item, List<Point<int>> cells) {
+    if (cells.isEmpty) return;
+    _specialEffectEvents.add(
+      SpecialEffectEvent(
+        effectKind: item.kind,
+        origin: Point(item.row, item.col),
+        affectedCells: List<Point<int>>.unmodifiable(cells),
+        shake: _shakeForSpecial(item.kind),
+        triggerColor: item.triggerColor,
+      ),
+    );
+  }
+
   void activateSpecials(
     Map<String, bool> removalSet,
     List<MatchChainItem> queue,
@@ -864,40 +946,50 @@ class MatchBoardLogic {
       if (processed.containsKey(key)) continue;
       processed[key] = true;
 
+      final affectedKeys = <String, bool>{};
+      final affectedCells = <Point<int>>[];
+      void markAffected(int row, int col, int? triggerColor) {
+        if (!isInside(row, col)) return;
+        final affectedKey = _cellKey(row, col);
+        if (!affectedKeys.containsKey(affectedKey)) {
+          affectedCells.add(Point(row, col));
+          affectedKeys[affectedKey] = true;
+        }
+        markCellForRemoval(removalSet, queue, queued, row, col, triggerColor);
+      }
+
       if (item.kind == GemKind.row) {
         for (var c = 0; c < cols; c++) {
-          markCellForRemoval(
-            removalSet,
-            queue,
-            queued,
-            item.row,
-            c,
-            item.triggerColor,
-          );
+          markAffected(item.row, c, item.triggerColor);
         }
       } else if (item.kind == GemKind.col) {
         for (var r = 0; r < rows; r++) {
-          markCellForRemoval(
-            removalSet,
-            queue,
-            queued,
-            r,
-            item.col,
-            item.triggerColor,
-          );
+          markAffected(r, item.col, item.triggerColor);
         }
       } else if (item.kind == GemKind.bomb) {
         for (var r = item.row - 1; r <= item.row + 1; r++) {
           for (var c = item.col - 1; c <= item.col + 1; c++) {
-            markCellForRemoval(
-              removalSet,
-              queue,
-              queued,
-              r,
-              c,
-              item.triggerColor,
-            );
+            markAffected(r, c, item.triggerColor);
           }
+        }
+      } else if (item.kind == GemKind.star) {
+        for (var c = 0; c < cols; c++) {
+          markAffected(item.row, c, item.triggerColor);
+        }
+        for (var r = 0; r < rows; r++) {
+          markAffected(r, item.col, item.triggerColor);
+        }
+      } else if (item.kind == GemKind.supernova) {
+        for (var r = item.row - 1; r <= item.row + 1; r++) {
+          for (var c = item.col - 1; c <= item.col + 1; c++) {
+            markAffected(r, c, item.triggerColor);
+          }
+        }
+        for (var c = 0; c < cols; c++) {
+          markAffected(item.row, c, item.triggerColor);
+        }
+        for (var r = 0; r < rows; r++) {
+          markAffected(r, item.col, item.triggerColor);
         }
       } else if (item.kind == GemKind.hyper) {
         final targetColor = item.triggerColor ?? pickExistingColor();
@@ -908,19 +1000,13 @@ class MatchBoardLogic {
               if (gem != null &&
                   gem.kind != GemKind.hyper &&
                   gem.color == targetColor) {
-                markCellForRemoval(
-                  removalSet,
-                  queue,
-                  queued,
-                  r,
-                  c,
-                  targetColor,
-                );
+                markAffected(r, c, targetColor);
               }
             }
           }
         }
       }
+      _recordSpecialEffect(item, affectedCells);
     }
   }
 
@@ -1174,59 +1260,6 @@ class MatchBoardLogic {
         ),
       );
       resolveSpecialSwap(removalSet, queue, 'hyper');
-      return true;
-    }
-
-    if (_isSpecial(gemA.kind) && _isSpecial(gemB.kind)) {
-      removalSet[_cellKey(ar, ac)] = true;
-      removalSet[_cellKey(br, bc)] = true;
-      queue.add(
-        MatchChainItem(
-          row: ar,
-          col: ac,
-          kind: gemA.kind,
-          triggerColor: gemA.color > 0 ? gemA.color : null,
-        ),
-      );
-      queue.add(
-        MatchChainItem(
-          row: br,
-          col: bc,
-          kind: gemB.kind,
-          triggerColor: gemB.color > 0 ? gemB.color : null,
-        ),
-      );
-      resolveSpecialSwap(removalSet, queue, 'special swap');
-      return true;
-    }
-
-    if (_isSpecial(gemA.kind) && gemB.kind == GemKind.normal) {
-      removalSet[_cellKey(ar, ac)] = true;
-      removalSet[_cellKey(br, bc)] = true;
-      queue.add(
-        MatchChainItem(
-          row: ar,
-          col: ac,
-          kind: gemA.kind,
-          triggerColor: gemB.color,
-        ),
-      );
-      resolveSpecialSwap(removalSet, queue, 'special');
-      return true;
-    }
-
-    if (_isSpecial(gemB.kind) && gemA.kind == GemKind.normal) {
-      removalSet[_cellKey(ar, ac)] = true;
-      removalSet[_cellKey(br, bc)] = true;
-      queue.add(
-        MatchChainItem(
-          row: br,
-          col: bc,
-          kind: gemB.kind,
-          triggerColor: gemA.color,
-        ),
-      );
-      resolveSpecialSwap(removalSet, queue, 'special');
       return true;
     }
 

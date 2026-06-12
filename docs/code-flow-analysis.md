@@ -214,7 +214,8 @@ Flame 게임 셸이다.
 
 - 보드 프레임/슬롯 배경을 `ui.Picture`로 캐싱해 재사용
 - 기본 보석은 `assets/images/sprites/Jewel.png`를 사용
-- 특수 보석(col / row / bomb)은 `assets/images/sprites/Special.png`의 전용 프레임을 사용
+- 특수 보석은 비쥬얼드식 생성 규칙을 사용한다: 4개 일렬은 Flame(`bomb`), T/L 모양은 Star, 5개 일렬은 Hyper, 6개 이상 일렬은 Supernova.
+- Flame(`bomb`)은 `assets/images/sprites/Special.png`의 3번째 프레임을 사용하고, Star/Supernova는 일반 보석 스프라이트 위에 런타임 광선 오버레이를 그린다.
 - 하이퍼 보석은 `Jewel.png`의 **2번째 프레임(인덱스 1)** 을 그대로 사용
 - 현재 스프라이트 기준 셀 크기는 모두 `128×128`
 - 예전 `ColorFilter.matrix` 기반 하이퍼 틴트는 제거되었고, 런타임 필터 대신 준비된 스프라이트를 직접 그린다
@@ -225,15 +226,17 @@ Flame 게임 셸이다.
 |:---|:---|:---|
 | 일반 보석 + 하이퍼 | `assets/images/sprites/Jewel.png` | 7프레임, 각 `128×128` |
 | 하이퍼 보석 | `assets/images/sprites/Jewel.png` | **2번째 프레임** |
-| 특수 보석 `col` | `assets/images/sprites/Special.png` | **1번째 프레임** |
-| 특수 보석 `row` | `assets/images/sprites/Special.png` | **2번째 프레임** |
-| 특수 보석 `bomb` | `assets/images/sprites/Special.png` | **3번째 프레임** |
+| Legacy 특수 보석 `col` | `assets/images/sprites/Special.png` | **1번째 프레임** |
+| Legacy 특수 보석 `row` | `assets/images/sprites/Special.png` | **2번째 프레임** |
+| Flame 특수 보석 `bomb` | `assets/images/sprites/Special.png` | **3번째 프레임** |
+| Star 특수 보석 `star` | `assets/images/sprites/Jewel.png` + 런타임 오버레이 | 보석 색 + 십자 광선 |
+| Supernova 특수 보석 `supernova` | `assets/images/sprites/Jewel.png` + 런타임 오버레이 | 보석 색 + 십자 광선 + 폭발 링 |
 
 참고:
 
 - `AssetPaths.jewelSpriteSheet` → `sprites/Jewel.png`
 - `AssetPaths.specialSpriteSheet` → `sprites/Special.png`
-- 튜토리얼 오버레이(`HowToPlayOverlay`)도 동일한 시트 기준으로 프리뷰를 표시한다
+- 튜토리얼 오버레이(`HowToPlayOverlay`)도 같은 프리뷰 원칙을 사용한다. Star/Supernova는 시트 프레임 대신 `CustomPainter` 오버레이로 미리 보여준다
 
 ### 3-9. `lib/game/components/match_game_hud.dart`
 

@@ -12,6 +12,7 @@ import '../match_board_logic.dart';
 
 /// 매치 보드 격자·보석·플래시·선택 표시.
 /// `Jewel.png`(896×128, 7프레임×128) + `Special.png`(384×128, 3프레임×128) 사용.
+/// Star/Supernova는 색 보석 위에 광선 오버레이를 얹어 표현한다.
 ///
 /// 힌트: [MatchBoardLogic.showHint]가 고른 **한 쌍**만, 보석 위에 흰색 펄스(느리게 깜박임).
 /// 다른 칸에는 오버레이를 그리지 않는다.
@@ -84,6 +85,14 @@ class MatchBoardRenderer extends PositionComponent
     ..style = PaintingStyle.stroke
     ..strokeWidth = 1.2;
   final Paint _proceduralHighlightPaint = Paint();
+  final Paint _specialAuraPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round;
+  final Paint _specialGlowPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+  final Paint _specialCorePaint = Paint();
   final Vector2 _spriteRenderPosition = Vector2.zero();
   final Vector2 _spriteRenderSize = Vector2.zero();
 
@@ -357,6 +366,92 @@ class MatchBoardRenderer extends PositionComponent
     } else {
       _drawGemProcedural(canvas, gem, ts);
     }
+
+    if (gem.kind == GemKind.star) {
+      _drawStarOverlay(canvas, ox, oy, drawW, drawH);
+    } else if (gem.kind == GemKind.supernova) {
+      _drawSupernovaOverlay(canvas, ox, oy, drawW, drawH);
+    }
+  }
+
+  void _drawStarOverlay(
+    Canvas canvas,
+    double ox,
+    double oy,
+    double drawW,
+    double drawH,
+  ) {
+    final center = Offset(ox + drawW / 2, oy + drawH / 2);
+    final short = drawW * 0.19;
+    final long = drawW * 0.39;
+
+    _specialGlowPaint
+      ..color = JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.42)
+      ..strokeWidth = drawW * 0.12;
+    canvas.drawLine(
+      Offset(center.dx - long, center.dy),
+      Offset(center.dx + long, center.dy),
+      _specialGlowPaint,
+    );
+    canvas.drawLine(
+      Offset(center.dx, center.dy - long),
+      Offset(center.dx, center.dy + long),
+      _specialGlowPaint,
+    );
+
+    _specialAuraPaint
+      ..color = Colors.white.withValues(alpha: 0.86)
+      ..strokeWidth = drawW * 0.045;
+    canvas.drawLine(
+      Offset(center.dx - long, center.dy),
+      Offset(center.dx + long, center.dy),
+      _specialAuraPaint,
+    );
+    canvas.drawLine(
+      Offset(center.dx, center.dy - long),
+      Offset(center.dx, center.dy + long),
+      _specialAuraPaint,
+    );
+    canvas.drawLine(
+      Offset(center.dx - short, center.dy - short),
+      Offset(center.dx + short, center.dy + short),
+      _specialAuraPaint,
+    );
+    canvas.drawLine(
+      Offset(center.dx - short, center.dy + short),
+      Offset(center.dx + short, center.dy - short),
+      _specialAuraPaint,
+    );
+
+    _specialCorePaint.color = Colors.white.withValues(alpha: 0.92);
+    canvas.drawCircle(center, drawW * 0.07, _specialCorePaint);
+  }
+
+  void _drawSupernovaOverlay(
+    Canvas canvas,
+    double ox,
+    double oy,
+    double drawW,
+    double drawH,
+  ) {
+    final center = Offset(ox + drawW / 2, oy + drawH / 2);
+    final radius = drawW * 0.38;
+
+    _specialGlowPaint
+      ..color = JewelCandyLuminaTheme.primaryPink.withValues(alpha: 0.5)
+      ..strokeWidth = drawW * 0.14;
+    canvas.drawCircle(center, radius, _specialGlowPaint);
+
+    _specialAuraPaint
+      ..color = JewelCandyLuminaTheme.tertiaryGold.withValues(alpha: 0.9)
+      ..strokeWidth = drawW * 0.055;
+    canvas.drawCircle(center, radius, _specialAuraPaint);
+    canvas.drawCircle(center, radius * 0.74, _specialAuraPaint);
+
+    _drawStarOverlay(canvas, ox, oy, drawW, drawH);
+
+    _specialCorePaint.color = Colors.white.withValues(alpha: 0.78);
+    canvas.drawCircle(center, drawW * 0.12, _specialCorePaint);
   }
 
   void _drawGemProcedural(Canvas canvas, BoardGem gem, double ts) {

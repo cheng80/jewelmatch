@@ -18,7 +18,7 @@
 - [x] HUD `TextPainter`/`Paint` 재사용 캐싱 (`MatchGameHud`)
 - [x] 개발 모드 FPS 오버레이 추가 (`PerformanceOverlay`, debug only)
 - [x] 하이퍼 보석 `ColorFilter.matrix` 제거 → 전용 스프라이트 프레임 사용
-- [x] 특수 보석 `col / row / bomb` 전용 시트(`Special.png`) 직접 렌더
+- [x] 특수 보석 렌더: Flame은 `Special.png`, Star/Supernova는 보석 위 광선 오버레이
 - [x] 튜토리얼 스프라이트 프리뷰를 원본 픽셀 기준 프레임 크롭으로 통일 (`SpriteSheetFrame`)
 - [x] 파티클 퍼짐 반경·입자 수·수명·글로우 강도 축소로 GPU 부담 완화
 - [x] MVVM 리팩터링: `flutter_riverpod` 도입, `SettingsNotifier`·`RankingNotifier`, 오버레이 파일 분리, 공통 위젯 추출
@@ -36,7 +36,7 @@
 - [x] `AssetPaths` + `SoundManager.preload` 정합 (경로 깨지면 앱 기동 실패)
 - [x] BGM: 메뉴·메인 경로·포맷(wav/mp3)과 실제 파일 일치 확인
 - [x] 보석 스프라이트 시트 교체: `Juwel.png` → `Jewel.png` (`128×128` 프레임 기준)
-- [x] 특수 보석 전용 시트 `Special.png` (`col / row / bomb`) 적용
+- [x] 특수 보석 전용 시트 `Special.png`와 Star/Supernova 런타임 오버레이 적용
 - [x] `docs/audio_aisfx_prompts.md` — AISFX / Soundverse 프롬프트 정리
 - [ ] 교체한 `TimeUp` 등 SFX가 의도한 톤인지 인게임에서 최종 청취
 

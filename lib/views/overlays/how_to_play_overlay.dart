@@ -27,8 +27,9 @@ class HowToPlayOverlay extends StatelessWidget {
             maxHeight: MediaQuery.of(context).size.height * 0.85,
           ),
           decoration: BoxDecoration(
-            color: JewelCandyLuminaTheme.surfaceContainer
-                .withValues(alpha: 0.97),
+            color: JewelCandyLuminaTheme.surfaceContainer.withValues(
+              alpha: 0.97,
+            ),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: JewelCandyLuminaTheme.secondaryCyan,
@@ -36,8 +37,7 @@ class HowToPlayOverlay extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: JewelCandyLuminaTheme.primaryDeep
-                    .withValues(alpha: 0.4),
+                color: JewelCandyLuminaTheme.primaryDeep.withValues(alpha: 0.4),
                 blurRadius: 22,
               ),
             ],
@@ -186,8 +186,9 @@ class HowToPlayOverlay extends StatelessWidget {
             decoration: i < 3
                 ? BoxDecoration(
                     border: Border.all(
-                      color: JewelCandyLuminaTheme.tertiaryGold
-                          .withValues(alpha: 0.8),
+                      color: JewelCandyLuminaTheme.tertiaryGold.withValues(
+                        alpha: 0.8,
+                      ),
                       width: 2,
                     ),
                     borderRadius: BorderRadius.circular(6),
@@ -208,8 +209,11 @@ class HowToPlayOverlay extends StatelessWidget {
         const SizedBox(width: 2),
         _gemClip(6),
         const SizedBox(width: 8),
-        Icon(Icons.swap_horiz_rounded,
-            color: JewelCandyLuminaTheme.secondaryCyan, size: 28),
+        Icon(
+          Icons.swap_horiz_rounded,
+          color: JewelCandyLuminaTheme.secondaryCyan,
+          size: 28,
+        ),
         const SizedBox(width: 8),
         _gemClip(6),
         const SizedBox(width: 2),
@@ -225,24 +229,17 @@ class HowToPlayOverlay extends StatelessWidget {
       children: [
         _specialGemCard(
           context,
-          kind: GemKind.row,
-          gemSheetCol: 0,
-          title: context.tr('howToPlaySpecialRowTitle'),
-          desc: context.tr('howToPlaySpecialRowDesc'),
-        ),
-        _specialGemCard(
-          context,
-          kind: GemKind.col,
-          gemSheetCol: 3,
-          title: context.tr('howToPlaySpecialColTitle'),
-          desc: context.tr('howToPlaySpecialColDesc'),
-        ),
-        _specialGemCard(
-          context,
           kind: GemKind.bomb,
-          gemSheetCol: 5,
-          title: context.tr('howToPlaySpecialBombTitle'),
-          desc: context.tr('howToPlaySpecialBombDesc'),
+          gemSheetCol: 0,
+          title: context.tr('howToPlaySpecialFlameTitle'),
+          desc: context.tr('howToPlaySpecialFlameDesc'),
+        ),
+        _specialGemCard(
+          context,
+          kind: GemKind.star,
+          gemSheetCol: 3,
+          title: context.tr('howToPlaySpecialStarTitle'),
+          desc: context.tr('howToPlaySpecialStarDesc'),
         ),
         _specialGemCard(
           context,
@@ -250,6 +247,13 @@ class HowToPlayOverlay extends StatelessWidget {
           gemSheetCol: 1,
           title: context.tr('howToPlaySpecialHyperTitle'),
           desc: context.tr('howToPlaySpecialHyperDesc'),
+        ),
+        _specialGemCard(
+          context,
+          kind: GemKind.supernova,
+          gemSheetCol: 5,
+          title: context.tr('howToPlaySpecialSupernovaTitle'),
+          desc: context.tr('howToPlaySpecialSupernovaDesc'),
         ),
       ],
     );
@@ -301,31 +305,41 @@ class HowToPlayOverlay extends StatelessWidget {
     );
   }
 
-  Widget _specialGemPreview({
-    required GemKind kind,
-    int? gemSheetCol,
-  }) {
+  Widget _specialGemPreview({required GemKind kind, int? gemSheetCol}) {
     final specialSheetCol = switch (kind) {
       GemKind.col => 0,
       GemKind.row => 1,
       GemKind.bomb => 2,
-      GemKind.normal || GemKind.hyper => null,
+      GemKind.normal ||
+      GemKind.star ||
+      GemKind.hyper ||
+      GemKind.supernova => null,
     };
 
     return SizedBox(
       width: 52,
       height: 52,
-      child: specialSheetCol != null
-          ? Padding(
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          if (specialSheetCol != null)
+            Padding(
               padding: const EdgeInsets.all(4),
               child: _specialGemClip(specialSheetCol),
             )
-          : Padding(
+          else
+            Padding(
               padding: const EdgeInsets.all(4),
               child: gemSheetCol == null
                   ? const SizedBox.shrink()
                   : _gemClip(gemSheetCol),
             ),
+          if (kind == GemKind.star || kind == GemKind.supernova)
+            Positioned.fill(
+              child: CustomPaint(painter: _SpecialGemPainter(kind)),
+            ),
+        ],
+      ),
     );
   }
 
@@ -335,9 +349,17 @@ class HowToPlayOverlay extends StatelessWidget {
         _specialCreationRow(
           context,
           before: _creationMatchRow([0, 0, 0, 0]),
-          afterKind: GemKind.row,
+          afterKind: GemKind.bomb,
           afterSheetCol: 0,
-          label: context.tr('howToPlaySpecialMakeRow'),
+          label: context.tr('howToPlaySpecialMakeFlame'),
+        ),
+        const SizedBox(height: 10),
+        _specialCreationRow(
+          context,
+          before: _creationCrossMatch(),
+          afterKind: GemKind.star,
+          afterSheetCol: 3,
+          label: context.tr('howToPlaySpecialMakeStar'),
         ),
         const SizedBox(height: 10),
         _specialCreationRow(
@@ -350,10 +372,10 @@ class HowToPlayOverlay extends StatelessWidget {
         const SizedBox(height: 10),
         _specialCreationRow(
           context,
-          before: _creationCrossMatch(),
-          afterKind: GemKind.bomb,
+          before: _creationMatchRow([5, 5, 5, 5, 5, 5]),
+          afterKind: GemKind.supernova,
           afterSheetCol: 5,
-          label: context.tr('howToPlaySpecialMakeBomb'),
+          label: context.tr('howToPlaySpecialMakeSupernova'),
         ),
       ],
     );
@@ -448,7 +470,9 @@ class HowToPlayOverlay extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               border: Border.all(
-                color: JewelCandyLuminaTheme.tertiaryGold.withValues(alpha: 0.8),
+                color: JewelCandyLuminaTheme.tertiaryGold.withValues(
+                  alpha: 0.8,
+                ),
                 width: 2,
               ),
               borderRadius: BorderRadius.circular(6),
@@ -489,5 +513,91 @@ class HowToPlayOverlay extends StatelessWidget {
       ),
       child: _gemClip(sheetCol),
     );
+  }
+}
+
+class _SpecialGemPainter extends CustomPainter {
+  _SpecialGemPainter(this.kind);
+
+  final GemKind kind;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.shortestSide * 0.35;
+    final glow = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+    final line = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    final core = Paint()..color = Colors.white.withValues(alpha: 0.9);
+
+    if (kind == GemKind.supernova) {
+      glow
+        ..color = JewelCandyLuminaTheme.primaryPink.withValues(alpha: 0.55)
+        ..strokeWidth = size.shortestSide * 0.12;
+      canvas.drawCircle(center, radius, glow);
+
+      line
+        ..color = JewelCandyLuminaTheme.tertiaryGold.withValues(alpha: 0.9)
+        ..strokeWidth = size.shortestSide * 0.04;
+      canvas.drawCircle(center, radius, line);
+      canvas.drawCircle(center, radius * 0.72, line);
+    }
+
+    final long = size.shortestSide * 0.32;
+    final short = size.shortestSide * 0.16;
+    glow
+      ..color = JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.44)
+      ..strokeWidth = size.shortestSide * 0.09;
+    canvas.drawLine(
+      Offset(center.dx - long, center.dy),
+      Offset(center.dx + long, center.dy),
+      glow,
+    );
+    canvas.drawLine(
+      Offset(center.dx, center.dy - long),
+      Offset(center.dx, center.dy + long),
+      glow,
+    );
+
+    line
+      ..color = Colors.white.withValues(alpha: 0.9)
+      ..strokeWidth = size.shortestSide * 0.035;
+    canvas.drawLine(
+      Offset(center.dx - long, center.dy),
+      Offset(center.dx + long, center.dy),
+      line,
+    );
+    canvas.drawLine(
+      Offset(center.dx, center.dy - long),
+      Offset(center.dx, center.dy + long),
+      line,
+    );
+    canvas.drawLine(
+      Offset(center.dx - short, center.dy - short),
+      Offset(center.dx + short, center.dy + short),
+      line,
+    );
+    canvas.drawLine(
+      Offset(center.dx - short, center.dy + short),
+      Offset(center.dx + short, center.dy - short),
+      line,
+    );
+
+    canvas.drawCircle(
+      center,
+      kind == GemKind.supernova
+          ? size.shortestSide * 0.09
+          : size.shortestSide * 0.055,
+      core,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_SpecialGemPainter oldDelegate) {
+    return oldDelegate.kind != kind;
   }
 }
