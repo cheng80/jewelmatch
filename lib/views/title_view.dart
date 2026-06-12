@@ -21,8 +21,7 @@ class TitleView extends StatefulWidget {
   State<TitleView> createState() => _TitleViewState();
 }
 
-class _TitleViewState extends State<TitleView>
-    with WidgetsBindingObserver {
+class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
   bool _ready = false;
 
   /// PackageInfo는 변하지 않으므로 앱 전역 캐싱.
@@ -49,9 +48,7 @@ class _TitleViewState extends State<TitleView>
   }
 
   Future<void> _cachePackageInfo() async {
-    if (_cachedPackageInfo == null) {
-      _cachedPackageInfo = await PackageInfo.fromPlatform();
-    }
+    _cachedPackageInfo ??= await PackageInfo.fromPlatform();
     if (!mounted) return;
     setState(() {});
   }
@@ -83,14 +80,12 @@ class _TitleViewState extends State<TitleView>
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor:
-            JewelCandyLuminaTheme.surfaceContainer.withValues(alpha: 0.97),
+        backgroundColor: JewelCandyLuminaTheme.surfaceContainer.withValues(
+          alpha: 0.97,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: JewelCandyLuminaTheme.borderPause,
-            width: 2,
-          ),
+          side: BorderSide(color: JewelCandyLuminaTheme.borderPause, width: 2),
         ),
         title: Text(
           context.tr('enterName'),
@@ -110,11 +105,14 @@ class _TitleViewState extends State<TitleView>
               hintStyle: TextStyle(color: Colors.white38),
               enabledBorder: UnderlineInputBorder(
                 borderSide: BorderSide(
-                    color: JewelCandyLuminaTheme.tertiaryGold),
+                  color: JewelCandyLuminaTheme.tertiaryGold,
+                ),
               ),
               focusedBorder: UnderlineInputBorder(
                 borderSide: BorderSide(
-                    color: JewelCandyLuminaTheme.secondaryCyan, width: 2),
+                  color: JewelCandyLuminaTheme.secondaryCyan,
+                  width: 2,
+                ),
               ),
             ),
             onSubmitted: (v) => Navigator.of(ctx).pop(v),
@@ -174,117 +172,118 @@ class _TitleContent extends StatelessWidget {
     return Column(
       children: [
         const Spacer(flex: 3),
-              Text(
-                context.tr('gameTitle'),
-                style: TextStyle(
-                  fontSize: 64,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white.withValues(alpha: 0.9),
-                  letterSpacing: 8,
+        Text(
+          context.tr('gameTitle'),
+          style: TextStyle(
+            fontSize: 64,
+            fontWeight: FontWeight.bold,
+            color: Colors.white.withValues(alpha: 0.9),
+            letterSpacing: 8,
+          ),
+        ),
+        Text(
+          AppConfig.gameTitleSub,
+          style: TextStyle(
+            fontSize: 88,
+            fontWeight: FontWeight.bold,
+            color: JewelCandyLuminaTheme.goldStrong,
+            letterSpacing: 6,
+            shadows: [
+              Shadow(
+                color: JewelCandyLuminaTheme.primaryPink.withValues(
+                  alpha: 0.55,
                 ),
+                blurRadius: 24,
               ),
-              Text(
-                AppConfig.gameTitleSub,
-                style: TextStyle(
-                  fontSize: 88,
-                  fontWeight: FontWeight.bold,
-                  color: JewelCandyLuminaTheme.goldStrong,
-                  letterSpacing: 6,
-                  shadows: [
-                    Shadow(
-                      color: JewelCandyLuminaTheme.primaryPink
-                          .withValues(alpha: 0.55),
-                      blurRadius: 24,
-                    ),
-                    Shadow(
-                      color: JewelCandyLuminaTheme.primaryDeep,
-                      offset: const Offset(2, 2),
-                      blurRadius: 0,
-                    ),
-                  ],
-                ),
+              Shadow(
+                color: JewelCandyLuminaTheme.primaryDeep,
+                offset: const Offset(2, 2),
+                blurRadius: 0,
               ),
-              const SizedBox(height: 8),
-              Text(
-                context.tr('gameSubtitle'),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 22,
-                  color: JewelCandyLuminaTheme.tertiaryGold
-                      .withValues(alpha: 0.75),
-                ),
-              ),
-              const Spacer(flex: 3),
-              _RoundButton(
-                label: context.tr('modeSimple'),
-                gradientColors: JewelCandyLuminaTheme.buttonPrimaryPink,
-                onPressed: () {
-                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                  context.go('${RoutePaths.game}?mode=simple');
-                },
-              ),
-              const SizedBox(height: 16),
-              _RoundButton(
-                label: context.tr('modeTimed'),
-                gradientColors: JewelCandyLuminaTheme.buttonRetryMagOr,
-                onPressed: () {
-                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                  onShowNameDialog();
-                },
-              ),
-              const SizedBox(height: 20),
-              _RoundButton(
-                label: context.tr('settings'),
-                gradientColors: JewelCandyLuminaTheme.buttonShuffleCyanLime,
-                onPressed: () {
-                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                  context.push(RoutePaths.setting);
-                },
-              ),
-              const SizedBox(height: 16),
-              _RoundButton(
-                label: context.tr('rankingTitle'),
-                gradientColors: const [
-                  JewelCandyLuminaTheme.tertiaryGold,
-                  JewelCandyLuminaTheme.goldStrong,
-                ],
-                onPressed: () {
-                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                  showDialog<void>(
-                    context: context,
-                    barrierDismissible: true,
-                    builder: (ctx) => Material(
-                      color: Colors.transparent,
-                      child: PhoneFrame(
-                        child: RankingListPopup(
-                          onClose: () {
-                            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                            Navigator.of(ctx).pop();
-                          },
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 8),
-              const Spacer(flex: 1),
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  packageInfo != null
-                      ? 'Ver ${packageInfo!.version}+${packageInfo!.buildNumber}'
-                      : 'Ver',
-                  style: TextStyle(
-                    color: JewelCandyLuminaTheme.outlineBright
-                        .withValues(alpha: 0.65),
-                    fontSize: 12,
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          context.tr('gameSubtitle'),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 22,
+            color: JewelCandyLuminaTheme.tertiaryGold.withValues(alpha: 0.75),
+          ),
+        ),
+        const Spacer(flex: 3),
+        _RoundButton(
+          label: context.tr('modeSimple'),
+          gradientColors: JewelCandyLuminaTheme.buttonPrimaryPink,
+          onPressed: () {
+            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+            context.go('${RoutePaths.game}?mode=simple');
+          },
+        ),
+        const SizedBox(height: 16),
+        _RoundButton(
+          label: context.tr('modeTimed'),
+          gradientColors: JewelCandyLuminaTheme.buttonRetryMagOr,
+          onPressed: () {
+            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+            onShowNameDialog();
+          },
+        ),
+        const SizedBox(height: 20),
+        _RoundButton(
+          label: context.tr('settings'),
+          gradientColors: JewelCandyLuminaTheme.buttonShuffleCyanLime,
+          onPressed: () {
+            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+            context.push(RoutePaths.setting);
+          },
+        ),
+        const SizedBox(height: 16),
+        _RoundButton(
+          label: context.tr('rankingTitle'),
+          gradientColors: const [
+            JewelCandyLuminaTheme.tertiaryGold,
+            JewelCandyLuminaTheme.goldStrong,
+          ],
+          onPressed: () {
+            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+            showDialog<void>(
+              context: context,
+              barrierDismissible: true,
+              builder: (ctx) => Material(
+                color: Colors.transparent,
+                child: PhoneFrame(
+                  child: RankingListPopup(
+                    onClose: () {
+                      SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                      Navigator.of(ctx).pop();
+                    },
                   ),
                 ),
               ),
-              const Spacer(flex: 2),
-            ],
-          );
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        const Spacer(flex: 1),
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(
+            packageInfo != null
+                ? 'Ver ${packageInfo!.version}+${packageInfo!.buildNumber}'
+                : 'Ver',
+            style: TextStyle(
+              color: JewelCandyLuminaTheme.outlineBright.withValues(
+                alpha: 0.65,
+              ),
+              fontSize: 12,
+            ),
+          ),
+        ),
+        const Spacer(flex: 2),
+      ],
+    );
   }
 }
 
@@ -294,19 +293,16 @@ class _RoundButton extends StatelessWidget {
     required this.label,
     required this.gradientColors,
     required this.onPressed,
-    this.width = 236,
-    this.height = 62,
-    this.fontSize = 28,
-    this.letterSpacing = 5,
   });
+
+  static const double _width = 236;
+  static const double _height = 62;
+  static const double _fontSize = 28;
+  static const double _letterSpacing = 5;
 
   final String label;
   final List<Color> gradientColors;
   final VoidCallback onPressed;
-  final double width;
-  final double height;
-  final double fontSize;
-  final double letterSpacing;
 
   /// 게임 화면과 동일한 Lumina 그라데이션·테두리·그림자 둥근 버튼.
   @override
@@ -314,23 +310,25 @@ class _RoundButton extends StatelessWidget {
     final base = gradientColors.first;
     final darkerColor = HSLColor.fromColor(gradientColors.last)
         .withLightness(
-          (HSLColor.fromColor(gradientColors.last).lightness - 0.14)
-              .clamp(0.0, 1.0),
+          (HSLColor.fromColor(gradientColors.last).lightness - 0.14).clamp(
+            0.0,
+            1.0,
+          ),
         )
         .toColor();
 
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        width: width,
-        height: height,
+        width: _width,
+        height: _height,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: gradientColors,
           ),
-          borderRadius: BorderRadius.circular(height / 2),
+          borderRadius: BorderRadius.circular(_height / 2),
           border: Border.all(
             color: darkerColor.withValues(alpha: 0.65),
             width: 3,
@@ -341,10 +339,7 @@ class _RoundButton extends StatelessWidget {
               offset: const Offset(0, 4),
               blurRadius: 0,
             ),
-            BoxShadow(
-              color: base.withValues(alpha: 0.35),
-              blurRadius: 16,
-            ),
+            BoxShadow(color: base.withValues(alpha: 0.35), blurRadius: 16),
             BoxShadow(
               color: JewelCandyLuminaTheme.primaryDeep.withValues(alpha: 0.25),
               blurRadius: 12,
@@ -356,23 +351,21 @@ class _RoundButton extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              fontSize: fontSize,
+              fontSize: _fontSize,
               fontWeight: FontWeight.bold,
               color: Colors.white,
-              letterSpacing: letterSpacing,
+              letterSpacing: _letterSpacing,
               shadows: [
-                Shadow(
-                  color: base.withValues(alpha: 0.5),
-                  blurRadius: 14,
-                ),
+                Shadow(color: base.withValues(alpha: 0.5), blurRadius: 14),
                 Shadow(
                   color: darkerColor.withValues(alpha: 0.85),
                   offset: const Offset(0, 2),
                   blurRadius: 4,
                 ),
                 Shadow(
-                  color: JewelCandyLuminaTheme.primaryDeep
-                      .withValues(alpha: 0.45),
+                  color: JewelCandyLuminaTheme.primaryDeep.withValues(
+                    alpha: 0.45,
+                  ),
                   offset: const Offset(1.5, 1.5),
                   blurRadius: 0,
                 ),
