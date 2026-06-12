@@ -23,7 +23,7 @@
 - [x] 파티클 퍼짐 반경·입자 수·수명·글로우 강도 축소로 GPU 부담 완화
 - [x] MVVM 리팩터링: `flutter_riverpod` 도입, `SettingsNotifier`·`RankingNotifier`, 오버레이 파일 분리, 공통 위젯 추출
 - [x] Riverpod 구독 범위 최적화: `select`로 필요한 필드만 구독 (`SettingView` / `PauseMenuOverlay` / `TimeUpOverlay`)
-- [x] 볼륨 슬라이더 draft/commit 분리로 드래그 중 `GetStorage`/설정 연속 쓰기 제거
+- [x] 볼륨 슬라이더 draft/commit 분리로 드래그 중 `shared_preferences`/설정 연속 쓰기 제거
 - [x] `StarryBackground` GlobalKey 싱글톤 — App 레벨 1개만 배치, 전환 시 재생성 비용 0
 - [x] 모든 라우트 `FadeTransition` + `endOfFrame` 대기 패턴 적용 (타이틀·게임·설정)
 - [x] `GameView` 비율 프레임: `kIsWeb` 대신 화면 비율 기반 → 태블릿에서도 비율 유지

@@ -13,7 +13,7 @@ class AppConfig {
   static const bool debugLog = false;
 }
 
-/// 로컬 저장소(GetStorage) 키 상수.
+/// 로컬 저장소(shared_preferences) 키 상수.
 class StorageKeys {
   StorageKeys._();
 
@@ -23,14 +23,17 @@ class StorageKeys {
   static const String sfxMuted = 'sfx_muted';
   static const String keepScreenOn = 'keep_screen_on';
   static const String bestScorePrefix = 'best_score_mode_';
+
   /// 이전 단일 키(심플 베스트 마이그레이션용).
   static const String bestMatchScore = 'best_match_score';
   static const String bestMatchSimple = 'best_match_simple';
   static const String bestMatchTimed = 'best_match_timed';
+
   /// 타임 어택 랭킹용 플레이어 이름 (아케이드). 첫 진입 시 기본 'GUEST'.
   static const String playerName = 'player_name';
   static const String firstLaunchDate = 'first_launch_date';
-  static const String reviewRequestedAfterFirstClear = 'review_requested_after_first_clear';
+  static const String reviewRequestedAfterFirstClear =
+      'review_requested_after_first_clear';
   static const String reviewRequestedOnTitle = 'review_requested_on_title';
 }
 

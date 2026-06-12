@@ -9,7 +9,7 @@ Flame 기반 **8×8 매치-3** 퍼즐 (`com.cheng80.jewelmatch`).
 - **GoRouter** — 화면 전환
 - **easy_localization** — ko / en / ja / zh-CN / zh-TW
 - **flame_audio** — BGM·SFX
-- **get_storage** — 설정·베스트 스코어
+- **shared_preferences** — 설정·베스트 스코어
 - **wakelock_plus** — 화면 켜짐 유지
 
 ---

@@ -260,7 +260,7 @@ Flame 게임 셸이다.
 - `sound_manager.dart`
   - BGM / 효과음 / 웹 unlock 처리
 - `storage_helper.dart`
-  - `GetStorage` 래퍼
+  - `shared_preferences` 래퍼
 
 현재 Riverpod 연결 원칙은 다음과 같다.
 
@@ -282,7 +282,7 @@ Flame 게임 셸이다.
 UI / Game
 └─ GameSettings
    └─ StorageHelper
-      └─ GetStorage
+      └─ shared_preferences
 ```
 
 ## 4. 매치-3 규칙과 보드 배치 (8×8)

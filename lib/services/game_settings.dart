@@ -2,7 +2,7 @@ import '../app_config.dart';
 import '../game/jewel_game_mode.dart';
 import '../utils/storage_helper.dart';
 
-/// 게임 설정 저장/로드. StorageHelper(GetStorage)로 로컬에 영구 저장한다.
+/// 게임 설정 저장/로드. StorageHelper(shared_preferences)로 로컬에 영구 저장한다.
 class GameSettings {
   GameSettings._();
 
@@ -11,7 +11,7 @@ class GameSettings {
       StorageHelper.readDouble(StorageKeys.bgmVolume, defaultValue: 0.5);
 
   static set bgmVolume(double v) {
-    StorageHelper.write(StorageKeys.bgmVolume, v.clamp(0.0, 1.0));
+    StorageHelper.write(StorageKeys.bgmVolume, v.clamp(0.0, 1.0).toDouble());
   }
 
   /// 효과음 볼륨 (0.0 ~ 1.0).
@@ -19,7 +19,7 @@ class GameSettings {
       StorageHelper.readDouble(StorageKeys.sfxVolume, defaultValue: 1.0);
 
   static set sfxVolume(double v) {
-    StorageHelper.write(StorageKeys.sfxVolume, v.clamp(0.0, 1.0));
+    StorageHelper.write(StorageKeys.sfxVolume, v.clamp(0.0, 1.0).toDouble());
   }
 
   /// BGM 음소거 여부.
@@ -42,21 +42,25 @@ class GameSettings {
       StorageHelper.write(StorageKeys.keepScreenOn, v);
 
   /// [gameMode]에 해당하는 베스트 스코어(초). 없으면 null.
-  static double? getBestScore(int gameMode) =>
-      StorageHelper.read<double>(StorageKeys.bestScorePrefix + gameMode.toString());
+  static double? getBestScore(int gameMode) => StorageHelper.read<double>(
+    StorageKeys.bestScorePrefix + gameMode.toString(),
+  );
 
   /// [gameMode]의 베스트 스코어를 [seconds]로 갱신. 기존보다 좋을 때만 저장.
   static void saveBestScoreIfBetter(int gameMode, double seconds) {
     final current = getBestScore(gameMode);
     if (current == null || seconds < current) {
-      StorageHelper.write(StorageKeys.bestScorePrefix + gameMode.toString(), seconds);
+      StorageHelper.write(
+        StorageKeys.bestScorePrefix + gameMode.toString(),
+        seconds,
+      );
     }
   }
 
   static String _bestKey(JewelGameMode mode) => switch (mode) {
-        JewelGameMode.simple => StorageKeys.bestMatchSimple,
-        JewelGameMode.timed => StorageKeys.bestMatchTimed,
-      };
+    JewelGameMode.simple => StorageKeys.bestMatchSimple,
+    JewelGameMode.timed => StorageKeys.bestMatchTimed,
+  };
 
   /// 모드별 매치-3 최고 점수. 없으면 null.
   /// 심플은 예전 단일 키 `best_match_score`에서 한 번 읽어 마이그레이션한다.
@@ -87,5 +91,3 @@ class GameSettings {
     }
   }
 }
-
-
