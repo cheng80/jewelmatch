@@ -51,11 +51,11 @@ class SpaceBg extends PositionComponent with HasGameReference {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Color(0xFF3D0A6B),
-          Color(0xFF6A148C),
-          Color(0xFF12085C),
-          Color(0xFF4A148C),
-          Color(0xFF190033),
+          Color(0xFF130824),
+          Color(0xFF1B1238),
+          Color(0xFF0D1B35),
+          Color(0xFF162B48),
+          Color(0xFF090C1B),
         ],
       ).createShader(rect);
     canvas.drawRect(rect, paint);
@@ -72,13 +72,15 @@ class SpaceBg extends PositionComponent with HasGameReference {
     final groups = List.generate(_groupCount, (_) => <_Star>[]);
 
     for (var i = 0; i < _starCount; i++) {
-      groups[i % _groupCount].add(_Star(
-        x: rng.nextDouble() * size.x,
-        y: rng.nextDouble() * size.y,
-        radius: rng.nextDouble() * 1.8 + 0.3,
-        alpha: rng.nextDouble() * 0.5 + 0.3,
-        color: _starColor(rng),
-      ));
+      groups[i % _groupCount].add(
+        _Star(
+          x: rng.nextDouble() * size.x,
+          y: rng.nextDouble() * size.y,
+          radius: rng.nextDouble() * 1.8 + 0.3,
+          alpha: rng.nextDouble() * 0.5 + 0.3,
+          color: _starColor(rng),
+        ),
+      );
     }
 
     for (var g = 0; g < _groupCount; g++) {
@@ -97,7 +99,10 @@ class SpaceBg extends PositionComponent with HasGameReference {
             ..color = star.color.withValues(alpha: star.alpha * 0.15)
             ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
           canvas.drawCircle(
-              Offset(star.x, star.y), star.radius * 2.5, glowPaint);
+            Offset(star.x, star.y),
+            star.radius * 2.5,
+            glowPaint,
+          );
         }
       }
 
@@ -108,10 +113,10 @@ class SpaceBg extends PositionComponent with HasGameReference {
   Color _starColor(Random rng) {
     final roll = rng.nextDouble();
     if (roll < 0.55) return Colors.white;
-    if (roll < 0.7) return const Color(0xFF00FBFB);
-    if (roll < 0.82) return const Color(0xFFFF86C1);
-    if (roll < 0.92) return const Color(0xFFFFEA00);
-    return const Color(0xFFE1BEE7);
+    if (roll < 0.7) return const Color(0xFF9DE7EF);
+    if (roll < 0.82) return const Color(0xFFF4A6C5);
+    if (roll < 0.92) return const Color(0xFFF3DFA3);
+    return const Color(0xFFC8B9E8);
   }
 
   @override
@@ -128,9 +133,8 @@ class SpaceBg extends PositionComponent with HasGameReference {
 
     final rect = Rect.fromLTWH(0, 0, size.x, size.y);
     for (var g = 0; g < _groupCount; g++) {
-      final alpha =
-          (0.7 + 0.3 * sin(_time * _groupSpeeds[g] + _groupPhases[g]))
-              .clamp(0.4, 1.0);
+      final alpha = (0.7 + 0.3 * sin(_time * _groupSpeeds[g] + _groupPhases[g]))
+          .clamp(0.4, 1.0);
       canvas.saveLayer(
         rect,
         Paint()..color = Color.fromRGBO(255, 255, 255, alpha),

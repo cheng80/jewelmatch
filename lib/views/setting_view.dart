@@ -15,9 +15,7 @@ class SettingView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scaffold = Scaffold(
-      appBar: AppBar(
-        title: Text(context.tr('settings')),
-      ),
+      appBar: AppBar(title: Text(context.tr('settings'))),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -44,14 +42,19 @@ class SettingView extends ConsumerWidget {
                 const Divider(height: 1),
                 _SectionTitle(icon: Icons.star, title: context.tr('rateApp')),
                 ListTile(
-                  leading: const Icon(Icons.star_border, color: Colors.amber),
+                  leading: const Icon(
+                    Icons.star_border,
+                    color: JewelCandyLuminaTheme.goldStrong,
+                  ),
                   title: Text(context.tr('rateApp')),
                   onTap: () async {
                     final result = await InAppReviewService.openStoreListing();
                     if (!context.mounted) return;
                     if (result == false) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(context.tr('rateAppAfterRelease'))),
+                        SnackBar(
+                          content: Text(context.tr('rateAppAfterRelease')),
+                        ),
                       );
                     }
                   },
@@ -62,35 +65,50 @@ class SettingView extends ConsumerWidget {
               ListTile(
                 title: Text(context.tr('langKo')),
                 trailing: context.locale == const Locale('ko')
-                    ? const Icon(Icons.check, color: Colors.green)
+                    ? const Icon(
+                        Icons.check,
+                        color: JewelCandyLuminaTheme.borderNoMoves,
+                      )
                     : null,
                 onTap: () => context.setLocale(const Locale('ko')),
               ),
               ListTile(
                 title: Text(context.tr('langEn')),
                 trailing: context.locale == const Locale('en')
-                    ? const Icon(Icons.check, color: Colors.green)
+                    ? const Icon(
+                        Icons.check,
+                        color: JewelCandyLuminaTheme.borderNoMoves,
+                      )
                     : null,
                 onTap: () => context.setLocale(const Locale('en')),
               ),
               ListTile(
                 title: Text(context.tr('langJa')),
                 trailing: context.locale == const Locale('ja')
-                    ? const Icon(Icons.check, color: Colors.green)
+                    ? const Icon(
+                        Icons.check,
+                        color: JewelCandyLuminaTheme.borderNoMoves,
+                      )
                     : null,
                 onTap: () => context.setLocale(const Locale('ja')),
               ),
               ListTile(
                 title: Text(context.tr('langZhCN')),
                 trailing: context.locale == const Locale('zh', 'CN')
-                    ? const Icon(Icons.check, color: Colors.green)
+                    ? const Icon(
+                        Icons.check,
+                        color: JewelCandyLuminaTheme.borderNoMoves,
+                      )
                     : null,
                 onTap: () => context.setLocale(const Locale('zh', 'CN')),
               ),
               ListTile(
                 title: Text(context.tr('langZhTW')),
                 trailing: context.locale == const Locale('zh', 'TW')
-                    ? const Icon(Icons.check, color: Colors.green)
+                    ? const Icon(
+                        Icons.check,
+                        color: JewelCandyLuminaTheme.borderNoMoves,
+                      )
                     : null,
                 onTap: () => context.setLocale(const Locale('zh', 'TW')),
               ),
@@ -128,7 +146,9 @@ class _SectionTitle extends StatelessWidget {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: JewelCandyLuminaTheme.outlineBright.withValues(alpha: 0.85),
+              color: JewelCandyLuminaTheme.outlineBright.withValues(
+                alpha: 0.85,
+              ),
             ),
           ),
         ],
@@ -203,8 +223,7 @@ class _KeepScreenOnTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final value =
-        ref.watch(settingsProvider.select((s) => s.keepScreenOn));
+    final value = ref.watch(settingsProvider.select((s) => s.keepScreenOn));
     final notifier = ref.read(settingsProvider.notifier);
     return _MuteSwitch(
       label: context.tr('keepScreenOn'),
@@ -220,8 +239,7 @@ class _BgmVolumeTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final value = ref.watch(settingsProvider.select((s) => s.bgmVolume));
-    final enabled =
-        !ref.watch(settingsProvider.select((s) => s.bgmMuted));
+    final enabled = !ref.watch(settingsProvider.select((s) => s.bgmMuted));
     final notifier = ref.read(settingsProvider.notifier);
     return _VolumeSlider(
       label: context.tr('bgmVolume'),
@@ -254,8 +272,7 @@ class _SfxVolumeTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final value = ref.watch(settingsProvider.select((s) => s.sfxVolume));
-    final enabled =
-        !ref.watch(settingsProvider.select((s) => s.sfxMuted));
+    final enabled = !ref.watch(settingsProvider.select((s) => s.sfxMuted));
     final notifier = ref.read(settingsProvider.notifier);
     return _VolumeSlider(
       label: context.tr('sfxVolume'),

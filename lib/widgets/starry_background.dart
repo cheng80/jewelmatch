@@ -104,11 +104,11 @@ class _GradientPainter extends CustomPainter {
   const _GradientPainter();
 
   static const _colors = [
-    Color(0xFF05051A),
-    Color(0xFF0A0A2E),
-    Color(0xFF12123A),
-    Color(0xFF0A0A2E),
-    Color(0xFF05051A),
+    Color(0xFF090C1B),
+    Color(0xFF101A31),
+    Color(0xFF1B1238),
+    Color(0xFF130824),
+    Color(0xFF070813),
   ];
 
   @override
@@ -175,13 +175,15 @@ class _StarPool {
     final groups = List.generate(groupCount, (_) => <_Star>[]);
 
     for (var i = 0; i < 120; i++) {
-      groups[i % groupCount].add(_Star(
-        nx: rng.nextDouble(),
-        ny: rng.nextDouble(),
-        radius: rng.nextDouble() * 1.8 + 0.3,
-        alpha: rng.nextDouble() * 0.5 + 0.3,
-        color: _starColor(rng),
-      ));
+      groups[i % groupCount].add(
+        _Star(
+          nx: rng.nextDouble(),
+          ny: rng.nextDouble(),
+          radius: rng.nextDouble() * 1.8 + 0.3,
+          alpha: rng.nextDouble() * 0.5 + 0.3,
+          color: _starColor(rng),
+        ),
+      );
     }
 
     return groups;
@@ -190,9 +192,9 @@ class _StarPool {
   static Color _starColor(Random rng) {
     final roll = rng.nextDouble();
     if (roll < 0.7) return Colors.white;
-    if (roll < 0.85) return const Color(0xFFAADDFF);
-    if (roll < 0.95) return const Color(0xFFFFEEAA);
-    return const Color(0xFFFFAAAA);
+    if (roll < 0.85) return const Color(0xFFB9E7F0);
+    if (roll < 0.95) return const Color(0xFFF4DFA3);
+    return const Color(0xFFF1A8C7);
   }
 }
 

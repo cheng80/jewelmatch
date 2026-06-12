@@ -54,7 +54,30 @@ class MatchBoardRenderer extends PositionComponent
     ..style = PaintingStyle.stroke
     ..strokeWidth = 3;
   final Paint _hintPulsePaint = Paint();
-  final Paint _normalSpritePaint = Paint()..filterQuality = FilterQuality.medium;
+  final Paint _normalSpritePaint = Paint()
+    ..filterQuality = FilterQuality.medium
+    ..colorFilter = const ColorFilter.matrix(<double>[
+      0.90556,
+      0.06296,
+      0.01848,
+      0,
+      0,
+      0.02556,
+      0.93704,
+      0.01848,
+      0,
+      0,
+      0.02556,
+      0.06296,
+      0.89848,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+    ]);
   final Paint _proceduralShadowPaint = Paint();
   final Paint _proceduralGradientPaint = Paint();
   final Paint _proceduralStrokePaint = Paint()
@@ -180,10 +203,7 @@ class MatchBoardRenderer extends PositionComponent
           colors: JewelCandyLuminaTheme.boardFrameGradient,
         ).createShader(outerRect),
     );
-    canvas.drawRRect(
-      innerR,
-      Paint()..color = JewelCandyLuminaTheme.boardInner,
-    );
+    canvas.drawRRect(innerR, Paint()..color = JewelCandyLuminaTheme.boardInner);
 
     const pad = 3.0;
     final fillPaint = Paint()..color = JewelCandyLuminaTheme.boardSlotFill;
@@ -228,7 +248,8 @@ class MatchBoardRenderer extends PositionComponent
       canvas.drawPicture(_boardChromePicture!);
     }
 
-    final needsBoardClip = logic.introFillInProgress ||
+    final needsBoardClip =
+        logic.introFillInProgress ||
         logic.state == 'falling' ||
         logic.state == 'refilling';
     if (needsBoardClip) {
@@ -238,17 +259,15 @@ class MatchBoardRenderer extends PositionComponent
     }
 
     for (final fx in logic.flashEffects) {
-      final a = (fx.timer / MatchBoardLogic.flashDuration).clamp(0.0, 1.0) *
+      final a =
+          (fx.timer / MatchBoardLogic.flashDuration).clamp(0.0, 1.0) *
           MatchBoardLogic.flashAlpha;
       final fr = RRect.fromRectAndRadius(
         Rect.fromLTWH(fx.x + 4, fx.y + 4, fx.size - 8, fx.size - 8),
         Radius.circular(ts * 0.12),
       );
       _flashPaint.color = Colors.white.withValues(alpha: a);
-      canvas.drawRRect(
-        fr,
-        _flashPaint,
-      );
+      canvas.drawRRect(fr, _flashPaint);
     }
 
     for (var r = 0; r < logic.rows; r++) {
@@ -292,14 +311,12 @@ class MatchBoardRenderer extends PositionComponent
     }
 
     final t = (_hintPulseTime * _hintPulseHz) % 1.0;
-    final alpha =
-        0.14 + 0.42 * (0.5 + 0.5 * math.cos(t * 2 * math.pi));
+    final alpha = 0.14 + 0.42 * (0.5 + 0.5 * math.cos(t * 2 * math.pi));
     _hintPulsePaint.color = Color.lerp(
       JewelCandyLuminaTheme.secondaryCyan,
       JewelCandyLuminaTheme.primaryPink,
       0.35,
-    )!
-        .withValues(alpha: alpha);
+    )!.withValues(alpha: alpha);
     final radius = Radius.circular(ts * _slotRadiusRatio);
     const pad = 3.0;
 
@@ -326,7 +343,8 @@ class MatchBoardRenderer extends PositionComponent
     final drawH = ts * 0.82;
     final ox = x + (ts - drawW) / 2;
     final oy = y + (ts - drawH) / 2;
-    final sprite = _specialSpriteFor(gem.kind) ?? _sheetSprites[_spriteColumnFor(gem)];
+    final sprite =
+        _specialSpriteFor(gem.kind) ?? _sheetSprites[_spriteColumnFor(gem)];
     if (sprite != null) {
       _spriteRenderPosition.setValues(ox, oy);
       _spriteRenderSize.setValues(drawW, drawH);
@@ -344,8 +362,11 @@ class MatchBoardRenderer extends PositionComponent
   void _drawGemProcedural(Canvas canvas, BoardGem gem, double ts) {
     final base = gem.kind == GemKind.hyper
         ? const Color(0xFFE8E8FF)
-        : MatchBoardLogic.palette[
-            gem.color.clamp(1, MatchBoardLogic.palette.length) - 1];
+        : MatchBoardLogic.palette[gem.color.clamp(
+                1,
+                MatchBoardLogic.palette.length,
+              ) -
+              1];
 
     final x = gem.x;
     final y = gem.y;

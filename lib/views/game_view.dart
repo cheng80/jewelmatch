@@ -14,6 +14,7 @@ import '../widgets/sfx_play_log_panel.dart';
 import '../widgets/sprite_sheet_frame.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
+import '../theme/jewel_candy_lumina_theme.dart';
 import 'overlays/time_up_overlay.dart';
 import 'overlays/pause_menu_overlay.dart';
 import 'overlays/no_moves_overlay.dart';
@@ -98,8 +99,11 @@ class _GameViewState extends State<GameView> {
       },
       overlayBuilderMap: {
         'IntroBlock': (_, MatchBoardGame g) => const AbsorbPointer(
-              child: ColoredBox(color: Colors.transparent, child: SizedBox.expand()),
-            ),
+          child: ColoredBox(
+            color: Colors.transparent,
+            child: SizedBox.expand(),
+          ),
+        ),
         'PauseMenu': (_, MatchBoardGame g) => PauseMenuOverlay(game: g),
         'NoMoves': (_, MatchBoardGame g) => NoMovesOverlay(game: g),
         'TimeUp': (_, MatchBoardGame g) => TimeUpOverlay(game: g),
@@ -113,7 +117,9 @@ class _GameViewState extends State<GameView> {
   Widget build(BuildContext context) {
     final content = _gameMounted ? _gameWidget! : const SizedBox.shrink();
     final showSfxLog =
-        AppConfig.debugLog && widget.gameMode == JewelGameMode.simple && _gameMounted;
+        AppConfig.debugLog &&
+        widget.gameMode == JewelGameMode.simple &&
+        _gameMounted;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -182,17 +188,22 @@ class _GameLoadingOverlayState extends State<GameLoadingOverlay>
   @override
   Widget build(BuildContext context) {
     final accent = widget.gameMode == JewelGameMode.timed
-        ? const Color(0xFFFFD54F)
-        : const Color(0xFF22E6FF);
+        ? JewelCandyLuminaTheme.goldStrong
+        : JewelCandyLuminaTheme.secondaryCyan;
 
     return ColoredBox(
       color: Colors.black.withValues(alpha: 0.12),
       child: Center(
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: const Color(0xCC2A0A4D),
+            color: JewelCandyLuminaTheme.surfaceContainer.withValues(
+              alpha: 0.9,
+            ),
             borderRadius: BorderRadius.circular(34),
-            border: Border.all(color: accent.withValues(alpha: 0.8), width: 2.5),
+            border: Border.all(
+              color: accent.withValues(alpha: 0.8),
+              width: 2.5,
+            ),
             boxShadow: [
               BoxShadow(
                 color: accent.withValues(alpha: 0.18),

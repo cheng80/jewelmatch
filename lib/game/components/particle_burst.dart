@@ -24,18 +24,17 @@ class ParticleBurst extends PositionComponent {
   double _elapsed = 0;
   bool _active = false;
   final Paint _particlePaint = Paint();
-  static const MaskFilter _glowBlur =
-      MaskFilter.blur(BlurStyle.normal, 4);
+  static const MaskFilter _glowBlur = MaskFilter.blur(BlurStyle.normal, 4);
 
   static final Random _rng = Random();
 
   static const _accentColors = [
     Color(0xFFFFFFFF),
-    Color(0xFFFFF176),
-    Color(0xFF80DEEA),
-    Color(0xFFFF80AB),
-    Color(0xFFB388FF),
-    Color(0xFF69F0AE),
+    Color(0xFFF4D58A),
+    Color(0xFF8EDFE7),
+    Color(0xFFF48AB6),
+    Color(0xFFA897DA),
+    Color(0xFF7FDCB4),
   ];
 
   /// 풀에서 꺼낸 뒤 파라미터를 설정하고 활성화한다.
@@ -79,14 +78,19 @@ class ParticleBurst extends PositionComponent {
       Color tweaked;
       if (_rng.nextDouble() < 0.3) {
         final accent = _accentColors[_rng.nextInt(_accentColors.length)];
-        tweaked =
-            Color.lerp(_baseColor, accent, 0.35 + _rng.nextDouble() * 0.3)!;
+        tweaked = Color.lerp(
+          _baseColor,
+          accent,
+          0.35 + _rng.nextDouble() * 0.3,
+        )!;
       } else {
         tweaked = hsl
             .withLightness(
-                (hsl.lightness + _rng.nextDouble() * 0.4).clamp(0, 1))
+              (hsl.lightness + _rng.nextDouble() * 0.4).clamp(0, 1),
+            )
             .withSaturation(
-                (hsl.saturation + _rng.nextDouble() * 0.2 - 0.1).clamp(0, 1))
+              (hsl.saturation + _rng.nextDouble() * 0.2 - 0.1).clamp(0, 1),
+            )
             .toColor();
       }
 

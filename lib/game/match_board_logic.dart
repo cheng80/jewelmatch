@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 enum BoardFillIntroKind {
   /// 첫 진입·재시작·새 보드
   roundStart,
+
   /// 노무브 셔플 등 — 연출만, Start 효과음 없음
   shuffleRefill,
 }
@@ -163,7 +164,8 @@ class MatchBoardLogic {
     bool bigMatch,
     bool hasSpecial,
     int combo,
-  )? onGemsRemoved;
+  )?
+  onGemsRemoved;
 
   double boardX = 0;
   double boardY = 0;
@@ -279,13 +281,13 @@ class MatchBoardLogic {
 
   /// 표시용 팔레트 (Love2D `palette`와 동일 계열).
   static const List<Color> palette = [
-    Color(0xFFE85150),
-    Color(0xFF3BA8F0),
-    Color(0xFFFCB838),
-    Color(0xFF5EC76B),
-    Color(0xFFB275E0),
-    Color(0xFFF58530),
-    Color(0xFF33D6CC),
+    Color(0xFFE65A68),
+    Color(0xFF469FE2),
+    Color(0xFFF0B84F),
+    Color(0xFF66C982),
+    Color(0xFFA56ED4),
+    Color(0xFFEF8B48),
+    Color(0xFF55C8C4),
   ];
 
   double stageTimer = 0;
@@ -317,8 +319,7 @@ class MatchBoardLogic {
     boardX = x;
     boardY = y;
     tileSize = tile;
-    if (cells.length != rows ||
-        cells.any((row) => row.length != cols)) {
+    if (cells.length != rows || cells.any((row) => row.length != cols)) {
       return;
     }
     for (var r = 0; r < rows; r++) {
@@ -368,7 +369,9 @@ class MatchBoardLogic {
   }
 
   /// [_fillBoardWithRandomValidLayout] 직후: **줄 단위** 낙하(아래→위 [rows]번), 마스크·화면 밖 스폰은 유지.
-  void prepareIntroFill({BoardFillIntroKind kind = BoardFillIntroKind.roundStart}) {
+  void prepareIntroFill({
+    BoardFillIntroKind kind = BoardFillIntroKind.roundStart,
+  }) {
     _pendingIntroKind = kind;
     _introWaveIndex = 0;
     introFillInProgress = true;
@@ -389,10 +392,7 @@ class MatchBoardLogic {
   }
 
   Offset cellToPixel(int row, int col) {
-    return Offset(
-      boardX + col * tileSize,
-      boardY + row * tileSize,
-    );
+    return Offset(boardX + col * tileSize, boardY + row * tileSize);
   }
 
   Point<int>? pixelToCell(double px, double py) {
@@ -565,12 +565,14 @@ class MatchBoardLogic {
               matchData.cells[_cellKey(row, fc)] = true;
               groupCells.add(Point(row, fc));
             }
-            matchData.groups.add(MatchGroup(
-              direction: 'row',
-              length: length,
-              color: currentColor,
-              cells: groupCells,
-            ));
+            matchData.groups.add(
+              MatchGroup(
+                direction: 'row',
+                length: length,
+                color: currentColor,
+                cells: groupCells,
+              ),
+            );
           }
           currentColor = color;
           startCol = col;
@@ -592,12 +594,14 @@ class MatchBoardLogic {
               matchData.cells[_cellKey(fr, col)] = true;
               groupCells.add(Point(fr, col));
             }
-            matchData.groups.add(MatchGroup(
-              direction: 'col',
-              length: length,
-              color: currentColor,
-              cells: groupCells,
-            ));
+            matchData.groups.add(
+              MatchGroup(
+                direction: 'col',
+                length: length,
+                color: currentColor,
+                cells: groupCells,
+              ),
+            );
           }
           currentColor = color;
           startRow = row;
@@ -660,8 +664,12 @@ class MatchBoardLogic {
     final spawns = <SpecialSpawn>[];
     final reserved = <String, bool>{};
 
-    final rowGroups = matchData.groups.where((g) => g.direction == 'row').toList();
-    final colGroups = matchData.groups.where((g) => g.direction == 'col').toList();
+    final rowGroups = matchData.groups
+        .where((g) => g.direction == 'row')
+        .toList();
+    final colGroups = matchData.groups
+        .where((g) => g.direction == 'col')
+        .toList();
 
     for (final rowGroup in rowGroups) {
       for (final colGroup in colGroups) {
@@ -681,12 +689,14 @@ class MatchBoardLogic {
           final key = _cellKey(overlap.x, overlap.y);
           if (!reserved.containsKey(key)) {
             final g = getGem(overlap.x, overlap.y)!;
-            spawns.add(SpecialSpawn(
-              row: overlap.x,
-              col: overlap.y,
-              kind: GemKind.bomb,
-              color: g.color,
-            ));
+            spawns.add(
+              SpecialSpawn(
+                row: overlap.x,
+                col: overlap.y,
+                kind: GemKind.bomb,
+                color: g.color,
+              ),
+            );
             reserved[key] = true;
           }
         }
@@ -698,12 +708,14 @@ class MatchBoardLogic {
         final spawn = pickSpawnCell(group, movedCells);
         final key = _cellKey(spawn.x, spawn.y);
         if (!reserved.containsKey(key)) {
-          spawns.add(SpecialSpawn(
-            row: spawn.x,
-            col: spawn.y,
-            kind: GemKind.hyper,
-            color: 0,
-          ));
+          spawns.add(
+            SpecialSpawn(
+              row: spawn.x,
+              col: spawn.y,
+              kind: GemKind.hyper,
+              color: 0,
+            ),
+          );
           reserved[key] = true;
         }
       }
@@ -715,14 +727,17 @@ class MatchBoardLogic {
         final key = _cellKey(spawn.x, spawn.y);
         if (!reserved.containsKey(key)) {
           final g = getGem(spawn.x, spawn.y)!;
-          final stripeKind =
-              group.direction == 'row' ? GemKind.row : GemKind.col;
-          spawns.add(SpecialSpawn(
-            row: spawn.x,
-            col: spawn.y,
-            kind: stripeKind,
-            color: g.color,
-          ));
+          final stripeKind = group.direction == 'row'
+              ? GemKind.row
+              : GemKind.col;
+          spawns.add(
+            SpecialSpawn(
+              row: spawn.x,
+              col: spawn.y,
+              kind: stripeKind,
+              color: g.color,
+            ),
+          );
           reserved[key] = true;
         }
       }
@@ -731,7 +746,10 @@ class MatchBoardLogic {
     return spawns;
   }
 
-  Map<String, bool> buildRemovalSet(MatchData matchData, List<SpecialSpawn> spawns) {
+  Map<String, bool> buildRemovalSet(
+    MatchData matchData,
+    List<SpecialSpawn> spawns,
+  ) {
     final removalSet = Map<String, bool>.fromEntries(
       matchData.cells.keys.map((k) => MapEntry(k, true)),
     );
@@ -778,12 +796,14 @@ class MatchBoardLogic {
       final col = int.parse(parts[1]);
       final gem = getGem(row, col);
       if (gem != null && _isSpecial(gem.kind) && !queued.containsKey(key)) {
-        queue.add(MatchChainItem(
-          row: row,
-          col: col,
-          kind: gem.kind,
-          triggerColor: gem.color > 0 ? gem.color : null,
-        ));
+        queue.add(
+          MatchChainItem(
+            row: row,
+            col: col,
+            kind: gem.kind,
+            triggerColor: gem.color > 0 ? gem.color : null,
+          ),
+        );
         queued[key] = true;
       }
     }
@@ -800,12 +820,14 @@ class MatchBoardLogic {
     final gem = getGem(row, col);
     final key = _cellKey(row, col);
     if (gem != null && _isSpecial(gem.kind) && !queued.containsKey(key)) {
-      queue.add(MatchChainItem(
-        row: row,
-        col: col,
-        kind: gem.kind,
-        triggerColor: triggerColor,
-      ));
+      queue.add(
+        MatchChainItem(
+          row: row,
+          col: col,
+          kind: gem.kind,
+          triggerColor: triggerColor,
+        ),
+      );
       queued[key] = true;
     }
   }
@@ -824,7 +846,10 @@ class MatchBoardLogic {
     enqueueTriggeredSpecial(queue, queued, row, col, triggerColor);
   }
 
-  void activateSpecials(Map<String, bool> removalSet, List<MatchChainItem> queue) {
+  void activateSpecials(
+    Map<String, bool> removalSet,
+    List<MatchChainItem> queue,
+  ) {
     final queued = <String, bool>{};
     for (final item in queue) {
       queued[_cellKey(item.row, item.col)] = true;
@@ -901,12 +926,9 @@ class MatchBoardLogic {
 
   void addFlashEffect(int row, int col) {
     final p = cellToPixel(row, col);
-    flashEffects.add(FlashEffect(
-      x: p.dx,
-      y: p.dy,
-      size: tileSize,
-      timer: flashDuration,
-    ));
+    flashEffects.add(
+      FlashEffect(x: p.dx, y: p.dy, size: tileSize, timer: flashDuration),
+    );
   }
 
   int removeMarkedGems(Map<String, bool> removalSet) {
@@ -934,7 +956,8 @@ class MatchBoardLogic {
       final comboBonus = max(1, combo);
       score += (base * comboBonus).round();
 
-      final raw = (timedModeBonusBaseUnits +
+      final raw =
+          (timedModeBonusBaseUnits +
               max(0, combo - 1) * timedModeBonusPerComboTierUnits) *
           timedModeTimeRewardScale;
       // 타임 보상: 정수 초만. raw>0인데 반올림이 0이 되면 최소 1초(보상 0초 금지).
@@ -948,7 +971,8 @@ class MatchBoardLogic {
       }
 
       if (onGemsRemoved != null && removedCells.isNotEmpty) {
-        final bigMatch = _lastMatchData?.groups.any((g) => g.length >= 4) ?? false;
+        final bigMatch =
+            _lastMatchData?.groups.any((g) => g.length >= 4) ?? false;
         onGemsRemoved!(removedCells, bigMatch, hasSpecial, combo);
       }
     }
@@ -990,8 +1014,13 @@ class MatchBoardLogic {
       for (var row = 0; row < rows; row++) {
         if (cells[row][col] == null) {
           final color = _random.nextInt(colorCount) + 1;
-          final gem = createGem(row, col, color, GemKind.normal,
-              spawnOffsetRows: missing);
+          final gem = createGem(
+            row,
+            col,
+            color,
+            GemKind.normal,
+            spawnOffsetRows: missing,
+          );
           setGem(row, col, gem);
           spawned++;
           missing--;
@@ -1030,11 +1059,7 @@ class MatchBoardLogic {
     _lastMatchData = matchData;
 
     final mi = pendingMoveInfo;
-    final spawns = classifyMatchGroups(
-      matchData,
-      mi?.movedA,
-      mi?.movedB,
-    );
+    final spawns = classifyMatchGroups(matchData, mi?.movedA, mi?.movedB);
     var removalSet = buildRemovalSet(matchData, spawns);
     final queue = buildSpecialQueue(removalSet);
 
@@ -1138,13 +1163,16 @@ class MatchBoardLogic {
       }
       removalSet[_cellKey(ar, ac)] = true;
       removalSet[_cellKey(br, bc)] = true;
-      queue.add(MatchChainItem(
-        row: hyperR,
-        col: hyperC,
-        kind: GemKind.hyper,
-        triggerColor:
-            other.kind == GemKind.hyper ? pickExistingColor() : other.color,
-      ));
+      queue.add(
+        MatchChainItem(
+          row: hyperR,
+          col: hyperC,
+          kind: GemKind.hyper,
+          triggerColor: other.kind == GemKind.hyper
+              ? pickExistingColor()
+              : other.color,
+        ),
+      );
       resolveSpecialSwap(removalSet, queue, 'hyper');
       return true;
     }
@@ -1152,18 +1180,22 @@ class MatchBoardLogic {
     if (_isSpecial(gemA.kind) && _isSpecial(gemB.kind)) {
       removalSet[_cellKey(ar, ac)] = true;
       removalSet[_cellKey(br, bc)] = true;
-      queue.add(MatchChainItem(
-        row: ar,
-        col: ac,
-        kind: gemA.kind,
-        triggerColor: gemA.color > 0 ? gemA.color : null,
-      ));
-      queue.add(MatchChainItem(
-        row: br,
-        col: bc,
-        kind: gemB.kind,
-        triggerColor: gemB.color > 0 ? gemB.color : null,
-      ));
+      queue.add(
+        MatchChainItem(
+          row: ar,
+          col: ac,
+          kind: gemA.kind,
+          triggerColor: gemA.color > 0 ? gemA.color : null,
+        ),
+      );
+      queue.add(
+        MatchChainItem(
+          row: br,
+          col: bc,
+          kind: gemB.kind,
+          triggerColor: gemB.color > 0 ? gemB.color : null,
+        ),
+      );
       resolveSpecialSwap(removalSet, queue, 'special swap');
       return true;
     }
@@ -1171,12 +1203,14 @@ class MatchBoardLogic {
     if (_isSpecial(gemA.kind) && gemB.kind == GemKind.normal) {
       removalSet[_cellKey(ar, ac)] = true;
       removalSet[_cellKey(br, bc)] = true;
-      queue.add(MatchChainItem(
-        row: ar,
-        col: ac,
-        kind: gemA.kind,
-        triggerColor: gemB.color,
-      ));
+      queue.add(
+        MatchChainItem(
+          row: ar,
+          col: ac,
+          kind: gemA.kind,
+          triggerColor: gemB.color,
+        ),
+      );
       resolveSpecialSwap(removalSet, queue, 'special');
       return true;
     }
@@ -1184,12 +1218,14 @@ class MatchBoardLogic {
     if (_isSpecial(gemB.kind) && gemA.kind == GemKind.normal) {
       removalSet[_cellKey(ar, ac)] = true;
       removalSet[_cellKey(br, bc)] = true;
-      queue.add(MatchChainItem(
-        row: br,
-        col: bc,
-        kind: gemB.kind,
-        triggerColor: gemA.color,
-      ));
+      queue.add(
+        MatchChainItem(
+          row: br,
+          col: bc,
+          kind: gemB.kind,
+          triggerColor: gemA.color,
+        ),
+      );
       resolveSpecialSwap(removalSet, queue, 'special');
       return true;
     }
@@ -1224,10 +1260,7 @@ class MatchBoardLogic {
       return false;
     }
 
-    resolveMatchCascade(MoveInfo(
-      movedA: Point(br, bc),
-      movedB: Point(ar, ac),
-    ));
+    resolveMatchCascade(MoveInfo(movedA: Point(br, bc), movedB: Point(ar, ac)));
     selected = null;
     return true;
   }
@@ -1255,7 +1288,10 @@ class MatchBoardLogic {
     final moves = <ValidMovePair>[];
     for (var row = 0; row < rows; row++) {
       for (var col = 0; col < cols; col++) {
-        for (final dir in const [[0, 1], [1, 0]]) {
+        for (final dir in const [
+          [0, 1],
+          [1, 0],
+        ]) {
           final or = row + dir[0];
           final oc = col + dir[1];
           if (!isInside(or, oc)) continue;
@@ -1277,10 +1313,7 @@ class MatchBoardLogic {
           }
 
           if (isValid) {
-            moves.add(ValidMovePair(
-              a: Point(row, col),
-              b: Point(or, oc),
-            ));
+            moves.add(ValidMovePair(a: Point(row, col), b: Point(or, oc)));
           }
         }
       }
@@ -1373,7 +1406,6 @@ class MatchBoardLogic {
         flashEffects.removeAt(i);
       }
     }
-
   }
 
   void clearSelection() => selected = null;
