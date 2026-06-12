@@ -23,9 +23,14 @@ import 'overlays/ranking_overlay.dart';
 
 /// 매치-3 게임 화면. [gameMode]는 타이틀에서 Simple / Timed 로 전달한다.
 class GameView extends StatefulWidget {
-  const GameView({super.key, this.gameMode = JewelGameMode.simple});
+  const GameView({
+    super.key,
+    this.gameMode = JewelGameMode.simple,
+    this.qaVfxEnabled = false,
+  });
 
   final JewelGameMode gameMode;
+  final bool qaVfxEnabled;
 
   @override
   State<GameView> createState() => _GameViewState();
@@ -37,8 +42,12 @@ class _GameViewState extends State<GameView> {
   /// Flame GameWidget — initState가 아닌 didChangeDependencies에서 1회만 생성.
   /// build()에서 매번 생성하면 rebuild마다 엔진이 재초기화된다.
   Widget? _gameWidget;
+  MatchBoardGame? _game;
   bool _gameMounted = false;
   bool _loadingVisible = true;
+  bool _qaVfxPreviewScheduled = false;
+
+  bool get _qaVfxEnabled => kIsWeb && widget.qaVfxEnabled;
 
   @override
   void initState() {
@@ -74,6 +83,14 @@ class _GameViewState extends State<GameView> {
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
     setState(() => _loadingVisible = false);
+    if (_qaVfxEnabled && !_qaVfxPreviewScheduled) {
+      _qaVfxPreviewScheduled = true;
+      unawaited(
+        Future<void>.delayed(const Duration(milliseconds: 1200), () {
+          if (mounted) _game?.debugTriggerSpecialEffects();
+        }),
+      );
+    }
   }
 
   @override
@@ -95,6 +112,7 @@ class _GameViewState extends State<GameView> {
           'unlimitedMode': context.tr('unlimitedMode'),
           'maxComboLabel': context.tr('maxComboLabel'),
         });
+        _game = g;
         return g;
       },
       overlayBuilderMap: {
@@ -147,6 +165,16 @@ class _GameViewState extends State<GameView> {
                     bottom: 6,
                     height: 148,
                     child: SfxPlayLogPanel(),
+                  ),
+                if (_qaVfxEnabled)
+                  Positioned.fill(
+                    child: ExcludeSemantics(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _game?.debugTriggerSpecialEffects(),
+                        child: const SizedBox.expand(),
+                      ),
+                    ),
                   ),
               ],
             ),

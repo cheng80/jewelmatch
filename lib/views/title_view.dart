@@ -13,6 +13,11 @@ import '../widgets/phone_frame_scaffold.dart';
 import '../widgets/ranking_list_popup.dart';
 import '../services/in_app_review_service.dart';
 
+String _gameRoute(String mode) {
+  final qa = Uri.base.queryParameters['qaVfx'] == '1' ? '&qaVfx=1' : '';
+  return '${RoutePaths.game}?mode=$mode$qa';
+}
+
 /// 타이틀 화면. 심플/타임 모드 선택 후 게임 진입, 설정.
 class TitleView extends StatefulWidget {
   const TitleView({super.key});
@@ -144,7 +149,7 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
     GameSettings.playerName = name;
     await WidgetsBinding.instance.endOfFrame;
     if (!context.mounted) return;
-    context.go('${RoutePaths.game}?mode=timed');
+    context.go(_gameRoute('timed'));
   }
 
   @override
@@ -218,7 +223,7 @@ class _TitleContent extends StatelessWidget {
           gradientColors: JewelCandyLuminaTheme.buttonPrimaryPink,
           onPressed: () {
             SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-            context.go('${RoutePaths.game}?mode=simple');
+            context.go(_gameRoute('simple'));
           },
         ),
         const SizedBox(height: 16),

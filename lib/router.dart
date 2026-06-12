@@ -26,12 +26,13 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: RoutePaths.game,
       pageBuilder: (context, state) {
-        final mode = JewelGameMode.fromQuery(
-          state.uri.queryParameters['mode'],
-        );
+        final mode = JewelGameMode.fromQuery(state.uri.queryParameters['mode']);
         return CustomTransitionPage(
           key: state.pageKey,
-          child: GameView(gameMode: mode),
+          child: GameView(
+            gameMode: mode,
+            qaVfxEnabled: state.uri.queryParameters['qaVfx'] == '1',
+          ),
           transitionDuration: const Duration(milliseconds: 500),
           transitionsBuilder: (context, animation, _, child) =>
               FadeTransition(opacity: animation, child: child),

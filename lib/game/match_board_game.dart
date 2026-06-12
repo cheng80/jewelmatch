@@ -1,4 +1,4 @@
-import 'dart:math' show min;
+import 'dart:math' show max, min, pi, sin;
 
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
@@ -11,6 +11,7 @@ import '../services/ranking_service.dart';
 import 'components/match_board_renderer.dart';
 import 'components/match_game_hud.dart';
 import 'components/particle_burst.dart';
+import 'components/special_effect_burst.dart';
 import 'components/space_bg.dart';
 import 'jewel_game_mode.dart';
 import 'match_board_logic.dart';
@@ -72,9 +73,13 @@ class MatchBoardGame extends FlameGame {
 
   late final MatchBoardLogic board;
   late final ParticlePool _particlePool;
-
+  late final SpecialEffectPool _specialEffectPool;
   MatchGameHud? _hud;
   final Map<String, String> _localeStrings = {};
+  double _shakeRemaining = 0;
+  double _shakeDuration = 0;
+  double _shakeIntensity = 0;
+  double _shakeElapsed = 0;
 
   /// 타임 모드: 서버 1위 이름·점수 (비동기 fetch 완료 후 갱신).
   String? rankingTop1Name;
@@ -173,6 +178,7 @@ class MatchBoardGame extends FlameGame {
     world.add(MatchBoardRenderer(logic: board));
 
     _particlePool = ParticlePool(world);
+    _specialEffectPool = SpecialEffectPool(world);
 
     if (isTimedMode) {
       _fetchTop1();
@@ -365,6 +371,8 @@ class MatchBoardGame extends FlameGame {
   @override
   void update(double dt) {
     board.update(dt);
+    _spawnSpecialEffectEvents();
+    _updateCameraShake(dt);
 
     if (isTimedMode && isPlaying && !timeUp && !board.introFillInProgress) {
       timeRemaining -= dt;
@@ -390,6 +398,188 @@ class MatchBoardGame extends FlameGame {
       _lastSavedScore = board.score;
     }
     super.update(dt);
+  }
+
+  void _spawnSpecialEffectEvents() {
+    final events = board.consumeSpecialEffectEvents();
+    if (events.isEmpty || board.tileSize <= 0) return;
+
+    for (final event in events) {
+      final color =
+          event.triggerColor != null &&
+              event.triggerColor! >= 1 &&
+              event.triggerColor! <= MatchBoardLogic.palette.length
+          ? MatchBoardLogic.palette[event.triggerColor! - 1]
+          : _colorAt(event.origin.x, event.origin.y);
+      _specialEffectPool.spawn(
+        effectKind: event.effectKind,
+        origin: _cellCenter(event.origin.x, event.origin.y),
+        affectedCenters: event.affectedCells
+            .map((cell) => _cellCenter(cell.x, cell.y))
+            .toList(growable: false),
+        tileSize: board.tileSize,
+        baseColor: color,
+      );
+      _queueCameraShake(event.shake);
+    }
+  }
+
+  /// Browser QA hook for previewing every high-impact special VFX path.
+  void debugTriggerSpecialEffects() {
+    if (board.tileSize <= 0) return;
+
+    final centerRow = rows ~/ 2;
+    final centerCol = cols ~/ 2;
+    final effects = <_DebugSpecialEffect>[
+      const _DebugSpecialEffect(
+        kind: GemKind.bomb,
+        rowOffset: -1,
+        colOffset: -1,
+        colorIndex: 0,
+        shake: SpecialEffectShake(intensity: 4.8, duration: 0.30),
+      ),
+      const _DebugSpecialEffect(
+        kind: GemKind.star,
+        rowOffset: -1,
+        colOffset: 0,
+        colorIndex: 1,
+        shake: SpecialEffectShake(intensity: 4.2, duration: 0.26),
+      ),
+      const _DebugSpecialEffect(
+        kind: GemKind.hyper,
+        rowOffset: 0,
+        colOffset: -1,
+        colorIndex: 2,
+        shake: SpecialEffectShake(intensity: 5.4, duration: 0.36),
+      ),
+      const _DebugSpecialEffect(
+        kind: GemKind.supernova,
+        rowOffset: 0,
+        colOffset: 0,
+        colorIndex: 3,
+        shake: SpecialEffectShake(intensity: 7.2, duration: 0.46),
+      ),
+    ];
+
+    for (final effect in effects) {
+      final row = (centerRow + effect.rowOffset).clamp(0, rows - 1);
+      final col = (centerCol + effect.colOffset).clamp(0, cols - 1);
+      _specialEffectPool.spawn(
+        effectKind: effect.kind,
+        origin: _cellCenter(row, col),
+        affectedCenters: _debugAffectedCenters(effect.kind, row, col),
+        tileSize: board.tileSize,
+        baseColor: MatchBoardLogic.palette[effect.colorIndex],
+      );
+      _queueCameraShake(effect.shake);
+    }
+  }
+
+  List<Vector2> _debugAffectedCenters(GemKind kind, int row, int col) {
+    final cells = <Vector2>[];
+
+    void addCell(int r, int c) {
+      if (board.isInside(r, c)) {
+        cells.add(_cellCenter(r, c));
+      }
+    }
+
+    switch (kind) {
+      case GemKind.bomb:
+        for (var r = row - 1; r <= row + 1; r++) {
+          for (var c = col - 1; c <= col + 1; c++) {
+            addCell(r, c);
+          }
+        }
+        break;
+      case GemKind.star:
+        for (var c = 0; c < cols; c++) {
+          addCell(row, c);
+        }
+        for (var r = 0; r < rows; r++) {
+          addCell(r, col);
+        }
+        break;
+      case GemKind.hyper:
+        for (var r = row - 2; r <= row + 2; r++) {
+          for (var c = col - 2; c <= col + 2; c++) {
+            if ((r - row).abs() + (c - col).abs() <= 2) {
+              addCell(r, c);
+            }
+          }
+        }
+        break;
+      case GemKind.supernova:
+        for (var r = 0; r < rows; r++) {
+          for (var c = 0; c < cols; c++) {
+            addCell(r, c);
+          }
+        }
+        break;
+      case GemKind.row:
+      case GemKind.col:
+      case GemKind.normal:
+        break;
+    }
+
+    return cells;
+  }
+
+  Vector2 _cellCenter(int row, int col) {
+    final half = board.tileSize / 2;
+    return Vector2(
+      board.boardX + col * board.tileSize + half,
+      board.boardY + row * board.tileSize + half,
+    );
+  }
+
+  Color _colorAt(int row, int col) {
+    final gem = board.getGem(row, col);
+    final color = gem?.color ?? 0;
+    if (color >= 1 && color <= MatchBoardLogic.palette.length) {
+      return MatchBoardLogic.palette[color - 1];
+    }
+    return Colors.white;
+  }
+
+  void _queueCameraShake(SpecialEffectShake shake) {
+    if (shake.intensity <= 0 || shake.duration <= 0) return;
+    _shakeIntensity = max(_shakeIntensity, shake.intensity);
+    _shakeDuration = max(_shakeDuration, shake.duration);
+    _shakeRemaining = max(_shakeRemaining, shake.duration);
+    _shakeElapsed = 0;
+  }
+
+  void _updateCameraShake(double dt) {
+    if (_shakeRemaining <= 0 || _shakeDuration <= 0) {
+      camera.viewfinder.position = Vector2.zero();
+      _shakeIntensity = 0;
+      _shakeDuration = 0;
+      _shakeRemaining = 0;
+      _shakeElapsed = 0;
+      return;
+    }
+
+    _shakeRemaining = max(0, _shakeRemaining - dt);
+    _shakeElapsed += dt;
+    if (_shakeRemaining <= 0) {
+      camera.viewfinder.position = Vector2.zero();
+      _shakeIntensity = 0;
+      _shakeDuration = 0;
+      _shakeElapsed = 0;
+      return;
+    }
+
+    final falloff = _shakeRemaining / _shakeDuration;
+    final amplitude = _shakeIntensity * falloff * falloff;
+    final phase = _shakeElapsed / _shakeDuration;
+    final primary = sin(phase * pi * 9.0);
+    final secondary = sin(phase * pi * 13.0 + pi / 3);
+    final vertical = sin(phase * pi * 7.0 + pi / 2);
+    camera.viewfinder.position = Vector2(
+      (primary * 0.82 + secondary * 0.18) * amplitude,
+      vertical * amplitude * 0.48,
+    );
   }
 
   void handleBoardTap(double x, double y) {
@@ -549,4 +739,20 @@ class MatchBoardGame extends FlameGame {
     final applied = min(seconds.toDouble(), room);
     timeRemaining += applied;
   }
+}
+
+class _DebugSpecialEffect {
+  const _DebugSpecialEffect({
+    required this.kind,
+    required this.rowOffset,
+    required this.colOffset,
+    required this.colorIndex,
+    required this.shake,
+  });
+
+  final GemKind kind;
+  final int rowOffset;
+  final int colOffset;
+  final int colorIndex;
+  final SpecialEffectShake shake;
 }
