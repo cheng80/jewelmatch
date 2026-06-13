@@ -2,144 +2,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-/// 인트로식 보드 채움 완료 시 구분. [BoardFillIntroKind.roundStart]만 Start 효과음.
-enum BoardFillIntroKind {
-  /// 첫 진입·재시작·새 보드
-  roundStart,
+import 'match_board_models.dart';
 
-  /// 노무브 셔플 등 — 연출만, Start 효과음 없음
-  shuffleRefill,
-}
-
-/// 보석 종류. `row`/`col`은 예전 저장 상태 호환용으로 유지한다.
-enum GemKind { normal, row, col, bomb, star, hyper, supernova }
-
-/// 단일 보석 인스턴스 (논리 격자 + 화면 보간 좌표).
-/// 오브젝트 풀링을 위해 [reset]으로 필드를 재설정할 수 있다.
-class BoardGem {
-  BoardGem({
-    required this.id,
-    required this.color,
-    required this.kind,
-    required this.row,
-    required this.col,
-    required this.x,
-    required this.y,
-    required this.targetX,
-    required this.targetY,
-  });
-
-  int id;
-  int color;
-  GemKind kind;
-  int row;
-  int col;
-  double x;
-  double y;
-  double targetX;
-  double targetY;
-
-  /// 풀에서 꺼낸 인스턴스를 새 보석처럼 재설정한다.
-  void reset({
-    required int id,
-    required int color,
-    required GemKind kind,
-    required int row,
-    required int col,
-    required double x,
-    required double y,
-    required double targetX,
-    required double targetY,
-  }) {
-    this.id = id;
-    this.color = color;
-    this.kind = kind;
-    this.row = row;
-    this.col = col;
-    this.x = x;
-    this.y = y;
-    this.targetX = targetX;
-    this.targetY = targetY;
-  }
-}
-
-/// 제거 순간 플래시 이펙트.
-class FlashEffect {
-  FlashEffect({
-    required this.x,
-    required this.y,
-    required this.size,
-    required this.timer,
-  });
-
-  double x;
-  double y;
-  double size;
-  double timer;
-}
-
-class MatchGroup {
-  MatchGroup({
-    required this.direction,
-    required this.length,
-    required this.color,
-    required this.cells,
-  });
-
-  final String direction; // 'row' | 'col'
-  final int length;
-  final int color;
-  final List<Point<int>> cells;
-}
-
-class MatchData {
-  final Map<String, bool> cells = {};
-  final List<MatchGroup> groups = [];
-}
-
-class MoveInfo {
-  MoveInfo({required this.movedA, required this.movedB});
-
-  final Point<int> movedA;
-  final Point<int> movedB;
-}
-
-class SpecialSpawn {
-  SpecialSpawn({
-    required this.row,
-    required this.col,
-    required this.kind,
-    required this.color,
-  });
-
-  final int row;
-  final int col;
-  final GemKind kind;
-  final int color;
-}
-
-class SpecialEffectShake {
-  const SpecialEffectShake({required this.intensity, required this.duration});
-
-  final double intensity;
-  final double duration;
-}
-
-class SpecialEffectEvent {
-  SpecialEffectEvent({
-    required this.effectKind,
-    required this.origin,
-    required this.affectedCells,
-    required this.shake,
-    this.triggerColor,
-  });
-
-  final GemKind effectKind;
-  final Point<int> origin;
-  final List<Point<int>> affectedCells;
-  final SpecialEffectShake shake;
-  final int? triggerColor;
-}
+export 'match_board_models.dart';
 
 /// 8×8 등 격자 매치-3 보드 로직 (스왑, 연쇄, 특수 보석, 중력, 리필).
 /// 좌표는 **0 기반** row, col 이다.
@@ -498,6 +363,15 @@ class MatchBoardLogic {
     return gem.color;
   }
 
+  int? gemSpecialKindMatchCode(BoardGem? gem) {
+    if (gem == null ||
+        gem.kind == GemKind.normal ||
+        gem.kind == GemKind.hyper) {
+      return null;
+    }
+    return -gem.kind.index;
+  }
+
   bool causesImmediateMatch(int row, int col, int color) {
     final l1 = getGem(row, col - 1);
     final l2 = getGem(row, col - 2);
@@ -597,33 +471,54 @@ class MatchBoardLogic {
 
   bool hasMatches() => findAllMatches().groups.isNotEmpty;
 
-  MatchData findAllMatches() {
-    final matchData = MatchData();
+  void _scanMatchesBy(
+    MatchData matchData,
+    int? Function(BoardGem? gem) tokenForGem,
+  ) {
+    void addGroup(String direction, int token, List<Point<int>> cells) {
+      final isDuplicate = matchData.groups.any((group) {
+        if (group.direction != direction ||
+            group.cells.length != cells.length) {
+          return false;
+        }
+        for (var i = 0; i < cells.length; i++) {
+          if (group.cells[i].x != cells[i].x ||
+              group.cells[i].y != cells[i].y) {
+            return false;
+          }
+        }
+        return true;
+      });
+      if (isDuplicate) return;
+      for (final cell in cells) {
+        matchData.cells[_cellKey(cell.x, cell.y)] = true;
+      }
+      matchData.groups.add(
+        MatchGroup(
+          direction: direction,
+          length: cells.length,
+          color: token,
+          cells: cells,
+        ),
+      );
+    }
 
     for (var row = 0; row < rows; row++) {
       var startCol = 0;
-      int? currentColor;
+      int? currentToken;
       for (var col = 0; col <= cols; col++) {
         final gem = col < cols ? getGem(row, col) : null;
-        final color = gemMatchColor(gem);
-        if (color != currentColor) {
+        final token = tokenForGem(gem);
+        if (token != currentToken) {
           final length = col - startCol;
-          if (currentColor != null && length >= 3) {
+          if (currentToken != null && length >= 3) {
             final groupCells = <Point<int>>[];
             for (var fc = startCol; fc < col; fc++) {
-              matchData.cells[_cellKey(row, fc)] = true;
               groupCells.add(Point(row, fc));
             }
-            matchData.groups.add(
-              MatchGroup(
-                direction: 'row',
-                length: length,
-                color: currentColor,
-                cells: groupCells,
-              ),
-            );
+            addGroup('row', currentToken, groupCells);
           }
-          currentColor = color;
+          currentToken = token;
           startCol = col;
         }
       }
@@ -631,33 +526,30 @@ class MatchBoardLogic {
 
     for (var col = 0; col < cols; col++) {
       var startRow = 0;
-      int? currentColor;
+      int? currentToken;
       for (var row = 0; row <= rows; row++) {
         final gem = row < rows ? getGem(row, col) : null;
-        final color = gemMatchColor(gem);
-        if (color != currentColor) {
+        final token = tokenForGem(gem);
+        if (token != currentToken) {
           final length = row - startRow;
-          if (currentColor != null && length >= 3) {
+          if (currentToken != null && length >= 3) {
             final groupCells = <Point<int>>[];
             for (var fr = startRow; fr < row; fr++) {
-              matchData.cells[_cellKey(fr, col)] = true;
               groupCells.add(Point(fr, col));
             }
-            matchData.groups.add(
-              MatchGroup(
-                direction: 'col',
-                length: length,
-                color: currentColor,
-                cells: groupCells,
-              ),
-            );
+            addGroup('col', currentToken, groupCells);
           }
-          currentColor = color;
+          currentToken = token;
           startRow = row;
         }
       }
     }
+  }
 
+  MatchData findAllMatches() {
+    final matchData = MatchData();
+    _scanMatchesBy(matchData, gemMatchColor);
+    _scanMatchesBy(matchData, gemSpecialKindMatchCode);
     return matchData;
   }
 
@@ -1481,23 +1373,4 @@ class MatchBoardLogic {
     }
     selectCell(row, col);
   }
-}
-
-class MatchChainItem {
-  MatchChainItem({
-    required this.row,
-    required this.col,
-    required this.kind,
-    this.triggerColor,
-  });
-  final int row;
-  final int col;
-  final GemKind kind;
-  final int? triggerColor;
-}
-
-class ValidMovePair {
-  ValidMovePair({required this.a, required this.b});
-  final Point<int> a;
-  final Point<int> b;
 }

@@ -107,6 +107,22 @@ void main() {
     expect(board.consumeSpecialEffectEvents(), isEmpty);
   });
 
+  test('non-hyper special gems can match by visible kind after a swap', () {
+    final board = _filledBoard();
+    board.setGem(4, 0, board.createGem(4, 0, 6, GemKind.normal));
+    board.setGem(4, 1, board.createGem(4, 1, 1, GemKind.bomb));
+    board.setGem(4, 2, board.createGem(4, 2, 2, GemKind.bomb));
+    board.setGem(5, 0, board.createGem(5, 0, 3, GemKind.bomb));
+
+    final swapped = board.trySwap(4, 0, 5, 0);
+
+    expect(swapped, isTrue);
+    expect(
+      board.consumeSpecialEffectEvents().map((event) => event.effectKind),
+      contains(GemKind.bomb),
+    );
+  });
+
   test('hyper gem still triggers by swapping with a normal gem', () {
     final board = _filledBoard();
     board.setGem(3, 3, board.createGem(3, 3, 0, GemKind.hyper));
