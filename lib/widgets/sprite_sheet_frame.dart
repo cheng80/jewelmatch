@@ -21,6 +21,8 @@ class SpriteSheetFrame extends StatelessWidget {
   static final Map<String, Future<ui.Image>> _imageCache =
       <String, Future<ui.Image>>{};
 
+  static Future<ui.Image> precache(String assetPath) => _loadImage(assetPath);
+
   static Future<ui.Image> _loadImage(String assetPath) {
     return _imageCache.putIfAbsent(assetPath, () async {
       final data = await rootBundle.load(assetPath);

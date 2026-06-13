@@ -33,9 +33,11 @@ class AssetPaths {
   static const String fontAngduIpsul140 = 'HUAngduIpsul140';
 
   /// 7열×128px 보석 스프라이트 시트 (색은 코드에서 열 인덱스로 매핑)
-  static const String jewelSpriteSheet = 'sprites/Jewel.png';
+  static const String jewelSpriteSheet = 'sprites/Jewel_Arcane.png';
 
   /// 3열×128px 특수 보석 시트 (순서: legacy col, legacy row, flame)
-  /// Star/Supernova는 일반 보석 스프라이트 위에 런타임 오버레이로 표시한다.
-  static const String specialSpriteSheet = 'sprites/Special.png';
+  static const String specialSpriteSheet = 'sprites/Special_Arcane.png';
+
+  /// 12열×128px 충전 보석 시트 (순서: star 1~6색, supernova 1~6색)
+  static const String chargedSpriteSheet = 'sprites/Charged_Arcane.png';
 }

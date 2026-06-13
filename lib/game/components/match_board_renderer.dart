@@ -15,8 +15,8 @@ part 'match_board_gem_overlay_renderer.dart';
 part 'match_board_procedural_renderer.dart';
 
 /// 매치 보드 격자·보석·플래시·선택 표시.
-/// `Jewel.png`(896×128, 7프레임×128) + `Special.png`(384×128, 3프레임×128) 사용.
-/// Star/Supernova는 색 보석 위에 광선 오버레이를 얹어 표현한다.
+/// `Jewel_Arcane.png`(896×128, 7프레임×128), `Special_Arcane.png`(384×128),
+/// `Charged_Arcane.png`(1536×128, star/supernova 12프레임) 사용.
 ///
 /// 힌트: [MatchBoardLogic.showHint]가 고른 **한 쌍**만, 보석 위에 흰색 펄스(느리게 깜박임).
 /// 다른 칸에는 오버레이를 그리지 않는다.
@@ -30,6 +30,7 @@ class MatchBoardRenderer extends PositionComponent
 
   /// 기본 보석 스프라이트 시트 열 0~6 (각 128×128).
   final List<Sprite?> _sheetSprites = List<Sprite?>.filled(7, null);
+  final List<Sprite?> _chargedSprites = List<Sprite?>.filled(12, null);
   final Map<GemKind, Sprite?> _specialSprites = <GemKind, Sprite?>{};
 
   static const double _frameW = 128;
@@ -89,14 +90,6 @@ class MatchBoardRenderer extends PositionComponent
     ..style = PaintingStyle.stroke
     ..strokeWidth = 1.2;
   final Paint _proceduralHighlightPaint = Paint();
-  final Paint _specialAuraPaint = Paint()
-    ..style = PaintingStyle.stroke
-    ..strokeCap = StrokeCap.round;
-  final Paint _specialGlowPaint = Paint()
-    ..style = PaintingStyle.stroke
-    ..strokeCap = StrokeCap.round
-    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-  final Paint _specialCorePaint = Paint();
   final Vector2 _spriteRenderPosition = Vector2.zero();
   final Vector2 _spriteRenderSize = Vector2.zero();
 
@@ -129,6 +122,20 @@ class MatchBoardRenderer extends PositionComponent
     } catch (_) {
       for (final kind in _specialSheetKinds) {
         _specialSprites[kind] = null;
+      }
+    }
+    try {
+      final img = await Flame.images.load(AssetPaths.chargedSpriteSheet);
+      for (var i = 0; i < _chargedSprites.length; i++) {
+        _chargedSprites[i] = Sprite(
+          img,
+          srcPosition: Vector2(i * _frameW, 0),
+          srcSize: Vector2(_frameW, _frameH),
+        );
+      }
+    } catch (_) {
+      for (var i = 0; i < _chargedSprites.length; i++) {
+        _chargedSprites[i] = null;
       }
     }
     _rebuildBoardChromePicture();

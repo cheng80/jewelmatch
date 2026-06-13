@@ -21,6 +21,7 @@ class SoundManager {
   static String? _pendingComboPath;
   static final Map<String, AudioPool> _webSfxPools = {};
   static bool _webPrimeInFlight = false;
+  static Timer? _webPrimeTimer;
   static DateTime? _lastWebPrimeAt;
 
   /// 웹: 첫 사용자 상호작용 시 호출. 대기 중인 BGM 재생.
@@ -30,7 +31,7 @@ class SoundManager {
   static void unlockForWeb() {
     if (!kIsWeb) return;
     _webUnlocked = true;
-    unawaited(_primeWebSfxPools());
+    _scheduleWebSfxPrime();
     if (_pendingBgm != null) {
       _pendingBgm = null;
       unawaited(playBgmIfUnmuted());

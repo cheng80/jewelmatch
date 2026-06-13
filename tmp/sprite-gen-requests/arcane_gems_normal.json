@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": "arcane_gems_normal",
+    "description": "seven static arcane mineral charm normal gems from the approved Option 3c direction"
+  },
+  "cell": {
+    "shape": "square",
+    "size": 128,
+    "safe_margin": 12
+  },
+  "chroma_key": {
+    "name": "green",
+    "hex": "#00FF00",
+    "rgb": [0, 255, 0]
+  },
+  "states": {
+    "normal_gems": {
+      "frames": 7,
+      "fps": 1,
+      "loop": false,
+      "action": "static row of seven equal-size carved mineral rune gems in this exact order: red tablet, pale stone coin, green triangular shard, golden sun diamond, purple crescent, orange ember stone, blue tide teardrop"
+    }
+  }
+}

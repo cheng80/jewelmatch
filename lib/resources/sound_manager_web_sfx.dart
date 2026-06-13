@@ -54,6 +54,19 @@ Future<void> _initWebSfxPools() async {
   );
 }
 
+void _scheduleWebSfxPrime() {
+  if (!kIsWeb ||
+      SoundManager._webSfxPools.isEmpty ||
+      SoundManager._webPrimeInFlight ||
+      SoundManager._webPrimeTimer != null) {
+    return;
+  }
+  SoundManager._webPrimeTimer = Timer(const Duration(milliseconds: 650), () {
+    SoundManager._webPrimeTimer = null;
+    unawaited(_primeWebSfxPools());
+  });
+}
+
 Future<void> _primeWebSfxPools() async {
   if (!kIsWeb ||
       SoundManager._webSfxPools.isEmpty ||

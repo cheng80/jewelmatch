@@ -183,6 +183,7 @@ app.*.map.json
 ############################################################
 match/
 match.zip
+assets/generated/
 
 ############################################################
 # Exceptions (keep defaults from flutter.gitignore)

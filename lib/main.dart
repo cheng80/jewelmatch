@@ -12,6 +12,7 @@ import 'resources/sound_manager.dart';
 import 'services/game_settings.dart';
 import 'services/in_app_review_service.dart';
 import 'utils/storage_helper.dart';
+import 'widgets/sprite_sheet_frame.dart';
 
 /// 앱 진입점.
 /// main()은 초기화와 실행만 담당하고, 앱 설정(테마, 라우팅)은 App 위젯에 위임한다.
@@ -27,6 +28,9 @@ void main() async {
     SoundManager.preload(),
     Flame.images.load(AssetPaths.jewelSpriteSheet),
     Flame.images.load(AssetPaths.specialSpriteSheet),
+    Flame.images.load(AssetPaths.chargedSpriteSheet),
+    SpriteSheetFrame.precache('assets/images/${AssetPaths.jewelSpriteSheet}'),
+    SpriteSheetFrame.precache('assets/images/${AssetPaths.specialSpriteSheet}'),
   ]);
   _applyKeepScreenOn();
   runApp(
