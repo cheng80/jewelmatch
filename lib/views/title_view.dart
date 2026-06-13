@@ -12,6 +12,8 @@ import '../theme/jewel_candy_lumina_theme.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import '../widgets/ranking_list_popup.dart';
 import '../services/in_app_review_service.dart';
+import 'title/title_round_button.dart';
+import 'title/title_version_footer.dart';
 
 String _gameRoute(String mode) {
   final qa = Uri.base.queryParameters['qaVfx'] == '1' ? '&qaVfx=1' : '';
@@ -218,7 +220,7 @@ class _TitleContent extends StatelessWidget {
           ),
         ),
         const Spacer(flex: 3),
-        _RoundButton(
+        TitleRoundButton(
           label: context.tr('modeSimple'),
           gradientColors: JewelCandyLuminaTheme.buttonPrimaryPink,
           onPressed: () {
@@ -227,7 +229,7 @@ class _TitleContent extends StatelessWidget {
           },
         ),
         const SizedBox(height: 16),
-        _RoundButton(
+        TitleRoundButton(
           label: context.tr('modeTimed'),
           gradientColors: JewelCandyLuminaTheme.buttonRetryMagOr,
           onPressed: () {
@@ -236,7 +238,7 @@ class _TitleContent extends StatelessWidget {
           },
         ),
         const SizedBox(height: 20),
-        _RoundButton(
+        TitleRoundButton(
           label: context.tr('settings'),
           gradientColors: JewelCandyLuminaTheme.buttonShuffleCyanLime,
           onPressed: () {
@@ -245,7 +247,7 @@ class _TitleContent extends StatelessWidget {
           },
         ),
         const SizedBox(height: 16),
-        _RoundButton(
+        TitleRoundButton(
           label: context.tr('rankingTitle'),
           gradientColors: const [
             JewelCandyLuminaTheme.tertiaryGold,
@@ -272,113 +274,9 @@ class _TitleContent extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         const Spacer(flex: 1),
-        Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Text(
-            packageInfo != null
-                ? 'Ver ${packageInfo!.version}+${packageInfo!.buildNumber}'
-                : 'Ver',
-            style: TextStyle(
-              color: JewelCandyLuminaTheme.outlineBright.withValues(
-                alpha: 0.65,
-              ),
-              fontSize: 12,
-            ),
-          ),
-        ),
+        TitleVersionFooter(packageInfo: packageInfo),
         const Spacer(flex: 2),
       ],
-    );
-  }
-}
-
-/// 참조 이미지 스타일의 둥글고 큼지막한 버튼.
-class _RoundButton extends StatelessWidget {
-  const _RoundButton({
-    required this.label,
-    required this.gradientColors,
-    required this.onPressed,
-  });
-
-  static const double _width = 236;
-  static const double _height = 62;
-  static const double _fontSize = 28;
-  static const double _letterSpacing = 5;
-
-  final String label;
-  final List<Color> gradientColors;
-  final VoidCallback onPressed;
-
-  /// 게임 화면과 동일한 Lumina 그라데이션·테두리·그림자 둥근 버튼.
-  @override
-  Widget build(BuildContext context) {
-    final base = gradientColors.first;
-    final darkerColor = HSLColor.fromColor(gradientColors.last)
-        .withLightness(
-          (HSLColor.fromColor(gradientColors.last).lightness - 0.14).clamp(
-            0.0,
-            1.0,
-          ),
-        )
-        .toColor();
-
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        width: _width,
-        height: _height,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: gradientColors,
-          ),
-          borderRadius: BorderRadius.circular(_height / 2),
-          border: Border.all(
-            color: darkerColor.withValues(alpha: 0.65),
-            width: 3,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: darkerColor.withValues(alpha: 0.5),
-              offset: const Offset(0, 4),
-              blurRadius: 0,
-            ),
-            BoxShadow(color: base.withValues(alpha: 0.35), blurRadius: 16),
-            BoxShadow(
-              color: JewelCandyLuminaTheme.primaryDeep.withValues(alpha: 0.25),
-              blurRadius: 12,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: _fontSize,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              letterSpacing: _letterSpacing,
-              shadows: [
-                Shadow(color: base.withValues(alpha: 0.5), blurRadius: 14),
-                Shadow(
-                  color: darkerColor.withValues(alpha: 0.85),
-                  offset: const Offset(0, 2),
-                  blurRadius: 4,
-                ),
-                Shadow(
-                  color: JewelCandyLuminaTheme.primaryDeep.withValues(
-                    alpha: 0.45,
-                  ),
-                  offset: const Offset(1.5, 1.5),
-                  blurRadius: 0,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

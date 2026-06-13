@@ -6,6 +6,9 @@ import '../services/game_settings.dart';
 import '../utils/sfx_play_log.dart';
 import 'asset_paths.dart';
 
+part 'sound_manager_combo_sfx.dart';
+part 'sound_manager_web_sfx.dart';
+
 /// 앱 전역 사운드 관리. BGM·효과음 재생, 볼륨·음소거 적용.
 /// 웹: 사용자 상호작용 전까지 자동재생 차단. 첫 탭 시 unlock.
 class SoundManager {
@@ -33,7 +36,9 @@ class SoundManager {
       unawaited(playBgmIfUnmuted());
       return;
     }
-    if (_currentBgm != null && !FlameAudio.bgm.isPlaying && !GameSettings.bgmMuted) {
+    if (_currentBgm != null &&
+        !FlameAudio.bgm.isPlaying &&
+        !GameSettings.bgmMuted) {
       unawaited(playBgmIfUnmuted());
     }
   }
@@ -56,94 +61,6 @@ class SoundManager {
     ]);
     if (kIsWeb) {
       await _initWebSfxPools();
-    }
-  }
-
-  static Future<void> _initWebSfxPools() async {
-    if (_webSfxPools.isNotEmpty) return;
-    _webSfxPools[AssetPaths.sfxBtnSnd] = await FlameAudio.createPool(
-      AssetPaths.sfxBtnSnd,
-      minPlayers: 1,
-      maxPlayers: 2,
-    );
-    _webSfxPools[AssetPaths.sfxCollect] = await FlameAudio.createPool(
-      AssetPaths.sfxCollect,
-      minPlayers: 1,
-      maxPlayers: 3,
-    );
-    _webSfxPools[AssetPaths.sfxFail] = await FlameAudio.createPool(
-      AssetPaths.sfxFail,
-      minPlayers: 1,
-      maxPlayers: 1,
-    );
-    _webSfxPools[AssetPaths.sfxComboHit] = await FlameAudio.createPool(
-      AssetPaths.sfxComboHit,
-      minPlayers: 1,
-      maxPlayers: 3,
-    );
-    _webSfxPools[AssetPaths.sfxBigMatch] = await FlameAudio.createPool(
-      AssetPaths.sfxBigMatch,
-      minPlayers: 1,
-      maxPlayers: 1,
-    );
-    _webSfxPools[AssetPaths.sfxSpecialGem] = await FlameAudio.createPool(
-      AssetPaths.sfxSpecialGem,
-      minPlayers: 1,
-      maxPlayers: 1,
-    );
-    _webSfxPools[AssetPaths.sfxTimeTic] = await FlameAudio.createPool(
-      AssetPaths.sfxTimeTic,
-      minPlayers: 1,
-      maxPlayers: 1,
-    );
-    _webSfxPools[AssetPaths.sfxTimeUp] = await FlameAudio.createPool(
-      AssetPaths.sfxTimeUp,
-      minPlayers: 1,
-      maxPlayers: 1,
-    );
-    _webSfxPools[AssetPaths.sfxStart] = await FlameAudio.createPool(
-      AssetPaths.sfxStart,
-      minPlayers: 1,
-      maxPlayers: 1,
-    );
-  }
-
-  static Future<void> _primeWebSfxPools() async {
-    if (!kIsWeb || _webSfxPools.isEmpty || _webPrimeInFlight) return;
-    final now = DateTime.now();
-    if (_lastWebPrimeAt != null &&
-        now.difference(_lastWebPrimeAt!) < const Duration(milliseconds: 300)) {
-      return;
-    }
-    _webPrimeInFlight = true;
-    _lastWebPrimeAt = now;
-    try {
-      for (final entry in _webSfxPools.entries) {
-        try {
-          final stop = await entry.value.start(volume: 0);
-          await stop();
-        } catch (e, _) {
-          SfxPlayLog.append('primeWebSfxPool ERROR path=${entry.key} err=$e');
-        }
-      }
-    } finally {
-      _webPrimeInFlight = false;
-    }
-  }
-
-  static bool _isHigherPriorityThanCombo(String path) {
-    return path == AssetPaths.sfxSpecialGem ||
-        path == AssetPaths.sfxBigMatch ||
-        path == AssetPaths.sfxTimeUp;
-  }
-
-  static void _cancelPendingComboIfNeeded(String path) {
-    if (_pendingComboTimer == null) return;
-    if (_isHigherPriorityThanCombo(path)) {
-      _pendingComboTimer?.cancel();
-      _pendingComboTimer = null;
-      _pendingComboPath = null;
-      SfxPlayLog.append('combo delayed SFX canceled by higher priority path=$path');
     }
   }
 

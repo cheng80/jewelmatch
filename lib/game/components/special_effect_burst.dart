@@ -8,9 +8,13 @@ import '../match_board_logic.dart';
 
 part 'special_effect_burst_draw_helpers.dart';
 part 'special_effect_burst_explosion_helpers.dart';
+part 'special_effect_burst_flame_helpers.dart';
 part 'special_effect_burst_geometry_helpers.dart';
+part 'special_effect_burst_hypercube_helpers.dart';
 part 'special_effect_burst_light_helpers.dart';
 part 'special_effect_burst_particle_helpers.dart';
+part 'special_effect_burst_supernova_helpers.dart';
+part 'special_effect_burst_sweep_helpers.dart';
 
 class SpecialEffectBurst extends PositionComponent {
   SpecialEffectBurst() {
