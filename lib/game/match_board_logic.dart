@@ -10,6 +10,10 @@ import 'match_board_specials.dart';
 export 'match_board_models.dart';
 
 part 'match_board_resolution.dart';
+part 'match_board_geometry.dart';
+part 'match_board_generation.dart';
+part 'match_board_input.dart';
+part 'match_board_update.dart';
 
 /// 8×8 등 격자 매치-3 보드 로직 (스왑, 연쇄, 특수 보석, 중력, 리필).
 /// 좌표는 **0 기반** row, col 이다.
@@ -216,95 +220,31 @@ class MatchBoardLogic {
     required double x,
     required double y,
     required double tile,
-  }) {
-    boardX = x;
-    boardY = y;
-    tileSize = tile;
-    if (cells.length != rows || cells.any((row) => row.length != cols)) {
-      return;
-    }
-    for (var r = 0; r < rows; r++) {
-      for (var c = 0; c < cols; c++) {
-        final g = cells[r][c];
-        if (g != null) {
-          _updateGemTarget(g);
-          if (state == 'idle' && !introFillInProgress) {
-            g.x = g.targetX;
-            g.y = g.targetY;
-          }
-        }
-      }
-    }
-    if (introFillInProgress) {
-      _syncIntroPositionsAfterGeometry();
-    }
-  }
+  }) => _setGeometryImpl(x: x, y: y, tile: tile);
 
   /// 목표보다 위(작은 y)로 둘 거리. `rows+4` 타일이면 보드 상단(boardY) 밖까지 충분히 올라간다.
-  double get _introFallDy => (rows + 4) * tileSize;
+  double get _introFallDy => _introFallDyImpl;
 
   /// 인트로: 슬롯 **위**에서 대기(낙하 직전). 각 칸마다 목표보다 위에 둔다.
-  double _introHoldYAbove(BoardGem gem) => gem.targetY - _introFallDy;
+  double _introHoldYAbove(BoardGem gem) => _introHoldYAboveImpl(gem);
 
   /// 현재 웨이브에서 낙하 중인 **행** 인덱스 (맨 아래 줄이 먼저).
-  int get _introActiveRow => rows - 1 - _introWaveIndex;
+  int get _introActiveRow => _introActiveRowImpl;
 
   /// 레이아웃 변경 중 인트로일 때 타깃만 갱신하고 대기/이동 중 위치를 맞춘다.
-  void _syncIntroPositionsAfterGeometry() {
-    if (!introFillInProgress) return;
-    final activeRow = _introActiveRow;
-    for (var r = 0; r < rows; r++) {
-      for (var c = 0; c < cols; c++) {
-        final gem = cells[r][c];
-        if (gem == null) continue;
-        gem.x = gem.targetX;
-        if (r > activeRow) {
-          gem.y = gem.targetY;
-        } else if (r < activeRow) {
-          gem.y = _introHoldYAbove(gem);
-        } else {
-          gem.y = gem.targetY;
-        }
-      }
-    }
-  }
+  void _syncIntroPositionsAfterGeometry() =>
+      _syncIntroPositionsAfterGeometryImpl();
 
   /// [_fillBoardWithRandomValidLayout] 직후: **줄 단위** 낙하(아래→위 [rows]번), 마스크·화면 밖 스폰은 유지.
   void prepareIntroFill({
     BoardFillIntroKind kind = BoardFillIntroKind.roundStart,
-  }) {
-    _pendingIntroKind = kind;
-    _introWaveIndex = 0;
-    introFillInProgress = true;
-    for (var r = 0; r < rows; r++) {
-      for (var c = 0; c < cols; c++) {
-        final gem = cells[r][c];
-        if (gem == null) continue;
-        gem.x = gem.targetX;
-        gem.y = _introHoldYAbove(gem);
-      }
-    }
-  }
+  }) => _prepareIntroFillImpl(kind: kind);
 
-  void _updateGemTarget(BoardGem gem) {
-    final p = cellToPixel(gem.row, gem.col);
-    gem.targetX = p.dx;
-    gem.targetY = p.dy;
-  }
+  void _updateGemTarget(BoardGem gem) => _updateGemTargetImpl(gem);
 
-  Offset cellToPixel(int row, int col) {
-    return Offset(boardX + col * tileSize, boardY + row * tileSize);
-  }
+  Offset cellToPixel(int row, int col) => _cellToPixelImpl(row, col);
 
-  Point<int>? pixelToCell(double px, double py) {
-    if (px < boardX || py < boardY) return null;
-    final lx = px - boardX;
-    final ly = py - boardY;
-    final col = (lx / tileSize).floor();
-    final row = (ly / tileSize).floor();
-    if (!isInside(row, col)) return null;
-    return Point(row, col);
-  }
+  Point<int>? pixelToCell(double px, double py) => _pixelToCellImpl(px, py);
 
   BoardGem createGem(
     int row,
@@ -312,24 +252,7 @@ class MatchBoardLogic {
     int color,
     GemKind kind, {
     int spawnOffsetRows = 0,
-  }) {
-    final t = cellToPixel(row, col);
-    var gy = t.dy;
-    if (spawnOffsetRows > 0) {
-      gy = t.dy - spawnOffsetRows * tileSize;
-    }
-    return _acquireGem(
-      id: _nextId(),
-      color: color,
-      kind: kind,
-      row: row,
-      col: col,
-      x: t.dx,
-      y: gy,
-      targetX: t.dx,
-      targetY: t.dy,
-    );
-  }
+  }) => _createGemImpl(row, col, color, kind, spawnOffsetRows: spawnOffsetRows);
 
   BoardGem? getGem(int row, int col) {
     if (!isInside(row, col)) return null;
@@ -349,81 +272,23 @@ class MatchBoardLogic {
 
   int? gemSpecialKindMatchCode(BoardGem? gem) => gemSpecialKindMatchToken(gem);
 
-  bool causesImmediateMatch(int row, int col, int color) {
-    final l1 = getGem(row, col - 1);
-    final l2 = getGem(row, col - 2);
-    if (l1 != null &&
-        l2 != null &&
-        gemMatchColor(l1) == color &&
-        gemMatchColor(l2) == color) {
-      return true;
-    }
-    final u1 = getGem(row - 1, col);
-    final u2 = getGem(row - 2, col);
-    if (u1 != null &&
-        u2 != null &&
-        gemMatchColor(u1) == color &&
-        gemMatchColor(u2) == color) {
-      return true;
-    }
-    return false;
-  }
+  bool causesImmediateMatch(int row, int col, int color) =>
+      _causesImmediateMatchImpl(row, col, color);
 
-  int randomAllowedColor(int row, int col) {
-    final allowed = <int>[];
-    for (var color = 1; color <= colorCount; color++) {
-      if (!causesImmediateMatch(row, col, color)) {
-        allowed.add(color);
-      }
-    }
-    if (allowed.isEmpty) {
-      return _random.nextInt(colorCount) + 1;
-    }
-    return allowed[_random.nextInt(allowed.length)];
-  }
+  int randomAllowedColor(int row, int col) => _randomAllowedColorImpl(row, col);
 
   /// 무작위로 유효한 초기 보드를 채운다 (즉시 매치 없음·최소 한 수 있는 상태). 기존 보석은 제거된다.
-  void _fillBoardWithRandomValidLayout() {
-    var attempts = 0;
-    do {
-      attempts++;
-      resetCells();
-      flashEffects.clear();
-      for (var r = 0; r < rows; r++) {
-        for (var c = 0; c < cols; c++) {
-          final color = randomAllowedColor(r, c);
-          setGem(r, c, createGem(r, c, color, GemKind.normal));
-        }
-      }
-    } while (hasMatches() || !hasAnyValidMove());
-
-    selected = null;
-    state = 'idle';
-    lastActionText = attempts > 1 ? 'board regen x$attempts' : 'ready';
-    clearHint();
-    introFillInProgress = false;
-  }
+  void _fillBoardWithRandomValidLayout() =>
+      _fillBoardWithRandomValidLayoutImpl();
 
   /// [newBoard]·재시작·셔플 등 공통: 보드 재생성 후 인트로 연출 여부만 선택.
   void generateFreshBoard({
     bool withIntroFill = true,
     BoardFillIntroKind introKind = BoardFillIntroKind.roundStart,
-  }) {
-    _fillBoardWithRandomValidLayout();
-    if (withIntroFill) {
-      prepareIntroFill(kind: introKind);
-    } else {
-      for (var r = 0; r < rows; r++) {
-        for (var c = 0; c < cols; c++) {
-          final g = cells[r][c];
-          if (g != null) {
-            g.x = g.targetX;
-            g.y = g.targetY;
-          }
-        }
-      }
-    }
-  }
+  }) => _generateFreshBoardImpl(
+    withIntroFill: withIntroFill,
+    introKind: introKind,
+  );
 
   bool areAdjacent(int ar, int ac, int br, int bc) {
     return (ar - br).abs() + (ac - bc).abs() == 1;
@@ -557,148 +422,22 @@ class MatchBoardLogic {
     );
   }
 
-  bool triggerSpecialSwap(int ar, int ac, int br, int bc) {
-    final gemA = getGem(ar, ac)!;
-    final gemB = getGem(br, bc)!;
-    final removalSet = <String, bool>{};
-    final queue = <MatchChainItem>[];
+  bool triggerSpecialSwap(int ar, int ac, int br, int bc) =>
+      _triggerSpecialSwapImpl(ar, ac, br, bc);
 
-    if (gemA.kind == GemKind.hyper && gemB.kind == GemKind.hyper) {
-      for (var r = 0; r < rows; r++) {
-        for (var c = 0; c < cols; c++) {
-          removalSet[_cellKey(r, c)] = true;
-        }
-      }
-      resolveSpecialSwap(removalSet, queue, 'hyper x2');
-      return true;
-    }
-
-    if (gemA.kind == GemKind.hyper || gemB.kind == GemKind.hyper) {
-      late int hyperR, hyperC;
-      late BoardGem other;
-      if (gemA.kind == GemKind.hyper) {
-        hyperR = ar;
-        hyperC = ac;
-        other = gemB;
-      } else {
-        hyperR = br;
-        hyperC = bc;
-        other = gemA;
-      }
-      removalSet[_cellKey(ar, ac)] = true;
-      removalSet[_cellKey(br, bc)] = true;
-      queue.add(
-        MatchChainItem(
-          row: hyperR,
-          col: hyperC,
-          kind: GemKind.hyper,
-          triggerColor: other.kind == GemKind.hyper
-              ? pickExistingColor()
-              : other.color,
-        ),
-      );
-      resolveSpecialSwap(removalSet, queue, 'hyper');
-      return true;
-    }
-
-    return false;
-  }
-
-  bool trySwap(int ar, int ac, int br, int bc) {
-    clearHint();
-    if (inputLocked || state != 'idle') return false;
-    if (!isInside(ar, ac) || !isInside(br, bc)) return false;
-    if (!areAdjacent(ar, ac, br, bc)) return false;
-
-    final gemA = getGem(ar, ac);
-    final gemB = getGem(br, bc);
-    if (gemA == null || gemB == null) return false;
-
-    if (triggerSpecialSwap(ar, ac, br, bc)) {
-      selected = null;
-      return true;
-    }
-
-    swapCells(ar, ac, br, bc);
-
-    final matchA = findMatchesAt(br, bc);
-    final matchB = findMatchesAt(ar, ac);
-    if (matchA.groups.isEmpty && matchB.groups.isEmpty) {
-      swapCells(ar, ac, br, bc);
-      lastActionText = 'bad swap';
-      lockInput(invalidSwapLock);
-      onInvalidSwap?.call();
-      return false;
-    }
-
-    resolveMatchCascade(MoveInfo(movedA: Point(br, bc), movedB: Point(ar, ac)));
-    selected = null;
-    return true;
-  }
+  bool trySwap(int ar, int ac, int br, int bc) => _trySwapImpl(ar, ac, br, bc);
 
   bool hasAnyValidMove() => getAllValidMoves().isNotEmpty;
 
-  void clearHint() {
-    _hintA = null;
-    _hintB = null;
-  }
+  void clearHint() => _clearHintImpl();
 
   /// 유효한 스왑 하나를 골라 두 칸을 힌트로 표시한다. 없으면 false.
   /// 해제는 [clearHint] — 탭·스왑·보드 재생성 등에서 호출.
-  bool showHint() {
-    if (state != 'idle' || inputLocked) return false;
-    final moves = getAllValidMoves();
-    if (moves.isEmpty) return false;
-    final pick = moves[_random.nextInt(moves.length)];
-    _hintA = pick.a;
-    _hintB = pick.b;
-    return true;
-  }
+  bool showHint() => _showHintImpl();
 
-  List<ValidMovePair> getAllValidMoves() {
-    final moves = <ValidMovePair>[];
-    for (var row = 0; row < rows; row++) {
-      for (var col = 0; col < cols; col++) {
-        for (final dir in const [
-          [0, 1],
-          [1, 0],
-        ]) {
-          final or = row + dir[0];
-          final oc = col + dir[1];
-          if (!isInside(or, oc)) continue;
-          final gemA = getGem(row, col);
-          final gemB = getGem(or, oc);
-          if (gemA == null || gemB == null) continue;
+  List<ValidMovePair> getAllValidMoves() => _getAllValidMovesImpl();
 
-          var isValid = false;
-          if (gemA.kind == GemKind.hyper || gemB.kind == GemKind.hyper) {
-            isValid = true;
-          } else if (_isSpecial(gemA.kind) && _isSpecial(gemB.kind)) {
-            isValid = true;
-          } else {
-            swapCells(row, col, or, oc);
-            final matchA = findMatchesAt(or, oc);
-            final matchB = findMatchesAt(row, col);
-            swapCells(row, col, or, oc);
-            isValid = matchA.groups.isNotEmpty || matchB.groups.isNotEmpty;
-          }
-
-          if (isValid) {
-            moves.add(ValidMovePair(a: Point(row, col), b: Point(or, oc)));
-          }
-        }
-      }
-    }
-    return moves;
-  }
-
-  void shuffle() {
-    generateFreshBoard(
-      withIntroFill: true,
-      introKind: BoardFillIntroKind.shuffleRefill,
-    );
-    lastActionText = 'shuffled';
-  }
+  void shuffle() => _shuffleImpl();
 
   int removeMarkedGems(Map<String, bool> removalSet) =>
       _removeMarkedGemsImpl(removalSet);
@@ -730,118 +469,12 @@ class MatchBoardLogic {
     lockTimer = duration ?? defaultLock;
   }
 
-  void update(double dt) {
-    if (inputLocked && !introFillInProgress) {
-      lockTimer -= dt;
-      if (lockTimer <= 0) {
-        inputLocked = false;
-        lockTimer = 0;
-      }
-    }
+  void update(double dt) => _updateImpl(dt);
 
-    if (state != 'idle' && state != 'gameover') {
-      stageTimer -= dt;
-      if (stageTimer <= 0) {
-        advanceResolutionStep();
-      }
-    }
+  void clearSelection() => _clearSelectionImpl();
 
-    if (introFillInProgress) {
-      final activeRow = _introActiveRow;
-      final s = min(1.0, dt * introTweenSpeed);
-      for (var r = 0; r < rows; r++) {
-        for (var c = 0; c < cols; c++) {
-          final gem = cells[r][c];
-          if (gem == null) continue;
-          gem.x = gem.targetX;
-          if (r > activeRow) {
-            gem.y = gem.targetY;
-          } else if (r < activeRow) {
-            gem.y = _introHoldYAbove(gem);
-          } else {
-            gem.y += (gem.targetY - gem.y) * s;
-            if ((gem.targetY - gem.y).abs() <= 0.45) {
-              gem.y = gem.targetY;
-            }
-          }
-        }
-      }
-      var waveComplete = true;
-      for (var c = 0; c < cols; c++) {
-        final g = cells[activeRow][c];
-        if (g == null) continue;
-        if ((g.targetY - g.y).abs() > 0.45) {
-          waveComplete = false;
-          break;
-        }
-      }
-      if (waveComplete) {
-        _introWaveIndex++;
-        if (_introWaveIndex >= rows) {
-          introFillInProgress = false;
-          _introWaveIndex = 0;
-          onIntroFillComplete?.call(_pendingIntroKind);
-        }
-      }
-    } else {
-      for (var r = 0; r < rows; r++) {
-        for (var c = 0; c < cols; c++) {
-          final gem = cells[r][c];
-          if (gem != null) {
-            final s = min(1.0, dt * tweenSpeed);
-            gem.x += (gem.targetX - gem.x) * s;
-            gem.y += (gem.targetY - gem.y) * s;
-          }
-        }
-      }
-    }
-
-    for (var i = flashEffects.length - 1; i >= 0; i--) {
-      flashEffects[i].timer -= dt;
-      if (flashEffects[i].timer <= 0) {
-        flashEffects.removeAt(i);
-      }
-    }
-  }
-
-  void clearSelection() => selected = null;
-
-  void selectCell(int row, int col) {
-    if (!isInside(row, col)) {
-      selected = null;
-      return;
-    }
-    selected = Point(row, col);
-  }
+  void selectCell(int row, int col) => _selectCellImpl(row, col);
 
   /// 화면 좌표 탭. 첫 탭은 선택, 인접 두 번째 탭은 스왑.
-  void handleTap(double px, double py) {
-    if (introFillInProgress) return;
-    clearHint();
-    if (inputLocked) return;
-    final cell = pixelToCell(px, py);
-    if (cell == null) {
-      selected = null;
-      return;
-    }
-    final row = cell.x;
-    final col = cell.y;
-
-    if (selected == null) {
-      selectCell(row, col);
-      return;
-    }
-    if (selected!.x == row && selected!.y == col) {
-      selected = null;
-      return;
-    }
-    if (areAdjacent(selected!.x, selected!.y, row, col)) {
-      final sr = selected!.x;
-      final sc = selected!.y;
-      selected = null;
-      trySwap(sr, sc, row, col);
-      return;
-    }
-    selectCell(row, col);
-  }
+  void handleTap(double px, double py) => _handleTapImpl(px, py);
 }

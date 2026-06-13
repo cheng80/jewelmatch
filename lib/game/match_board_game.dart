@@ -18,6 +18,9 @@ import 'match_board_camera_shake.dart';
 import 'match_board_logic.dart';
 
 part 'match_board_game_vfx.dart';
+part 'match_board_game_flow.dart';
+part 'match_board_game_layout.dart';
+part 'match_board_game_timing.dart';
 
 /// 8×8 매치-3 Flame 게임 (스왑·연쇄·특수 보석).
 /// 보드 탭은 전체 화면 [MatchGameHud]가 받아 상단 크롬 외 좌표를 [handleBoardTap]으로 전달한다.
@@ -193,85 +196,33 @@ class MatchBoardGame extends FlameGame {
     }
   }
 
-  double get hudScale => (size.x < size.y ? size.x : size.y) * _hudScaleRatio;
+  double get hudScale => _hudScaleImpl;
 
   /// 레이아웃용 [hudScale]은 50~100대라 그대로 `fontSize`에 곱하면 글자가 비정상적으로 커진다.
   static const double _hudLayoutRef = 72.0;
-  double get hudTextScale => (hudScale / _hudLayoutRef).clamp(0.68, 1.42);
+  double get hudTextScale => _hudTextScaleImpl;
 
-  double get panelCenterY => safeAreaPadding.top + hudScale * 0.62;
+  double get panelCenterY => _panelCenterYImpl;
 
-  double get safeContentLeft => safeAreaPadding.left + size.x * 0.03;
+  double get safeContentLeft => _safeContentLeftImpl;
 
-  double get safeContentRight => size.x - safeAreaPadding.right - size.x * 0.03;
+  double get safeContentRight => _safeContentRightImpl;
 
-  double get safeContentWidth =>
-      (safeContentRight - safeContentLeft).clamp(0.0, double.infinity);
+  double get safeContentWidth => _safeContentWidthImpl;
 
-  double get safeContentCenterX => safeContentLeft + safeContentWidth / 2;
+  double get safeContentCenterX => _safeContentCenterXImpl;
 
-  double get gridTopY => topChromeHeight;
+  double get gridTopY => _gridTopYImpl;
 
-  double get layoutRef {
-    final availW = safeContentWidth;
-    final maxGridH =
-        (size.y - safeAreaPadding.bottom - gridTopY - bottomChromeHeight - 12)
-            .clamp(0.0, double.infinity);
-    return availW < maxGridH ? availW : maxGridH;
-  }
+  double get layoutRef => _layoutRefImpl;
 
   /// 보드(셀) 영역 하단 Y — HUD에서 하단 패널 배치·히트 테스트에 사용.
-  double get boardPixelBottom {
-    final t = board.tileSize;
-    if (t <= 0) return gridTopY;
-    return board.boardY + rows * t;
-  }
+  double get boardPixelBottom => _boardPixelBottomImpl;
 
   /// 인트로 중에는 Flutter [IntroBlock] 오버레이로 전체 입력 차단(투명).
-  void _syncIntroInputBlock() {
-    if (board.introFillInProgress) {
-      if (!overlays.isActive('IntroBlock')) {
-        overlays.add('IntroBlock');
-      }
-    } else {
-      overlays.remove('IntroBlock');
-    }
-  }
+  void _syncIntroInputBlock() => _syncIntroInputBlockImpl();
 
-  void _syncLayout() {
-    if (!hasLayout || size.x <= 0 || size.y <= 0) return;
-
-    final ref = layoutRef;
-    if (ref <= 0 || !ref.isFinite) return;
-
-    const spacingRatio = 0.06;
-    final denom = cols + spacingRatio * (cols + 1);
-    final tile = ref / denom;
-    if (tile <= 0 || !tile.isFinite) return;
-
-    final spacing = tile * spacingRatio;
-    final gridW = cols * tile + (cols + 1) * spacing;
-    final left = safeContentLeft + (safeContentWidth - gridW) / 2 + spacing;
-    final top = gridTopY + spacing;
-
-    board.setGeometry(x: left, y: top, tile: tile);
-
-    if (!_boardSeededFromLayout) {
-      board.generateFreshBoard();
-      _boardSeededFromLayout = true;
-    } else if (board.state == 'idle' && !board.introFillInProgress) {
-      for (var r = 0; r < rows; r++) {
-        for (var c = 0; c < cols; c++) {
-          final g = board.getGem(r, c);
-          if (g != null) {
-            g.x = g.targetX;
-            g.y = g.targetY;
-          }
-        }
-      }
-    }
-    _syncIntroInputBlock();
-  }
+  void _syncLayout() => _syncLayoutImpl();
 
   @override
   void onGameResize(Vector2 size) {
@@ -279,39 +230,14 @@ class MatchBoardGame extends FlameGame {
     _syncLayout();
   }
 
-  void pauseGame() {
-    if (!isPlaying || timeUp) return;
-    isPlaying = false;
-    SoundManager.pauseBgm();
-    pauseEngine();
-    overlays.add('PauseMenu');
-  }
+  void pauseGame() => _pauseGameImpl();
 
-  void resumeGame() {
-    if (timeUp) return;
-    SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
-    resumeEngine();
-    overlays.remove('PauseMenu');
-    overlays.remove('RankingList');
-    isPlaying = true;
-  }
+  void resumeGame() => _resumeGameImpl();
 
   /// 타임 모드 HUD 랭킹 버튼: 게임 일시정지 + 랭킹 팝업.
-  void pauseForRankingPopup() {
-    if (!isTimedMode || !isPlaying || timeUp) return;
-    isPlaying = false;
-    SoundManager.pauseBgm();
-    pauseEngine();
-    overlays.add('RankingList');
-  }
+  void pauseForRankingPopup() => _pauseForRankingPopupImpl();
 
-  void closeRankingPopup() {
-    if (timeUp) return;
-    overlays.remove('RankingList');
-    SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
-    resumeEngine();
-    isPlaying = true;
-  }
+  void closeRankingPopup() => _closeRankingPopupImpl();
 
   @override
   void lifecycleStateChange(AppLifecycleState state) {
@@ -334,39 +260,10 @@ class MatchBoardGame extends FlameGame {
     }
   }
 
-  void _triggerTimeUp() {
-    if (!isTimedMode || timeUp) return;
-    timeUp = true;
-    isPlaying = false;
-    GameSettings.saveBestMatchScoreIfBetter(gameMode, board.score);
-    _lastSavedScore = board.score;
-    pauseEngine();
-    overlays.add('TimeUp');
-    SoundManager.playSfx(AssetPaths.sfxTimeUp);
-  }
+  void _triggerTimeUp() => _triggerTimeUpImpl();
 
   /// 같은 모드로 점수·타이머·보드 초기화.
-  void restartRound() {
-    overlays.remove('TimeUp');
-    overlays.remove('PauseMenu');
-    overlays.remove('NoMoves');
-    overlays.remove('HowToPlay');
-    overlays.remove('RankingList');
-    timeUp = false;
-    board.score = 0;
-    board.lastCombo = 0;
-    board.maxCombo = 0;
-    _lastSavedScore = -1;
-    if (isTimedMode) {
-      timeRemaining = timedRoundSeconds;
-      _lastFlooredSecondForTimeTic = timeRemaining.floor();
-    }
-    board.generateFreshBoard();
-    _syncIntroInputBlock();
-    resumeEngine();
-    isPlaying = true;
-    SoundManager.playBgm(AssetPaths.bgmMain);
-  }
+  void restartRound() => _restartRoundImpl();
 
   @override
   void update(double dt) {
@@ -374,29 +271,8 @@ class MatchBoardGame extends FlameGame {
     _spawnSpecialEffectEvents();
     _updateCameraShake(dt);
 
-    if (isTimedMode && isPlaying && !timeUp && !board.introFillInProgress) {
-      timeRemaining -= dt;
-      final floored = timeRemaining.floor();
-      if (timeRemaining > 0 &&
-          floored >= 1 &&
-          floored <= timedLowTimeTickMaxSeconds) {
-        if (_lastFlooredSecondForTimeTic >= 0 &&
-            floored < _lastFlooredSecondForTimeTic) {
-          SoundManager.playSfx(AssetPaths.sfxTimeTic);
-        }
-      }
-      _lastFlooredSecondForTimeTic = floored;
-
-      if (timeRemaining <= 0) {
-        timeRemaining = 0;
-        _triggerTimeUp();
-      }
-    }
-
-    if (!timeUp && board.state == 'idle' && board.score != _lastSavedScore) {
-      GameSettings.saveBestMatchScoreIfBetter(gameMode, board.score);
-      _lastSavedScore = board.score;
-    }
+    _updateTimedModeClock(dt);
+    _saveBestScoreIfChanged();
     super.update(dt);
   }
 
@@ -430,51 +306,20 @@ class MatchBoardGame extends FlameGame {
     board.trySwap(fromRow, fromCol, toRow, toCol);
   }
 
-  void requestHint() {
-    if (!isPlaying ||
-        timeUp ||
-        board.inputLocked ||
-        board.introFillInProgress) {
-      return;
-    }
-    if (board.state != 'idle') return;
-    if (board.showHint()) {
-      SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-    }
-  }
+  void requestHint() => _requestHintImpl();
 
   /// 힌트 디밍만 해제 (보드 탭 외 UI 탭 등).
-  void dismissHint() => board.clearHint();
+  void dismissHint() => _dismissHintImpl();
 
-  void showHowToPlay() {
-    if (!isPlaying || timeUp) return;
-    isPlaying = false;
-    SoundManager.pauseBgm();
-    pauseEngine();
-    overlays.add('HowToPlay');
-  }
+  void showHowToPlay() => _showHowToPlayImpl();
 
-  void closeHowToPlay() {
-    if (timeUp) return;
-    SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
-    resumeEngine();
-    overlays.remove('HowToPlay');
-    isPlaying = true;
-  }
+  void closeHowToPlay() => _closeHowToPlayImpl();
 
-  void shuffleBoard() {
-    board.shuffle();
-    overlays.remove('NoMoves');
-    _syncIntroInputBlock();
-  }
+  void shuffleBoard() => _shuffleBoardImpl();
 
   void debugTriggerSpecialEffects() => _debugTriggerSpecialEffectsImpl();
 
-  void newBoard() {
-    board.generateFreshBoard();
-    overlays.remove('NoMoves');
-    _syncIntroInputBlock();
-  }
+  void newBoard() => _newBoardImpl();
 
   /// [seconds]는 정수 초. [timedMaxTimeSeconds]까지 남은 여유(`room`)만큼만 가산하고,
   /// 보상 초 중 **초과분은 제외**(버림)한다.
@@ -482,14 +327,6 @@ class MatchBoardGame extends FlameGame {
     SoundManager.playSfx(AssetPaths.sfxFail);
   }
 
-  void _applyTimedModeTimeBonus(int seconds) {
-    if (!isTimedMode || timeUp || seconds <= 0) return;
-    final cap = timedMaxTimeSeconds;
-    final room = cap - timeRemaining;
-    if (room <= 0) {
-      return;
-    }
-    final applied = min(seconds.toDouble(), room);
-    timeRemaining += applied;
-  }
+  void _applyTimedModeTimeBonus(int seconds) =>
+      _applyTimedModeTimeBonusImpl(seconds);
 }

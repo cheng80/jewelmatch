@@ -12,6 +12,7 @@ import '../theme/jewel_candy_lumina_theme.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import '../widgets/ranking_list_popup.dart';
 import '../services/in_app_review_service.dart';
+import 'title/player_name_dialog.dart';
 import 'title/title_round_button.dart';
 import 'title/title_version_footer.dart';
 
@@ -83,71 +84,8 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
   }
 
   Future<void> _showNameDialog(BuildContext context) async {
-    final controller = TextEditingController(text: GameSettings.playerName);
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: JewelCandyLuminaTheme.surfaceContainer.withValues(
-          alpha: 0.97,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: JewelCandyLuminaTheme.borderPause, width: 2),
-        ),
-        title: Text(
-          context.tr('enterName'),
-          style: TextStyle(
-            color: JewelCandyLuminaTheme.secondaryCyan,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: SingleChildScrollView(
-          child: TextField(
-            controller: controller,
-            maxLength: 20,
-            autofocus: true,
-            style: const TextStyle(color: Colors.white, fontSize: 20),
-            decoration: InputDecoration(
-              hintText: 'GUEST',
-              hintStyle: TextStyle(color: Colors.white38),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: JewelCandyLuminaTheme.tertiaryGold,
-                ),
-              ),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: JewelCandyLuminaTheme.secondaryCyan,
-                  width: 2,
-                ),
-              ),
-            ),
-            onSubmitted: (v) => Navigator.of(ctx).pop(v),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(
-              context.tr('cancel'),
-              style: TextStyle(color: Colors.white54),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: Text(
-              context.tr('startGame'),
-              style: TextStyle(
-                color: JewelCandyLuminaTheme.tertiaryGold,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-    if (result == null || !context.mounted) return;
-    final name = result.trim().isEmpty ? 'GUEST' : result.trim();
+    final name = await showPlayerNameDialog(context);
+    if (name == null || !context.mounted) return;
     GameSettings.playerName = name;
     await WidgetsBinding.instance.endOfFrame;
     if (!context.mounted) return;

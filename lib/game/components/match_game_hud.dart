@@ -12,6 +12,7 @@ import '../../theme/jewel_candy_lumina_theme.dart';
 import '../match_board_game.dart';
 
 part 'match_game_hud_buttons.dart';
+part 'match_game_hud_input.dart';
 part 'match_game_hud_painters.dart';
 part 'match_game_hud_sections.dart';
 
@@ -35,20 +36,9 @@ class MatchGameHud extends PositionComponent
   /// 타임 모드 전용: 힌트 오른쪽 랭킹 버튼. `null`이면 그리지 않는다.
   final VoidCallback? onRankingPressed;
 
-  /// 스와이프 감지: 드래그 시작 위치(캔버스 좌표, trySwap 셀 판정용).
-  Vector2? _dragStartCanvas;
-
-  /// 드래그 시작 이후 누적 변위.
-  Vector2 _dragDelta = Vector2.zero();
-
-  /// 드래그가 보드 영역에서 시작됐는지.
-  bool _dragOnBoard = false;
-
-  /// 이 드래그에서 이미 스와이프가 발동됐는지 (1회만).
-  bool _dragConsumed = false;
-
   /// 방향 판정 최소 이동 거리(px). 이보다 짧으면 탭으로 폴백.
   static const double _swipeThreshold = 14.0;
+  final _drag = _HudDragTracker();
 
   late TextPainter _scoreLabel;
   late TextPainter _scoreValue;
@@ -310,35 +300,23 @@ class MatchGameHud extends PositionComponent
     final bt = game.board.boardY;
     final bb = game.boardPixelBottom;
     if (p.y < bt || p.y > bb) return;
-    _dragStartCanvas = event.canvasPosition.clone();
-    _dragDelta = Vector2.zero();
-    _dragOnBoard = true;
+    _drag.start(event.canvasPosition);
   }
 
   @override
   void onDragUpdate(DragUpdateEvent event) {
     super.onDragUpdate(event);
-    if (!_dragOnBoard || _dragConsumed || _dragStartCanvas == null) return;
-    _dragDelta += event.localDelta;
-    if (_dragDelta.length < _swipeThreshold) return;
-
-    _dragConsumed = true;
-    final dx = _dragDelta.x.abs();
-    final dy = _dragDelta.y.abs();
-    int dr = 0, dc = 0;
-    if (dx >= dy) {
-      dc = _dragDelta.x > 0 ? 1 : -1;
-    } else {
-      dr = _dragDelta.y > 0 ? 1 : -1;
-    }
-    game.handleBoardSwipe(_dragStartCanvas!.x, _dragStartCanvas!.y, dr, dc);
+    final swipe = _drag.consumeSwipe(event.localDelta, _swipeThreshold);
+    if (swipe == null) return;
+    game.handleBoardSwipe(swipe.start.x, swipe.start.y, swipe.dr, swipe.dc);
   }
 
   @override
   void onDragEnd(DragEndEvent event) {
     super.onDragEnd(event);
-    if (_dragOnBoard && !_dragConsumed && _dragStartCanvas != null) {
-      game.handleBoardTap(_dragStartCanvas!.x, _dragStartCanvas!.y);
+    final fallbackTap = _drag.fallbackTap;
+    if (fallbackTap != null) {
+      game.handleBoardTap(fallbackTap.x, fallbackTap.y);
     }
     _resetDrag();
   }
@@ -350,10 +328,7 @@ class MatchGameHud extends PositionComponent
   }
 
   void _resetDrag() {
-    _dragStartCanvas = null;
-    _dragDelta = Vector2.zero();
-    _dragOnBoard = false;
-    _dragConsumed = false;
+    _drag.reset();
   }
 
   bool _isUiButton(Vector2 p) {
