@@ -26,6 +26,17 @@ class RankingSubmitState {
       rankMessage: rankMessage ?? this.rankMessage,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is RankingSubmitState &&
+        other.isSubmitting == isSubmitting &&
+        other.submitted == submitted &&
+        other.rankMessage == rankMessage;
+  }
+
+  @override
+  int get hashCode => Object.hash(isSubmitting, submitted, rankMessage);
 }
 
 /// 타임 모드 종료 시 랭킹 제출을 담당하는 Notifier.
@@ -35,6 +46,14 @@ class RankingSubmitState {
 class RankingNotifier extends Notifier<RankingSubmitState> {
   @override
   RankingSubmitState build() => const RankingSubmitState();
+
+  @override
+  bool updateShouldNotify(
+    RankingSubmitState previous,
+    RankingSubmitState next,
+  ) {
+    return previous != next;
+  }
 
   /// 점수를 서버에 제출한다. [trRankSuccess] 등은 이미 번역된 템플릿 문자열.
   Future<void> submit({
@@ -70,6 +89,7 @@ class RankingNotifier extends Notifier<RankingSubmitState> {
 
   /// 재시작 등으로 상태를 초기화한다.
   void reset() {
+    if (state == const RankingSubmitState()) return;
     state = const RankingSubmitState();
   }
 }

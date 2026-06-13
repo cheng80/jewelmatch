@@ -35,6 +35,20 @@ class SettingsState {
       keepScreenOn: keepScreenOn ?? this.keepScreenOn,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is SettingsState &&
+        other.bgmVolume == bgmVolume &&
+        other.sfxVolume == sfxVolume &&
+        other.bgmMuted == bgmMuted &&
+        other.sfxMuted == sfxMuted &&
+        other.keepScreenOn == keepScreenOn;
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(bgmVolume, sfxVolume, bgmMuted, sfxMuted, keepScreenOn);
 }
 
 /// 설정 읽기/쓰기 + SoundManager·WakelockPlus 적용을 담당하는 Notifier.
@@ -48,6 +62,11 @@ class SettingsNotifier extends Notifier<SettingsState> {
       sfxMuted: GameSettings.sfxMuted,
       keepScreenOn: GameSettings.keepScreenOn,
     );
+  }
+
+  @override
+  bool updateShouldNotify(SettingsState previous, SettingsState next) {
+    return previous != next;
   }
 
   void setBgmVolumeDraft(double v) {
@@ -103,5 +122,6 @@ class SettingsNotifier extends Notifier<SettingsState> {
   }
 }
 
-final settingsProvider =
-    NotifierProvider<SettingsNotifier, SettingsState>(SettingsNotifier.new);
+final settingsProvider = NotifierProvider<SettingsNotifier, SettingsState>(
+  SettingsNotifier.new,
+);
