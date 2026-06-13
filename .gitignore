@@ -184,6 +184,7 @@ app.*.map.json
 match/
 match.zip
 assets/generated/
+tmp/
 
 ############################################################
 # Exceptions (keep defaults from flutter.gitignore)
