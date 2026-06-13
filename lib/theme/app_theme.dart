@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import '../resources/asset_paths.dart';
 import 'jewel_candy_lumina_theme.dart';
 
-/// 앱 전역 테마. 게임 [JewelCandyLuminaTheme]과 동일한 팔레트·폰트(HUAngduIpsul140)로 통일한다.
+/// 앱 전역 테마. 게임 [JewelCandyLuminaTheme]과 동일한 팔레트·폰트로 통일한다.
 ThemeData buildAppTheme() {
   return ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    fontFamily: AssetPaths.fontAngduIpsul140,
+    fontFamily: AssetPaths.fontNexonLv2Gothic,
     colorScheme: ColorScheme.dark(
       primary: JewelCandyLuminaTheme.primaryPink,
       onPrimary: Colors.white,
@@ -34,7 +34,7 @@ ThemeData buildAppTheme() {
       scrolledUnderElevation: 0,
       surfaceTintColor: Colors.transparent,
       titleTextStyle: const TextStyle(
-        fontFamily: AssetPaths.fontAngduIpsul140,
+        fontFamily: AssetPaths.fontNexonLv2Gothic,
         fontSize: 22,
         fontWeight: FontWeight.bold,
         color: Colors.white,
@@ -43,7 +43,7 @@ ThemeData buildAppTheme() {
     snackBarTheme: SnackBarThemeData(
       backgroundColor: JewelCandyLuminaTheme.surfaceVariant,
       contentTextStyle: const TextStyle(
-        fontFamily: AssetPaths.fontAngduIpsul140,
+        fontFamily: AssetPaths.fontNexonLv2Gothic,
         color: Colors.white,
         fontSize: 16,
       ),
@@ -53,9 +53,7 @@ ThemeData buildAppTheme() {
       iconColor: JewelCandyLuminaTheme.secondaryCyan,
       textColor: Colors.white.withValues(alpha: 0.95),
     ),
-    dividerTheme: DividerThemeData(
-      color: Colors.white.withValues(alpha: 0.12),
-    ),
+    dividerTheme: DividerThemeData(color: Colors.white.withValues(alpha: 0.12)),
     switchTheme: SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {

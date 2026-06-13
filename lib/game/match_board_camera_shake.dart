@@ -10,6 +10,8 @@ class MatchBoardCameraShake {
   double _intensity = 0;
   double _elapsed = 0;
 
+  bool get isActive => _remaining > 0 && _duration > 0;
+
   void queue(SpecialEffectShake shake) {
     if (shake.intensity <= 0 || shake.duration <= 0) return;
     _intensity = max(_intensity, shake.intensity);

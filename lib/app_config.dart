@@ -27,6 +27,9 @@ class StorageKeys {
   /// 이전 단일 키(심플 베스트 마이그레이션용).
   static const String bestMatchScore = 'best_match_score';
   static const String bestMatchSimple = 'best_match_simple';
+  static const String bestMatchProgression = 'best_match_progression';
+  static const String bestMatchProgressionLevel =
+      'best_match_progression_level';
   static const String bestMatchTimed = 'best_match_timed';
 
   /// 타임 어택 랭킹용 플레이어 이름 (아케이드). 첫 진입 시 기본 'GUEST'.

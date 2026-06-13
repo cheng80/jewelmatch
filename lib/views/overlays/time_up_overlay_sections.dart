@@ -94,14 +94,14 @@ class _TimeUpResultPanel extends StatelessWidget {
             ),
           ),
           Text(
-            '${context.tr('score')}: ${game.board.score}',
+            '${game.board.score}',
             style: TextStyle(
               color: JewelCandyLuminaTheme.goldStrong,
               fontSize: 32,
               fontWeight: FontWeight.bold,
             ),
           ),
-          if (game.isTimedMode) ...[
+          if (game.hasTimedClock) ...[
             const SizedBox(height: 12),
             const _RankStatusSection(),
           ],

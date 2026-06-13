@@ -1,6 +1,15 @@
 part of 'match_board_game.dart';
 
 extension MatchBoardGameFlow on MatchBoardGame {
+  void _generateFreshBoardWithStartSfx({
+    BoardFillIntroKind introKind = BoardFillIntroKind.roundStart,
+  }) {
+    if (introKind == BoardFillIntroKind.roundStart) {
+      SoundManager.playSfx(AssetPaths.sfxStart);
+    }
+    board.generateFreshBoard(introKind: introKind);
+  }
+
   void _pauseGameImpl() {
     if (!isPlaying || timeUp) return;
     isPlaying = false;
@@ -40,16 +49,21 @@ extension MatchBoardGameFlow on MatchBoardGame {
     overlays.remove('NoMoves');
     overlays.remove('HowToPlay');
     overlays.remove('RankingList');
+    overlays.remove('LevelCelebration');
+    overlays.remove('LevelUp');
     timeUp = false;
     board.score = 0;
     board.lastCombo = 0;
     board.maxCombo = 0;
     _lastSavedScore = -1;
-    if (isTimedMode) {
-      timeRemaining = MatchBoardGame.timedRoundSeconds;
+    if (isProgressionMode) {
+      _resetProgressionRound();
+    }
+    if (hasTimedClock) {
+      timeRemaining = roundSecondsForMode;
       _lastFlooredSecondForTimeTic = timeRemaining.floor();
     }
-    board.generateFreshBoard();
+    _generateFreshBoardWithStartSfx();
     _syncIntroInputBlock();
     resumeEngine();
     isPlaying = true;
@@ -94,7 +108,7 @@ extension MatchBoardGameFlow on MatchBoardGame {
   }
 
   void _newBoardImpl() {
-    board.generateFreshBoard();
+    _generateFreshBoardWithStartSfx();
     overlays.remove('NoMoves');
     _syncIntroInputBlock();
   }

@@ -57,6 +57,7 @@ class RankingNotifier extends Notifier<RankingSubmitState> {
 
   /// 점수를 서버에 제출한다. [trRankSuccess] 등은 이미 번역된 템플릿 문자열.
   Future<void> submit({
+    required RankingMode mode,
     required int score,
     required String trRankSuccess,
     required String trRankNotInTop,
@@ -67,7 +68,11 @@ class RankingNotifier extends Notifier<RankingSubmitState> {
     state = state.copyWith(isSubmitting: true);
 
     final name = GameSettings.playerName;
-    final result = await RankingService.submit(name: name, score: score);
+    final result = await RankingService.submit(
+      mode: mode,
+      name: name,
+      score: score,
+    );
 
     String message;
     if (result == null) {

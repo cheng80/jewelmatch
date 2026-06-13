@@ -12,9 +12,11 @@ class SpecialEffectPool {
   final Component _parent;
   final List<SpecialEffectBurst> _pool = [];
   int _activeLineSweeps = 0;
+  int _activeCount = 0;
 
   int get cachedCount => _pool.length;
   int get activeLineSweepCount => _activeLineSweeps;
+  int get activeCount => _activeCount;
 
   void spawn({
     required GemKind effectKind,
@@ -31,6 +33,7 @@ class SpecialEffectPool {
     if (isLineSweep) {
       _activeLineSweeps++;
     }
+    _activeCount++;
     burst.activate(
       effectKind: effectKind,
       origin: origin,
@@ -51,6 +54,7 @@ class SpecialEffectPool {
   }
 
   void _returnToPool(SpecialEffectBurst burst) {
+    _activeCount = max(0, _activeCount - 1);
     if (burst.effectKind == GemKind.row || burst.effectKind == GemKind.col) {
       _activeLineSweeps = max(0, _activeLineSweeps - 1);
     }

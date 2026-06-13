@@ -17,7 +17,12 @@ import 'title/title_round_button.dart';
 import 'title/title_version_footer.dart';
 
 String _gameRoute(String mode) {
-  final qa = Uri.base.queryParameters['qaVfx'] == '1' ? '&qaVfx=1' : '';
+  final params = <String>[
+    if (Uri.base.queryParameters['qaVfx'] == '1') 'qaVfx=1',
+    if (Uri.base.queryParameters['qaLevelUp'] == '1') 'qaLevelUp=1',
+    if (Uri.base.queryParameters['qaPerf'] == '1') 'qaPerf=1',
+  ];
+  final qa = params.isEmpty ? '' : '&${params.join('&')}';
   return '${RoutePaths.game}?mode=$mode$qa';
 }
 
@@ -83,13 +88,13 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _showNameDialog(BuildContext context) async {
+  Future<void> _showNameDialog(BuildContext context, String mode) async {
     final name = await showPlayerNameDialog(context);
     if (name == null || !context.mounted) return;
     GameSettings.playerName = name;
     await WidgetsBinding.instance.endOfFrame;
     if (!context.mounted) return;
-    context.go(_gameRoute('timed'));
+    context.go(_gameRoute(mode));
   }
 
   @override
@@ -98,7 +103,7 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
       return const Scaffold(backgroundColor: Colors.transparent);
     }
     final content = _TitleContent(
-      onShowNameDialog: () => _showNameDialog(context),
+      onShowNameDialog: (mode) => _showNameDialog(context, mode),
       packageInfo: _cachedPackageInfo,
     );
 
@@ -109,7 +114,7 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
 class _TitleContent extends StatelessWidget {
   const _TitleContent({required this.onShowNameDialog, this.packageInfo});
 
-  final VoidCallback onShowNameDialog;
+  final ValueChanged<String> onShowNameDialog;
   final PackageInfo? packageInfo;
 
   @override
@@ -168,17 +173,29 @@ class _TitleContent extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         TitleRoundButton(
+          label: context.tr('modeProgression'),
+          gradientColors: JewelCandyLuminaTheme.buttonShuffleCyanLime,
+          onPressed: () {
+            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+            onShowNameDialog('progression');
+          },
+        ),
+        const SizedBox(height: 16),
+        TitleRoundButton(
           label: context.tr('modeTimed'),
           gradientColors: JewelCandyLuminaTheme.buttonRetryMagOr,
           onPressed: () {
             SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-            onShowNameDialog();
+            onShowNameDialog('timed');
           },
         ),
         const SizedBox(height: 20),
         TitleRoundButton(
           label: context.tr('settings'),
-          gradientColors: JewelCandyLuminaTheme.buttonShuffleCyanLime,
+          gradientColors: const [
+            JewelCandyLuminaTheme.secondaryCyan,
+            JewelCandyLuminaTheme.primaryPink,
+          ],
           onPressed: () {
             SoundManager.playSfx(AssetPaths.sfxBtnSnd);
             context.push(RoutePaths.setting);

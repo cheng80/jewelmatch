@@ -4,6 +4,7 @@ extension MatchBoardResolution on MatchBoardLogic {
   int _removeMarkedGemsImpl(Map<String, bool> removalSet) {
     var removed = 0;
     var hasSpecial = false;
+    var specialBonus = 0;
     final removedCells = <({int row, int col, int color})>[];
     for (final key in removalSet.keys) {
       final parts = key.split(':');
@@ -13,7 +14,10 @@ extension MatchBoardResolution on MatchBoardLogic {
       final gem = getGem(row, col);
       if (gem != null) {
         removed++;
-        if (_isSpecial(gem.kind)) hasSpecial = true;
+        if (_isSpecial(gem.kind)) {
+          hasSpecial = true;
+          specialBonus += _specialActivationScoreBonus(gem.kind);
+        }
         removedCells.add((row: row, col: col, color: gem.color));
         addFlashEffect(row, col);
         cells[row][col] = null;
@@ -26,7 +30,7 @@ extension MatchBoardResolution on MatchBoardLogic {
           MatchBoardLogic.scoreBase +
           max(0, removed - 3) * MatchBoardLogic.scoreExtraPerGem;
       final comboBonus = max(1, combo);
-      score += (base * comboBonus).round();
+      score += ((base + specialBonus) * comboBonus).round();
 
       final raw =
           (timedModeBonusBaseUnits +
@@ -204,4 +208,15 @@ extension MatchBoardResolution on MatchBoardLogic {
       _beginNextResolutionCycleImpl();
     }
   }
+}
+
+int _specialActivationScoreBonus(GemKind kind) {
+  return switch (kind) {
+    GemKind.row || GemKind.col => 300,
+    GemKind.bomb => 500,
+    GemKind.star => 800,
+    GemKind.hyper => 1200,
+    GemKind.supernova => 2000,
+    GemKind.normal => 0,
+  };
 }

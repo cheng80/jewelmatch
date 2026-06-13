@@ -32,6 +32,7 @@ final GoRouter appRouter = GoRouter(
           child: GameView(
             gameMode: mode,
             qaVfxEnabled: state.uri.queryParameters['qaVfx'] == '1',
+            qaLevelUpEnabled: state.uri.queryParameters['qaLevelUp'] == '1',
           ),
           transitionDuration: const Duration(milliseconds: 500),
           transitionsBuilder: (context, animation, _, child) =>

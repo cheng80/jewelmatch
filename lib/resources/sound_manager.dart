@@ -54,6 +54,8 @@ class SoundManager {
       FlameAudio.audioCache.load(AssetPaths.sfxCollect),
       FlameAudio.audioCache.load(AssetPaths.sfxFail),
       FlameAudio.audioCache.load(AssetPaths.sfxClear),
+      FlameAudio.audioCache.load(AssetPaths.sfxLevelUp),
+      FlameAudio.audioCache.load(AssetPaths.sfxConfetti),
       FlameAudio.audioCache.load(AssetPaths.sfxBtnSnd),
       FlameAudio.audioCache.load(AssetPaths.sfxComboHit),
       FlameAudio.audioCache.load(AssetPaths.sfxBigMatch),

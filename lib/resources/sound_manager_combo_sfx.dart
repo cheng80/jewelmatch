@@ -3,6 +3,8 @@ part of 'sound_manager.dart';
 bool _isHigherPriorityThanCombo(String path) {
   return path == AssetPaths.sfxSpecialGem ||
       path == AssetPaths.sfxBigMatch ||
+      path == AssetPaths.sfxLevelUp ||
+      path == AssetPaths.sfxConfetti ||
       path == AssetPaths.sfxTimeUp;
 }
 

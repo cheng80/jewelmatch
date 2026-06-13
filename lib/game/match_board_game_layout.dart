@@ -66,7 +66,7 @@ extension MatchBoardGameLayout on MatchBoardGame {
     board.setGeometry(x: left, y: top, tile: tile);
 
     if (!_boardSeededFromLayout) {
-      board.generateFreshBoard();
+      _generateFreshBoardWithStartSfx();
       _boardSeededFromLayout = true;
     } else if (board.state == 'idle' && !board.introFillInProgress) {
       for (var r = 0; r < MatchBoardGame.rows; r++) {

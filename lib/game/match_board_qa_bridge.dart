@@ -43,3 +43,24 @@ extension MatchBoardSimulationHints on MatchBoardGame {
     };
   }
 }
+
+typedef SimulationGameState = Map<String, Object?>;
+
+extension MatchBoardSimulationState on MatchBoardGame {
+  SimulationGameState readSimulationState() {
+    return {
+      'mode': gameMode.queryParam,
+      'score': board.score,
+      'level': progressionLevel,
+      'targetScore': progressionTargetScore,
+      'levelUpActive': overlays.isActive('LevelUp'),
+      'levelCelebrationActive': overlays.isActive('LevelCelebration'),
+      'timeUp': timeUp,
+      'timeRemaining': timeRemaining,
+      'isPlaying': isPlaying,
+      'boardState': board.state,
+      'hasActiveVisualEffects': hasActiveVisualEffects,
+      'introFillInProgress': board.introFillInProgress,
+    };
+  }
+}

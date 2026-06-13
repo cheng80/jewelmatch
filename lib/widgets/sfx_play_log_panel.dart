@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../resources/asset_paths.dart';
 import '../theme/jewel_candy_lumina_theme.dart';
 import '../utils/sfx_play_log.dart';
 
@@ -25,7 +26,9 @@ class SfxPlayLogPanel extends StatelessWidget {
                 Icon(
                   Icons.graphic_eq,
                   size: 16,
-                  color: JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.9),
+                  color: JewelCandyLuminaTheme.secondaryCyan.withValues(
+                    alpha: 0.9,
+                  ),
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -53,14 +56,19 @@ class SfxPlayLogPanel extends StatelessWidget {
                     );
                   },
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   child: Text(
                     '전체 복사',
                     style: TextStyle(
-                      color: JewelCandyLuminaTheme.tertiaryGold.withValues(alpha: 0.95),
+                      color: JewelCandyLuminaTheme.tertiaryGold.withValues(
+                        alpha: 0.95,
+                      ),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -89,14 +97,17 @@ class SfxPlayLogPanel extends StatelessWidget {
                 }
                 return SingleChildScrollView(
                   reverse: true,
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
                   child: SelectableText(
                     entries.join('\n'),
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.88),
                       fontSize: 10,
                       height: 1.25,
-                      fontFamily: 'monospace',
+                      fontFamily: AssetPaths.fontNexonLv2Gothic,
                     ),
                   ),
                 );

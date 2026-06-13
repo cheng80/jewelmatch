@@ -165,7 +165,7 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
       Radius.circular(inner.height / 2),
     );
 
-    if (game.isTimedMode) {
+    if (game.hasTimedClock) {
       final r = _timeRatio();
       final fillW = inner.width * r;
       if (fillW > 0.5) {
@@ -185,7 +185,7 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
           topRight: Radius.circular(fillW >= inner.width - 1 ? rad : 0),
           bottomRight: Radius.circular(fillW >= inner.width - 1 ? rad : 0),
         );
-        final low = r < 0.2;
+        final low = game.isTimedMode && r < 0.2;
         canvas.drawRRect(
           fillR,
           _timeFillPaint
@@ -214,8 +214,8 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
   }
 
   double _timeRatio() {
-    if (!game.isTimedMode) return 1;
-    final initial = MatchBoardGame.timedRoundSeconds;
+    if (!game.hasTimedClock) return 1;
+    final initial = game.roundSecondsForMode;
     if (initial <= 0) return 0;
     final t = game.timeRemaining;
     // 보너스로 시작 분(120초)을 넘기면 바는 가득 찬 상태로 유지

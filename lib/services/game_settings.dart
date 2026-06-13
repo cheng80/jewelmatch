@@ -59,6 +59,7 @@ class GameSettings {
 
   static String _bestKey(JewelGameMode mode) => switch (mode) {
     JewelGameMode.simple => StorageKeys.bestMatchSimple,
+    JewelGameMode.progression => StorageKeys.bestMatchProgression,
     JewelGameMode.timed => StorageKeys.bestMatchTimed,
   };
 
@@ -71,6 +72,12 @@ class GameSettings {
       return StorageHelper.read<num>(StorageKeys.bestMatchScore)?.toInt();
     }
     return null;
+  }
+
+  static int? getBestMatchProgressionLevel() {
+    return StorageHelper.read<num>(
+      StorageKeys.bestMatchProgressionLevel,
+    )?.toInt();
   }
 
   /// 타임 어택 랭킹용 플레이어 이름. 한 번도 입력한 적 없으면 'GUEST'.
@@ -89,5 +96,21 @@ class GameSettings {
         StorageHelper.write(StorageKeys.bestMatchScore, score);
       }
     }
+  }
+
+  static void saveBestProgressionRecordIfBetter({
+    required int level,
+    required int score,
+  }) {
+    final curLevel = getBestMatchProgressionLevel();
+    final curScore = getBestMatchScore(JewelGameMode.progression);
+    final isBetter =
+        curLevel == null ||
+        level > curLevel ||
+        (level == curLevel && (curScore == null || score > curScore));
+    if (!isBetter) return;
+
+    StorageHelper.write(StorageKeys.bestMatchProgressionLevel, level);
+    StorageHelper.write(_bestKey(JewelGameMode.progression), score);
   }
 }

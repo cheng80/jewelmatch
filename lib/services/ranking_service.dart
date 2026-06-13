@@ -1,6 +1,15 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+enum RankingMode {
+  level('level'),
+  time('time');
+
+  const RankingMode(this.queryValue);
+
+  final String queryValue;
+}
+
 class RankingEntry {
   RankingEntry({required this.name, required this.score, this.ts});
   final String name;
@@ -8,10 +17,10 @@ class RankingEntry {
   final int? ts;
 
   factory RankingEntry.fromJson(Map<String, dynamic> j) => RankingEntry(
-        name: j['name'] as String,
-        score: (j['score'] as num).toInt(),
-        ts: (j['ts'] as num?)?.toInt(),
-      );
+    name: j['name'] as String,
+    score: (j['score'] as num).toInt(),
+    ts: (j['ts'] as num?)?.toInt(),
+  );
 }
 
 class SubmitResult {
@@ -28,28 +37,44 @@ class RankingService {
   static const String _baseUrl =
       'https://cheng80.myqnapcloud.com/matchranking/ranking.php';
 
-  static Future<RankingEntry?> fetchTop1() async {
+  static Uri _uri(String action, RankingMode mode) {
+    return Uri.parse('$_baseUrl?action=$action&mode=${mode.queryValue}');
+  }
+
+  static Future<RankingEntry?> fetchTop1({
+    RankingMode mode = RankingMode.time,
+  }) async {
     try {
       final res = await http
-          .get(Uri.parse('$_baseUrl?action=top1'))
+          .get(_uri('top1', mode))
           .timeout(const Duration(seconds: 6));
       if (res.statusCode != 200) return null;
       final body = jsonDecode(res.body) as Map<String, dynamic>;
       if (body['ok'] != true || body['top1'] == null) return null;
+      if (mode == RankingMode.level &&
+          body['mode'] != RankingMode.level.queryValue) {
+        return null;
+      }
       return RankingEntry.fromJson(body['top1'] as Map<String, dynamic>);
     } catch (_) {
       return null;
     }
   }
 
-  static Future<List<RankingEntry>> fetchList() async {
+  static Future<List<RankingEntry>> fetchList({
+    RankingMode mode = RankingMode.time,
+  }) async {
     try {
       final res = await http
-          .get(Uri.parse('$_baseUrl?action=list'))
+          .get(_uri('list', mode))
           .timeout(const Duration(seconds: 6));
       if (res.statusCode != 200) return [];
       final body = jsonDecode(res.body) as Map<String, dynamic>;
       if (body['ok'] != true) return [];
+      if (mode == RankingMode.level &&
+          body['mode'] != RankingMode.level.queryValue) {
+        return [];
+      }
       final list = body['ranking'] as List<dynamic>;
       return list
           .map((e) => RankingEntry.fromJson(e as Map<String, dynamic>))
@@ -60,15 +85,20 @@ class RankingService {
   }
 
   static Future<SubmitResult?> submit({
+    required RankingMode mode,
     required String name,
     required int score,
   }) async {
     try {
       final res = await http
           .post(
-            Uri.parse('$_baseUrl?action=submit'),
+            _uri('submit', mode),
             headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({'name': name, 'score': score}),
+            body: jsonEncode({
+              'name': name,
+              'score': score,
+              'mode': mode.queryValue,
+            }),
           )
           .timeout(const Duration(seconds: 6));
       if (res.statusCode != 200) return null;

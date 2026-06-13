@@ -77,6 +77,18 @@ void main() {
     expect(removalSet, containsPair('3:7', true));
   });
 
+  test('special gem activation adds bonus score', () {
+    final board = _filledBoard();
+    board.setGem(3, 3, board.createGem(3, 3, 2, GemKind.bomb));
+    final removalSet = {'3:3': true};
+    final queue = board.buildSpecialQueue(removalSet);
+    board.activateSpecials(removalSet, queue);
+
+    board.removeMarkedGems(removalSet);
+
+    expect(board.score, 900);
+  });
+
   test('supernova gem combines 3x3 blast with row and column clear', () {
     final board = _filledBoard();
     board.setGem(3, 4, board.createGem(3, 4, 5, GemKind.supernova));

@@ -2,7 +2,7 @@ part of 'match_board_game.dart';
 
 extension MatchBoardGameTiming on MatchBoardGame {
   void _updateTimedModeClock(double dt) {
-    if (!isTimedMode || !isPlaying || timeUp || board.introFillInProgress) {
+    if (!hasTimedClock || !isPlaying || timeUp || board.introFillInProgress) {
       return;
     }
 
@@ -25,30 +25,47 @@ extension MatchBoardGameTiming on MatchBoardGame {
   }
 
   void _saveBestScoreIfChanged() {
-    if (!timeUp && board.state == 'idle' && board.score != _lastSavedScore) {
-      GameSettings.saveBestMatchScoreIfBetter(gameMode, board.score);
-      _lastSavedScore = board.score;
+    final score = _scoreForBestSave();
+    if (!timeUp && board.state == 'idle' && score != _lastSavedScore) {
+      _saveBestRecordIfBetter(score);
+      _lastSavedScore = score;
     }
   }
 
   void _triggerTimeUpImpl() {
-    if (!isTimedMode || timeUp) return;
+    if (!hasTimedClock || timeUp) return;
     timeUp = true;
     isPlaying = false;
-    GameSettings.saveBestMatchScoreIfBetter(gameMode, board.score);
-    _lastSavedScore = board.score;
+    final score = _scoreForBestSave();
+    _saveBestRecordIfBetter(score);
+    _lastSavedScore = score;
     pauseEngine();
     overlays.add('TimeUp');
     SoundManager.playSfx(AssetPaths.sfxTimeUp);
   }
 
   void _applyTimedModeTimeBonusImpl(int seconds) {
-    if (!isTimedMode || timeUp || seconds <= 0) return;
-    final room = MatchBoardGame.timedMaxTimeSeconds - timeRemaining;
+    if (!hasTimedClock || timeUp || seconds <= 0) return;
+    final room = maxTimeSecondsForMode - timeRemaining;
     if (room <= 0) {
       return;
     }
     final applied = min(seconds.toDouble(), room);
     timeRemaining += applied;
+  }
+
+  int _scoreForBestSave() {
+    return board.score;
+  }
+
+  void _saveBestRecordIfBetter(int score) {
+    if (isProgressionMode) {
+      GameSettings.saveBestProgressionRecordIfBetter(
+        level: progressionLevel,
+        score: score,
+      );
+      return;
+    }
+    GameSettings.saveBestMatchScoreIfBetter(gameMode, score);
   }
 }

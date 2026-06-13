@@ -7,6 +7,7 @@ import '../../app_config.dart';
 import '../../game/match_board_game.dart';
 import '../../resources/asset_paths.dart';
 import '../../resources/sound_manager.dart';
+import '../../services/ranking_service.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../../vm/ranking_notifier.dart';
 import '../../widgets/lumina_buttons.dart';
@@ -70,12 +71,23 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
   }
 
   void _submitScore() {
-    if (!widget.game.isTimedMode) return;
+    if (!widget.game.hasTimedClock) return;
+    final rankingMode = widget.game.isProgressionMode
+        ? RankingMode.level
+        : RankingMode.time;
+    final rankingScore = widget.game.isProgressionMode
+        ? widget.game.progressionLevel
+        : widget.game.board.score;
     ref
         .read(rankingProvider.notifier)
         .submit(
-          score: widget.game.board.score,
-          trRankSuccess: context.tr('rankSuccess'),
+          mode: rankingMode,
+          score: rankingScore,
+          trRankSuccess: context.tr(
+            rankingMode == RankingMode.level
+                ? 'rankLevelSuccess'
+                : 'rankSuccess',
+          ),
           trRankNotInTop: context.tr('rankNotInTop'),
           trRankSubmitFailed: context.tr('rankSubmitFailed'),
         );

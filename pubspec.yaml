@@ -54,6 +54,7 @@ dependencies:
   in_app_review: ^2.0.11
   http: ^1.6.0
   web: ^1.1.1
+  confetti: ^0.8.0
 
 dev_dependencies:
   flutter_test:
@@ -135,6 +136,6 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   fonts:
-    - family: HUAngduIpsul140
+    - family: NexonLv2Gothic
       fonts:
-        - asset: assets/fonts/HU앵두입술140.otf
+        - asset: assets/fonts/NEXON Lv2 Gothic.ttf

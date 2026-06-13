@@ -5,6 +5,9 @@
 ### Overview
 Jewel Match는 Flutter + Flame 기반 8×8 매치-3 퍼즐 게임이다. 기본 명령어는 `README.md` 참조.
 
+### Communication
+- 항상 한국어로 대화한다.
+
 ### Flutter SDK
 - Flutter SDK `3.38.x` (Dart `^3.10.8`)가 필요하다. `/opt/flutter/bin`이 `PATH`에 포함되어야 한다.
 - `~/.bashrc`에 `export PATH="/opt/flutter/bin:$PATH"`가 설정되어 있다.

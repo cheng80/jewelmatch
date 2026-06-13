@@ -52,6 +52,23 @@ Future<void> _initWebSfxPools() async {
     minPlayers: 1,
     maxPlayers: 1,
   );
+  SoundManager._webSfxPools[AssetPaths.sfxClear] = await FlameAudio.createPool(
+    AssetPaths.sfxClear,
+    minPlayers: 1,
+    maxPlayers: 1,
+  );
+  SoundManager._webSfxPools[AssetPaths.sfxLevelUp] =
+      await FlameAudio.createPool(
+        AssetPaths.sfxLevelUp,
+        minPlayers: 1,
+        maxPlayers: 1,
+      );
+  SoundManager._webSfxPools[AssetPaths.sfxConfetti] =
+      await FlameAudio.createPool(
+        AssetPaths.sfxConfetti,
+        minPlayers: 1,
+        maxPlayers: 1,
+      );
 }
 
 void _scheduleWebSfxPrime() {

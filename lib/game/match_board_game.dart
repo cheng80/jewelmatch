@@ -14,13 +14,17 @@ import 'components/particle_burst.dart';
 import 'components/special_effect_pool.dart';
 import 'components/space_bg.dart';
 import 'jewel_game_mode.dart';
+import 'jewel_rank_progression.dart';
 import 'match_board_camera_shake.dart';
 import 'match_board_logic.dart';
 import 'match_board_qa_bridge.dart';
 
 part 'match_board_game_vfx.dart';
+part 'match_board_game_debug_vfx.dart';
 part 'match_board_game_flow.dart';
 part 'match_board_game_layout.dart';
+part 'match_board_game_mode_rules.dart';
+part 'match_board_game_progression.dart';
 part 'match_board_game_timing.dart';
 
 /// 8×8 매치-3 Flame 게임 (스왑·연쇄·특수 보석).
@@ -37,43 +41,24 @@ class MatchBoardGame extends FlameGame {
       onNoMoves: () {
         overlays.add('NoMoves');
       },
-      timedModeTimeRewardScale: timedModeTimeRewardScale,
-      timedModeBonusBaseUnits: timedModeBonusBaseUnits,
-      timedModeBonusPerComboTierUnits: timedModeBonusPerComboTierUnits,
-      onTimedModeTimeBonus: isTimedMode ? _applyTimedModeTimeBonus : null,
+      timedModeTimeRewardScale: timeRewardScaleForMode,
+      timedModeBonusBaseUnits: timeBonusBaseUnitsForMode,
+      timedModeBonusPerComboTierUnits: timeBonusPerComboTierUnitsForMode,
+      onTimedModeTimeBonus: hasTimedClock ? _applyTimedModeTimeBonus : null,
       onInvalidSwap: _playInvalidSwapSfx,
     );
     board.onIntroFillComplete = (BoardFillIntroKind kind) {
       overlays.remove('IntroBlock');
-      if (kind == BoardFillIntroKind.roundStart) {
-        SoundManager.playSfx(AssetPaths.sfxStart);
-      }
     };
     board.onGemsRemoved = _spawnParticles;
-    if (isTimedMode) {
-      timeRemaining = timedRoundSeconds;
+    if (hasTimedClock) {
+      timeRemaining = roundSecondsForMode;
       _lastFlooredSecondForTimeTic = timeRemaining.floor();
     }
   }
 
   final EdgeInsets safeAreaPadding;
   final JewelGameMode gameMode;
-
-  /// 타임 모드 시작 시 남은 시간(초).
-  static const double timedRoundSeconds = 60;
-
-  /// 타임 모드에서 [timeRemaining] 상한(초). 이보다 많이 쌓이는 보상은 버린다.
-  static const double timedMaxTimeSeconds = 90;
-
-  /// 레벨/난이도용 **시간 보상 비율**.
-  /// 실제 추가 초 = `round((기준합) * 이 값)` — 0.5면 보상이 절반.
-  static const double timedModeTimeRewardScale = 0.6;
-
-  /// 매치 1단계 기준 보상(정수 초). 콤보 단계 보상은 [timedModeBonusPerComboTierUnits]와 합산 후 스케일·반올림.
-  static const int timedModeBonusBaseUnits = 1;
-
-  /// 콤보 2단계부터 (combo-1)에 곱해 더하는 정수 초 단위.
-  static const int timedModeBonusPerComboTierUnits = 1;
 
   /// 남은 시간이 이 초 이하로 떨어지면 매 정수 초마다 [sfxTimeTic] 재생.
   static const int timedLowTimeTickMaxSeconds = 10;
@@ -106,6 +91,10 @@ class MatchBoardGame extends FlameGame {
   bool isPlaying = true;
   bool timeUp = false;
   int _lastSavedScore = -1;
+  int progressionLevel = 1;
+  int levelUpFromLevel = 1;
+  int levelUpToLevel = 1;
+  List<GemKind> progressionNextBoardBonusKinds = const [];
 
   /// `true`이면 `onGameResize`에서 기하만 갱신하고, 보석 데이터는 유지한다.
   /// (첫 유효 레이아웃에서 한 번만 `generateFreshBoard` — 문서 5절 `onLoad` 이후 레이아웃 확정 흐름과 동일한 단계)
@@ -116,7 +105,21 @@ class MatchBoardGame extends FlameGame {
   /// [timeRemaining]의 정수 초(내림) — 저시간 틱이 중복되지 않도록 추적.
   int _lastFlooredSecondForTimeTic = -1;
 
-  bool get isTimedMode => gameMode == JewelGameMode.timed;
+  int get progressionXp => JewelRankProgression.xpFromScore(board.score);
+  int get progressionTargetScore =>
+      JewelRankProgression.scoreTargetForLevel(progressionLevel);
+  double get progressionRatio => JewelRankProgression.stageProgressRatio(
+    level: progressionLevel,
+    score: board.score,
+  );
+
+  String progressionLabel() => JewelRankView(
+    level: progressionLevel,
+    xp: progressionXp,
+  ).timeBarLabel(localeString('levelLabel', 'Lv.'));
+
+  int get progressionNextBoardBonusCount =>
+      progressionNextBoardBonusKinds.length;
 
   /// 상단 1열: 일시정지 + 최고 기록만.
   static const double hudTopBarScale = 0.54;
@@ -240,6 +243,9 @@ class MatchBoardGame extends FlameGame {
   void pauseForRankingPopup() => _pauseForRankingPopupImpl();
 
   void closeRankingPopup() => _closeRankingPopupImpl();
+  void continueAfterLevelUp() => _continueAfterLevelUpImpl();
+  void showLevelUpPopupAfterCelebration() =>
+      _showLevelUpPopupAfterCelebrationImpl();
 
   @override
   void lifecycleStateChange(AppLifecycleState state) {
@@ -274,6 +280,7 @@ class MatchBoardGame extends FlameGame {
     _updateCameraShake(dt);
 
     _updateTimedModeClock(dt);
+    _updateProgressionMode();
     _saveBestScoreIfChanged();
     super.update(dt);
   }

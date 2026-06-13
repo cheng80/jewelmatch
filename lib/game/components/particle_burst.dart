@@ -189,6 +189,9 @@ class ParticlePool {
 
   final Component _parent;
   final List<ParticleBurst> _pool = [];
+  int _activeCount = 0;
+
+  int get activeCount => _activeCount;
 
   /// 풀에서 꺼내거나 새로 만들어 활성화한다.
   void spawn({
@@ -210,6 +213,7 @@ class ParticlePool {
       sizeScale: sizeScale,
       withGlow: withGlow,
     );
+    _activeCount++;
     if (!burst.isMounted) {
       _parent.add(burst);
     }
@@ -222,6 +226,7 @@ class ParticlePool {
   }
 
   void _returnToPool(ParticleBurst burst) {
+    _activeCount = max(0, _activeCount - 1);
     _pool.add(burst);
   }
 }

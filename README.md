@@ -109,3 +109,4 @@ Web 배포·서브패스 설정: [`docs/web_build.md`](docs/web_build.md)
 | [`docs/game_flow.md`](docs/game_flow.md) | 매치-3 플레이 흐름 요약 |
 | [`docs/web_build.md`](docs/web_build.md) | Web 빌드·배포 |
 | [`docs/audio_aisfx_prompts.md`](docs/audio_aisfx_prompts.md) | SFX·BGM 프롬프트·파일 매핑 |
+| [`docs/supertonic_tts_sfx.md`](docs/supertonic_tts_sfx.md) | Supertonic TTS 임시 SFX 생성·연결 방법 |

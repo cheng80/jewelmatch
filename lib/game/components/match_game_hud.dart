@@ -13,6 +13,7 @@ import '../match_board_game.dart';
 
 part 'match_game_hud_buttons.dart';
 part 'match_game_hud_input.dart';
+part 'match_game_hud_interactions.dart';
 part 'match_game_hud_painters.dart';
 part 'match_game_hud_sections.dart';
 
@@ -61,9 +62,11 @@ class MatchGameHud extends PositionComponent
 
   double _scoreBlockTop = 0;
   int? _cachedBest;
+  int? _cachedBestProgressionLevel;
   double? _cachedHudTextScale;
   int? _cachedScore;
   int? _cachedTimedSeconds;
+  int? _cachedProgressionXp;
   int? _cachedDisplayedCombo;
   int? _cachedMaxCombo;
   bool? _cachedTimedModeForText;
@@ -114,7 +117,7 @@ class MatchGameHud extends PositionComponent
     FontWeight? weight,
     List<Shadow>? shadows,
   }) => TextStyle(
-    fontFamily: AssetPaths.fontAngduIpsul140,
+    fontFamily: AssetPaths.fontNexonLv2Gothic,
     fontFamilyFallback: _fallbackFonts,
     fontSize: size,
     color: color,
@@ -154,9 +157,11 @@ class MatchGameHud extends PositionComponent
     final g = game;
     final scale = g.hudScale;
     _cachedBest = GameSettings.getBestMatchScore(g.gameMode);
+    _cachedBestProgressionLevel = GameSettings.getBestMatchProgressionLevel();
     _cachedHudTextScale = g.hudTextScale;
     _cachedScore = null;
     _cachedTimedSeconds = null;
+    _cachedProgressionXp = null;
     _cachedDisplayedCombo = null;
     _cachedMaxCombo = null;
     _cachedTimedModeForText = null;
@@ -224,146 +229,36 @@ class MatchGameHud extends PositionComponent
   @override
   void update(double dt) {
     super.update(dt);
-    final currentHudTextScale = game.hudTextScale;
-    if (_cachedHudTextScale != currentHudTextScale) {
-      _layout();
-      return;
-    }
-
-    if (_cachedScore != game.board.score) {
-      _rebuildScoreValue();
-    }
-
-    final latestBest = GameSettings.getBestMatchScore(game.gameMode);
-    if (latestBest != _cachedBest) {
-      _cachedBest = latestBest;
-      _rebuildStaticPainters();
-      return;
-    }
-
-    final timedModeChanged = _cachedTimedModeForText != game.isTimedMode;
-    final currentTimedSeconds = game.isTimedMode
-        ? game.timeRemaining.ceil().clamp(0, 99999)
-        : null;
-    if (timedModeChanged || _cachedTimedSeconds != currentTimedSeconds) {
-      _rebuildTimeBarText();
-    }
-
-    final displayedCombo = _displayCurrentCombo();
-    final maxCombo = game.board.maxCombo;
-    if (_cachedDisplayedCombo != displayedCombo ||
-        _cachedMaxCombo != maxCombo) {
-      _rebuildComboPainters();
-    }
+    _updateHudState();
   }
 
   @override
-  void render(Canvas canvas) {
-    final g = game;
-    if (!g.hasLayout || g.size.x <= 0 || g.size.y <= 0) {
-      return;
-    }
-
-    _renderBestBlock(canvas);
-    _drawTutorialButton(canvas);
-    _renderScoreBlock(canvas);
-    _renderComboStrip(canvas);
-    _renderTimeBar(canvas);
-    _drawHintButton(canvas);
-    if (onRankingPressed != null && _rankingRect.width > 0) {
-      _drawRankingButton(canvas);
-    }
-    _drawPause(canvas);
-  }
+  void render(Canvas canvas) => _renderHud(canvas);
 
   @override
-  void onTapDown(TapDownEvent event) {
-    final p = event.localPosition;
-    if (_handleUiButtonTap(p)) return;
-    final bt = game.board.boardY;
-    final bb = game.boardPixelBottom;
-    if (p.y < bt || p.y > bb) {
-      game.dismissHint();
-      return;
-    }
-    game.handleBoardTap(event.canvasPosition.x, event.canvasPosition.y);
-  }
-
-  // ── 스와이프(드래그) ──
+  void onTapDown(TapDownEvent event) => _handleTapDown(event);
 
   @override
   void onDragStart(DragStartEvent event) {
     super.onDragStart(event);
-    _resetDrag();
-    final p = event.localPosition;
-    if (_isUiButton(p)) return;
-    final bt = game.board.boardY;
-    final bb = game.boardPixelBottom;
-    if (p.y < bt || p.y > bb) return;
-    _drag.start(event.canvasPosition);
+    _handleDragStart(event);
   }
 
   @override
   void onDragUpdate(DragUpdateEvent event) {
     super.onDragUpdate(event);
-    final swipe = _drag.consumeSwipe(event.localDelta, _swipeThreshold);
-    if (swipe == null) return;
-    game.handleBoardSwipe(swipe.start.x, swipe.start.y, swipe.dr, swipe.dc);
+    _handleDragUpdate(event);
   }
 
   @override
   void onDragEnd(DragEndEvent event) {
     super.onDragEnd(event);
-    final fallbackTap = _drag.fallbackTap;
-    if (fallbackTap != null) {
-      game.handleBoardTap(fallbackTap.x, fallbackTap.y);
-    }
-    _resetDrag();
+    _handleDragEnd();
   }
 
   @override
   void onDragCancel(DragCancelEvent event) {
     super.onDragCancel(event);
     _resetDrag();
-  }
-
-  void _resetDrag() {
-    _drag.reset();
-  }
-
-  bool _isUiButton(Vector2 p) {
-    final o = Offset(p.x, p.y);
-    return _pauseRect.contains(o) ||
-        _hintRect.contains(o) ||
-        (onRankingPressed != null &&
-            _rankingRect.width > 0 &&
-            _rankingRect.contains(o)) ||
-        _tutorialRect.contains(o);
-  }
-
-  bool _handleUiButtonTap(Vector2 p) {
-    final o = Offset(p.x, p.y);
-    if (_pauseRect.contains(o)) {
-      game.dismissHint();
-      onPausePressed();
-      return true;
-    }
-    if (_hintRect.contains(o)) {
-      onHintPressed();
-      return true;
-    }
-    if (onRankingPressed != null &&
-        _rankingRect.width > 0 &&
-        _rankingRect.contains(o)) {
-      game.dismissHint();
-      onRankingPressed!();
-      return true;
-    }
-    if (_tutorialRect.contains(o)) {
-      game.dismissHint();
-      onTutorialPressed();
-      return true;
-    }
-    return false;
   }
 }

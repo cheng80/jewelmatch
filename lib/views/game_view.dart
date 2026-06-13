@@ -17,6 +17,8 @@ import 'overlays/time_up_overlay.dart';
 import 'overlays/pause_menu_overlay.dart';
 import 'overlays/no_moves_overlay.dart';
 import 'overlays/how_to_play_overlay.dart';
+import 'overlays/level_celebration_overlay.dart';
+import 'overlays/level_up_overlay.dart';
 import 'overlays/game_loading_overlay.dart';
 import 'overlays/ranking_overlay.dart';
 
@@ -26,10 +28,12 @@ class GameView extends StatefulWidget {
     super.key,
     this.gameMode = JewelGameMode.simple,
     this.qaVfxEnabled = false,
+    this.qaLevelUpEnabled = false,
   });
 
   final JewelGameMode gameMode;
   final bool qaVfxEnabled;
+  final bool qaLevelUpEnabled;
 
   @override
   State<GameView> createState() => _GameViewState();
@@ -45,8 +49,10 @@ class _GameViewState extends State<GameView> {
   bool _gameMounted = false;
   bool _loadingVisible = true;
   bool _qaVfxPreviewScheduled = false;
+  bool _qaLevelUpPreviewScheduled = false;
 
   bool get _qaVfxEnabled => kIsWeb && widget.qaVfxEnabled;
+  bool get _qaLevelUpEnabled => kIsWeb && widget.qaLevelUpEnabled;
 
   @override
   void initState() {
@@ -90,6 +96,14 @@ class _GameViewState extends State<GameView> {
         }),
       );
     }
+    if (_qaLevelUpEnabled && !_qaLevelUpPreviewScheduled) {
+      _qaLevelUpPreviewScheduled = true;
+      unawaited(
+        Future<void>.delayed(const Duration(milliseconds: 1200), () {
+          if (mounted) _game?.debugTriggerProgressionLevelUp();
+        }),
+      );
+    }
   }
 
   @override
@@ -105,10 +119,13 @@ class _GameViewState extends State<GameView> {
         );
         g.setLocaleStrings({
           'score': context.tr('score'),
+          'targetScore': context.tr('targetScore'),
           'bestScore': context.tr('bestScore'),
           'combo': context.tr('combo'),
           'timeLeft': context.tr('timeLeft'),
           'unlimitedMode': context.tr('unlimitedMode'),
+          'levelLabel': context.tr('levelLabel'),
+          'xpLabel': context.tr('xpLabel'),
           'maxComboLabel': context.tr('maxComboLabel'),
         });
         _game = g;
@@ -123,6 +140,9 @@ class _GameViewState extends State<GameView> {
         ),
         'PauseMenu': (_, MatchBoardGame g) => PauseMenuOverlay(game: g),
         'NoMoves': (_, MatchBoardGame g) => NoMovesOverlay(game: g),
+        'LevelCelebration': (_, MatchBoardGame g) =>
+            LevelCelebrationOverlay(game: g),
+        'LevelUp': (_, MatchBoardGame g) => LevelUpOverlay(game: g),
         'TimeUp': (_, MatchBoardGame g) => TimeUpOverlay(game: g),
         'HowToPlay': (_, MatchBoardGame g) => HowToPlayOverlay(game: g),
         'RankingList': (_, MatchBoardGame g) => RankingOverlay(game: g),
