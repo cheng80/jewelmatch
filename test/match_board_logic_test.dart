@@ -133,6 +133,21 @@ void main() {
     expect(swapped, isTrue);
     expect(board.consumeSpecialEffectEvents().single.effectKind, GemKind.hyper);
   });
+
+  test('showHint chooses cells that produce a valid swap', () {
+    final board = MatchBoardLogic(rows: 8, cols: 8);
+    board.generateFreshBoard(withIntroFill: false);
+
+    final shown = board.showHint();
+
+    final a = board.hintCellA;
+    final b = board.hintCellB;
+    expect(shown, isTrue);
+    expect(a, isNotNull);
+    expect(b, isNotNull);
+    expect(board.areAdjacent(a!.x, a.y, b!.x, b.y), isTrue);
+    expect(board.trySwap(a.x, a.y, b.x, b.y), isTrue);
+  });
 }
 
 MatchBoardLogic _boardWithLine({required int length}) {

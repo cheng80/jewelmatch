@@ -16,6 +16,7 @@ import 'components/space_bg.dart';
 import 'jewel_game_mode.dart';
 import 'match_board_camera_shake.dart';
 import 'match_board_logic.dart';
+import 'match_board_qa_bridge.dart';
 
 part 'match_board_game_vfx.dart';
 part 'match_board_game_flow.dart';
@@ -182,6 +183,7 @@ class MatchBoardGame extends FlameGame {
 
     _particlePool = ParticlePool(world);
     _specialEffectPool = SpecialEffectPool(world);
+    installMatchBoardQaBridge(this);
 
     if (isTimedMode) {
       _fetchTop1();
