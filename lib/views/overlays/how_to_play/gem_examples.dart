@@ -86,6 +86,22 @@ class HowToPlaySpecialGemClip extends StatelessWidget {
   }
 }
 
+class HowToPlayChargedGemClip extends StatelessWidget {
+  const HowToPlayChargedGemClip(this.sheetCol, {super.key});
+
+  final int sheetCol;
+
+  @override
+  Widget build(BuildContext context) {
+    return SpriteSheetFrame(
+      assetPath: 'assets/images/${AssetPaths.chargedSpriteSheet}',
+      frameIndex: sheetCol,
+      frameSize: 128,
+      size: howToPlayGemSize,
+    );
+  }
+}
+
 BoxDecoration howToPlayGemHighlightDecoration() {
   return BoxDecoration(
     border: Border.all(

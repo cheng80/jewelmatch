@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../game/match_board_logic.dart';
 import '../../../theme/jewel_candy_lumina_theme.dart';
 import 'gem_examples.dart';
-import 'special_gem_painter.dart';
 
 class HowToPlaySpecialGemCard extends StatelessWidget {
   const HowToPlaySpecialGemCard({
@@ -85,6 +84,15 @@ class HowToPlaySpecialGemPreview extends StatelessWidget {
       GemKind.hyper ||
       GemKind.supernova => null,
     };
+    final chargedSheetCol = switch (kind) {
+      GemKind.star => _chargedStarColFromGemCol(gemSheetCol),
+      GemKind.supernova => _chargedSupernovaColFromGemCol(gemSheetCol),
+      GemKind.normal ||
+      GemKind.row ||
+      GemKind.col ||
+      GemKind.bomb ||
+      GemKind.hyper => null,
+    };
 
     return SizedBox(
       width: 52,
@@ -97,6 +105,11 @@ class HowToPlaySpecialGemPreview extends StatelessWidget {
               padding: const EdgeInsets.all(4),
               child: HowToPlaySpecialGemClip(specialSheetCol),
             )
+          else if (chargedSheetCol != null)
+            Padding(
+              padding: const EdgeInsets.all(4),
+              child: HowToPlayChargedGemClip(chargedSheetCol),
+            )
           else
             Padding(
               padding: const EdgeInsets.all(4),
@@ -104,12 +117,30 @@ class HowToPlaySpecialGemPreview extends StatelessWidget {
                   ? const SizedBox.shrink()
                   : HowToPlayGemClip(gemSheetCol!),
             ),
-          if (kind == GemKind.star || kind == GemKind.supernova)
-            Positioned.fill(
-              child: CustomPaint(painter: HowToPlaySpecialGemPainter(kind)),
-            ),
         ],
       ),
     );
+  }
+
+  int? _chargedStarColFromGemCol(int? gemSheetCol) {
+    final colorIndex = _colorIndexFromGemSheetCol(gemSheetCol);
+    return colorIndex;
+  }
+
+  int? _chargedSupernovaColFromGemCol(int? gemSheetCol) {
+    final colorIndex = _colorIndexFromGemSheetCol(gemSheetCol);
+    return colorIndex == null ? null : 6 + colorIndex;
+  }
+
+  int? _colorIndexFromGemSheetCol(int? gemSheetCol) {
+    return switch (gemSheetCol) {
+      0 => 0,
+      6 => 1,
+      3 => 2,
+      2 => 3,
+      4 => 4,
+      5 => 5,
+      _ => null,
+    };
   }
 }
