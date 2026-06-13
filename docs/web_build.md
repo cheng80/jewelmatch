@@ -8,7 +8,10 @@
 
 ```bash
 flutter build web --release --base-href "/match/"
+dart run tools/patch_flutter_web_deprecations.dart
 ```
+
+`patch_flutter_web_deprecations.dart`는 Flutter 3.44.0 web bootstrap이 Chrome에서 deprecated `Intl.v8BreakIterator` feature check를 건드리며 콘솔 경고를 내는 부분만 빌드 산출물에서 제거합니다. 앱 코드나 Flutter SDK는 수정하지 않습니다.
 
 ### 용량 줄이기 옵션
 
@@ -18,6 +21,7 @@ flutter build web --release --base-href "/match/"
 flutter build web --release --base-href "/match/" \
   --tree-shake-icons \
   --no-source-maps
+dart run tools/patch_flutter_web_deprecations.dart
 ```
 
 | 옵션 | 설명 |
@@ -45,6 +49,7 @@ flutter build web --release --base-href "/match/" --analyze-size
 ```bash
 # 빌드 후 match 폴더 생성 및 복사
 flutter build web --release --base-href "/match/"
+dart run tools/patch_flutter_web_deprecations.dart
 mkdir -p match && cp -r build/web/* match/                         
 ```
 
@@ -85,6 +90,7 @@ Alias /match /path/to/build/web
 
 ```bash
 flutter build web --release --base-href "/match/"
+dart run tools/patch_flutter_web_deprecations.dart
 mkdir -p match && cp -r build/web/* match/
 python3 -m http.server 8080   # match 폴더의 부모 디렉터리(예: 프로젝트 루트)에서 실행
 ```
