@@ -11,7 +11,7 @@ import '../services/ranking_service.dart';
 import 'components/match_board_renderer.dart';
 import 'components/match_game_hud.dart';
 import 'components/particle_burst.dart';
-import 'components/special_effect_burst.dart';
+import 'components/special_effect_pool.dart';
 import 'components/space_bg.dart';
 import 'jewel_game_mode.dart';
 import 'match_board_logic.dart';
@@ -432,6 +432,41 @@ class MatchBoardGame extends FlameGame {
     final centerCol = cols ~/ 2;
     final effects = <_DebugSpecialEffect>[
       const _DebugSpecialEffect(
+        kind: GemKind.row,
+        rowOffset: -3,
+        colOffset: 0,
+        colorIndex: 1,
+        shake: SpecialEffectShake(intensity: 2.6, duration: 0.22),
+      ),
+      const _DebugSpecialEffect(
+        kind: GemKind.col,
+        rowOffset: 0,
+        colOffset: -3,
+        colorIndex: 1,
+        shake: SpecialEffectShake(intensity: 2.6, duration: 0.22),
+      ),
+      const _DebugSpecialEffect(
+        kind: GemKind.row,
+        rowOffset: 2,
+        colOffset: 0,
+        colorIndex: 1,
+        shake: SpecialEffectShake(intensity: 2.6, duration: 0.22),
+      ),
+      const _DebugSpecialEffect(
+        kind: GemKind.col,
+        rowOffset: 0,
+        colOffset: 2,
+        colorIndex: 1,
+        shake: SpecialEffectShake(intensity: 2.6, duration: 0.22),
+      ),
+      const _DebugSpecialEffect(
+        kind: GemKind.row,
+        rowOffset: 0,
+        colOffset: 0,
+        colorIndex: 1,
+        shake: SpecialEffectShake(intensity: 2.6, duration: 0.22),
+      ),
+      const _DebugSpecialEffect(
         kind: GemKind.bomb,
         rowOffset: -1,
         colOffset: -1,
@@ -517,7 +552,15 @@ class MatchBoardGame extends FlameGame {
         }
         break;
       case GemKind.row:
+        for (var c = 0; c < cols; c++) {
+          addCell(row, c);
+        }
+        break;
       case GemKind.col:
+        for (var r = 0; r < rows; r++) {
+          addCell(r, col);
+        }
+        break;
       case GemKind.normal:
         break;
     }

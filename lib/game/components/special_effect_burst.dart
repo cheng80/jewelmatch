@@ -12,6 +12,9 @@ class SpecialEffectBurst extends PositionComponent {
   }
 
   void Function(SpecialEffectBurst)? _onExpired;
+  set onExpired(void Function(SpecialEffectBurst)? value) {
+    _onExpired = value;
+  }
 
   void activate({
     required GemKind effectKind,
@@ -19,12 +22,14 @@ class SpecialEffectBurst extends PositionComponent {
     required List<Vector2> affectedCenters,
     required double tileSize,
     required Color baseColor,
+    int performanceTier = 0,
   }) {
     this.effectKind = effectKind;
     this.origin = origin;
     this.affectedCenters = affectedCenters;
     this.tileSize = tileSize;
     this.baseColor = baseColor;
+    this.performanceTier = performanceTier;
     _lifetime = _lifetimeFor(effectKind);
     _elapsed = 0;
     _active = true;
@@ -35,6 +40,7 @@ class SpecialEffectBurst extends PositionComponent {
   List<Vector2> affectedCenters = const [];
   double tileSize = 0;
   Color baseColor = Colors.white;
+  int performanceTier = 0;
   double _lifetime = 0;
 
   final Paint _paint = Paint()
@@ -202,28 +208,48 @@ class SpecialEffectBurst extends PositionComponent {
     final center = origin.toOffset();
     final a = _axisExtreme(horizontal: horizontal, first: true);
     final b = _axisExtreme(horizontal: horizontal, first: false);
-    _drawLightning(canvas, a, b, t, fade, seed: horizontal ? 5 : 6);
-    _drawRadialGlow(
+    final tier = performanceTier.clamp(0, 2);
+    _drawLightning(
       canvas,
-      center,
-      tileSize * 1.2,
-      [
-        Colors.white.withValues(alpha: 0.45 * fade),
-        _electricBlue.withValues(alpha: 0.28 * fade),
-        Colors.transparent,
-      ],
-      const [0.0, 0.4, 1.0],
+      a,
+      b,
+      t,
+      fade,
+      seed: horizontal ? 5 : 6,
+      glow: tier == 0,
+      segments: tier == 0 ? 9 : 6,
     );
+    if (tier < 2) {
+      _drawRadialGlow(
+        canvas,
+        center,
+        tileSize * (tier == 0 ? 1.2 : 0.86),
+        [
+          Colors.white.withValues(alpha: (tier == 0 ? 0.45 : 0.24) * fade),
+          _electricBlue.withValues(alpha: (tier == 0 ? 0.28 : 0.16) * fade),
+          Colors.transparent,
+        ],
+        const [0.0, 0.4, 1.0],
+      );
+    }
     _drawSparks(
       canvas,
       center,
       t,
       fade,
-      count: 18,
-      spread: tileSize * 1.8,
+      count: tier == 0 ? 18 : 8,
+      spread: tileSize * (tier == 0 ? 1.8 : 1.25),
       color: _electricBlue,
     );
-    _drawCellFlash(canvas, t, fade, maxCells: 12, color: _electricBlue);
+    if (tier < 2) {
+      _drawCellFlash(
+        canvas,
+        t,
+        fade,
+        maxCells: tier == 0 ? 12 : 4,
+        color: _electricBlue,
+      );
+    }
   }
 
   void _renderHypercube(Canvas canvas, double t, double fade) {
@@ -363,12 +389,13 @@ class SpecialEffectBurst extends PositionComponent {
     double t,
     double fade, {
     required int seed,
+    bool glow = true,
+    int segments = 9,
   }) {
     if ((start - end).distance < 1) return;
     final path = Path()..moveTo(start.dx, start.dy);
     final delta = end - start;
     final normal = Offset(-delta.dy, delta.dx) / delta.distance;
-    const segments = 9;
     for (var i = 1; i < segments; i++) {
       final f = i / segments;
       final jitter =
@@ -378,14 +405,16 @@ class SpecialEffectBurst extends PositionComponent {
     }
     path.lineTo(end.dx, end.dy);
 
-    _paint
-      ..maskFilter = _glow
-      ..strokeWidth = tileSize * 0.14
-      ..color = _electricBlue.withValues(alpha: 0.30 * fade);
-    canvas.drawPath(path, _paint);
+    if (glow) {
+      _paint
+        ..maskFilter = _glow
+        ..strokeWidth = tileSize * 0.14
+        ..color = _electricBlue.withValues(alpha: 0.30 * fade);
+      canvas.drawPath(path, _paint);
+    }
     _paint
       ..maskFilter = null
-      ..strokeWidth = tileSize * 0.052
+      ..strokeWidth = tileSize * (glow ? 0.052 : 0.044)
       ..color = _electricBlue.withValues(alpha: 0.88 * fade);
     canvas.drawPath(path, _paint);
     _paint
@@ -755,43 +784,4 @@ class SpecialEffectBurst extends PositionComponent {
   }
 
   double _easeOut(double value) => 1 - pow(1 - value, 3).toDouble();
-}
-
-class SpecialEffectPool {
-  SpecialEffectPool(this._parent);
-
-  final Component _parent;
-  final List<SpecialEffectBurst> _pool = [];
-
-  int get cachedCount => _pool.length;
-
-  void spawn({
-    required GemKind effectKind,
-    required Vector2 origin,
-    required List<Vector2> affectedCenters,
-    required double tileSize,
-    required Color baseColor,
-  }) {
-    final burst = _pool.isNotEmpty ? _pool.removeLast() : _createBurst();
-    burst.activate(
-      effectKind: effectKind,
-      origin: origin,
-      affectedCenters: affectedCenters,
-      tileSize: tileSize,
-      baseColor: baseColor,
-    );
-    if (!burst.isMounted) {
-      _parent.add(burst);
-    }
-  }
-
-  SpecialEffectBurst _createBurst() {
-    final burst = SpecialEffectBurst();
-    burst._onExpired = _returnToPool;
-    return burst;
-  }
-
-  void _returnToPool(SpecialEffectBurst burst) {
-    _pool.add(burst);
-  }
 }
