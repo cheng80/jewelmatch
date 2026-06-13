@@ -2,7 +2,10 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import 'match_board_matching.dart';
 import 'match_board_models.dart';
+import 'match_board_spawn_classifier.dart';
+import 'match_board_specials.dart';
 
 export 'match_board_models.dart';
 
@@ -181,25 +184,7 @@ class MatchBoardLogic {
 
   double stageTimer = 0;
 
-  String _cellKey(int row, int col) => '$row:$col';
-
-  SpecialEffectShake _shakeForSpecial(GemKind kind) {
-    switch (kind) {
-      case GemKind.row:
-      case GemKind.col:
-        return const SpecialEffectShake(intensity: 2.6, duration: 0.22);
-      case GemKind.bomb:
-        return const SpecialEffectShake(intensity: 4.8, duration: 0.30);
-      case GemKind.star:
-        return const SpecialEffectShake(intensity: 4.2, duration: 0.26);
-      case GemKind.hyper:
-        return const SpecialEffectShake(intensity: 5.4, duration: 0.36);
-      case GemKind.supernova:
-        return const SpecialEffectShake(intensity: 7.2, duration: 0.46);
-      case GemKind.normal:
-        return const SpecialEffectShake(intensity: 0, duration: 0);
-    }
-  }
+  String _cellKey(int row, int col) => matchBoardCellKey(row, col);
 
   List<SpecialEffectEvent> consumeSpecialEffectEvents() {
     final events = List<SpecialEffectEvent>.unmodifiable(_specialEffectEvents);
@@ -358,19 +343,9 @@ class MatchBoardLogic {
     }
   }
 
-  int? gemMatchColor(BoardGem? gem) {
-    if (gem == null || gem.kind == GemKind.hyper) return null;
-    return gem.color;
-  }
+  int? gemMatchColor(BoardGem? gem) => gemMatchColorToken(gem);
 
-  int? gemSpecialKindMatchCode(BoardGem? gem) {
-    if (gem == null ||
-        gem.kind == GemKind.normal ||
-        gem.kind == GemKind.hyper) {
-      return null;
-    }
-    return -gem.kind.index;
-  }
+  int? gemSpecialKindMatchCode(BoardGem? gem) => gemSpecialKindMatchToken(gem);
 
   bool causesImmediateMatch(int row, int col, int color) {
     final l1 = getGem(row, col - 1);
@@ -471,122 +446,15 @@ class MatchBoardLogic {
 
   bool hasMatches() => findAllMatches().groups.isNotEmpty;
 
-  void _scanMatchesBy(
-    MatchData matchData,
-    int? Function(BoardGem? gem) tokenForGem,
-  ) {
-    void addGroup(String direction, int token, List<Point<int>> cells) {
-      final isDuplicate = matchData.groups.any((group) {
-        if (group.direction != direction ||
-            group.cells.length != cells.length) {
-          return false;
-        }
-        for (var i = 0; i < cells.length; i++) {
-          if (group.cells[i].x != cells[i].x ||
-              group.cells[i].y != cells[i].y) {
-            return false;
-          }
-        }
-        return true;
-      });
-      if (isDuplicate) return;
-      for (final cell in cells) {
-        matchData.cells[_cellKey(cell.x, cell.y)] = true;
-      }
-      matchData.groups.add(
-        MatchGroup(
-          direction: direction,
-          length: cells.length,
-          color: token,
-          cells: cells,
-        ),
-      );
-    }
-
-    for (var row = 0; row < rows; row++) {
-      var startCol = 0;
-      int? currentToken;
-      for (var col = 0; col <= cols; col++) {
-        final gem = col < cols ? getGem(row, col) : null;
-        final token = tokenForGem(gem);
-        if (token != currentToken) {
-          final length = col - startCol;
-          if (currentToken != null && length >= 3) {
-            final groupCells = <Point<int>>[];
-            for (var fc = startCol; fc < col; fc++) {
-              groupCells.add(Point(row, fc));
-            }
-            addGroup('row', currentToken, groupCells);
-          }
-          currentToken = token;
-          startCol = col;
-        }
-      }
-    }
-
-    for (var col = 0; col < cols; col++) {
-      var startRow = 0;
-      int? currentToken;
-      for (var row = 0; row <= rows; row++) {
-        final gem = row < rows ? getGem(row, col) : null;
-        final token = tokenForGem(gem);
-        if (token != currentToken) {
-          final length = row - startRow;
-          if (currentToken != null && length >= 3) {
-            final groupCells = <Point<int>>[];
-            for (var fr = startRow; fr < row; fr++) {
-              groupCells.add(Point(fr, col));
-            }
-            addGroup('col', currentToken, groupCells);
-          }
-          currentToken = token;
-          startRow = row;
-        }
-      }
-    }
-  }
-
-  MatchData findAllMatches() {
-    final matchData = MatchData();
-    _scanMatchesBy(matchData, gemMatchColor);
-    _scanMatchesBy(matchData, gemSpecialKindMatchCode);
-    return matchData;
-  }
+  MatchData findAllMatches() =>
+      findAllBoardMatches(rows: rows, cols: cols, getGem: getGem);
 
   MatchData findMatchesAt(int row, int col) {
-    final all = findAllMatches();
-    final targetKey = _cellKey(row, col);
-    if (!all.cells.containsKey(targetKey)) {
-      return MatchData();
-    }
-
-    final result = MatchData();
-    for (final group in all.groups) {
-      var include = false;
-      for (final cell in group.cells) {
-        if (cell.x == row && cell.y == col) {
-          include = true;
-          break;
-        }
-      }
-      if (include) {
-        result.groups.add(group);
-        for (final cell in group.cells) {
-          result.cells[_cellKey(cell.x, cell.y)] = true;
-        }
-      }
-    }
-    return result;
+    return findBoardMatchesAt(all: findAllMatches(), row: row, col: col);
   }
 
   Point<int> pickSpawnCell(MatchGroup group, Set<String> movedCells) {
-    for (final cell in group.cells) {
-      if (movedCells.contains(_cellKey(cell.x, cell.y))) {
-        return Point(cell.x, cell.y);
-      }
-    }
-    final mid = group.cells[(group.cells.length - 1) ~/ 2];
-    return Point(mid.x, mid.y);
+    return pickMatchSpawnCell(group, movedCells);
   }
 
   List<SpecialSpawn> classifyMatchGroups(
@@ -594,140 +462,23 @@ class MatchBoardLogic {
     Point<int>? movedA,
     Point<int>? movedB,
   ) {
-    final movedCells = <String>{};
-    if (movedA != null) {
-      movedCells.add(_cellKey(movedA.x, movedA.y));
-    }
-    if (movedB != null) {
-      movedCells.add(_cellKey(movedB.x, movedB.y));
-    }
-
-    final spawns = <SpecialSpawn>[];
-    final reserved = <String, bool>{};
-    final consumed = <String, bool>{};
-
-    final rowGroups = matchData.groups
-        .where((g) => g.direction == 'row')
-        .toList();
-    final colGroups = matchData.groups
-        .where((g) => g.direction == 'col')
-        .toList();
-
-    for (final rowGroup in rowGroups) {
-      for (final colGroup in colGroups) {
-        Point<int>? overlap;
-        final merged = <String, bool>{};
-        for (final cell in rowGroup.cells) {
-          merged[_cellKey(cell.x, cell.y)] = true;
-        }
-        for (final cell in colGroup.cells) {
-          final key = _cellKey(cell.x, cell.y);
-          if (merged.containsKey(key)) {
-            overlap = Point(cell.x, cell.y);
-          }
-          merged[key] = true;
-        }
-        if (overlap != null && merged.length >= 5) {
-          final key = _cellKey(overlap.x, overlap.y);
-          if (!reserved.containsKey(key)) {
-            final g = getGem(overlap.x, overlap.y)!;
-            spawns.add(
-              SpecialSpawn(
-                row: overlap.x,
-                col: overlap.y,
-                kind: GemKind.star,
-                color: g.color,
-              ),
-            );
-            reserved[key] = true;
-            consumed.addAll(merged);
-          }
-        }
-      }
-    }
-
-    for (final group in matchData.groups) {
-      if (group.cells.any((c) => consumed.containsKey(_cellKey(c.x, c.y)))) {
-        continue;
-      }
-      if (group.length >= 6) {
-        final spawn = pickSpawnCell(group, movedCells);
-        final key = _cellKey(spawn.x, spawn.y);
-        if (!reserved.containsKey(key)) {
-          final g = getGem(spawn.x, spawn.y)!;
-          spawns.add(
-            SpecialSpawn(
-              row: spawn.x,
-              col: spawn.y,
-              kind: GemKind.supernova,
-              color: g.color,
-            ),
-          );
-          reserved[key] = true;
-        }
-      } else if (group.length == 5) {
-        final spawn = pickSpawnCell(group, movedCells);
-        final key = _cellKey(spawn.x, spawn.y);
-        if (!reserved.containsKey(key)) {
-          spawns.add(
-            SpecialSpawn(
-              row: spawn.x,
-              col: spawn.y,
-              kind: GemKind.hyper,
-              color: 0,
-            ),
-          );
-          reserved[key] = true;
-        }
-      }
-    }
-
-    for (final group in matchData.groups) {
-      if (group.cells.any((c) => consumed.containsKey(_cellKey(c.x, c.y)))) {
-        continue;
-      }
-      if (group.length == 4) {
-        final spawn = pickSpawnCell(group, movedCells);
-        final key = _cellKey(spawn.x, spawn.y);
-        if (!reserved.containsKey(key)) {
-          final g = getGem(spawn.x, spawn.y)!;
-          spawns.add(
-            SpecialSpawn(
-              row: spawn.x,
-              col: spawn.y,
-              kind: GemKind.bomb,
-              color: g.color,
-            ),
-          );
-          reserved[key] = true;
-        }
-      }
-    }
-
-    return spawns;
+    return classifyBoardMatchGroups(
+      matchData: matchData,
+      getGem: getGem,
+      movedA: movedA,
+      movedB: movedB,
+    );
   }
 
   Map<String, bool> buildRemovalSet(
     MatchData matchData,
     List<SpecialSpawn> spawns,
   ) {
-    final removalSet = Map<String, bool>.fromEntries(
-      matchData.cells.keys.map((k) => MapEntry(k, true)),
-    );
-    for (final s in spawns) {
-      removalSet.remove(_cellKey(s.row, s.col));
-    }
-    return removalSet;
+    return buildBoardRemovalSet(matchData, spawns);
   }
 
   void applySpawnInfo(List<SpecialSpawn> spawns) {
-    for (final s in spawns) {
-      final gem = getGem(s.row, s.col);
-      if (gem != null) {
-        gem.kind = s.kind;
-        gem.color = s.color;
-      }
-    }
+    applySpecialSpawnInfo(spawns: spawns, getGem: getGem);
   }
 
   int? pickExistingColor() {
@@ -744,32 +495,10 @@ class MatchBoardLogic {
     return colors[_random.nextInt(colors.length)];
   }
 
-  bool _isSpecial(GemKind k) => k != GemKind.normal;
+  bool _isSpecial(GemKind k) => isSpecialGemKind(k);
 
-  List<MatchChainItem> buildSpecialQueue(Map<String, bool> removalSet) {
-    final queue = <MatchChainItem>[];
-    final queued = <String, bool>{};
-
-    for (final key in removalSet.keys) {
-      final parts = key.split(':');
-      if (parts.length != 2) continue;
-      final row = int.parse(parts[0]);
-      final col = int.parse(parts[1]);
-      final gem = getGem(row, col);
-      if (gem != null && _isSpecial(gem.kind) && !queued.containsKey(key)) {
-        queue.add(
-          MatchChainItem(
-            row: row,
-            col: col,
-            kind: gem.kind,
-            triggerColor: gem.color > 0 ? gem.color : null,
-          ),
-        );
-        queued[key] = true;
-      }
-    }
-    return queue;
-  }
+  List<MatchChainItem> buildSpecialQueue(Map<String, bool> removalSet) =>
+      buildSpecialQueueForRemoval(removalSet: removalSet, getGem: getGem);
 
   void enqueueTriggeredSpecial(
     List<MatchChainItem> queue,
@@ -777,21 +506,14 @@ class MatchBoardLogic {
     int row,
     int col,
     int? triggerColor,
-  ) {
-    final gem = getGem(row, col);
-    final key = _cellKey(row, col);
-    if (gem != null && _isSpecial(gem.kind) && !queued.containsKey(key)) {
-      queue.add(
-        MatchChainItem(
-          row: row,
-          col: col,
-          kind: gem.kind,
-          triggerColor: triggerColor,
-        ),
-      );
-      queued[key] = true;
-    }
-  }
+  ) => enqueueTriggeredSpecialForBoard(
+    queue: queue,
+    queued: queued,
+    getGem: getGem,
+    row: row,
+    col: col,
+    triggerColor: triggerColor,
+  );
 
   void markCellForRemoval(
     Map<String, bool> removalSet,
@@ -800,107 +522,31 @@ class MatchBoardLogic {
     int row,
     int col,
     int? triggerColor,
-  ) {
-    if (!isInside(row, col)) return;
-    final key = _cellKey(row, col);
-    removalSet[key] = true;
-    enqueueTriggeredSpecial(queue, queued, row, col, triggerColor);
-  }
-
-  void _recordSpecialEffect(MatchChainItem item, List<Point<int>> cells) {
-    if (cells.isEmpty) return;
-    _specialEffectEvents.add(
-      SpecialEffectEvent(
-        effectKind: item.kind,
-        origin: Point(item.row, item.col),
-        affectedCells: List<Point<int>>.unmodifiable(cells),
-        shake: _shakeForSpecial(item.kind),
-        triggerColor: item.triggerColor,
-      ),
-    );
-  }
+  ) => markSpecialCellForRemoval(
+    removalSet: removalSet,
+    queue: queue,
+    queued: queued,
+    getGem: getGem,
+    rows: rows,
+    cols: cols,
+    row: row,
+    col: col,
+    triggerColor: triggerColor,
+  );
 
   void activateSpecials(
     Map<String, bool> removalSet,
     List<MatchChainItem> queue,
-  ) {
-    final queued = <String, bool>{};
-    for (final item in queue) {
-      queued[_cellKey(item.row, item.col)] = true;
-    }
-
-    final processed = <String, bool>{};
-    var index = 0;
-    while (index < queue.length) {
-      final item = queue[index];
-      index++;
-      final key = _cellKey(item.row, item.col);
-      if (processed.containsKey(key)) continue;
-      processed[key] = true;
-
-      final affectedKeys = <String, bool>{};
-      final affectedCells = <Point<int>>[];
-      void markAffected(int row, int col, int? triggerColor) {
-        if (!isInside(row, col)) return;
-        final affectedKey = _cellKey(row, col);
-        if (!affectedKeys.containsKey(affectedKey)) {
-          affectedCells.add(Point(row, col));
-          affectedKeys[affectedKey] = true;
-        }
-        markCellForRemoval(removalSet, queue, queued, row, col, triggerColor);
-      }
-
-      if (item.kind == GemKind.row) {
-        for (var c = 0; c < cols; c++) {
-          markAffected(item.row, c, item.triggerColor);
-        }
-      } else if (item.kind == GemKind.col) {
-        for (var r = 0; r < rows; r++) {
-          markAffected(r, item.col, item.triggerColor);
-        }
-      } else if (item.kind == GemKind.bomb) {
-        for (var r = item.row - 1; r <= item.row + 1; r++) {
-          for (var c = item.col - 1; c <= item.col + 1; c++) {
-            markAffected(r, c, item.triggerColor);
-          }
-        }
-      } else if (item.kind == GemKind.star) {
-        for (var c = 0; c < cols; c++) {
-          markAffected(item.row, c, item.triggerColor);
-        }
-        for (var r = 0; r < rows; r++) {
-          markAffected(r, item.col, item.triggerColor);
-        }
-      } else if (item.kind == GemKind.supernova) {
-        for (var r = item.row - 1; r <= item.row + 1; r++) {
-          for (var c = item.col - 1; c <= item.col + 1; c++) {
-            markAffected(r, c, item.triggerColor);
-          }
-        }
-        for (var c = 0; c < cols; c++) {
-          markAffected(item.row, c, item.triggerColor);
-        }
-        for (var r = 0; r < rows; r++) {
-          markAffected(r, item.col, item.triggerColor);
-        }
-      } else if (item.kind == GemKind.hyper) {
-        final targetColor = item.triggerColor ?? pickExistingColor();
-        if (targetColor != null) {
-          for (var r = 0; r < rows; r++) {
-            for (var c = 0; c < cols; c++) {
-              final gem = getGem(r, c);
-              if (gem != null &&
-                  gem.kind != GemKind.hyper &&
-                  gem.color == targetColor) {
-                markAffected(r, c, targetColor);
-              }
-            }
-          }
-        }
-      }
-      _recordSpecialEffect(item, affectedCells);
-    }
-  }
+  ) => _specialEffectEvents.addAll(
+    activateSpecialsForBoard(
+      removalSet: removalSet,
+      queue: queue,
+      getGem: getGem,
+      pickExistingColor: pickExistingColor,
+      rows: rows,
+      cols: cols,
+    ),
+  );
 
   void addFlashEffect(int row, int col) {
     final p = cellToPixel(row, col);

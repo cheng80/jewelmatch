@@ -1,4 +1,4 @@
-import 'dart:math' show max, min, pi, sin;
+import 'dart:math' show min;
 
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
@@ -14,6 +14,7 @@ import 'components/particle_burst.dart';
 import 'components/special_effect_pool.dart';
 import 'components/space_bg.dart';
 import 'jewel_game_mode.dart';
+import 'match_board_camera_shake.dart';
 import 'match_board_logic.dart';
 
 /// 8×8 매치-3 Flame 게임 (스왑·연쇄·특수 보석).
@@ -74,12 +75,9 @@ class MatchBoardGame extends FlameGame {
   late final MatchBoardLogic board;
   late final ParticlePool _particlePool;
   late final SpecialEffectPool _specialEffectPool;
+  final MatchBoardCameraShake _cameraShake = MatchBoardCameraShake();
   MatchGameHud? _hud;
   final Map<String, String> _localeStrings = {};
-  double _shakeRemaining = 0;
-  double _shakeDuration = 0;
-  double _shakeIntensity = 0;
-  double _shakeElapsed = 0;
 
   /// 타임 모드: 서버 1위 이름·점수 (비동기 fetch 완료 후 갱신).
   String? rankingTop1Name;
@@ -586,43 +584,11 @@ class MatchBoardGame extends FlameGame {
   }
 
   void _queueCameraShake(SpecialEffectShake shake) {
-    if (shake.intensity <= 0 || shake.duration <= 0) return;
-    _shakeIntensity = max(_shakeIntensity, shake.intensity);
-    _shakeDuration = max(_shakeDuration, shake.duration);
-    _shakeRemaining = max(_shakeRemaining, shake.duration);
-    _shakeElapsed = 0;
+    _cameraShake.queue(shake);
   }
 
   void _updateCameraShake(double dt) {
-    if (_shakeRemaining <= 0 || _shakeDuration <= 0) {
-      camera.viewfinder.position = Vector2.zero();
-      _shakeIntensity = 0;
-      _shakeDuration = 0;
-      _shakeRemaining = 0;
-      _shakeElapsed = 0;
-      return;
-    }
-
-    _shakeRemaining = max(0, _shakeRemaining - dt);
-    _shakeElapsed += dt;
-    if (_shakeRemaining <= 0) {
-      camera.viewfinder.position = Vector2.zero();
-      _shakeIntensity = 0;
-      _shakeDuration = 0;
-      _shakeElapsed = 0;
-      return;
-    }
-
-    final falloff = _shakeRemaining / _shakeDuration;
-    final amplitude = _shakeIntensity * falloff * falloff;
-    final phase = _shakeElapsed / _shakeDuration;
-    final primary = sin(phase * pi * 9.0);
-    final secondary = sin(phase * pi * 13.0 + pi / 3);
-    final vertical = sin(phase * pi * 7.0 + pi / 2);
-    camera.viewfinder.position = Vector2(
-      (primary * 0.82 + secondary * 0.18) * amplitude,
-      vertical * amplitude * 0.48,
-    );
+    camera.viewfinder.position = _cameraShake.update(dt);
   }
 
   void handleBoardTap(double x, double y) {

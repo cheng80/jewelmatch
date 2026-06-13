@@ -2,19 +2,19 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../game/match_board_game.dart';
-import '../../game/match_board_logic.dart';
 import '../../resources/asset_paths.dart';
 import '../../resources/sound_manager.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../../widgets/lumina_buttons.dart';
-import '../../widgets/sprite_sheet_frame.dart';
+import 'how_to_play/gem_examples.dart';
+import 'how_to_play/special_creation_guide.dart';
+import 'how_to_play/special_gem_guide.dart';
+import 'how_to_play/text_styles.dart';
 
 /// "?" 버튼으로 열리는 게임 설명 오버레이.
 class HowToPlayOverlay extends StatelessWidget {
   const HowToPlayOverlay({super.key, required this.game});
   final MatchBoardGame game;
-
-  static const double _gemSize = 36;
 
   @override
   Widget build(BuildContext context) {
@@ -63,39 +63,41 @@ class HowToPlayOverlay extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _sectionTitle(context.tr('howToPlayGoal')),
+                      HowToPlaySectionTitle(context.tr('howToPlayGoal')),
                       const SizedBox(height: 6),
-                      _bodyText(context.tr('howToPlayGoalDesc')),
+                      HowToPlayBodyText(context.tr('howToPlayGoalDesc')),
                       const SizedBox(height: 16),
-                      _sectionTitle(context.tr('howToPlayMatch')),
+                      HowToPlaySectionTitle(context.tr('howToPlayMatch')),
                       const SizedBox(height: 8),
-                      _matchExample([0, 0, 0, 6, 3]),
+                      const HowToPlayMatchExample([0, 0, 0, 6, 3]),
                       const SizedBox(height: 6),
-                      _bodyText(context.tr('howToPlayMatchDesc')),
+                      HowToPlayBodyText(context.tr('howToPlayMatchDesc')),
                       const SizedBox(height: 16),
-                      _sectionTitle(context.tr('howToPlaySwap')),
+                      HowToPlaySectionTitle(context.tr('howToPlaySwap')),
                       const SizedBox(height: 8),
-                      _swapExample(),
+                      const HowToPlaySwapExample(),
                       const SizedBox(height: 6),
-                      _bodyText(context.tr('howToPlaySwapDesc')),
+                      HowToPlayBodyText(context.tr('howToPlaySwapDesc')),
                       const SizedBox(height: 16),
-                      _sectionTitle(context.tr('howToPlayCombo')),
+                      HowToPlaySectionTitle(context.tr('howToPlayCombo')),
                       const SizedBox(height: 6),
-                      _bodyText(context.tr('howToPlayComboDesc')),
+                      HowToPlayBodyText(context.tr('howToPlayComboDesc')),
                       const SizedBox(height: 16),
-                      _sectionTitle(context.tr('howToPlaySpecial')),
+                      HowToPlaySectionTitle(context.tr('howToPlaySpecial')),
                       const SizedBox(height: 6),
-                      _bodyText(context.tr('howToPlaySpecialDesc')),
+                      HowToPlayBodyText(context.tr('howToPlaySpecialDesc')),
                       const SizedBox(height: 12),
-                      _specialGemGuide(context),
+                      const HowToPlaySpecialGemGuide(),
                       const SizedBox(height: 14),
-                      _sectionTitle(context.tr('howToPlaySpecialMakeTitle')),
+                      HowToPlaySectionTitle(
+                        context.tr('howToPlaySpecialMakeTitle'),
+                      ),
                       const SizedBox(height: 8),
-                      _specialCreationGuide(context),
+                      const HowToPlaySpecialCreationGuide(),
                       const SizedBox(height: 16),
-                      _sectionTitle(context.tr('howToPlayHint')),
+                      HowToPlaySectionTitle(context.tr('howToPlayHint')),
                       const SizedBox(height: 6),
-                      _bodyText(context.tr('howToPlayHintDesc')),
+                      HowToPlayBodyText(context.tr('howToPlayHintDesc')),
                       const SizedBox(height: 8),
                     ],
                   ),
@@ -117,487 +119,5 @@ class HowToPlayOverlay extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Widget _sectionTitle(String text) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        text,
-        style: TextStyle(
-          color: JewelCandyLuminaTheme.tertiaryGold,
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _bodyText(String text) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Colors.white70,
-          fontSize: 14,
-          height: 1.5,
-        ),
-      ),
-    );
-  }
-
-  Widget _gemClip(int sheetCol) {
-    return _sheetFrameClip(
-      assetPath: 'assets/images/${AssetPaths.jewelSpriteSheet}',
-      frameCount: 7,
-      frameIndex: sheetCol,
-    );
-  }
-
-  Widget _specialGemClip(int sheetCol) {
-    return _sheetFrameClip(
-      assetPath: 'assets/images/${AssetPaths.specialSpriteSheet}',
-      frameCount: 3,
-      frameIndex: sheetCol,
-    );
-  }
-
-  Widget _sheetFrameClip({
-    required String assetPath,
-    required int frameCount,
-    required int frameIndex,
-  }) {
-    return SpriteSheetFrame(
-      assetPath: assetPath,
-      frameIndex: frameIndex,
-      frameSize: 128,
-      size: _gemSize,
-    );
-  }
-
-  Widget _matchExample(List<int> cols) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        for (var i = 0; i < cols.length; i++) ...[
-          if (i > 0) const SizedBox(width: 2),
-          Container(
-            decoration: i < 3
-                ? BoxDecoration(
-                    border: Border.all(
-                      color: JewelCandyLuminaTheme.tertiaryGold.withValues(
-                        alpha: 0.8,
-                      ),
-                      width: 2,
-                    ),
-                    borderRadius: BorderRadius.circular(6),
-                  )
-                : null,
-            child: _gemClip(cols[i]),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _swapExample() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _gemClip(0),
-        const SizedBox(width: 2),
-        _gemClip(6),
-        const SizedBox(width: 8),
-        Icon(
-          Icons.swap_horiz_rounded,
-          color: JewelCandyLuminaTheme.secondaryCyan,
-          size: 28,
-        ),
-        const SizedBox(width: 8),
-        _gemClip(6),
-        const SizedBox(width: 2),
-        _gemClip(0),
-      ],
-    );
-  }
-
-  Widget _specialGemGuide(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: [
-        _specialGemCard(
-          context,
-          kind: GemKind.bomb,
-          gemSheetCol: 0,
-          title: context.tr('howToPlaySpecialFlameTitle'),
-          desc: context.tr('howToPlaySpecialFlameDesc'),
-        ),
-        _specialGemCard(
-          context,
-          kind: GemKind.star,
-          gemSheetCol: 3,
-          title: context.tr('howToPlaySpecialStarTitle'),
-          desc: context.tr('howToPlaySpecialStarDesc'),
-        ),
-        _specialGemCard(
-          context,
-          kind: GemKind.hyper,
-          gemSheetCol: 1,
-          title: context.tr('howToPlaySpecialHyperTitle'),
-          desc: context.tr('howToPlaySpecialHyperDesc'),
-        ),
-        _specialGemCard(
-          context,
-          kind: GemKind.supernova,
-          gemSheetCol: 5,
-          title: context.tr('howToPlaySpecialSupernovaTitle'),
-          desc: context.tr('howToPlaySpecialSupernovaDesc'),
-        ),
-      ],
-    );
-  }
-
-  Widget _specialGemCard(
-    BuildContext context, {
-    required GemKind kind,
-    int? gemSheetCol,
-    required String title,
-    required String desc,
-  }) {
-    return Container(
-      width: 132,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: JewelCandyLuminaTheme.outlineBright.withValues(alpha: 0.35),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: _specialGemPreview(kind: kind, gemSheetCol: gemSheetCol),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            style: TextStyle(
-              color: JewelCandyLuminaTheme.tertiaryGold,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            desc,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 12,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _specialGemPreview({required GemKind kind, int? gemSheetCol}) {
-    final specialSheetCol = switch (kind) {
-      GemKind.col => 0,
-      GemKind.row => 1,
-      GemKind.bomb => 2,
-      GemKind.normal ||
-      GemKind.star ||
-      GemKind.hyper ||
-      GemKind.supernova => null,
-    };
-
-    return SizedBox(
-      width: 52,
-      height: 52,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          if (specialSheetCol != null)
-            Padding(
-              padding: const EdgeInsets.all(4),
-              child: _specialGemClip(specialSheetCol),
-            )
-          else
-            Padding(
-              padding: const EdgeInsets.all(4),
-              child: gemSheetCol == null
-                  ? const SizedBox.shrink()
-                  : _gemClip(gemSheetCol),
-            ),
-          if (kind == GemKind.star || kind == GemKind.supernova)
-            Positioned.fill(
-              child: CustomPaint(painter: _SpecialGemPainter(kind)),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _specialCreationGuide(BuildContext context) {
-    return Column(
-      children: [
-        _specialCreationRow(
-          context,
-          before: _creationMatchRow([0, 0, 0, 0]),
-          afterKind: GemKind.bomb,
-          afterSheetCol: 0,
-          label: context.tr('howToPlaySpecialMakeFlame'),
-        ),
-        const SizedBox(height: 10),
-        _specialCreationRow(
-          context,
-          before: _creationCrossMatch(),
-          afterKind: GemKind.star,
-          afterSheetCol: 3,
-          label: context.tr('howToPlaySpecialMakeStar'),
-        ),
-        const SizedBox(height: 10),
-        _specialCreationRow(
-          context,
-          before: _creationMatchRow([3, 3, 3, 3, 3]),
-          afterKind: GemKind.hyper,
-          afterSheetCol: 1,
-          label: context.tr('howToPlaySpecialMakeHyper'),
-        ),
-        const SizedBox(height: 10),
-        _specialCreationRow(
-          context,
-          before: _creationMatchRow([5, 5, 5, 5, 5, 5]),
-          afterKind: GemKind.supernova,
-          afterSheetCol: 5,
-          label: context.tr('howToPlaySpecialMakeSupernova'),
-        ),
-      ],
-    );
-  }
-
-  Widget _specialCreationRow(
-    BuildContext context, {
-    required Widget before,
-    required GemKind afterKind,
-    required int afterSheetCol,
-    required String label,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: JewelCandyLuminaTheme.outlineBright.withValues(alpha: 0.22),
-        ),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 300;
-          final beforeWidget = FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: before,
-          );
-
-          final labelText = Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 12,
-              height: 1.35,
-            ),
-          );
-
-          if (compact) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(child: beforeWidget),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.arrow_downward_rounded,
-                      color: JewelCandyLuminaTheme.secondaryCyan,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    _specialGemPreview(
-                      kind: afterKind,
-                      gemSheetCol: afterSheetCol,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(child: labelText),
-                  ],
-                ),
-              ],
-            );
-          }
-
-          return Row(
-            children: [
-              Expanded(child: beforeWidget),
-              Icon(
-                Icons.arrow_forward_rounded,
-                color: JewelCandyLuminaTheme.secondaryCyan,
-                size: 20,
-              ),
-              const SizedBox(width: 10),
-              _specialGemPreview(kind: afterKind, gemSheetCol: afterSheetCol),
-              const SizedBox(width: 12),
-              Expanded(child: labelText),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _creationMatchRow(List<int> cols) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (var i = 0; i < cols.length; i++) ...[
-          if (i > 0) const SizedBox(width: 2),
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: JewelCandyLuminaTheme.tertiaryGold.withValues(
-                  alpha: 0.8,
-                ),
-                width: 2,
-              ),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: _gemClip(cols[i]),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _creationCrossMatch() {
-    const c = 2;
-    const cell = 42.0;
-    return SizedBox(
-      width: cell * 3,
-      height: cell * 3,
-      child: Stack(
-        children: [
-          Positioned(left: cell, top: 0, child: _highlightedGem(c)),
-          Positioned(left: 0, top: cell, child: _highlightedGem(c)),
-          Positioned(left: cell, top: cell, child: _highlightedGem(c)),
-          Positioned(left: cell * 2, top: cell, child: _highlightedGem(c)),
-          Positioned(left: cell, top: cell * 2, child: _highlightedGem(c)),
-        ],
-      ),
-    );
-  }
-
-  Widget _highlightedGem(int sheetCol) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: JewelCandyLuminaTheme.tertiaryGold.withValues(alpha: 0.8),
-          width: 2,
-        ),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: _gemClip(sheetCol),
-    );
-  }
-}
-
-class _SpecialGemPainter extends CustomPainter {
-  _SpecialGemPainter(this.kind);
-
-  final GemKind kind;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.shortestSide * 0.35;
-    final glow = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-    final line = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    final core = Paint()..color = Colors.white.withValues(alpha: 0.9);
-
-    if (kind == GemKind.supernova) {
-      glow
-        ..color = JewelCandyLuminaTheme.primaryPink.withValues(alpha: 0.55)
-        ..strokeWidth = size.shortestSide * 0.12;
-      canvas.drawCircle(center, radius, glow);
-
-      line
-        ..color = JewelCandyLuminaTheme.tertiaryGold.withValues(alpha: 0.9)
-        ..strokeWidth = size.shortestSide * 0.04;
-      canvas.drawCircle(center, radius, line);
-      canvas.drawCircle(center, radius * 0.72, line);
-    }
-
-    final long = size.shortestSide * 0.32;
-    final short = size.shortestSide * 0.16;
-    glow
-      ..color = JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.44)
-      ..strokeWidth = size.shortestSide * 0.09;
-    canvas.drawLine(
-      Offset(center.dx - long, center.dy),
-      Offset(center.dx + long, center.dy),
-      glow,
-    );
-    canvas.drawLine(
-      Offset(center.dx, center.dy - long),
-      Offset(center.dx, center.dy + long),
-      glow,
-    );
-
-    line
-      ..color = Colors.white.withValues(alpha: 0.9)
-      ..strokeWidth = size.shortestSide * 0.035;
-    canvas.drawLine(
-      Offset(center.dx - long, center.dy),
-      Offset(center.dx + long, center.dy),
-      line,
-    );
-    canvas.drawLine(
-      Offset(center.dx, center.dy - long),
-      Offset(center.dx, center.dy + long),
-      line,
-    );
-    canvas.drawLine(
-      Offset(center.dx - short, center.dy - short),
-      Offset(center.dx + short, center.dy + short),
-      line,
-    );
-    canvas.drawLine(
-      Offset(center.dx - short, center.dy + short),
-      Offset(center.dx + short, center.dy - short),
-      line,
-    );
-
-    canvas.drawCircle(
-      center,
-      kind == GemKind.supernova
-          ? size.shortestSide * 0.09
-          : size.shortestSide * 0.055,
-      core,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_SpecialGemPainter oldDelegate) {
-    return oldDelegate.kind != kind;
   }
 }
