@@ -155,6 +155,8 @@ analysis_benchmark.json
 # Environment files
 **/.env
 **/.env.*
+!**/.env.example
+**/.match_deploy.env
 
 # Firebase 서비스 계정 키 (절대 커밋하지 않음!)
 **/serviceAccountKey.json

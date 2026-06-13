@@ -48,9 +48,11 @@ flutter build web --release --base-href "/match/" --analyze-size
 
 ```bash
 # 빌드 후 match 폴더 생성 및 복사
+rm -rf build/web match match.zip
 flutter build web --release --base-href "/match/"
 dart run tools/patch_flutter_web_deprecations.dart
-mkdir -p match && cp -r build/web/* match/                         
+mkdir -p match && cp -R build/web/. match/
+zip -qry match.zip match
 ```
 
 `match/` 폴더를 업로드하면 `https://example.com/match/` 에서 서비스됩니다.
@@ -89,9 +91,10 @@ Alias /match /path/to/build/web
 빌드 후 로컬에서 `/match/` 서브패스 동작을 확인하려면, **방법 A**처럼 `match` 폴더를 만든 뒤 그 **부모 디렉터리**에서 정적 서버를 띄웁니다.
 
 ```bash
+rm -rf build/web match
 flutter build web --release --base-href "/match/"
 dart run tools/patch_flutter_web_deprecations.dart
-mkdir -p match && cp -r build/web/* match/
+mkdir -p match && cp -R build/web/. match/
 python3 -m http.server 8080   # match 폴더의 부모 디렉터리(예: 프로젝트 루트)에서 실행
 ```
 
