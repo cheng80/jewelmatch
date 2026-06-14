@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
+import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -56,7 +57,6 @@ class MatchGameHud extends PositionComponent
   late Rect _hintRect;
   late Rect _rankingRect;
   late Rect _tutorialRect;
-  late TextPainter _tutorialGlyph;
   late Rect _timeBarRect;
   late Rect _comboRect;
 
@@ -74,34 +74,23 @@ class MatchGameHud extends PositionComponent
   final Paint _comboStrokePaint = Paint()
     ..style = PaintingStyle.stroke
     ..strokeWidth = 1.4;
+  final Paint _comboInnerStrokePaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.0;
   final Paint _timeBarBgPaint = Paint();
   final Paint _timeBarStrokePaint = Paint()
     ..style = PaintingStyle.stroke
     ..strokeWidth = 1.4;
+  final Paint _timeBarInnerStrokePaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.0;
   final Paint _timeFillPaint = Paint();
   final Paint _untimedFillPaint = Paint();
-  final Paint _tutorialFillPaint = Paint();
-  final Paint _tutorialStrokePaint = Paint()
-    ..style = PaintingStyle.stroke
-    ..strokeWidth = 1.4;
-  final Paint _hintFillPaint = Paint();
-  final Paint _hintStrokePaint = Paint()
-    ..style = PaintingStyle.stroke
-    ..strokeWidth = 1.5;
-  final Paint _hintBulbPaint = Paint();
-  final Paint _hintBasePaint = Paint();
-  final Paint _hintGlintPaint = Paint();
-  final Paint _rankingFillPaint = Paint();
-  final Paint _rankingStrokePaint = Paint()
-    ..style = PaintingStyle.stroke
-    ..strokeWidth = 1.5;
-  final Paint _rankingCupPaint = Paint();
-  final Paint _rankingBasePaint = Paint();
-  final Paint _pauseFillPaint = Paint();
-  final Paint _pauseStrokePaint = Paint()
-    ..style = PaintingStyle.stroke
-    ..strokeWidth = 1.2;
-  final Paint _pauseBarPaint = Paint();
+  ui.Image? _iconButtonFrameImage;
+  ui.Image? _hintBulbIconImage;
+  ui.Image? _tutorialIconImage;
+  ui.Image? _pauseIconImage;
+  ui.Image? _rankingCrownIconImage;
 
   final _fmt = NumberFormat.decimalPattern();
 
@@ -142,6 +131,19 @@ class MatchGameHud extends PositionComponent
   @override
   Future<void> onLoad() async {
     priority = 20;
+    _iconButtonFrameImage = await Flame.images.load(
+      AssetPaths.obsidianIconButtonFrame,
+    );
+    _hintBulbIconImage = await Flame.images.load(
+      AssetPaths.obsidianHintBulbIcon,
+    );
+    _tutorialIconImage = await Flame.images.load(
+      AssetPaths.obsidianTutorialIcon,
+    );
+    _pauseIconImage = await Flame.images.load(AssetPaths.obsidianPauseIcon);
+    _rankingCrownIconImage = await Flame.images.load(
+      AssetPaths.obsidianRankingCrownIcon,
+    );
     _layout();
   }
 

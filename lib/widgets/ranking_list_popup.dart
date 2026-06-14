@@ -32,12 +32,18 @@ class _RankingListPopupState extends State<RankingListPopup> {
 
   @override
   Widget build(BuildContext context) {
-    final listMaxH = MediaQuery.sizeOf(context).height * 0.45;
+    final listMaxH = MediaQuery.sizeOf(context).height * 0.32;
 
     return DefaultTabController(
       length: 2,
       child: LuminaOverlayCard(
         borderColor: JewelCandyLuminaTheme.secondaryCyan,
+        maxHeightFactor: 0.78,
+        verticalMargin: 48,
+        alignment: const Alignment(0, -0.08),
+        horizontalPadding: 26,
+        verticalPadding: 24,
+        innerPadding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -51,26 +57,43 @@ class _RankingListPopupState extends State<RankingListPopup> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 14),
-            Container(
+            const SizedBox(height: 18),
+            DecoratedBox(
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.white24),
+                color: JewelCandyLuminaTheme.surfaceVariant.withValues(
+                  alpha: 0.58,
+                ),
+                border: Border.all(
+                  color: JewelCandyLuminaTheme.tertiaryGold.withValues(
+                    alpha: 0.78,
+                  ),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: TabBar(
                 indicatorSize: TabBarIndicatorSize.tab,
                 indicator: BoxDecoration(
-                  borderRadius: BorderRadius.circular(7),
                   gradient: const LinearGradient(
                     colors: [
-                      JewelCandyLuminaTheme.secondaryCyan,
-                      JewelCandyLuminaTheme.primaryPink,
+                      Color(0xFF2D2920),
+                      JewelCandyLuminaTheme.goldStrong,
+                      Color(0xFF6F3D24),
                     ],
+                  ),
+                  border: Border.all(
+                    color: JewelCandyLuminaTheme.goldStrong,
+                    width: 1.4,
                   ),
                 ),
                 dividerColor: Colors.transparent,
-                labelColor: Colors.white,
+                labelColor: const Color(0xFFFFF4C4),
                 unselectedLabelColor: JewelCandyLuminaTheme.tertiaryGold,
                 labelStyle: const TextStyle(
                   fontWeight: FontWeight.w800,
@@ -82,7 +105,7 @@ class _RankingListPopupState extends State<RankingListPopup> {
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 18),
             SizedBox(
               height: listMaxH,
               child: TabBarView(
@@ -100,11 +123,15 @@ class _RankingListPopupState extends State<RankingListPopup> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-            LuminaOutlinedButton(
-              label: context.tr('close'),
-              onPressed: widget.onClose,
+            const SizedBox(height: 22),
+            Center(
+              child: LuminaOutlinedButton(
+                width: 240,
+                label: context.tr('close'),
+                onPressed: widget.onClose,
+              ),
             ),
+            const SizedBox(height: 26),
           ],
         ),
       ),
@@ -141,10 +168,11 @@ class _RankingList extends StatelessWidget {
         }
         return ListView.separated(
           primary: false,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           physics: const ClampingScrollPhysics(),
           itemCount: list.length,
           separatorBuilder: (context, _) =>
-              const Divider(height: 1, color: Colors.white24),
+              Divider(height: 1, color: Colors.white.withValues(alpha: 0.18)),
           itemBuilder: (context, i) {
             final e = list[i];
             final rank = i + 1;

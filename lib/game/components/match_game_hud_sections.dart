@@ -62,6 +62,12 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
     );
     canvas.drawRRect(
       comboBg,
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.38)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+    );
+    canvas.drawRRect(
+      comboBg,
       _comboGradientPaint
         ..shader = LinearGradient(
           begin: Alignment.centerLeft,
@@ -69,8 +75,21 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
           colors: JewelCandyLuminaTheme.comboStripGradient,
         ).createShader(_comboRect),
     );
-    _comboStrokePaint.color = Colors.white.withValues(alpha: 0.22);
+    _comboStrokePaint.color = JewelCandyLuminaTheme.outlineBright.withValues(
+      alpha: 0.78,
+    );
     canvas.drawRRect(comboBg, _comboStrokePaint);
+    final comboInset = math.min(4.0, _comboRect.height * 0.12);
+    final comboInner = _comboRect.deflate(comboInset);
+    if (comboInner.width > 0 && comboInner.height > 0) {
+      final innerBg = RRect.fromRectAndRadius(
+        comboInner,
+        Radius.circular(math.max(0, comboR - comboInset)),
+      );
+      _comboInnerStrokePaint.color = JewelCandyLuminaTheme.goldStrong
+          .withValues(alpha: 0.28);
+      canvas.drawRRect(innerBg, _comboInnerStrokePaint);
+    }
 
     final halfW = _comboRect.width / 2;
     final leftCol = Rect.fromLTWH(
@@ -134,21 +153,52 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
       return;
     }
 
+    final shadowRect = _timeBarRect.shift(
+      Offset(0, _timeBarRect.height * 0.08),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        shadowRect,
+        Radius.circular(shadowRect.height / 2),
+      ),
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.45)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+    );
+
     final barBg = RRect.fromRectAndRadius(
       _timeBarRect,
       Radius.circular(_timeBarRect.height / 2),
     );
     canvas.drawRRect(
       barBg,
-      _timeBarBgPaint..color = JewelCandyLuminaTheme.surfaceContainer,
+      _timeBarBgPaint
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: const [
+            Color(0xFF2A2419),
+            JewelCandyLuminaTheme.surfaceStoneDark,
+            Color(0xFF241D12),
+          ],
+        ).createShader(_timeBarRect),
     );
     _timeBarStrokePaint.color = JewelCandyLuminaTheme.outlineBright.withValues(
-      alpha: 0.55,
+      alpha: 0.82,
     );
     canvas.drawRRect(barBg, _timeBarStrokePaint);
+    _timeBarInnerStrokePaint.color = JewelCandyLuminaTheme.goldStrong
+        .withValues(alpha: 0.28);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        _timeBarRect.deflate(3),
+        Radius.circular(math.max(0, _timeBarRect.height / 2 - 3)),
+      ),
+      _timeBarInnerStrokePaint,
+    );
 
     // 고정 inset(3)은 타임바가 낮을 때 inner 높이가 음수가 되어 셰이더/ RRect 가 실패할 수 있음
-    final inset = math.min(3.0, _timeBarRect.height / 3);
+    final inset = math.min(5.0, _timeBarRect.height / 3);
     final inner = Rect.fromLTWH(
       _timeBarRect.left + inset,
       _timeBarRect.top + inset,

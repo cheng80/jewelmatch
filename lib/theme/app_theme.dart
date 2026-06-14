@@ -54,27 +54,9 @@ ThemeData buildAppTheme() {
       textColor: Colors.white.withValues(alpha: 0.95),
     ),
     dividerTheme: DividerThemeData(color: Colors.white.withValues(alpha: 0.12)),
-    switchTheme: SwitchThemeData(
-      thumbColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
-          return JewelCandyLuminaTheme.secondaryCyan;
-        }
-        return Colors.grey;
-      }),
-      trackColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
-          return JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.45);
-        }
-        return Colors.white24;
-      }),
-    ),
-    sliderTheme: SliderThemeData(
-      activeTrackColor: JewelCandyLuminaTheme.secondaryCyan,
-      inactiveTrackColor: Colors.white24,
-      thumbColor: JewelCandyLuminaTheme.primaryPink,
-      overlayColor: WidgetStateColor.resolveWith(
-        (states) => JewelCandyLuminaTheme.primaryPink.withValues(alpha: 0.2),
-      ),
+    switchTheme: JewelCandyLuminaTheme.obsidianSwitchTheme(),
+    sliderTheme: JewelCandyLuminaTheme.obsidianSliderTheme(
+      const SliderThemeData(),
     ),
   );
 }

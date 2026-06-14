@@ -19,21 +19,20 @@ class PauseMenuOverlay extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sliderTheme = SliderThemeData(
-      activeTrackColor: JewelCandyLuminaTheme.secondaryCyan,
-      inactiveTrackColor: Colors.white24,
-      thumbColor: JewelCandyLuminaTheme.primaryPink,
-      overlayColor: JewelCandyLuminaTheme.primaryPink.withValues(alpha: 0.2),
+    final sliderTheme = SliderThemeData(trackHeight: 12);
+    final sliderThemeData = JewelCandyLuminaTheme.obsidianSliderTheme(
+      sliderTheme,
     );
-    final switchTheme = SwitchThemeData(
-      thumbColor:
-          WidgetStatePropertyAll(JewelCandyLuminaTheme.secondaryCyan),
-      trackColor: WidgetStatePropertyAll(
-        JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.45),
-      ),
-    );
+    final switchTheme = JewelCandyLuminaTheme.obsidianSwitchTheme();
 
     return LuminaOverlayCard(
+      maxCardWidth: 410,
+      maxHeightFactor: 0.72,
+      verticalMargin: 86,
+      alignment: Alignment.topCenter,
+      horizontalPadding: 28,
+      verticalPadding: 24,
+      innerPadding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
       scrollable: true,
       child: Theme(
         data: Theme.of(context).copyWith(switchTheme: switchTheme),
@@ -43,9 +42,10 @@ class PauseMenuOverlay extends ConsumerWidget {
           children: [
             Text(
               context.tr('paused'),
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: JewelCandyLuminaTheme.secondaryCyan,
-                fontSize: 48,
+                fontSize: 40,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -53,38 +53,47 @@ class PauseMenuOverlay extends ConsumerWidget {
             Text(
               context.tr('bgm'),
               style: TextStyle(
-                color: JewelCandyLuminaTheme.tertiaryGold
-                    .withValues(alpha: 0.95),
+                color: JewelCandyLuminaTheme.tertiaryGold.withValues(
+                  alpha: 0.95,
+                ),
                 fontSize: 20,
               ),
             ),
-            _PauseBgmControls(sliderTheme: sliderTheme),
+            _PauseBgmControls(sliderTheme: sliderThemeData),
             Text(
               context.tr('sfx'),
               style: TextStyle(
-                color: JewelCandyLuminaTheme.tertiaryGold
-                    .withValues(alpha: 0.95),
+                color: JewelCandyLuminaTheme.tertiaryGold.withValues(
+                  alpha: 0.95,
+                ),
                 fontSize: 20,
               ),
             ),
-            _PauseSfxControls(sliderTheme: sliderTheme),
+            _PauseSfxControls(sliderTheme: sliderThemeData),
             const SizedBox(height: 24),
-            LuminaGradientButton(
-              colors: JewelCandyLuminaTheme.buttonPrimaryPink,
-              label: context.tr('continueGame'),
-              onPressed: () {
-                SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                game.resumeGame();
-              },
+            Center(
+              child: LuminaGradientButton(
+                width: 260,
+                colors: JewelCandyLuminaTheme.buttonPrimaryPink,
+                label: context.tr('continueGame'),
+                onPressed: () {
+                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                  game.resumeGame();
+                },
+              ),
+            ),
+            const SizedBox(height: 18),
+            Center(
+              child: LuminaOutlinedButton(
+                width: 260,
+                label: context.tr('exit'),
+                onPressed: () {
+                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                  context.go(RoutePaths.title);
+                },
+              ),
             ),
             const SizedBox(height: 12),
-            LuminaOutlinedButton(
-              label: context.tr('exit'),
-              onPressed: () {
-                SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                context.go(RoutePaths.title);
-              },
-            ),
           ],
         ),
       ),
@@ -113,10 +122,7 @@ class _PauseBgmControls extends ConsumerWidget {
               onChangeEnd: muted ? null : (_) => notifier.commitBgmVolume(),
             ),
           ),
-          Switch(
-            value: muted,
-            onChanged: notifier.setBgmMuted,
-          ),
+          Switch(value: muted, onChanged: notifier.setBgmMuted),
         ],
       ),
     );
@@ -144,10 +150,7 @@ class _PauseSfxControls extends ConsumerWidget {
               onChangeEnd: muted ? null : (_) => notifier.commitSfxVolume(),
             ),
           ),
-          Switch(
-            value: muted,
-            onChanged: notifier.setSfxMuted,
-          ),
+          Switch(value: muted, onChanged: notifier.setSfxMuted),
         ],
       ),
     );

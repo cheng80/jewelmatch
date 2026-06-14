@@ -198,11 +198,8 @@ class _VolumeSlider extends StatelessWidget {
     return ListTile(
       title: Text(label),
       subtitle: SliderTheme(
-        data: SliderTheme.of(context).copyWith(
-          trackHeight: 12,
-          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
-          overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
-          trackShape: const RoundedRectSliderTrackShape(),
+        data: JewelCandyLuminaTheme.obsidianSliderTheme(
+          SliderTheme.of(context),
         ),
         child: Slider(
           value: value,

@@ -60,8 +60,13 @@ class _LevelUpOverlayState extends State<LevelUpOverlay>
         child: LuminaOverlayCard(
           borderColor: JewelCandyLuminaTheme.goldStrong,
           shadowColor: JewelCandyLuminaTheme.tertiaryGold,
-          horizontalPadding: 30,
-          verticalPadding: 30,
+          maxCardWidth: 410,
+          maxHeightFactor: 0.72,
+          verticalMargin: 86,
+          alignment: Alignment.topCenter,
+          horizontalPadding: 28,
+          verticalPadding: 24,
+          innerPadding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -70,14 +75,14 @@ class _LevelUpOverlayState extends State<LevelUpOverlay>
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: JewelCandyLuminaTheme.goldStrong,
-                  fontSize: 38,
+                  fontSize: 34,
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 18),
               _LevelBadge(game: game),
               if (game.progressionNextBoardBonusCount > 0) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 Text(
                   context.tr(
                     'nextBoardBonus',
@@ -93,7 +98,7 @@ class _LevelUpOverlayState extends State<LevelUpOverlay>
                   ),
                 ),
               ],
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
               Text(
                 context.tr('levelUpDesc'),
                 textAlign: TextAlign.center,
@@ -103,15 +108,19 @@ class _LevelUpOverlayState extends State<LevelUpOverlay>
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 22),
-              LuminaGradientButton(
-                colors: JewelCandyLuminaTheme.buttonShuffleCyanLime,
-                label: context.tr('nextLevel'),
-                onPressed: () {
-                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                  game.continueAfterLevelUp();
-                },
+              const SizedBox(height: 24),
+              Center(
+                child: LuminaGradientButton(
+                  width: 260,
+                  colors: JewelCandyLuminaTheme.buttonShuffleCyanLime,
+                  label: context.tr('nextLevel'),
+                  onPressed: () {
+                    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                    game.continueAfterLevelUp();
+                  },
+                ),
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),

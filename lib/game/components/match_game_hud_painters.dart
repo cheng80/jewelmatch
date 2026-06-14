@@ -81,18 +81,6 @@ extension _MatchGameHudPainterCache on MatchGameHud {
     _rebuildTimeBarText();
     _rebuildComboPainters();
     _rebuildScoreValue();
-
-    _tutorialGlyph = TextPainter(
-      text: TextSpan(
-        text: '?',
-        style: _ts(
-          size: 20 * t,
-          color: JewelCandyLuminaTheme.primaryPink,
-          weight: FontWeight.bold,
-        ),
-      ),
-      textDirection: ui.TextDirection.ltr,
-    )..layout();
   }
 
   void _rebuildTimeBarText() {

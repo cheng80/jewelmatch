@@ -72,8 +72,12 @@ class _TimeUpResultPanel extends StatelessWidget {
     return LuminaOverlayCard(
       borderColor: JewelCandyLuminaTheme.borderTimeUp,
       shadowColor: JewelCandyLuminaTheme.primaryPink,
-      horizontalPadding: 40,
-      verticalPadding: 36,
+      maxHeightFactor: 0.72,
+      verticalMargin: 86,
+      alignment: Alignment.topCenter,
+      horizontalPadding: 28,
+      verticalPadding: 24,
+      innerPadding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -81,7 +85,7 @@ class _TimeUpResultPanel extends StatelessWidget {
             context.tr('timeUpTitle'),
             style: TextStyle(
               color: JewelCandyLuminaTheme.secondaryCyan,
-              fontSize: 36,
+              fontSize: 34,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -105,14 +109,15 @@ class _TimeUpResultPanel extends StatelessWidget {
             const SizedBox(height: 12),
             const _RankStatusSection(),
           ],
-          const SizedBox(height: 24),
+          const SizedBox(height: 22),
           LuminaGradientButton(
             colors: JewelCandyLuminaTheme.buttonRetryMagOr,
             label: context.tr('retry'),
             onPressed: onRetry,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 18),
           LuminaOutlinedButton(label: context.tr('exit'), onPressed: onExit),
+          const SizedBox(height: 12),
         ],
       ),
     );

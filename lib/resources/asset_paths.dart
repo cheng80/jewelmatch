@@ -46,4 +46,25 @@ class AssetPaths {
 
   /// 12열×128px 충전 보석 시트 (순서: star 1~6색, supernova 1~6색)
   static const String chargedSpriteSheet = 'sprites/Charged_Arcane.png';
+
+  /// Obsidian Rune Temple 나인패치 프레임.
+  static const String obsidianPanelFrame =
+      'assets/images/ui/obsidian_panel_frame.png';
+
+  /// Obsidian Rune Temple 원형 아이콘 버튼 프레임.
+  static const String obsidianIconButtonFrame =
+      'ui/obsidian_icon_button_frame.png';
+
+  /// 힌트 버튼용 금속 전구 아이콘.
+  static const String obsidianHintBulbIcon = 'ui/obsidian_hint_bulb_icon.png';
+
+  /// 튜토리얼 버튼용 금속 안내 아이콘.
+  static const String obsidianTutorialIcon = 'ui/obsidian_tutorial_icon.png';
+
+  /// 일시정지 버튼용 금속 pause 아이콘.
+  static const String obsidianPauseIcon = 'ui/obsidian_pause_icon.png';
+
+  /// 랭킹 버튼용 금속 왕관 아이콘.
+  static const String obsidianRankingCrownIcon =
+      'ui/obsidian_ranking_crown_icon.png';
 }

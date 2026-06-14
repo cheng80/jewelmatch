@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/jewel_candy_lumina_theme.dart';
+import 'obsidian_frame.dart';
 
 /// 오버레이·메뉴에서 사용하는 Lumina 스타일 그라데이션 CTA.
 class LuminaGradientButton extends StatelessWidget {
@@ -25,36 +26,27 @@ class LuminaGradientButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return ObsidianButtonFrame(
       width: width,
       height: height,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(colors: colors),
-          borderRadius: BorderRadius.circular(borderRadius),
-          boxShadow: [
-            BoxShadow(
-              color: JewelCandyLuminaTheme.primaryDeep.withValues(alpha: 0.45),
-              blurRadius: 14,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(borderRadius),
-            onTap: onPressed,
-            child: Center(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: fontSize,
-                ),
+      onPressed: onPressed,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          label,
+          maxLines: 1,
+          softWrap: false,
+          style: TextStyle(
+            color: JewelCandyLuminaTheme.tertiaryGold,
+            fontWeight: FontWeight.bold,
+            fontSize: fontSize,
+            shadows: [
+              Shadow(
+                color: Colors.black.withValues(alpha: 0.8),
+                offset: const Offset(0, 1),
+                blurRadius: 3,
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -83,22 +75,28 @@ class LuminaOutlinedButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sideColor = borderColor ?? JewelCandyLuminaTheme.secondaryCyan;
-    return SizedBox(
+    return ObsidianButtonFrame(
       width: width,
       height: height,
-      child: OutlinedButton(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.white,
-          side: BorderSide(color: sideColor, width: 2),
-          backgroundColor:
-              JewelCandyLuminaTheme.surfaceVariant.withValues(alpha: 0.6),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(borderRadius),
+      onPressed: onPressed,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          label,
+          maxLines: 1,
+          softWrap: false,
+          style: TextStyle(
+            color: JewelCandyLuminaTheme.secondaryCyan,
+            fontWeight: FontWeight.w700,
+            shadows: [
+              Shadow(
+                color: Colors.black.withValues(alpha: 0.8),
+                offset: const Offset(0, 1),
+                blurRadius: 3,
+              ),
+            ],
           ),
         ),
-        onPressed: onPressed,
-        child: Text(label),
       ),
     );
   }
@@ -125,63 +123,33 @@ class LuminaRoundButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final base = gradientColors.first;
-    final darkerColor = HSLColor.fromColor(gradientColors.last)
-        .withLightness(
-          (HSLColor.fromColor(gradientColors.last).lightness - 0.14)
-              .clamp(0.0, 1.0),
-        )
-        .toColor();
-
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: gradientColors,
-          ),
-          borderRadius: BorderRadius.circular(height / 2),
-          border: Border.all(
-            color: darkerColor.withValues(alpha: 0.65),
-            width: 3,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: darkerColor.withValues(alpha: 0.5),
-              offset: const Offset(0, 4),
-              blurRadius: 0,
-            ),
-            BoxShadow(
-              color: base.withValues(alpha: 0.35),
-              blurRadius: 16,
-            ),
-            BoxShadow(
-              color: JewelCandyLuminaTheme.primaryDeep.withValues(alpha: 0.25),
-              blurRadius: 12,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              letterSpacing: 6,
-              shadows: [
-                Shadow(
-                  color: darkerColor.withValues(alpha: 0.85),
-                  offset: const Offset(1, 1),
-                  blurRadius: 0,
-                ),
-              ],
-            ),
+    return ObsidianButtonFrame(
+      width: width,
+      height: height,
+      onPressed: onPressed,
+      padding: const EdgeInsets.symmetric(horizontal: 44),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          label,
+          maxLines: 1,
+          softWrap: false,
+          style: TextStyle(
+            fontSize: fontSize,
+            fontWeight: FontWeight.bold,
+            color: JewelCandyLuminaTheme.tertiaryGold,
+            letterSpacing: 4,
+            shadows: [
+              Shadow(
+                color: Colors.black.withValues(alpha: 0.9),
+                offset: const Offset(0, 2),
+                blurRadius: 4,
+              ),
+              Shadow(
+                color: JewelCandyLuminaTheme.goldStrong.withValues(alpha: 0.35),
+                blurRadius: 10,
+              ),
+            ],
           ),
         ),
       ),

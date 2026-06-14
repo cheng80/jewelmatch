@@ -18,6 +18,8 @@ class NoMovesOverlay extends StatelessWidget {
     return LuminaOverlayCard(
       borderColor: JewelCandyLuminaTheme.borderNoMoves,
       shadowColor: JewelCandyLuminaTheme.secondaryCyan,
+      verticalMargin: 52,
+      alignment: const Alignment(0, -0.12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -50,6 +52,7 @@ class NoMovesOverlay extends StatelessWidget {
               game.newBoard();
             },
           ),
+          const SizedBox(height: 12),
         ],
       ),
     );
