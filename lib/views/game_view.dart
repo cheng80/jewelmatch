@@ -29,11 +29,13 @@ class GameView extends StatefulWidget {
     this.gameMode = JewelGameMode.simple,
     this.qaVfxEnabled = false,
     this.qaLevelUpEnabled = false,
+    this.qaNoMovesEnabled = false,
   });
 
   final JewelGameMode gameMode;
   final bool qaVfxEnabled;
   final bool qaLevelUpEnabled;
+  final bool qaNoMovesEnabled;
 
   @override
   State<GameView> createState() => _GameViewState();
@@ -50,9 +52,11 @@ class _GameViewState extends State<GameView> {
   bool _loadingVisible = true;
   bool _qaVfxPreviewScheduled = false;
   bool _qaLevelUpPreviewScheduled = false;
+  bool _qaNoMovesPreviewScheduled = false;
 
   bool get _qaVfxEnabled => kIsWeb && widget.qaVfxEnabled;
   bool get _qaLevelUpEnabled => kIsWeb && widget.qaLevelUpEnabled;
+  bool get _qaNoMovesEnabled => kIsWeb && widget.qaNoMovesEnabled;
 
   @override
   void initState() {
@@ -101,6 +105,14 @@ class _GameViewState extends State<GameView> {
       unawaited(
         Future<void>.delayed(const Duration(milliseconds: 1200), () {
           if (mounted) _game?.debugTriggerProgressionLevelUp();
+        }),
+      );
+    }
+    if (_qaNoMovesEnabled && !_qaNoMovesPreviewScheduled) {
+      _qaNoMovesPreviewScheduled = true;
+      unawaited(
+        Future<void>.delayed(const Duration(milliseconds: 900), () {
+          if (mounted) _game?.debugShowNoMovesOverlay();
         }),
       );
     }

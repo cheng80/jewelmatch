@@ -16,10 +16,15 @@ class NoMovesOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LuminaOverlayCard(
-      borderColor: JewelCandyLuminaTheme.borderNoMoves,
-      shadowColor: JewelCandyLuminaTheme.focusTeal,
-      verticalMargin: 52,
-      alignment: const Alignment(0, -0.12),
+      borderColor: JewelCandyLuminaTheme.goldStrong,
+      shadowColor: JewelCandyLuminaTheme.goldStrong,
+      maxCardWidth: 360,
+      maxHeightFactor: 0.72,
+      horizontalPadding: 28,
+      verticalPadding: 24,
+      innerPadding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
+      verticalMargin: 86,
+      alignment: Alignment.topCenter,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -27,14 +32,35 @@ class NoMovesOverlay extends StatelessWidget {
             context.tr('noMovesTitle'),
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: JewelCandyLuminaTheme.primaryPink,
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
+              color: JewelCandyLuminaTheme.textTitleGold,
+              fontSize: 27,
+              fontWeight: FontWeight.w900,
+              height: 1.12,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withValues(alpha: 0.85),
+                  offset: const Offset(0, 2),
+                  blurRadius: 4,
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
+          Text(
+            context.tr('noMovesDesc'),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: JewelCandyLuminaTheme.textParchment.withValues(
+                alpha: 0.86,
+              ),
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 22),
           LuminaGradientButton(
-            width: 220,
+            width: 246,
+            height: 54,
             colors: JewelCandyLuminaTheme.buttonShuffleCyanLime,
             label: context.tr('shuffleBoard'),
             onPressed: () {
@@ -42,17 +68,18 @@ class NoMovesOverlay extends StatelessWidget {
               game.shuffleBoard();
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           LuminaOutlinedButton(
-            width: 220,
+            width: 246,
+            height: 54,
             label: context.tr('newBoard'),
-            borderColor: JewelCandyLuminaTheme.primaryPink,
+            borderColor: JewelCandyLuminaTheme.outlineBright,
             onPressed: () {
               SoundManager.playSfx(AssetPaths.sfxBtnSnd);
               game.newBoard();
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
         ],
       ),
     );

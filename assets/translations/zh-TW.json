@@ -36,6 +36,7 @@
   "combo": "連擊",
   "maxComboLabel": "最高",
   "noMovesTitle": "無可行移動",
+  "noMovesDesc": "可洗牌重排棋盤，或換新棋盤繼續。",
   "shuffleBoard": "洗牌",
   "newBoard": "新棋盤",
   "modeSimple": "無限",

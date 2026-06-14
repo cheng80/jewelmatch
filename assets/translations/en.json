@@ -36,6 +36,7 @@
   "combo": "Combo",
   "maxComboLabel": "Max",
   "noMovesTitle": "No more moves",
+  "noMovesDesc": "Shuffle the board or continue with a new one.",
   "shuffleBoard": "Shuffle",
   "newBoard": "New board",
   "modeSimple": "Infinite",

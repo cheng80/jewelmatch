@@ -20,6 +20,7 @@ String _gameRoute(String mode) {
   final params = <String>[
     if (Uri.base.queryParameters['qaVfx'] == '1') 'qaVfx=1',
     if (Uri.base.queryParameters['qaLevelUp'] == '1') 'qaLevelUp=1',
+    if (Uri.base.queryParameters['qaNoMoves'] == '1') 'qaNoMoves=1',
     if (Uri.base.queryParameters['qaPerf'] == '1') 'qaPerf=1',
   ];
   final qa = params.isEmpty ? '' : '&${params.join('&')}';

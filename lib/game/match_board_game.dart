@@ -328,6 +328,10 @@ class MatchBoardGame extends FlameGame {
 
   void debugTriggerSpecialEffects() => _debugTriggerSpecialEffectsImpl();
 
+  void debugShowNoMovesOverlay() {
+    overlays.add('NoMoves');
+  }
+
   void newBoard() => _newBoardImpl();
 
   /// [seconds]는 정수 초. [timedMaxTimeSeconds]까지 남은 여유(`room`)만큼만 가산하고,

@@ -36,6 +36,7 @@
   "combo": "コンボ",
   "maxComboLabel": "最高",
   "noMovesTitle": "移動できません",
+  "noMovesDesc": "盤面をシャッフルするか、新しい盤面で続けられます。",
   "shuffleBoard": "シャッフル",
   "newBoard": "新しい盤面",
   "modeSimple": "無限",
