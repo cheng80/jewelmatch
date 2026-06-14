@@ -119,6 +119,20 @@ void main() {
     expect(board.consumeSpecialEffectEvents(), isEmpty);
   });
 
+  test('non-hyper special hidden color does not match normal gems', () {
+    final board = _filledBoard();
+    board.setGem(3, 1, board.createGem(3, 1, 2, GemKind.normal));
+    board.setGem(3, 2, board.createGem(3, 2, 3, GemKind.normal));
+    board.setGem(3, 3, board.createGem(3, 3, 2, GemKind.normal));
+    board.setGem(4, 2, board.createGem(4, 2, 2, GemKind.star));
+
+    final swapped = board.trySwap(3, 2, 4, 2);
+
+    expect(swapped, isFalse);
+    expect(board.getGem(3, 2)?.kind, GemKind.normal);
+    expect(board.getGem(4, 2)?.kind, GemKind.star);
+  });
+
   test('non-hyper special gems can match by visible kind after a swap', () {
     final board = _filledBoard();
     board.setGem(4, 0, board.createGem(4, 0, 6, GemKind.normal));
@@ -146,6 +160,48 @@ void main() {
     expect(board.consumeSpecialEffectEvents().single.effectKind, GemKind.hyper);
   });
 
+  test(
+    'hint candidates exclude adjacent non-hyper specials without a match',
+    () {
+      final board = _filledBoard();
+      board.setGem(3, 3, board.createGem(3, 3, 2, GemKind.bomb));
+      board.setGem(3, 4, board.createGem(3, 4, 5, GemKind.star));
+
+      final moves = board.getAllValidMoves();
+
+      expect(
+        moves,
+        isNot(
+          contains(
+            predicate<ValidMovePair>(
+              (move) =>
+                  move.a == const Point(3, 3) && move.b == const Point(3, 4),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+
+  test('screenshot board has no valid moves after visual match rules', () {
+    final board = MatchBoardLogic(rows: 8, cols: 8);
+    _setRows(board, const [
+      [5, 1, 3, 3, 5, 1, 1, 6],
+      [6, 5, 4, 6, 2, 1, 4, 5],
+      [4, 3, 1, 6, 5, 5, 3, 2],
+      [5, -2, 2, 2, 4, 6, 2, 4],
+      [3, 4, 6, 4, 5, 1, 5, 1],
+      [2, -1, 1, 5, 2, 4, -1, 6],
+      [4, 5, 1, 1, 2, 6, 3, 3],
+      [1, 4, 6, 6, 3, 4, 1, 1],
+    ]);
+
+    final moves = board.getAllValidMoves();
+
+    expect(moves, isEmpty);
+    expect(board.showHint(), isFalse);
+  });
+
   test('showHint chooses cells that produce a valid swap', () {
     final board = MatchBoardLogic(rows: 8, cols: 8);
     board.generateFreshBoard(withIntroFill: false);
@@ -168,6 +224,21 @@ MatchBoardLogic _boardWithLine({required int length}) {
     board.setGem(0, col, board.createGem(0, col, 1, GemKind.normal));
   }
   return board;
+}
+
+void _setRows(MatchBoardLogic board, List<List<int>> rows) {
+  for (var row = 0; row < rows.length; row++) {
+    for (var col = 0; col < rows[row].length; col++) {
+      final token = rows[row][col];
+      final kind = switch (token) {
+        -1 => GemKind.bomb,
+        -2 => GemKind.star,
+        _ => GemKind.normal,
+      };
+      final color = token < 0 ? token.abs() : token;
+      board.setGem(row, col, board.createGem(row, col, color, kind));
+    }
+  }
 }
 
 MatchBoardLogic _filledBoard() {

@@ -113,8 +113,6 @@ extension MatchBoardInput on MatchBoardLogic {
           var isValid = false;
           if (gemA.kind == GemKind.hyper || gemB.kind == GemKind.hyper) {
             isValid = true;
-          } else if (_isSpecial(gemA.kind) && _isSpecial(gemB.kind)) {
-            isValid = true;
           } else {
             swapCells(row, col, or, oc);
             final matchA = findMatchesAt(or, oc);

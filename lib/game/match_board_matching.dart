@@ -8,7 +8,7 @@ typedef MatchBoardTokenForGem = int? Function(BoardGem? gem);
 String matchBoardCellKey(int row, int col) => '$row:$col';
 
 int? gemMatchColorToken(BoardGem? gem) {
-  if (gem == null || gem.kind == GemKind.hyper) return null;
+  if (gem == null || gem.kind != GemKind.normal) return null;
   return gem.color;
 }
 
