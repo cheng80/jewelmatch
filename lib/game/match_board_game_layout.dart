@@ -58,9 +58,8 @@ extension MatchBoardGameLayout on MatchBoardGame {
     if (tile <= 0 || !tile.isFinite) return;
 
     final spacing = tile * spacingRatio;
-    final gridW =
-        MatchBoardGame.cols * tile + (MatchBoardGame.cols + 1) * spacing;
-    final left = safeContentLeft + (safeContentWidth - gridW) / 2 + spacing;
+    final boardW = MatchBoardGame.cols * tile;
+    final left = safeContentLeft + (safeContentWidth - boardW) / 2;
     final top = gridTopY + spacing;
 
     board.setGeometry(x: left, y: top, tile: tile);

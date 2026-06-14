@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../resources/asset_paths.dart';
+
 /// 전체 화면 우주 배경. 앱 전역에서 단일 인스턴스만 사용한다.
 ///
 /// [StarryBackground.instance]를 통해 항상 같은 [GlobalKey]를 가진
@@ -89,6 +91,35 @@ class _StarryBackgroundState extends State<StarryBackground>
                   ),
                 ),
               ),
+            Positioned.fill(
+              child: RepaintBoundary(
+                child: Center(
+                  child: SizedBox(
+                    width: size.height,
+                    height: size.height,
+                    child: ShaderMask(
+                      blendMode: BlendMode.dstIn,
+                      shaderCallback: (bounds) => const LinearGradient(
+                        colors: [
+                          Colors.transparent,
+                          Color(0x99FFFFFF),
+                          Colors.white,
+                          Colors.white,
+                          Color(0x99FFFFFF),
+                          Colors.transparent,
+                        ],
+                        stops: [0, 0.08, 0.26, 0.74, 0.92, 1],
+                      ).createShader(bounds),
+                      child: Image.asset(
+                        AssetPaths.ancientRuinsSpaceBackground,
+                        fit: BoxFit.fill,
+                        filterQuality: FilterQuality.high,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         );
       },

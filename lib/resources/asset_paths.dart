@@ -47,6 +47,14 @@ class AssetPaths {
   /// 12열×128px 충전 보석 시트 (순서: star 1~6색, supernova 1~6색)
   static const String chargedSpriteSheet = 'sprites/Charged_Arcane.png';
 
+  /// 고대 판타지 유적 배경. Flutter 위젯에서는 전체 assets 경로를 사용한다.
+  static const String ancientRuinsSpaceBackground =
+      'assets/images/backgrounds/ancient_ruins_space_bg.png';
+
+  /// 고대 판타지 유적 배경. Flame image cache에서는 assets/images 이후 경로를 사용한다.
+  static const String ancientRuinsSpaceBackgroundFlame =
+      'backgrounds/ancient_ruins_space_bg.png';
+
   /// Obsidian Rune Temple 나인패치 프레임.
   static const String obsidianPanelFrame =
       'assets/images/ui/obsidian_panel_frame.png';

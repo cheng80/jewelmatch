@@ -116,6 +116,7 @@ flutter:
   assets:
     - assets/translations/
     - assets/images/
+    - assets/images/backgrounds/
     - assets/images/sprites/
     - assets/images/ui/
     - assets/audio/

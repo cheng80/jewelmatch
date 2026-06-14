@@ -70,6 +70,6 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
   void _drawPause(Canvas canvas) {
     final r = _pauseRect;
     _drawIconButtonFrame(canvas, r);
-    _drawButtonIcon(canvas, r, _pauseIconImage, sizeFactor: 0.54);
+    _drawButtonIcon(canvas, r, _pauseIconImage, sizeFactor: 0.70);
   }
 }

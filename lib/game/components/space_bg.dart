@@ -4,6 +4,8 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
+import '../../resources/asset_paths.dart';
+
 /// 우주 배경 컴포넌트.
 ///
 /// - 그라데이션 배경을 [ui.Picture]로 캐싱 → 매 프레임 drawPicture 1회.
@@ -13,17 +15,22 @@ import 'package:flutter/material.dart';
 class SpaceBg extends PositionComponent with HasGameReference {
   static const int _starCount = 120;
   static const int _groupCount = 3;
+  static const double _horizontalFadeFullAlphaStart = 0.26;
 
   ui.Picture? _bgPicture;
   final List<ui.Picture> _starPictures = [];
   final List<double> _groupPhases = [];
   final List<double> _groupSpeeds = [];
 
+  ui.Image? _ruinsBackground;
   double _time = 0;
   Vector2 _lastSize = Vector2.zero();
 
   @override
   Future<void> onLoad() async {
+    _ruinsBackground = await game.images.load(
+      AssetPaths.ancientRuinsSpaceBackgroundFlame,
+    );
     _rebuild();
     priority = -1;
   }
@@ -140,6 +147,51 @@ class SpaceBg extends PositionComponent with HasGameReference {
         Paint()..color = Color.fromRGBO(255, 255, 255, alpha),
       );
       canvas.drawPicture(_starPictures[g]);
+      canvas.restore();
+    }
+
+    final image = _ruinsBackground;
+    if (image != null && size.y > 0) {
+      final source = Rect.fromLTWH(
+        0,
+        0,
+        image.width.toDouble(),
+        image.height.toDouble(),
+      );
+      final scale = size.y / image.height;
+      final fittedWidth = image.width * scale;
+      final left = (size.x - fittedWidth) / 2;
+      final destination = Rect.fromLTWH(left, 0, fittedWidth, size.y);
+      canvas.saveLayer(destination, Paint());
+      canvas.drawImageRect(
+        image,
+        source,
+        destination,
+        Paint()..filterQuality = FilterQuality.high,
+      );
+      final maskPaint = Paint()
+        ..blendMode = BlendMode.dstIn
+        ..shader = ui.Gradient.linear(
+          destination.centerLeft,
+          destination.centerRight,
+          const [
+            Colors.transparent,
+            Color(0x99FFFFFF),
+            Colors.white,
+            Colors.white,
+            Color(0x99FFFFFF),
+            Colors.transparent,
+          ],
+          const [
+            0,
+            0.08,
+            _horizontalFadeFullAlphaStart,
+            1 - _horizontalFadeFullAlphaStart,
+            0.92,
+            1,
+          ],
+        );
+      canvas.drawRect(destination, maskPaint);
       canvas.restore();
     }
   }
