@@ -191,10 +191,10 @@ class _StarPool {
 
   static Color _starColor(Random rng) {
     final roll = rng.nextDouble();
-    if (roll < 0.7) return Colors.white;
-    if (roll < 0.85) return const Color(0xFFB9E7F0);
-    if (roll < 0.95) return const Color(0xFFF4DFA3);
-    return const Color(0xFFF1A8C7);
+    if (roll < 0.7) return const Color(0xFFE9E1D2);
+    if (roll < 0.85) return const Color(0xFF9FB7BC);
+    if (roll < 0.95) return const Color(0xFFD8BE78);
+    return const Color(0xFF9B5A4F);
   }
 }
 

@@ -10,7 +10,7 @@ Jewel Match uses an ancient fantasy temple UI: obsidian stone, aged brass, teal 
 2. Primary containers and popups: ornate jeweled stone frame.
 3. Buttons: simple brass-and-obsidian frame, no gemstones.
 4. Circular icon buttons: simple brass ring, no gemstones.
-5. Progress and control rails: dark stone track, brass rim, teal active state.
+5. Progress and control rails: dark stone track, brass rim, muted teal active state.
 6. Background and board slots: darkest, lowest contrast layer.
 
 ## Asset Rules
@@ -23,16 +23,19 @@ Jewel Match uses an ancient fantasy temple UI: obsidian stone, aged brass, teal 
 
 ## Controls
 
-- Sliders represent adjustable power or volume. Use a dark stone rail with a brass outline and teal/gold active fill.
+- Sliders represent adjustable power or volume. Use a dark stone rail with a brass outline and muted teal/gold active fill.
 - Slider thumbs use gold/brass instead of bright candy colors.
-- Switches use dark inactive tracks and teal active tracks with gold/brass thumbs.
+- Switches use dark inactive tracks and muted teal active tracks with gold/brass thumbs.
 - Time bars use the same rail grammar as sliders, but larger and more legible.
 - Critical time may use red/orange fill, but the rail and border stay brass/stone.
 
 ## Text
 
-- Gold labels for calm metadata and section titles.
-- Teal for active/magical headings and focus states.
+- Gold labels for headings, section titles, dialog titles, selected states, and secondary actions.
+- Teal is reserved for functional or magical state only: active rails, focus rings, special-gem arrows, and temporary loading effects.
+- Do not use bright teal/mint for large readable text. It competes with the jewels and weakens the ancient-fantasy tone.
+- White text should be warm parchment, not pure white, except for short score flashes or gem effects.
+- Celebration effects use brass, muted red, and restrained teal. Avoid candy pink, neon cyan, and saturated purple in UI effects.
 - Warm white for score and high-priority numeric readouts.
 - Red only for danger, critical time, or destructive emphasis.
 
@@ -43,4 +46,3 @@ Jewel Match uses an ancient fantasy temple UI: obsidian stone, aged brass, teal 
 - Popup buttons: simple obsidian button frame.
 - HUD icon buttons: circular brass/obsidian frame.
 - HUD time bar and app sliders: stone rail with brass/teal hierarchy.
-

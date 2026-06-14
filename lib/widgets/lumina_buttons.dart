@@ -86,7 +86,7 @@ class LuminaOutlinedButton extends StatelessWidget {
           maxLines: 1,
           softWrap: false,
           style: TextStyle(
-            color: JewelCandyLuminaTheme.secondaryCyan,
+            color: JewelCandyLuminaTheme.textParchment,
             fontWeight: FontWeight.w700,
             shadows: [
               Shadow(

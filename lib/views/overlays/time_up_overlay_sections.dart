@@ -25,7 +25,7 @@ class _TimeUpIntroTitle extends StatelessWidget {
               child: Text(
                 context.tr('timeUpTitle'),
                 style: TextStyle(
-                  color: Colors.white,
+                  color: JewelCandyLuminaTheme.textTitleGold,
                   fontSize: 56,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 3,
@@ -84,7 +84,7 @@ class _TimeUpResultPanel extends StatelessWidget {
           Text(
             context.tr('timeUpTitle'),
             style: TextStyle(
-              color: JewelCandyLuminaTheme.secondaryCyan,
+              color: JewelCandyLuminaTheme.textTitleGold,
               fontSize: 34,
               fontWeight: FontWeight.bold,
             ),

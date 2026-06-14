@@ -29,7 +29,7 @@ class ObsidianFrame extends StatelessWidget {
             offset: const Offset(0, 8),
           ),
           BoxShadow(
-            color: JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.16),
+            color: JewelCandyLuminaTheme.goldStrong.withValues(alpha: 0.12),
             blurRadius: 18,
           ),
         ],

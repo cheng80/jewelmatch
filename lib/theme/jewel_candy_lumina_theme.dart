@@ -11,10 +11,16 @@ abstract final class JewelCandyLuminaTheme {
 
   static const Color primaryPink = Color(0xFFC64235);
   static const Color primaryDeep = Color(0xFF7B241C);
-  static const Color secondaryCyan = Color(0xFF36C7C0);
+  static const Color secondaryCyan = Color(0xFF2FA39A);
   static const Color tertiaryGold = Color(0xFFE4C174);
   static const Color goldStrong = Color(0xFFC98A32);
   static const Color outlineBright = Color(0xFF9E7A44);
+  static const Color textTitleGold = Color(0xFFD99A32);
+  static const Color textHero = Color(0xFFF0E4C8);
+  static const Color textParchment = Color(0xFFE8D2A0);
+  static const Color textMutedGold = Color(0xFFB89458);
+  static const Color focusTeal = Color(0xFF2A8E87);
+  static const Color dangerRed = Color(0xFFC64235);
 
   /// 보드 안쪽 패널 · 슬롯 — 배경은 **어둡게** 두어 스프라이트 보석이 튀도록 함 (HUD는 그대로 화사).
   static const Color boardInner = Color(0xFF090B0D);
@@ -37,7 +43,7 @@ abstract final class JewelCandyLuminaTheme {
 
   /// 타임바 충분할 때: 민트 → 골드 → 베리핑크
   static const List<Color> timeBarFillVibrant = [
-    Color(0xFF35CFC4),
+    Color(0xFF2FA39A),
     Color(0xFFD7AA52),
     Color(0xFF8A332A),
   ];
@@ -51,7 +57,7 @@ abstract final class JewelCandyLuminaTheme {
   static const Color overlayScrim = Color(0xC906080C);
 
   static const Color borderPause = Color(0xFFC98A32);
-  static const Color borderNoMoves = Color(0xFF36C7C0);
+  static const Color borderNoMoves = Color(0xFF2FA39A);
   static const Color borderTimeUp = Color(0xFFE0B257);
 
   static const List<Color> buttonPrimaryPink = [

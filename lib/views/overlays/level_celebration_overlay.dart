@@ -89,11 +89,11 @@ class _LevelCelebrationOverlayState extends State<LevelCelebrationOverlay>
                         blurRadius: 10,
                       ),
                       Shadow(
-                        color: JewelCandyLuminaTheme.primaryPink.withValues(
-                          alpha: 0.8,
+                        color: JewelCandyLuminaTheme.goldStrong.withValues(
+                          alpha: 0.65,
                         ),
                         offset: Offset.zero,
-                        blurRadius: 18,
+                        blurRadius: 16,
                       ),
                     ],
                   ),
@@ -109,11 +109,11 @@ class _LevelCelebrationOverlayState extends State<LevelCelebrationOverlay>
   List<_CelebrationParticle> _buildParticles() {
     final random = math.Random(20260614);
     final colors = <Color>[
-      const Color(0xFFFF5DAE),
-      const Color(0xFF5BE7D9),
-      const Color(0xFFFFD166),
-      const Color(0xFF7C5CFF),
-      const Color(0xFFFF7A59),
+      JewelCandyLuminaTheme.tertiaryGold,
+      JewelCandyLuminaTheme.goldStrong,
+      JewelCandyLuminaTheme.outlineBright,
+      JewelCandyLuminaTheme.dangerRed,
+      JewelCandyLuminaTheme.focusTeal,
     ];
     final launchers = <({double x, double y, double direction, int count})>[
       (x: 0.27, y: 40, direction: -math.pi * 0.58, count: 48),

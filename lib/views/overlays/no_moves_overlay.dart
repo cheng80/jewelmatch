@@ -17,7 +17,7 @@ class NoMovesOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return LuminaOverlayCard(
       borderColor: JewelCandyLuminaTheme.borderNoMoves,
-      shadowColor: JewelCandyLuminaTheme.secondaryCyan,
+      shadowColor: JewelCandyLuminaTheme.focusTeal,
       verticalMargin: 52,
       alignment: const Alignment(0, -0.12),
       child: Column(

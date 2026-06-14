@@ -143,7 +143,7 @@ class _RankStatusSection extends ConsumerWidget {
         width: 24,
         child: CircularProgressIndicator(
           strokeWidth: 2,
-          color: JewelCandyLuminaTheme.secondaryCyan,
+          color: JewelCandyLuminaTheme.focusTeal,
         ),
       );
     }

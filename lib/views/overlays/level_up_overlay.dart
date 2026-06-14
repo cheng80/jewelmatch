@@ -103,7 +103,7 @@ class _LevelUpOverlayState extends State<LevelUpOverlay>
                 context.tr('levelUpDesc'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: JewelCandyLuminaTheme.secondaryCyan,
+                  color: JewelCandyLuminaTheme.textParchment,
                   fontSize: 17,
                   fontWeight: FontWeight.w600,
                 ),
@@ -152,7 +152,9 @@ class _LevelBadge extends StatelessWidget {
           Text(
             '${context.tr('levelLabel')} ${game.levelUpFromLevel}',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.72),
+              color: JewelCandyLuminaTheme.textParchment.withValues(
+                alpha: 0.72,
+              ),
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -160,7 +162,7 @@ class _LevelBadge extends StatelessWidget {
           const SizedBox(height: 4),
           Icon(
             Icons.keyboard_double_arrow_down_rounded,
-            color: JewelCandyLuminaTheme.secondaryCyan,
+            color: JewelCandyLuminaTheme.focusTeal,
             size: 30,
           ),
           const SizedBox(height: 4),

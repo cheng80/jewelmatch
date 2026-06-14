@@ -33,7 +33,7 @@ class HowToPlayOverlay extends StatelessWidget {
           Text(
             context.tr('howToPlayTitle'),
             style: TextStyle(
-              color: JewelCandyLuminaTheme.secondaryCyan,
+              color: JewelCandyLuminaTheme.textTitleGold,
               fontSize: 28,
               fontWeight: FontWeight.bold,
             ),

@@ -32,12 +32,12 @@ class _RankingListPopupState extends State<RankingListPopup> {
 
   @override
   Widget build(BuildContext context) {
-    final listMaxH = MediaQuery.sizeOf(context).height * 0.32;
+    final listMaxH = MediaQuery.sizeOf(context).height * 0.285;
 
     return DefaultTabController(
       length: 2,
       child: LuminaOverlayCard(
-        borderColor: JewelCandyLuminaTheme.secondaryCyan,
+        borderColor: JewelCandyLuminaTheme.borderTimeUp,
         maxHeightFactor: 0.78,
         verticalMargin: 48,
         alignment: const Alignment(0, -0.08),
@@ -52,7 +52,7 @@ class _RankingListPopupState extends State<RankingListPopup> {
               context.tr('rankingTitle'),
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: JewelCandyLuminaTheme.secondaryCyan,
+                color: JewelCandyLuminaTheme.textTitleGold,
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
               ),
@@ -158,7 +158,7 @@ class _RankingList extends StatelessWidget {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Center(
             child: CircularProgressIndicator(
-              color: JewelCandyLuminaTheme.secondaryCyan,
+              color: JewelCandyLuminaTheme.focusTeal,
             ),
           );
         }
@@ -212,7 +212,7 @@ class _RankingList extends StatelessWidget {
                         Text(
                           _formatScore(context, e.score),
                           style: TextStyle(
-                            color: JewelCandyLuminaTheme.secondaryCyan,
+                            color: JewelCandyLuminaTheme.textParchment,
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                           ),

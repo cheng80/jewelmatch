@@ -22,7 +22,7 @@ class SettingsSectionTitle extends StatelessWidget {
             Icon(
               icon,
               size: 20,
-              color: JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.7),
+              color: JewelCandyLuminaTheme.textMutedGold.withValues(alpha: 0.9),
             ),
             const SizedBox(width: 8),
           ],
@@ -168,7 +168,7 @@ class LanguageSection extends StatelessWidget {
             trailing: context.locale == option.locale
                 ? const Icon(
                     Icons.check,
-                    color: JewelCandyLuminaTheme.borderNoMoves,
+                    color: JewelCandyLuminaTheme.textTitleGold,
                   )
                 : null,
             onTap: () => context.setLocale(option.locale),
@@ -227,7 +227,9 @@ class _MuteSwitch extends StatelessWidget {
     return SwitchListTile(
       secondary: Icon(
         value ? Icons.volume_off : Icons.volume_up,
-        color: value ? Colors.grey : null,
+        color: value
+            ? JewelCandyLuminaTheme.outlineBright.withValues(alpha: 0.55)
+            : null,
       ),
       title: Text(label),
       value: value,

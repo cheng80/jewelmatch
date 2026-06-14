@@ -37,7 +37,7 @@ class _GameLoadingOverlayState extends State<GameLoadingOverlay>
   Widget build(BuildContext context) {
     final accent = widget.gameMode == JewelGameMode.timed
         ? JewelCandyLuminaTheme.goldStrong
-        : JewelCandyLuminaTheme.secondaryCyan;
+        : JewelCandyLuminaTheme.focusTeal;
 
     return ColoredBox(
       color: Colors.black.withValues(alpha: 0.12),
@@ -90,7 +90,9 @@ class _GameLoadingOverlayState extends State<GameLoadingOverlay>
                 Text(
                   '불러오는 중...',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
+                    color: JewelCandyLuminaTheme.textHero.withValues(
+                      alpha: 0.9,
+                    ),
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),

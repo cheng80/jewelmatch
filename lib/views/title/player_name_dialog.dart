@@ -67,7 +67,7 @@ class _PlayerNameDialogState extends State<_PlayerNameDialog> {
                   Text(
                     context.tr('enterName'),
                     style: TextStyle(
-                      color: JewelCandyLuminaTheme.secondaryCyan,
+                      color: JewelCandyLuminaTheme.textTitleGold,
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
                     ),
@@ -77,7 +77,10 @@ class _PlayerNameDialogState extends State<_PlayerNameDialog> {
                     controller: _controller,
                     maxLength: 20,
                     autofocus: true,
-                    style: const TextStyle(color: Colors.white, fontSize: 20),
+                    style: const TextStyle(
+                      color: JewelCandyLuminaTheme.textHero,
+                      fontSize: 20,
+                    ),
                     decoration: InputDecoration(
                       hintText: 'GUEST',
                       hintStyle: TextStyle(color: Colors.white38),
@@ -88,7 +91,7 @@ class _PlayerNameDialogState extends State<_PlayerNameDialog> {
                       ),
                       focusedBorder: UnderlineInputBorder(
                         borderSide: BorderSide(
-                          color: JewelCandyLuminaTheme.secondaryCyan,
+                          color: JewelCandyLuminaTheme.focusTeal,
                           width: 2,
                         ),
                       ),
@@ -108,7 +111,7 @@ class _PlayerNameDialogState extends State<_PlayerNameDialog> {
                             child: Text(
                               context.tr('cancel'),
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.72),
+                                color: JewelCandyLuminaTheme.textMutedGold,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),

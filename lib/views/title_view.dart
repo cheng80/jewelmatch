@@ -127,7 +127,7 @@ class _TitleContent extends StatelessWidget {
           style: TextStyle(
             fontSize: 64,
             fontWeight: FontWeight.bold,
-            color: Colors.white.withValues(alpha: 0.9),
+            color: JewelCandyLuminaTheme.textHero.withValues(alpha: 0.92),
             letterSpacing: 8,
           ),
         ),
@@ -140,13 +140,11 @@ class _TitleContent extends StatelessWidget {
             letterSpacing: 6,
             shadows: [
               Shadow(
-                color: JewelCandyLuminaTheme.primaryPink.withValues(
-                  alpha: 0.55,
-                ),
-                blurRadius: 24,
+                color: JewelCandyLuminaTheme.goldStrong.withValues(alpha: 0.36),
+                blurRadius: 18,
               ),
               Shadow(
-                color: JewelCandyLuminaTheme.primaryDeep,
+                color: JewelCandyLuminaTheme.primaryDeep.withValues(alpha: 0.9),
                 offset: const Offset(2, 2),
                 blurRadius: 0,
               ),
@@ -193,8 +191,8 @@ class _TitleContent extends StatelessWidget {
         TitleRoundButton(
           label: context.tr('settings'),
           gradientColors: const [
-            JewelCandyLuminaTheme.secondaryCyan,
-            JewelCandyLuminaTheme.primaryPink,
+            JewelCandyLuminaTheme.outlineBright,
+            JewelCandyLuminaTheme.goldStrong,
           ],
           onPressed: () {
             SoundManager.playSfx(AssetPaths.sfxBtnSnd);

@@ -44,7 +44,7 @@ class PauseMenuOverlay extends ConsumerWidget {
               context.tr('paused'),
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: JewelCandyLuminaTheme.secondaryCyan,
+                color: JewelCandyLuminaTheme.textTitleGold,
                 fontSize: 40,
                 fontWeight: FontWeight.bold,
               ),
