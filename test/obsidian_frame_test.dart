@@ -48,4 +48,57 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('button frame paints at narrow dialog width', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: ObsidianButtonFrame(
+              width: 120,
+              height: 50,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              onPressed: () {},
+              child: const Text('취소'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('button frame paints at low heights', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final height in <double>[36, 44, 50, 52, 58])
+                  Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: ObsidianButtonFrame(
+                      width: 180,
+                      height: height,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      onPressed: () {},
+                      child: Text('H${height.toInt()}'),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+  });
 }
