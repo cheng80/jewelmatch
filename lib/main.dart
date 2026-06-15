@@ -28,7 +28,6 @@ void main() async {
     SoundManager.preload(),
     Flame.images.load(AssetPaths.jewelSpriteSheet),
     Flame.images.load(AssetPaths.specialSpriteSheet),
-    Flame.images.load(AssetPaths.chargedSpriteSheet),
     SpriteSheetFrame.precache('assets/images/${AssetPaths.jewelSpriteSheet}'),
     SpriteSheetFrame.precache('assets/images/${AssetPaths.specialSpriteSheet}'),
   ]);

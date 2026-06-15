@@ -44,9 +44,6 @@ class AssetPaths {
   /// 3열×128px 특수 보석 시트 (순서: legacy col, legacy row, flame)
   static const String specialSpriteSheet = 'sprites/Special_Arcane.png';
 
-  /// 12열×128px 충전 보석 시트 (순서: star 1~6색, supernova 1~6색)
-  static const String chargedSpriteSheet = 'sprites/Charged_Arcane.png';
-
   /// 폭탄 보석용 독립 오버레이.
   static const String flameOverlay = 'sprites/flame_overlay.png';
 
