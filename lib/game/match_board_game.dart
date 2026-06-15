@@ -126,36 +126,31 @@ class MatchBoardGame extends FlameGame {
   /// 상단 1열: 일시정지 + 최고 기록만.
   static const double hudTopBarScale = 0.54;
 
-  /// 큰 점수 블록 (라벨 + 숫자).
-  static const double hudMainScoreBlockScale = 1.38;
+  /// 점수 블록 (라벨 + 숫자). 보드 위 콤보/타임바 공간을 확보하기 위해 압축한다.
+  static const double hudMainScoreBlockScale = 1.06;
   double get hudTopBarHeight => hudScale * hudTopBarScale;
   double get hudMainScoreBlockHeight => hudScale * hudMainScoreBlockScale;
 
   /// 점수 숫자 아래 ~ 콤보 줄까지 간격.
-  double get hudGapScoreToCombo => hudScale * 0.1;
+  double get hudGapScoreToCombo => hudScale * 0.04;
 
   /// 콤보(현재·최대) 고정 줄 높이 — 점수 블록과 보드 사이.
   double get hudComboStripHeight => hudScale * 0.88;
 
-  /// 콤보 줄과 보드 사이 간격.
-  double get hudGapBeforeBoard => hudScale * 0.22;
+  /// 콤보 줄과 타임바 사이 간격.
+  double get hudGapComboToTimeBar => hudScale * 0.18;
 
-  /// 보드 아래: 타임바만 (여백은 [hudGapBelowBoard]·[hudGapBelowTimeBar]).
+  /// 타임바와 보드 사이 간격.
+  double get hudGapTimeBarToBoard => hudScale * 0.24;
+
   static const double hudBottomTimeBarScale = 0.5;
 
   double get hudBottomTimeBarHeight => hudScale * hudBottomTimeBarScale;
 
-  /// 보드 하단과 타임바 사이 ([MatchGameHud]와 동일).
-  double get hudGapBelowBoard => hudScale * 0.26;
+  /// [layoutRef] 계산 시 보드 아래에 확보할 최소 하단 여백.
+  double get bottomChromeHeight => hudScale * 0.12;
 
-  /// 타임바 아래 여백.
-  double get hudGapBelowTimeBar => hudScale * 0.18;
-
-  /// [layoutRef] 계산 시 보드 아래에 확보할 높이 (타임바 + 간격만).
-  double get bottomChromeHeight =>
-      hudGapBelowBoard + hudBottomTimeBarHeight + hudGapBelowTimeBar;
-
-  /// 상단: 안전영역 + 상단바 + 점수 블록 + 콤보 줄 + 보드 전 간격.
+  /// 상단: 안전영역 + 상단바 + 점수 + 콤보 + 타임바 + 보드 전 간격.
   double get topChromeHeight =>
       safeAreaPadding.top +
       10 +
@@ -163,7 +158,9 @@ class MatchBoardGame extends FlameGame {
       hudMainScoreBlockHeight +
       hudGapScoreToCombo +
       hudComboStripHeight +
-      hudGapBeforeBoard;
+      hudGapComboToTimeBar +
+      hudBottomTimeBarHeight +
+      hudGapTimeBarToBoard;
 
   /// Flame 부트스트랩 (`code-flow-analysis.md` 5절과 같은 단계)
   /// 1) super.onLoad  2) viewfinder  3) viewport(HUD)  4) world(보드 렌더러)

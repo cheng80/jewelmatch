@@ -1,6 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app_config.dart';
@@ -8,149 +7,92 @@ import '../../game/match_board_game.dart';
 import '../../resources/asset_paths.dart';
 import '../../resources/sound_manager.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
-import '../../vm/settings_notifier.dart';
-import '../../widgets/lumina_buttons.dart';
 import '../../widgets/lumina_overlay_card.dart';
+import 'pause_menu_buttons.dart';
 
-/// 일시 정지 메뉴. 볼륨/음소거를 SettingsNotifier로 관리한다.
-class PauseMenuOverlay extends ConsumerWidget {
+/// 일시 정지 메뉴. 액션만 남기고 사운드 설정은 설정 화면으로 분리한다.
+class PauseMenuOverlay extends StatelessWidget {
   const PauseMenuOverlay({super.key, required this.game});
+
   final MatchBoardGame game;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final sliderTheme = SliderThemeData(trackHeight: 12);
-    final sliderThemeData = JewelCandyLuminaTheme.obsidianSliderTheme(
-      sliderTheme,
-    );
-    final switchTheme = JewelCandyLuminaTheme.obsidianSwitchTheme();
-
+  Widget build(BuildContext context) {
     return LuminaOverlayCard(
-      maxCardWidth: 410,
-      maxHeightFactor: 0.72,
-      verticalMargin: 86,
-      alignment: Alignment.topCenter,
-      horizontalPadding: 28,
+      maxCardWidth: 390,
+      maxHeightFactor: 0.86,
+      verticalMargin: 30,
+      alignment: Alignment.center,
+      horizontalPadding: 24,
       verticalPadding: 24,
-      innerPadding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
+      innerPadding: const EdgeInsets.fromLTRB(16, 26, 16, 18),
       scrollable: true,
-      child: Theme(
-        data: Theme.of(context).copyWith(switchTheme: switchTheme),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              context.tr('paused'),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: JewelCandyLuminaTheme.textTitleGold,
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              context.tr('bgm'),
-              style: TextStyle(
-                color: JewelCandyLuminaTheme.tertiaryGold.withValues(
-                  alpha: 0.95,
-                ),
-                fontSize: 20,
-              ),
-            ),
-            _PauseBgmControls(sliderTheme: sliderThemeData),
-            Text(
-              context.tr('sfx'),
-              style: TextStyle(
-                color: JewelCandyLuminaTheme.tertiaryGold.withValues(
-                  alpha: 0.95,
-                ),
-                fontSize: 20,
-              ),
-            ),
-            _PauseSfxControls(sliderTheme: sliderThemeData),
-            const SizedBox(height: 24),
-            Center(
-              child: LuminaGradientButton(
-                width: 260,
-                colors: JewelCandyLuminaTheme.buttonPrimaryPink,
-                label: context.tr('continueGame'),
-                onPressed: () {
-                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                  game.resumeGame();
-                },
-              ),
-            ),
-            const SizedBox(height: 18),
-            Center(
-              child: LuminaOutlinedButton(
-                width: 260,
-                label: context.tr('exit'),
-                onPressed: () {
-                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                  context.go(RoutePaths.title);
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PauseBgmControls extends ConsumerWidget {
-  const _PauseBgmControls({required this.sliderTheme});
-
-  final SliderThemeData sliderTheme;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final volume = ref.watch(settingsProvider.select((s) => s.bgmVolume));
-    final muted = ref.watch(settingsProvider.select((s) => s.bgmMuted));
-    final notifier = ref.read(settingsProvider.notifier);
-    return SliderTheme(
-      data: sliderTheme,
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: Slider(
-              value: muted ? 0.0 : volume,
-              onChanged: muted ? null : notifier.setBgmVolumeDraft,
-              onChangeEnd: muted ? null : (_) => notifier.commitBgmVolume(),
+          Text(
+            context.tr('paused'),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: JewelCandyLuminaTheme.textTitleGold,
+              fontSize: 38,
+              fontWeight: FontWeight.w900,
+              height: 1,
+              letterSpacing: 0,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withValues(alpha: 0.88),
+                  offset: const Offset(0, 2),
+                  blurRadius: 5,
+                ),
+                Shadow(
+                  color: JewelCandyLuminaTheme.goldStrong.withValues(
+                    alpha: 0.42,
+                  ),
+                  blurRadius: 14,
+                ),
+              ],
             ),
           ),
-          Switch(value: muted, onChanged: notifier.setBgmMuted),
-        ],
-      ),
-    );
-  }
-}
-
-class _PauseSfxControls extends ConsumerWidget {
-  const _PauseSfxControls({required this.sliderTheme});
-
-  final SliderThemeData sliderTheme;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final volume = ref.watch(settingsProvider.select((s) => s.sfxVolume));
-    final muted = ref.watch(settingsProvider.select((s) => s.sfxMuted));
-    final notifier = ref.read(settingsProvider.notifier);
-    return SliderTheme(
-      data: sliderTheme,
-      child: Row(
-        children: [
-          Expanded(
-            child: Slider(
-              value: muted ? 0.0 : volume,
-              onChanged: muted ? null : notifier.setSfxVolumeDraft,
-              onChangeEnd: muted ? null : (_) => notifier.commitSfxVolume(),
-            ),
+          const SizedBox(height: 12),
+          const PauseMenuDivider(),
+          const SizedBox(height: 24),
+          PauseMenuActionButton(
+            label: context.tr('continueGame'),
+            icon: Icons.play_arrow_rounded,
+            panelColor: const Color(0xFF1F8274),
+            onPressed: () {
+              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+              game.resumeGame();
+            },
           ),
-          Switch(value: muted, onChanged: notifier.setSfxMuted),
+          const SizedBox(height: 16),
+          PauseMenuActionButton(
+            label: context.tr('retry'),
+            icon: Icons.restart_alt_rounded,
+            panelColor: const Color(0xFF68468C),
+            onPressed: () {
+              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+              game.restartRound();
+            },
+          ),
+          const SizedBox(height: 16),
+          PauseMenuActionButton(
+            label: context.tr('exit'),
+            icon: Icons.logout_rounded,
+            panelColor: const Color(0xFF96522B),
+            onPressed: () {
+              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+              context.go(RoutePaths.title);
+            },
+          ),
+          const SizedBox(height: 18),
+          PauseMenuSettingsButton(
+            onPressed: () {
+              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+              context.push(RoutePaths.setting);
+            },
+          ),
         ],
       ),
     );

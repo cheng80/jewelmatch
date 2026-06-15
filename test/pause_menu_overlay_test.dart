@@ -17,36 +17,41 @@ void main() {
     await StorageHelper.erase();
   });
 
-  testWidgets(
-    'pause menu sliders can be dragged without overlay owner errors',
-    (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          child: EasyLocalization(
-            supportedLocales: const [Locale('ko')],
-            path: 'assets/translations',
-            fallbackLocale: const Locale('ko'),
-            startLocale: const Locale('ko'),
-            child: Builder(
-              builder: (context) => MaterialApp(
-                localizationsDelegates: context.localizationDelegates,
-                supportedLocales: context.supportedLocales,
-                locale: context.locale,
-                home: PauseMenuOverlay(
-                  game: MatchBoardGame(gameMode: JewelGameMode.simple),
-                ),
+  testWidgets('pause menu shows action buttons without audio controls', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: EasyLocalization(
+          supportedLocales: const [Locale('ko')],
+          path: 'assets/translations',
+          fallbackLocale: const Locale('ko'),
+          startLocale: const Locale('ko'),
+          child: Builder(
+            builder: (context) => MaterialApp(
+              localizationsDelegates: context.localizationDelegates,
+              supportedLocales: context.supportedLocales,
+              locale: context.locale,
+              home: PauseMenuOverlay(
+                game: MatchBoardGame(gameMode: JewelGameMode.simple),
               ),
             ),
           ),
         ),
-      );
-      await tester.pumpAndSettle();
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      final firstSlider = find.byType(Slider).first;
-      await tester.drag(firstSlider, const Offset(70, 0));
-      await tester.pump();
-
-      expect(tester.takeException(), isNull);
-    },
-  );
+    expect(find.byType(Slider), findsNothing);
+    expect(find.byType(Switch), findsNothing);
+    expect(find.text('배경음악'), findsNothing);
+    expect(find.text('효과음'), findsNothing);
+    expect(find.text('계속하기'), findsOneWidget);
+    expect(find.text('다시하기'), findsOneWidget);
+    expect(find.text('나가기'), findsOneWidget);
+    expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.restart_alt_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.logout_rounded), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

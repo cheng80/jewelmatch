@@ -219,10 +219,9 @@ class MatchGameHud extends PositionComponent
       g.hudComboStripHeight,
     );
 
-    final bb = g.boardPixelBottom;
     _timeBarRect = Rect.fromLTWH(
       left + barPad,
-      bb + g.hudGapBelowBoard,
+      _comboRect.bottom + g.hudGapComboToTimeBar,
       (right - left) - barPad * 2,
       g.hudBottomTimeBarHeight,
     );

@@ -26,7 +26,7 @@ class MatchBoardRenderer extends PositionComponent
 
   final MatchBoardLogic logic;
 
-  static const double _slotRadiusRatio = 0.18;
+  static const double _cellCornerRatio = 0.04;
 
   /// 기본 보석 스프라이트 시트 열 0~6 (각 128×128).
   final List<Sprite?> _sheetSprites = List<Sprite?>.filled(7, null);
@@ -210,7 +210,7 @@ class MatchBoardRenderer extends PositionComponent
           MatchBoardLogic.flashAlpha;
       final fr = RRect.fromRectAndRadius(
         Rect.fromLTWH(fx.x + 4, fx.y + 4, fx.size - 8, fx.size - 8),
-        Radius.circular(ts * 0.12),
+        Radius.circular(ts * MatchBoardRenderer._cellCornerRatio),
       );
       _flashPaint.color = Colors.white.withValues(alpha: a);
       canvas.drawRRect(fr, _flashPaint);
@@ -234,7 +234,7 @@ class MatchBoardRenderer extends PositionComponent
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromLTWH(x + 2, y + 2, ts - 4, ts - 4),
-          Radius.circular(ts * 0.15),
+          Radius.circular(ts * MatchBoardRenderer._cellCornerRatio),
         ),
         _selectionPaint,
       );

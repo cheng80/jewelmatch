@@ -7,7 +7,7 @@ extension _MatchGameHudPainterCache on MatchGameHud {
       text: TextSpan(
         text: game.localeString('score', 'Score'),
         style: _ts(
-          size: 14 * t,
+          size: 12 * t,
           color: JewelCandyLuminaTheme.tertiaryGold.withValues(alpha: 0.92),
         ),
       ),
@@ -220,7 +220,7 @@ extension _MatchGameHudPainterCache on MatchGameHud {
       text: TextSpan(
         text: scoreText,
         style: _ts(
-          size: (game.isProgressionMode ? 29 : 40) * t,
+          size: (game.isProgressionMode ? 24 : 34) * t,
           color: const Color(0xFFFFFDE7),
           weight: FontWeight.bold,
         ),

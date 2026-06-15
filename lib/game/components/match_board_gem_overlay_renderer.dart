@@ -37,7 +37,7 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
       JewelCandyLuminaTheme.primaryPink,
       0.35,
     )!.withValues(alpha: alpha);
-    final radius = Radius.circular(ts * MatchBoardRenderer._slotRadiusRatio);
+    final radius = Radius.circular(ts * MatchBoardRenderer._cellCornerRatio);
     const pad = 3.0;
 
     void pulseCell(int r, int c) {
