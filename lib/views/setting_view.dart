@@ -28,7 +28,7 @@ class SettingView extends StatelessWidget {
               child: SizedBox(
                 height: frameHeight.clamp(0.0, constraints.maxHeight),
                 child: ObsidianFrame(
-                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
+                  padding: const EdgeInsets.fromLTRB(34, 56, 34, 58),
                   backgroundColor: JewelCandyLuminaTheme.surfaceContainer
                       .withValues(alpha: 0.94),
                   child: DecoratedBox(

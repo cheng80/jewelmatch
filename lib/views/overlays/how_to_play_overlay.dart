@@ -14,8 +14,20 @@ import 'how_to_play/text_styles.dart';
 
 /// "?" 버튼으로 열리는 게임 설명 오버레이.
 class HowToPlayOverlay extends StatelessWidget {
-  const HowToPlayOverlay({super.key, required this.game});
-  final MatchBoardGame game;
+  const HowToPlayOverlay({super.key, this.game, this.onClose})
+    : assert(game != null || onClose != null);
+
+  final MatchBoardGame? game;
+  final VoidCallback? onClose;
+
+  void _close() {
+    final closeHandler = onClose;
+    if (closeHandler != null) {
+      closeHandler();
+      return;
+    }
+    game?.closeHowToPlay();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +105,7 @@ class HowToPlayOverlay extends StatelessWidget {
               label: context.tr('continueGame'),
               onPressed: () {
                 SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                game.closeHowToPlay();
+                _close();
               },
             ),
           ),

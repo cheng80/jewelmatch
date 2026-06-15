@@ -11,6 +11,8 @@ import '../services/game_settings.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import '../widgets/ranking_list_popup.dart';
 import '../services/in_app_review_service.dart';
+import 'overlays/how_to_play_overlay.dart';
+import 'title/title_icon_button.dart';
 import 'title/player_name_dialog.dart';
 import 'title/title_round_button.dart';
 import 'title/title_version_footer.dart';
@@ -117,6 +119,23 @@ class _TitleContent extends StatelessWidget {
   final ValueChanged<String> onShowNameDialog;
   final PackageInfo? packageInfo;
 
+  void _showHowToPlayDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => Material(
+        color: Colors.transparent,
+        child: PhoneFrame(
+          child: HowToPlayOverlay(
+            onClose: () {
+              Navigator.of(ctx).pop();
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -127,6 +146,35 @@ class _TitleContent extends StatelessWidget {
           width: 338,
           fit: BoxFit.contain,
           filterQuality: FilterQuality.high,
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: 338,
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TitleIconButton(
+                  iconAssetPath: AssetPaths.modeIconSettings,
+                  semanticLabel: context.tr('settings'),
+                  onPressed: () {
+                    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                    context.push(RoutePaths.setting);
+                  },
+                ),
+                const SizedBox(width: 8),
+                TitleIconButton(
+                  iconAssetPath: AssetPaths.obsidianTutorialIcon,
+                  semanticLabel: context.tr('howToPlayTitle'),
+                  onPressed: () {
+                    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                    _showHowToPlayDialog(context);
+                  },
+                ),
+              ],
+            ),
+          ),
         ),
         const Spacer(flex: 1),
         TitleRoundButton(
@@ -156,16 +204,6 @@ class _TitleContent extends StatelessWidget {
           onPressed: () {
             SoundManager.playSfx(AssetPaths.sfxBtnSnd);
             onShowNameDialog('timed');
-          },
-        ),
-        const SizedBox(height: 10),
-        TitleRoundButton(
-          label: context.tr('settings'),
-          panelColor: TitleButtonPalette.blue,
-          iconAssetPath: AssetPaths.modeIconSettings,
-          onPressed: () {
-            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-            context.push(RoutePaths.setting);
           },
         ),
         const SizedBox(height: 6),

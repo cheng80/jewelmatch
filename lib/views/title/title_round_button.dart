@@ -19,6 +19,7 @@ class TitleRoundButton extends StatelessWidget {
   static const double _iconSize = 35;
   static const double _iconLeft = 22;
   static const double _letterSpacing = 1.2;
+  static const double _panelOpacity = 0.74;
 
   final String label;
   final Color panelColor;
@@ -38,14 +39,17 @@ class TitleRoundButton extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              ColorFiltered(
-                colorFilter: ColorFilter.mode(panelColor, BlendMode.modulate),
-                child: Image.asset(
-                  AssetPaths.modeButtonPanelBase,
-                  width: _width,
-                  height: _height,
-                  fit: BoxFit.fill,
-                  filterQuality: FilterQuality.high,
+              Opacity(
+                opacity: _panelOpacity,
+                child: ColorFiltered(
+                  colorFilter: ColorFilter.mode(panelColor, BlendMode.modulate),
+                  child: Image.asset(
+                    AssetPaths.modeButtonPanelBase,
+                    width: _width,
+                    height: _height,
+                    fit: BoxFit.fill,
+                    filterQuality: FilterQuality.high,
+                  ),
                 ),
               ),
               Image.asset(
