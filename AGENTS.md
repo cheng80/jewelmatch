@@ -28,6 +28,12 @@ Jewel Match는 Flutter + Flame 기반 8×8 매치-3 퍼즐 게임이다. 기본 
 - Linux 데스크톱 빌드에는 `libgtk-3-dev`, `cmake`, `ninja-build`, `clang`, `pkg-config` 패키지가 필요하다.
 - 랭킹 서버(PHP)는 선택사항이며, 앱은 서버 없이도 정상 동작한다.
 
+### QA 산출물 관리
+- QA 스크린샷, 시각 검증 이미지, 임시 캡처 파일을 레포 루트(`/Users/cheng80/Desktop/jewelmatch`)에 생성하지 않는다.
+- `*_qa.png`, `*_screenshot.png`, `*_preview.png` 같은 검증용 이미지는 `tmp/qa/` 또는 `tmp/imagegen/` 아래에만 저장한다.
+- 브라우저/Playwright/스크립트 캡처 경로를 지정할 때는 반드시 `tmp/qa/<작업명>.png`처럼 하위 임시 디렉터리를 명시한다.
+- 이미 레포 루트에 생성된 QA 이미지를 발견하면 새 산출물을 만들기 전에 `tmp/qa/`로 옮기거나 삭제한다.
+
 <!-- BEGIN GSTACK-CODEX MANAGED BLOCK -->
 ## gstack — AI Engineering Workflow
 
