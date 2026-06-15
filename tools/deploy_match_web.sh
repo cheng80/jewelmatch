@@ -193,6 +193,24 @@ mkdir -p "$PACKAGE_DIR"
 cp -R build/web/. "$PACKAGE_DIR/"
 log_info "copied current build/web into match/"
 
+cat > "$PACKAGE_DIR/.htaccess" <<'EOF'
+DirectoryIndex index.html
+ErrorDocument 404 /match/index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /match/
+
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  RewriteRule ^ index.html [L]
+</IfModule>
+EOF
+
+log_info "added SPA fallback rewrite: .htaccess"
+
 log_step 6 "zip 압축 및 NAS 업로드"
 log_info "zip path: $ZIP_PATH"
 zip -qry "$ZIP_PATH" "$(basename "$PACKAGE_DIR")"
