@@ -12,7 +12,6 @@ import 'components/match_board_renderer.dart';
 import 'components/match_game_hud.dart';
 import 'components/particle_burst.dart';
 import 'components/special_effect_pool.dart';
-import 'components/space_bg.dart';
 import 'jewel_game_mode.dart';
 import 'jewel_rank_progression.dart';
 import 'match_board_camera_shake.dart';
@@ -59,6 +58,9 @@ class MatchBoardGame extends FlameGame {
 
   final EdgeInsets safeAreaPadding;
   final JewelGameMode gameMode;
+
+  @override
+  Color backgroundColor() => Colors.black.withValues(alpha: 0.4);
 
   /// 남은 시간이 이 초 이하로 떨어지면 매 정수 초마다 [sfxTimeTic] 재생.
   static const int timedLowTimeTickMaxSeconds = 10;
@@ -164,7 +166,7 @@ class MatchBoardGame extends FlameGame {
       hudGapBeforeBoard;
 
   /// Flame 부트스트랩 (`code-flow-analysis.md` 5절과 같은 단계)
-  /// 1) super.onLoad  2) viewfinder  3) backdrop  4) viewport(HUD)  5) world(보드 렌더러)
+  /// 1) super.onLoad  2) viewfinder  3) viewport(HUD)  4) world(보드 렌더러)
   /// 실제 보석 채움은 `hasLayout`·`layoutRef`가 확보된 뒤 `onGameResize` → `_syncLayout`에서 수행.
   @override
   Future<void> onLoad() async {
@@ -172,7 +174,6 @@ class MatchBoardGame extends FlameGame {
     camera.viewfinder
       ..anchor = Anchor.topLeft
       ..position = Vector2.zero();
-    camera.backdrop.add(SpaceBg());
 
     _hud = MatchGameHud(
       onPausePressed: pauseGame,

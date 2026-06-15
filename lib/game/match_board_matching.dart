@@ -8,15 +8,8 @@ typedef MatchBoardTokenForGem = int? Function(BoardGem? gem);
 String matchBoardCellKey(int row, int col) => '$row:$col';
 
 int? gemMatchColorToken(BoardGem? gem) {
-  if (gem == null || gem.kind != GemKind.normal) return null;
+  if (gem == null || gem.kind == GemKind.hyper) return null;
   return gem.color;
-}
-
-int? gemSpecialKindMatchToken(BoardGem? gem) {
-  if (gem == null || gem.kind == GemKind.normal || gem.kind == GemKind.hyper) {
-    return null;
-  }
-  return -gem.kind.index;
 }
 
 void scanBoardMatchesBy({
@@ -107,13 +100,6 @@ MatchData findAllBoardMatches({
     cols: cols,
     getGem: getGem,
     tokenForGem: gemMatchColorToken,
-  );
-  scanBoardMatchesBy(
-    matchData: matchData,
-    rows: rows,
-    cols: cols,
-    getGem: getGem,
-    tokenForGem: gemSpecialKindMatchToken,
   );
   return matchData;
 }

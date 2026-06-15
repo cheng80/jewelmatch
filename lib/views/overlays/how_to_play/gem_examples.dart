@@ -5,6 +5,7 @@ import '../../../theme/jewel_candy_lumina_theme.dart';
 import '../../../widgets/sprite_sheet_frame.dart';
 
 const double howToPlayGemSize = 36;
+const double howToPlayOverlayRatio = 112 / 128;
 
 class HowToPlayMatchExample extends StatelessWidget {
   const HowToPlayMatchExample(this.cols, {super.key});
@@ -86,18 +87,33 @@ class HowToPlaySpecialGemClip extends StatelessWidget {
   }
 }
 
-class HowToPlayChargedGemClip extends StatelessWidget {
-  const HowToPlayChargedGemClip(this.sheetCol, {super.key});
+class HowToPlayOverlayGemClip extends StatelessWidget {
+  const HowToPlayOverlayGemClip({
+    super.key,
+    required this.sheetCol,
+    required this.overlayAssetPath,
+  });
 
   final int sheetCol;
+  final String overlayAssetPath;
 
   @override
   Widget build(BuildContext context) {
-    return SpriteSheetFrame(
-      assetPath: 'assets/images/${AssetPaths.chargedSpriteSheet}',
-      frameIndex: sheetCol,
-      frameSize: 128,
-      size: howToPlayGemSize,
+    return SizedBox.square(
+      dimension: howToPlayGemSize,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          HowToPlayGemClip(sheetCol),
+          Image.asset(
+            'assets/images/$overlayAssetPath',
+            width: howToPlayGemSize * howToPlayOverlayRatio,
+            height: howToPlayGemSize * howToPlayOverlayRatio,
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.medium,
+          ),
+        ],
+      ),
     );
   }
 }

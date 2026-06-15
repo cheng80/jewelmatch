@@ -119,6 +119,9 @@ flutter:
     - assets/images/backgrounds/
     - assets/images/sprites/
     - assets/images/ui/
+    - assets/images/ui/normal_buttons/
+    - assets/images/ui/mode_buttons/
+    - assets/images/ui/mode_icons/
     - assets/audio/
     - assets/audio/sfx/
     - assets/audio/music/

@@ -63,6 +63,8 @@ class MatchGameHud extends PositionComponent
   double _scoreBlockTop = 0;
   int? _cachedBest;
   int? _cachedBestProgressionLevel;
+  String? _cachedRankingTop1Name;
+  int? _cachedRankingTop1Score;
   double? _cachedHudTextScale;
   int? _cachedScore;
   int? _cachedTimedSeconds;

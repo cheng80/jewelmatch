@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../game/match_board_logic.dart';
+import '../../../resources/asset_paths.dart';
 import '../../../theme/jewel_candy_lumina_theme.dart';
 import 'gem_examples.dart';
 
@@ -78,20 +79,17 @@ class HowToPlaySpecialGemPreview extends StatelessWidget {
     final specialSheetCol = switch (kind) {
       GemKind.col => 0,
       GemKind.row => 1,
-      GemKind.bomb => 2,
       GemKind.normal ||
+      GemKind.bomb ||
       GemKind.star ||
       GemKind.hyper ||
       GemKind.supernova => null,
     };
-    final chargedSheetCol = switch (kind) {
-      GemKind.star => _chargedStarColFromGemCol(gemSheetCol),
-      GemKind.supernova => _chargedSupernovaColFromGemCol(gemSheetCol),
-      GemKind.normal ||
-      GemKind.row ||
-      GemKind.col ||
-      GemKind.bomb ||
-      GemKind.hyper => null,
+    final overlayAssetPath = switch (kind) {
+      GemKind.bomb => AssetPaths.flameOverlay,
+      GemKind.star => AssetPaths.starOverlay,
+      GemKind.supernova => AssetPaths.supernovaOverlay,
+      GemKind.normal || GemKind.row || GemKind.col || GemKind.hyper => null,
     };
 
     return SizedBox(
@@ -105,10 +103,13 @@ class HowToPlaySpecialGemPreview extends StatelessWidget {
               padding: const EdgeInsets.all(4),
               child: HowToPlaySpecialGemClip(specialSheetCol),
             )
-          else if (chargedSheetCol != null)
+          else if (overlayAssetPath != null && gemSheetCol != null)
             Padding(
               padding: const EdgeInsets.all(4),
-              child: HowToPlayChargedGemClip(chargedSheetCol),
+              child: HowToPlayOverlayGemClip(
+                sheetCol: gemSheetCol!,
+                overlayAssetPath: overlayAssetPath,
+              ),
             )
           else
             Padding(
@@ -120,27 +121,5 @@ class HowToPlaySpecialGemPreview extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  int? _chargedStarColFromGemCol(int? gemSheetCol) {
-    final colorIndex = _colorIndexFromGemSheetCol(gemSheetCol);
-    return colorIndex;
-  }
-
-  int? _chargedSupernovaColFromGemCol(int? gemSheetCol) {
-    final colorIndex = _colorIndexFromGemSheetCol(gemSheetCol);
-    return colorIndex == null ? null : 6 + colorIndex;
-  }
-
-  int? _colorIndexFromGemSheetCol(int? gemSheetCol) {
-    return switch (gemSheetCol) {
-      0 => 0,
-      6 => 1,
-      3 => 2,
-      2 => 3,
-      4 => 4,
-      5 => 5,
-      _ => null,
-    };
   }
 }

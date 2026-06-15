@@ -15,8 +15,8 @@ part 'match_board_gem_overlay_renderer.dart';
 part 'match_board_procedural_renderer.dart';
 
 /// 매치 보드 격자·보석·플래시·선택 표시.
-/// `Jewel_Arcane.png`(896×128, 7프레임×128), `Special_Arcane.png`(384×128),
-/// `Charged_Arcane.png`(1536×128, star/supernova 12프레임) 사용.
+/// `Jewel_Arcane.png`(896×128, 7프레임×128), row/col legacy 특수 시트,
+/// bomb/star/supernova 독립 오버레이 스프라이트 사용.
 ///
 /// 힌트: [MatchBoardLogic.showHint]가 고른 **한 쌍**만, 보석 위에 흰색 펄스(느리게 깜박임).
 /// 다른 칸에는 오버레이를 그리지 않는다.
@@ -30,16 +30,20 @@ class MatchBoardRenderer extends PositionComponent
 
   /// 기본 보석 스프라이트 시트 열 0~6 (각 128×128).
   final List<Sprite?> _sheetSprites = List<Sprite?>.filled(7, null);
-  final List<Sprite?> _chargedSprites = List<Sprite?>.filled(12, null);
   final Map<GemKind, Sprite?> _specialSprites = <GemKind, Sprite?>{};
+  final Map<GemKind, Sprite?> _overlaySprites = <GemKind, Sprite?>{};
 
   static const double _frameW = 128;
   static const double _frameH = 128;
   static const List<GemKind> _specialSheetKinds = <GemKind>[
     GemKind.col,
     GemKind.row,
-    GemKind.bomb,
   ];
+  static const Map<GemKind, String> _overlayAssetPaths = <GemKind, String>{
+    GemKind.bomb: AssetPaths.flameOverlay,
+    GemKind.star: AssetPaths.starOverlay,
+    GemKind.supernova: AssetPaths.supernovaOverlay,
+  };
 
   /// 힌트 펄스 위상 속도(낮을수록 느리게 한 박자).
   static const double _hintPulseHz = 0.32;
@@ -124,18 +128,16 @@ class MatchBoardRenderer extends PositionComponent
         _specialSprites[kind] = null;
       }
     }
-    try {
-      final img = await Flame.images.load(AssetPaths.chargedSpriteSheet);
-      for (var i = 0; i < _chargedSprites.length; i++) {
-        _chargedSprites[i] = Sprite(
+    for (final entry in _overlayAssetPaths.entries) {
+      try {
+        final img = await Flame.images.load(entry.value);
+        _overlaySprites[entry.key] = Sprite(
           img,
-          srcPosition: Vector2(i * _frameW, 0),
+          srcPosition: Vector2.zero(),
           srcSize: Vector2(_frameW, _frameH),
         );
-      }
-    } catch (_) {
-      for (var i = 0; i < _chargedSprites.length; i++) {
-        _chargedSprites[i] = null;
+      } catch (_) {
+        _overlaySprites[entry.key] = null;
       }
     }
     _rebuildBoardChromePicture();

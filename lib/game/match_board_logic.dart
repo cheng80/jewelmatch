@@ -270,8 +270,6 @@ class MatchBoardLogic {
 
   int? gemMatchColor(BoardGem? gem) => gemMatchColorToken(gem);
 
-  int? gemSpecialKindMatchCode(BoardGem? gem) => gemSpecialKindMatchToken(gem);
-
   bool causesImmediateMatch(int row, int col, int color) =>
       _causesImmediateMatchImpl(row, col, color);
 

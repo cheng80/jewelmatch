@@ -9,35 +9,58 @@ import 'special_gem_card.dart';
 class HowToPlaySpecialCreationGuide extends StatelessWidget {
   const HowToPlaySpecialCreationGuide({super.key});
 
+  static const int _flameExampleSheetCol = 0;
+  static const int _starExampleSheetCol = 2;
+  static const int _hyperExampleSheetCol = 3;
+  static const int _supernovaExampleSheetCol = 5;
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         _SpecialCreationRow(
-          before: const _CreationMatchRow([0, 0, 0, 0]),
+          before: const _CreationMatchRow([
+            _flameExampleSheetCol,
+            _flameExampleSheetCol,
+            _flameExampleSheetCol,
+            _flameExampleSheetCol,
+          ]),
           afterKind: GemKind.bomb,
-          afterSheetCol: 0,
+          afterSheetCol: _flameExampleSheetCol,
           label: context.tr('howToPlaySpecialMakeFlame'),
         ),
         const SizedBox(height: 10),
         _SpecialCreationRow(
           before: const _CreationCrossMatch(),
           afterKind: GemKind.star,
-          afterSheetCol: 3,
+          afterSheetCol: _starExampleSheetCol,
           label: context.tr('howToPlaySpecialMakeStar'),
         ),
         const SizedBox(height: 10),
         _SpecialCreationRow(
-          before: const _CreationMatchRow([3, 3, 3, 3, 3]),
+          before: const _CreationMatchRow([
+            _hyperExampleSheetCol,
+            _hyperExampleSheetCol,
+            _hyperExampleSheetCol,
+            _hyperExampleSheetCol,
+            _hyperExampleSheetCol,
+          ]),
           afterKind: GemKind.hyper,
           afterSheetCol: 1,
           label: context.tr('howToPlaySpecialMakeHyper'),
         ),
         const SizedBox(height: 10),
         _SpecialCreationRow(
-          before: const _CreationMatchRow([5, 5, 5, 5, 5, 5]),
+          before: const _CreationMatchRow([
+            _supernovaExampleSheetCol,
+            _supernovaExampleSheetCol,
+            _supernovaExampleSheetCol,
+            _supernovaExampleSheetCol,
+            _supernovaExampleSheetCol,
+            _supernovaExampleSheetCol,
+          ]),
           afterKind: GemKind.supernova,
-          afterSheetCol: 5,
+          afterSheetCol: _supernovaExampleSheetCol,
           label: context.tr('howToPlaySpecialMakeSupernova'),
         ),
       ],
@@ -164,7 +187,7 @@ class _CreationCrossMatch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const c = 2;
+    const c = HowToPlaySpecialCreationGuide._starExampleSheetCol;
     const cell = 42.0;
     return SizedBox(
       width: cell * 3,

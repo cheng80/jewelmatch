@@ -7,7 +7,14 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
     final top = g.safeAreaPadding.top + 10;
     final row1H = g.hudTopBarHeight;
 
-    final bestBlockW = math.max(_bestLabel.width, _bestValue.width);
+    final showsTopRanker =
+        g.isTimedMode &&
+        g.rankingTop1Name != null &&
+        g.rankingTop1Score != null;
+    final rankIconSize = showsTopRanker ? _bestLabel.height * 0.92 : 0.0;
+    final rankIconGap = showsTopRanker ? layout * 0.04 : 0.0;
+    final labelRowW = _bestLabel.width + rankIconSize + rankIconGap;
+    final bestBlockW = math.max(labelRowW, _bestValue.width);
     final gapBestTutorial = layout * 0.1;
     // 튜토리얼 왼쪽까지가 베스트 영역 오른쪽 끝. 랭킹 버튼 추가 시 bestRight를 왼쪽으로 당기면
     // 블록 전체가 일시정지·힌트 위로 겹친다 → 오른쪽 끝은 항상 튜토리얼 기준.
@@ -25,9 +32,22 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
     final slotBottom = top + row1H;
     canvas.save();
     canvas.clipRect(Rect.fromLTRB(minLeft, slotTop, bestRight, slotBottom));
+    final labelLeft = bestLeft + (bestBlockW - labelRowW) / 2;
+    if (showsTopRanker && _rankingCrownIconImage != null) {
+      final image = _rankingCrownIconImage!;
+      final iconTop = bestTop + (_bestLabel.height - rankIconSize) / 2;
+      canvas.drawImageRect(
+        image,
+        Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+        Rect.fromLTWH(labelLeft, iconTop, rankIconSize, rankIconSize),
+        Paint()
+          ..isAntiAlias = true
+          ..filterQuality = FilterQuality.high,
+      );
+    }
     _bestLabel.paint(
       canvas,
-      Offset(bestLeft + (bestBlockW - _bestLabel.width) / 2, bestTop),
+      Offset(labelLeft + rankIconSize + rankIconGap, bestTop),
     );
     _bestValue.paint(
       canvas,

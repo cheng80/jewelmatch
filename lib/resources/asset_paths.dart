@@ -47,6 +47,15 @@ class AssetPaths {
   /// 12열×128px 충전 보석 시트 (순서: star 1~6색, supernova 1~6색)
   static const String chargedSpriteSheet = 'sprites/Charged_Arcane.png';
 
+  /// 폭탄 보석용 독립 오버레이.
+  static const String flameOverlay = 'sprites/flame_overlay.png';
+
+  /// 별 보석용 독립 오버레이.
+  static const String starOverlay = 'sprites/star_overlay.png';
+
+  /// 초신성 보석용 독립 오버레이.
+  static const String supernovaOverlay = 'sprites/supernova_overlay.png';
+
   /// 고대 판타지 유적 배경. Flutter 위젯에서는 전체 assets 경로를 사용한다.
   static const String ancientRuinsSpaceBackground =
       'assets/images/backgrounds/ancient_ruins_space_bg.png';
@@ -75,4 +84,25 @@ class AssetPaths {
   /// 랭킹 버튼용 금속 왕관 아이콘.
   static const String obsidianRankingCrownIcon =
       'ui/obsidian_ranking_crown_icon.png';
+
+  static const String stoneMatchTitle =
+      'assets/images/ui/stone_match_title.png';
+  static const String modeButtonPanelBase =
+      'assets/images/ui/mode_buttons/mode_button_panel_base.png';
+  static const String modeButtonFrameFront =
+      'assets/images/ui/mode_buttons/mode_button_frame_front.png';
+  static const String normalButtonTintBg =
+      'assets/images/ui/normal_buttons/normal_button_tint_bg.png';
+  static const String normalButtonFrontFrame =
+      'assets/images/ui/normal_buttons/normal_button_front_frame.png';
+  static const String modeIconSimple =
+      'assets/images/ui/mode_icons/mode_icon_simple_infinity_256.png';
+  static const String modeIconProgression =
+      'assets/images/ui/mode_icons/mode_icon_progression_256.png';
+  static const String modeIconTimed =
+      'assets/images/ui/mode_icons/mode_icon_timed_hourglass_256.png';
+  static const String modeIconSettings =
+      'assets/images/ui/mode_icons/mode_icon_settings_gear_256.png';
+  static const String modeIconRanking =
+      'assets/images/ui/mode_icons/mode_icon_ranking_crown_256.png';
 }

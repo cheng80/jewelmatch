@@ -23,6 +23,12 @@ extension _MatchGameHudInteractions on MatchGameHud {
       return;
     }
 
+    if (_cachedRankingTop1Name != game.rankingTop1Name ||
+        _cachedRankingTop1Score != game.rankingTop1Score) {
+      _rebuildStaticPainters();
+      return;
+    }
+
     final timedModeChanged = _cachedTimedModeForText != game.hasTimedClock;
     final currentTimedSeconds = game.hasTimedClock
         ? game.timeRemaining.ceil().clamp(0, 99999)

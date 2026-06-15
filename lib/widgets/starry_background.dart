@@ -64,6 +64,7 @@ class _StarryBackgroundState extends State<StarryBackground>
       builder: (context, constraints) {
         final size = Size(constraints.maxWidth, constraints.maxHeight);
         final groups = _StarPool.groups(_groupCount);
+        final ruinsBackgroundSize = size.height;
 
         return Stack(
           children: [
@@ -94,26 +95,31 @@ class _StarryBackgroundState extends State<StarryBackground>
             Positioned.fill(
               child: RepaintBoundary(
                 child: Center(
-                  child: SizedBox(
-                    width: size.height,
-                    height: size.height,
-                    child: ShaderMask(
-                      blendMode: BlendMode.dstIn,
-                      shaderCallback: (bounds) => const LinearGradient(
-                        colors: [
-                          Colors.transparent,
-                          Color(0x99FFFFFF),
-                          Colors.white,
-                          Colors.white,
-                          Color(0x99FFFFFF),
-                          Colors.transparent,
-                        ],
-                        stops: [0, 0.08, 0.26, 0.74, 0.92, 1],
-                      ).createShader(bounds),
-                      child: Image.asset(
-                        AssetPaths.ancientRuinsSpaceBackground,
-                        fit: BoxFit.fill,
-                        filterQuality: FilterQuality.high,
+                  child: OverflowBox(
+                    minWidth: ruinsBackgroundSize,
+                    maxWidth: ruinsBackgroundSize,
+                    minHeight: ruinsBackgroundSize,
+                    maxHeight: ruinsBackgroundSize,
+                    child: SizedBox.square(
+                      dimension: ruinsBackgroundSize,
+                      child: ShaderMask(
+                        blendMode: BlendMode.dstIn,
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            Color(0x99FFFFFF),
+                            Colors.white,
+                            Colors.white,
+                            Color(0x99FFFFFF),
+                            Colors.transparent,
+                          ],
+                          stops: [0, 0.08, 0.26, 0.74, 0.92, 1],
+                        ).createShader(bounds),
+                        child: Image.asset(
+                          AssetPaths.ancientRuinsSpaceBackground,
+                          fit: BoxFit.fill,
+                          filterQuality: FilterQuality.high,
+                        ),
                       ),
                     ),
                   ),

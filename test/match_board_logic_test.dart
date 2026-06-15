@@ -119,21 +119,24 @@ void main() {
     expect(board.consumeSpecialEffectEvents(), isEmpty);
   });
 
-  test('non-hyper special hidden color does not match normal gems', () {
+  test('non-hyper special gem matches same-color normal gems', () {
     final board = _filledBoard();
     board.setGem(3, 1, board.createGem(3, 1, 2, GemKind.normal));
     board.setGem(3, 2, board.createGem(3, 2, 3, GemKind.normal));
     board.setGem(3, 3, board.createGem(3, 3, 2, GemKind.normal));
+    board.setGem(3, 4, board.createGem(3, 4, 5, GemKind.normal));
     board.setGem(4, 2, board.createGem(4, 2, 2, GemKind.star));
 
     final swapped = board.trySwap(3, 2, 4, 2);
 
-    expect(swapped, isFalse);
-    expect(board.getGem(3, 2)?.kind, GemKind.normal);
-    expect(board.getGem(4, 2)?.kind, GemKind.star);
+    expect(swapped, isTrue);
+    expect(
+      board.consumeSpecialEffectEvents().map((event) => event.effectKind),
+      contains(GemKind.star),
+    );
   });
 
-  test('non-hyper special gems can match by visible kind after a swap', () {
+  test('non-hyper special gems do not match by kind across colors', () {
     final board = _filledBoard();
     board.setGem(4, 0, board.createGem(4, 0, 6, GemKind.normal));
     board.setGem(4, 1, board.createGem(4, 1, 1, GemKind.bomb));
@@ -142,11 +145,8 @@ void main() {
 
     final swapped = board.trySwap(4, 0, 5, 0);
 
-    expect(swapped, isTrue);
-    expect(
-      board.consumeSpecialEffectEvents().map((event) => event.effectKind),
-      contains(GemKind.bomb),
-    );
+    expect(swapped, isFalse);
+    expect(board.consumeSpecialEffectEvents(), isEmpty);
   });
 
   test('hyper gem still triggers by swapping with a normal gem', () {
@@ -183,7 +183,7 @@ void main() {
     },
   );
 
-  test('screenshot board has no valid moves after visual match rules', () {
+  test('screenshot board has valid moves under color match rules', () {
     final board = MatchBoardLogic(rows: 8, cols: 8);
     _setRows(board, const [
       [5, 1, 3, 3, 5, 1, 1, 6],
@@ -198,8 +198,8 @@ void main() {
 
     final moves = board.getAllValidMoves();
 
-    expect(moves, isEmpty);
-    expect(board.showHint(), isFalse);
+    expect(moves, isNotEmpty);
+    expect(board.showHint(), isTrue);
   });
 
   test('showHint chooses cells that produce a valid swap', () {

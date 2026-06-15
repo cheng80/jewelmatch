@@ -4,11 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-import '../app_config.dart' show AppConfig, RoutePaths;
+import '../app_config.dart' show RoutePaths;
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import '../services/game_settings.dart';
-import '../theme/jewel_candy_lumina_theme.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import '../widgets/ranking_list_popup.dart';
 import '../services/in_app_review_service.dart';
@@ -122,91 +121,58 @@ class _TitleContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Spacer(flex: 3),
-        Text(
-          context.tr('gameTitle'),
-          style: TextStyle(
-            fontSize: 64,
-            fontWeight: FontWeight.bold,
-            color: JewelCandyLuminaTheme.textHero.withValues(alpha: 0.92),
-            letterSpacing: 8,
-          ),
+        const Spacer(flex: 2),
+        Image.asset(
+          AssetPaths.stoneMatchTitle,
+          width: 338,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.high,
         ),
-        Text(
-          AppConfig.gameTitleSub,
-          style: TextStyle(
-            fontSize: 88,
-            fontWeight: FontWeight.bold,
-            color: JewelCandyLuminaTheme.goldStrong,
-            letterSpacing: 6,
-            shadows: [
-              Shadow(
-                color: JewelCandyLuminaTheme.goldStrong.withValues(alpha: 0.36),
-                blurRadius: 18,
-              ),
-              Shadow(
-                color: JewelCandyLuminaTheme.primaryDeep.withValues(alpha: 0.9),
-                offset: const Offset(2, 2),
-                blurRadius: 0,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          context.tr('gameSubtitle'),
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 22,
-            color: JewelCandyLuminaTheme.tertiaryGold.withValues(alpha: 0.75),
-          ),
-        ),
-        const Spacer(flex: 3),
+        const Spacer(flex: 1),
         TitleRoundButton(
           label: context.tr('modeSimple'),
-          gradientColors: JewelCandyLuminaTheme.buttonPrimaryPink,
+          panelColor: TitleButtonPalette.teal,
+          iconAssetPath: AssetPaths.modeIconSimple,
           onPressed: () {
             SoundManager.playSfx(AssetPaths.sfxBtnSnd);
             context.go(_gameRoute('simple'));
           },
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 6),
         TitleRoundButton(
           label: context.tr('modeProgression'),
-          gradientColors: JewelCandyLuminaTheme.buttonShuffleCyanLime,
+          panelColor: TitleButtonPalette.purple,
+          iconAssetPath: AssetPaths.modeIconProgression,
           onPressed: () {
             SoundManager.playSfx(AssetPaths.sfxBtnSnd);
             onShowNameDialog('progression');
           },
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 6),
         TitleRoundButton(
           label: context.tr('modeTimed'),
-          gradientColors: JewelCandyLuminaTheme.buttonRetryMagOr,
+          panelColor: TitleButtonPalette.brown,
+          iconAssetPath: AssetPaths.modeIconTimed,
           onPressed: () {
             SoundManager.playSfx(AssetPaths.sfxBtnSnd);
             onShowNameDialog('timed');
           },
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
         TitleRoundButton(
           label: context.tr('settings'),
-          gradientColors: const [
-            JewelCandyLuminaTheme.outlineBright,
-            JewelCandyLuminaTheme.goldStrong,
-          ],
+          panelColor: TitleButtonPalette.blue,
+          iconAssetPath: AssetPaths.modeIconSettings,
           onPressed: () {
             SoundManager.playSfx(AssetPaths.sfxBtnSnd);
             context.push(RoutePaths.setting);
           },
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 6),
         TitleRoundButton(
           label: context.tr('rankingTitle'),
-          gradientColors: const [
-            JewelCandyLuminaTheme.tertiaryGold,
-            JewelCandyLuminaTheme.goldStrong,
-          ],
+          panelColor: TitleButtonPalette.charcoal,
+          iconAssetPath: AssetPaths.modeIconRanking,
           onPressed: () {
             SoundManager.playSfx(AssetPaths.sfxBtnSnd);
             showDialog<void>(
@@ -226,7 +192,6 @@ class _TitleContent extends StatelessWidget {
             );
           },
         ),
-        const SizedBox(height: 8),
         const Spacer(flex: 1),
         TitleVersionFooter(packageInfo: packageInfo),
         const Spacer(flex: 2),

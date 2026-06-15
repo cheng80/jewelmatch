@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jewelmatch/resources/asset_paths.dart';
 import 'package:jewelmatch/views/title/title_round_button.dart';
 import 'package:jewelmatch/widgets/obsidian_frame.dart';
 
@@ -36,7 +37,8 @@ void main() {
           body: Center(
             child: TitleRoundButton(
               label: '무한',
-              gradientColors: const [Colors.black, Colors.black],
+              panelColor: TitleButtonPalette.teal,
+              iconAssetPath: AssetPaths.modeIconSimple,
               onPressed: () {},
             ),
           ),

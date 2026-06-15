@@ -19,6 +19,8 @@ extension _MatchGameHudPainterCache on MatchGameHud {
     final top1Score = game.rankingTop1Score;
     final best = _cachedBest;
     final bestProgressionLevel = _cachedBestProgressionLevel;
+    _cachedRankingTop1Name = top1Name;
+    _cachedRankingTop1Score = top1Score;
 
     String bestLabelText;
     String bestValueText;
@@ -26,25 +28,11 @@ extension _MatchGameHudPainterCache on MatchGameHud {
       bestValueText = _fmt.format(top1Score);
       _bestLabel = TextPainter(
         text: TextSpan(
-          children: [
-            TextSpan(
-              text: '👑 ',
-              style: TextStyle(
-                fontFamily: AssetPaths.fontNexonLv2Gothic,
-                fontSize: 12 * t,
-                color: JewelCandyLuminaTheme.tertiaryGold,
-              ),
-            ),
-            TextSpan(
-              text: top1Name,
-              style: _ts(
-                size: 12 * t,
-                color: JewelCandyLuminaTheme.secondaryCyan.withValues(
-                  alpha: 0.95,
-                ),
-              ),
-            ),
-          ],
+          text: top1Name,
+          style: _ts(
+            size: 12 * t,
+            color: JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.95),
+          ),
         ),
         textDirection: ui.TextDirection.ltr,
       )..layout();
