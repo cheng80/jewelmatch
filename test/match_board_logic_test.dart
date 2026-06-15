@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:jewelmatch/game/match_board_logic.dart';
+import 'package:stonematch/game/match_board_logic.dart';
 
 void main() {
   test('4 in a row creates a flame gem', () {

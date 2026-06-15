@@ -3,7 +3,7 @@
 ## Cursor Cloud specific instructions
 
 ### Overview
-Jewel Match는 Flutter + Flame 기반 8×8 매치-3 퍼즐 게임이다. 기본 명령어는 `README.md` 참조.
+Stone Match는 Flutter + Flame 기반 8×8 매치-3 퍼즐 게임이다. 기본 명령어는 `README.md` 참조.
 
 ### Communication
 - 항상 한국어로 대화한다.

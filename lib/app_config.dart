@@ -6,8 +6,8 @@ class AppConfig {
   /// iOS/MacOS: App Store Connect > General > App Information > Apple ID. 출시 시 설정.
   static const String appStoreId = '';
 
-  static const String appTitle = '쥬얼 매치';
-  static const String gameTitle = 'Jewel';
+  static const String appTitle = 'Stone Match';
+  static const String gameTitle = 'Stone';
   static const String gameTitleSub = 'Match';
   static const String gameSubtitle = '같은 보석을 모아보세요!';
   static const bool debugLog = false;

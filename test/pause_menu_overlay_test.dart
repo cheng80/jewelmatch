@@ -2,10 +2,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:jewelmatch/game/jewel_game_mode.dart';
-import 'package:jewelmatch/game/match_board_game.dart';
-import 'package:jewelmatch/utils/storage_helper.dart';
-import 'package:jewelmatch/views/overlays/pause_menu_overlay.dart';
+import 'package:stonematch/game/jewel_game_mode.dart';
+import 'package:stonematch/game/match_board_game.dart';
+import 'package:stonematch/utils/storage_helper.dart';
+import 'package:stonematch/views/overlays/pause_menu_overlay.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

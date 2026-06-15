@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.cheng80" "\0"
-            VALUE "FileDescription", "jewelmatch" "\0"
+            VALUE "FileDescription", "stonematch" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "jewelmatch" "\0"
+            VALUE "InternalName", "stonematch" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.cheng80. All rights reserved." "\0"
-            VALUE "OriginalFilename", "jewelmatch.exe" "\0"
-            VALUE "ProductName", "jewelmatch" "\0"
+            VALUE "OriginalFilename", "stonematch.exe" "\0"
+            VALUE "ProductName", "stonematch" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

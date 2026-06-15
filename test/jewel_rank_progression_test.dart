@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:jewelmatch/game/jewel_rank_progression.dart';
-import 'package:jewelmatch/game/match_board_models.dart';
+import 'package:stonematch/game/jewel_rank_progression.dart';
+import 'package:stonematch/game/match_board_models.dart';
 
 void main() {
   test('levelForXp follows 250k growing thresholds', () {
@@ -11,7 +11,7 @@ void main() {
     expect(JewelRankProgression.levelForXp(750000), 3);
   });
 
-  test('xpFromScore scales Jewel Match scoring to rank XP', () {
+  test('xpFromScore scales Stone Match scoring to rank XP', () {
     expect(JewelRankProgression.xpFromScore(2500), 250000);
   });
 

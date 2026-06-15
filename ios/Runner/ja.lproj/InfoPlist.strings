@@ -1,3 +1,3 @@
 /* App display name under icon */
-CFBundleDisplayName = "ジュエルマッチ";
-CFBundleName = "ジュエルマッチ";
+CFBundleDisplayName = "Stone Match";
+CFBundleName = "Stone Match";

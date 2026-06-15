@@ -1,6 +1,6 @@
-# Jewel Match (jewelmatch)
+# Stone Match (stonematch)
 
-Flame 기반 **8×8 매치-3** 퍼즐 (`com.cheng80.jewelmatch`).
+Flame 기반 **8×8 매치-3** 퍼즐 (`com.cheng80.stonematch`).
 
 ## 기술 스택
 
@@ -76,8 +76,8 @@ lib/
 - **타임**: 정수 초 보상(배율 적용·반올림). 설계상 양수 보상이면 **최소 1초**, 상한 **초과분 제외**.
 - 스왑·매치·낙하·콤보·특수 보석 로직은 `MatchBoardLogic`, 그리기는 `MatchBoardRenderer` + HUD는 `MatchGameHud`.
 
-상세 실행 순서·파일 역할: [`docs/code-flow-analysis.md`](docs/code-flow-analysis.md)  
-규칙·플로우 요약: [`docs/game_flow.md`](docs/game_flow.md)
+상세 실행 순서·파일 역할: [`docs/architecture/code-flow-analysis.md`](docs/architecture/code-flow-analysis.md)  
+규칙·플로우 요약: [`docs/architecture/game_flow.md`](docs/architecture/game_flow.md)
 
 ---
 
@@ -97,16 +97,20 @@ flutter run
 | Android / iOS | `flutter build apk` / `flutter build ios` |
 | Web | `flutter build web --release --base-href "/match/" && dart run tools/patch_flutter_web_deprecations.dart` |
 
-Web 배포·서브패스 설정: [`docs/web_build.md`](docs/web_build.md)
+Web 배포·서브패스 설정: [`docs/tools/web_build.md`](docs/tools/web_build.md)
 
 ## 문서
 
 | 문서 | 내용 |
 |------|------|
 | [`START_HERE.md`](START_HERE.md) | **세션 시작 시 먼저 읽기** — 우선 작업·문서 순서 |
-| [`docs/jewel_match_execution_checklist.md`](docs/jewel_match_execution_checklist.md) | 진행·배포 체크리스트 |
-| [`docs/code-flow-analysis.md`](docs/code-flow-analysis.md) | 초기화·레이아웃·Flame 계층 |
-| [`docs/game_flow.md`](docs/game_flow.md) | 매치-3 플레이 흐름 요약 |
-| [`docs/web_build.md`](docs/web_build.md) | Web 빌드·배포 |
-| [`docs/audio_aisfx_prompts.md`](docs/audio_aisfx_prompts.md) | SFX·BGM 프롬프트·파일 매핑 |
-| [`docs/supertonic_tts_sfx.md`](docs/supertonic_tts_sfx.md) | Supertonic TTS 임시 SFX 생성·연결 방법 |
+| [`docs/README.md`](docs/README.md) | 문서 맵 — 주제별 문서 위치 |
+| [`docs/planning/stone_match_execution_checklist.md`](docs/planning/stone_match_execution_checklist.md) | 진행·배포 체크리스트 |
+| [`docs/architecture/code-flow-analysis.md`](docs/architecture/code-flow-analysis.md) | 초기화·레이아웃·Flame 계층 |
+| [`docs/architecture/game_flow.md`](docs/architecture/game_flow.md) | 매치-3 플레이 흐름 요약 |
+| [`docs/tools/web_build.md`](docs/tools/web_build.md) | Web 빌드·배포 |
+| [`docs/release/release_checklist.md`](docs/release/release_checklist.md) | 스토어 출시 체크리스트 |
+| [`docs/release/release_build.md`](docs/release/release_build.md) | Android/iOS/Web 릴리즈 빌드 |
+| [`docs/release/store_metadata_play_appstore_2026.md`](docs/release/store_metadata_play_appstore_2026.md) | 스토어 등록 메타데이터 초안 |
+| [`docs/tools/audio_aisfx_prompts.md`](docs/tools/audio_aisfx_prompts.md) | SFX·BGM 프롬프트·파일 매핑 |
+| [`docs/tools/web_audio_flutter_flame.md`](docs/tools/web_audio_flutter_flame.md) | Flutter Web + Flame 오디오 정책 |

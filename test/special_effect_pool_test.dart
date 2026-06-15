@@ -1,9 +1,9 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:jewelmatch/game/components/special_effect_burst.dart';
-import 'package:jewelmatch/game/components/special_effect_pool.dart';
-import 'package:jewelmatch/game/match_board_logic.dart';
+import 'package:stonematch/game/components/special_effect_burst.dart';
+import 'package:stonematch/game/components/special_effect_pool.dart';
+import 'package:stonematch/game/match_board_logic.dart';
 
 void main() {
   test('special effect pool reuses expired burst instances', () {

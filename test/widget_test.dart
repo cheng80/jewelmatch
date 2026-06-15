@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:jewelmatch/game/jewel_game_mode.dart';
-import 'package:jewelmatch/game/match_board_game.dart';
+import 'package:stonematch/game/jewel_game_mode.dart';
+import 'package:stonematch/game/match_board_game.dart';
 
 void main() {
   test('MatchBoardGame simple / timed', () {

@@ -1,6 +1,6 @@
 <?php
 /**
- * Jewel Match — 아케이드 랭킹 API (단일 파일).
+ * Stone Match — 아케이드 랭킹 API (단일 파일).
  *
  * GET  ?action=list&mode=time|level   → 상위 30명 반환
  * GET  ?action=top1&mode=time|level   → 1위만 반환 (HUD 표시용)

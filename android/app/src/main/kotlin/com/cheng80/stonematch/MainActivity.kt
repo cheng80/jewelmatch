@@ -1,4 +1,4 @@
-package com.cheng80.jewelmatch
+package com.cheng80.stonematch
 
 import io.flutter.embedding.android.FlutterActivity
 

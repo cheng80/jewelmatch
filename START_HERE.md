@@ -7,7 +7,7 @@
 
 ## 대화 시작 시 한 줄
 
-**「`START_HERE.md`와 `docs/jewel_match_execution_checklist.md`를 읽고, §1 문서 순서대로 훑은 뒤 §3 우선 작업부터 진행하자.」**
+**「`START_HERE.md`와 `docs/planning/stone_match_execution_checklist.md`를 읽고, §1 문서 순서대로 훑은 뒤 §3 우선 작업부터 진행하자.」**
 
 ---
 
@@ -16,20 +16,23 @@
 | 순서 | 문서 | 할 일 |
 |:---:|:---|:---|
 | 1 | **이 파일** (`START_HERE.md`) | §2 현재 포커스, §3 다음 작업만 먼저 확인 |
-| 2 | [`docs/jewel_match_execution_checklist.md`](docs/jewel_match_execution_checklist.md) | 체크 안 된 항목·보류 항목 확인 |
+| 2 | [`docs/planning/stone_match_execution_checklist.md`](docs/planning/stone_match_execution_checklist.md) | 체크 안 된 항목·보류 항목 확인 |
 | 3 | [`README.md`](README.md) | 디렉터리 구조, 라우팅, 빌드 명령 |
-| 4 | [`docs/game_flow.md`](docs/game_flow.md) | 매치 규칙·모드·오버레이 플로우 |
-| 5 | [`docs/code-flow-analysis.md`](docs/code-flow-analysis.md) | `main` → `GameView` → `MatchBoardGame` 초기화·파일 역할 |
-| 6 | [`docs/web_build.md`](docs/web_build.md) | Web `--base-href`·배포 시 주의 (서브패스 `/match/` 등) |
-| 7 | [`docs/audio_aisfx_prompts.md`](docs/audio_aisfx_prompts.md) | SFX·BGM 파일명·프롬프트·코드 매핑 변경 시 |
-| 8 | [`docs/web_audio_flutter_flame.md`](docs/web_audio_flutter_flame.md) | Web 오디오 정책 메모 — 현재 기준은 **웹 SFX 풀링/prime 실험 코드 유지 상태(완전 안정은 아님)** |
+| 4 | [`docs/README.md`](docs/README.md) | 주제별 문서 위치 확인 |
+| 5 | [`docs/architecture/game_flow.md`](docs/architecture/game_flow.md) | 매치 규칙·모드·오버레이 플로우 |
+| 6 | [`docs/architecture/code-flow-analysis.md`](docs/architecture/code-flow-analysis.md) | `main` → `GameView` → `MatchBoardGame` 초기화·파일 역할 |
+| 7 | [`docs/tools/web_build.md`](docs/tools/web_build.md) | Web `--base-href`·배포 시 주의 (서브패스 `/match/` 등) |
+| 8 | [`docs/tools/audio_aisfx_prompts.md`](docs/tools/audio_aisfx_prompts.md) | SFX·BGM 파일명·프롬프트·코드 매핑 변경 시 |
+| 9 | [`docs/tools/web_audio_flutter_flame.md`](docs/tools/web_audio_flutter_flame.md) | Web 오디오 정책 메모 — 현재 기준은 **웹 SFX 풀링/prime 실험 코드 유지 상태(완전 안정은 아님)** |
+| 10 | [`docs/release/release_checklist.md`](docs/release/release_checklist.md) | 스토어·웹 출시 준비 시 |
+| 11 | [`docs/release/store_metadata_play_appstore_2026.md`](docs/release/store_metadata_play_appstore_2026.md) | Play/App Store 등록 문구 준비 시 |
 
 ---
 
 ## 2. 현재 포커스
 
 - 현재 우선순위는 **최적화 후속 점검과 배포 전 정합 확인**이다.
-- 구조·완료 이력은 [`docs/code-flow-analysis.md`](docs/code-flow-analysis.md), [`docs/game_flow.md`](docs/game_flow.md), [`docs/jewel_match_execution_checklist.md`](docs/jewel_match_execution_checklist.md)에 정리되어 있다.
+- 구조·완료 이력은 [`docs/architecture/code-flow-analysis.md`](docs/architecture/code-flow-analysis.md), [`docs/architecture/game_flow.md`](docs/architecture/game_flow.md), [`docs/planning/stone_match_execution_checklist.md`](docs/planning/stone_match_execution_checklist.md)에 정리되어 있다.
 - Web 작업 시 핵심 쟁점은 `base-href`, 에셋 경로, 랭킹 API 경로, 오디오 unlock 정책이다.
 - 최근 코드상 주의 포인트:
   - 보석 시트는 `Jewel.png` `128×128` 기준이며 하이퍼는 2번째 프레임이다.
@@ -43,7 +46,7 @@
 
 새 세션에서 바로 확인할 것:
 
-1. **[`docs/jewel_match_execution_checklist.md`](docs/jewel_match_execution_checklist.md)** 의 미체크 항목 확인.
+1. **[`docs/planning/stone_match_execution_checklist.md`](docs/planning/stone_match_execution_checklist.md)** 의 미체크 항목 확인.
 2. **랭킹:** NAS `matchranking/` 경로·`ranking_data.json` 쓰기 권한·`RankingService` base URL이 실제 배포와 일치하는지.
 3. 체크리스트의 **후속 최적화 점검** 항목
    - 전체 `ConsumerWidget` / `setState` rebuild 범위 재점검
@@ -52,9 +55,10 @@
 
 단기적으로 자주 나오는 작업:
 
-- Web 릴리즈: `docs/web_build.md` 명령으로 빌드 → `build/web/` 업로드 경로와 `base-href` 일치 검증. **`matchranking/`는 플러터 웹 빌드 업로드와 별도 경로에 두기 (배포 시 JSON 유실 방지).**
-- 오디오 교체: 파일 추가 후 `AssetPaths`·`SoundManager.preload`·`audio_aisfx_prompts.md` 함께 수정.
+- Web 릴리즈: `docs/tools/web_build.md` 명령으로 빌드 → `build/web/` 업로드 경로와 `base-href` 일치 검증. **`matchranking/`는 플러터 웹 빌드 업로드와 별도 경로에 두기 (배포 시 JSON 유실 방지).**
+- 오디오 교체: 파일 추가 후 `AssetPaths`·`SoundManager.preload`·`docs/tools/audio_aisfx_prompts.md` 함께 수정.
 - 번역·도움말 문구 추가 시 `assets/translations/*.json` 다국어 동시 반영.
+- 스토어 출시 준비: `docs/release/release_checklist.md` → `docs/release/release_build.md` → `docs/release/store_metadata_play_appstore_2026.md` 순서로 확인.
 
 ---
 
@@ -74,7 +78,7 @@
 | HUD | `lib/game/components/match_game_hud.dart` |
 | 렌더 | `lib/game/components/match_board_renderer.dart` |
 | 파티클 | `lib/game/components/particle_burst.dart` |
-| 사운드 | `lib/resources/sound_manager.dart`, `asset_paths.dart` — 웹 이슈는 [`docs/web_audio_flutter_flame.md`](docs/web_audio_flutter_flame.md) |
+| 사운드 | `lib/resources/sound_manager.dart`, `asset_paths.dart` — 웹 이슈는 [`docs/tools/web_audio_flutter_flame.md`](docs/tools/web_audio_flutter_flame.md) |
 | 랭킹 API·클라이언트 | `lib/services/ranking_service.dart`, 서버 `matchranking/ranking.php` |
 
 ---
@@ -83,14 +87,15 @@
 
 작업을 끊기 전에 최소한 아래를 갱신한다.
 
-1. 끝낸 일이 있으면 [`docs/jewel_match_execution_checklist.md`](docs/jewel_match_execution_checklist.md) 체크박스 갱신.
-2. 플로우·초기화·큰 책임 변경이 있으면 [`docs/code-flow-analysis.md`](docs/code-flow-analysis.md) 또는 [`docs/game_flow.md`](docs/game_flow.md) 중 해당 부분 수정.
-3. 오디오 파일명·용도를 바꿨으면 [`docs/audio_aisfx_prompts.md`](docs/audio_aisfx_prompts.md) 수정.
-4. Web 배포 절차·URL 정책이 바뀌었으면 [`docs/web_build.md`](docs/web_build.md) 수정.
-5. **다음에 이어질 수 있게 이 파일의 §2·§3을 최신 상태로 유지.**
+1. 끝낸 일이 있으면 [`docs/planning/stone_match_execution_checklist.md`](docs/planning/stone_match_execution_checklist.md) 체크박스 갱신.
+2. 플로우·초기화·큰 책임 변경이 있으면 [`docs/architecture/code-flow-analysis.md`](docs/architecture/code-flow-analysis.md) 또는 [`docs/architecture/game_flow.md`](docs/architecture/game_flow.md) 중 해당 부분 수정.
+3. 오디오 파일명·용도를 바꿨으면 [`docs/tools/audio_aisfx_prompts.md`](docs/tools/audio_aisfx_prompts.md) 수정.
+4. Web 배포 절차·URL 정책이 바뀌었으면 [`docs/tools/web_build.md`](docs/tools/web_build.md) 수정.
+5. 스토어 메타데이터·스크린샷·릴리즈 절차가 바뀌었으면 `docs/release/` 문서 수정.
+6. **다음에 이어질 수 있게 이 파일의 §2·§3을 최신 상태로 유지.**
 
 ---
 
 ## 6. 한 줄 요약
 
-**다음 세션은 `START_HERE.md` → 체크리스트 → `game_flow` / `code-flow-analysis` 순으로 읽고, Web은 `base-href`·에셋 경로·랭킹 API URL·NAS 배포 분리, 네이티브는 스토어·오디오·문서 동기화를 우선 보면 된다.**
+**다음 세션은 `START_HERE.md` → 체크리스트 → `docs/architecture/game_flow.md` / `docs/architecture/code-flow-analysis.md` 순으로 읽고, Web은 `base-href`·에셋 경로·랭킹 API URL·NAS 배포 분리, 네이티브는 스토어·오디오·문서 동기화를 우선 보면 된다.**

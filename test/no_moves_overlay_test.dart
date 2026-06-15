@@ -1,9 +1,9 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:jewelmatch/game/jewel_game_mode.dart';
-import 'package:jewelmatch/game/match_board_game.dart';
-import 'package:jewelmatch/views/overlays/no_moves_overlay.dart';
+import 'package:stonematch/game/jewel_game_mode.dart';
+import 'package:stonematch/game/match_board_game.dart';
+import 'package:stonematch/views/overlays/no_moves_overlay.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

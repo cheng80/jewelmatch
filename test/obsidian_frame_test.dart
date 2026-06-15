@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:jewelmatch/resources/asset_paths.dart';
-import 'package:jewelmatch/views/title/title_round_button.dart';
-import 'package:jewelmatch/widgets/obsidian_frame.dart';
+import 'package:stonematch/resources/asset_paths.dart';
+import 'package:stonematch/views/title/title_round_button.dart';
+import 'package:stonematch/widgets/obsidian_frame.dart';
 
 void main() {
   testWidgets('standard button frame paints at compact overlay height', (

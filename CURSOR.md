@@ -49,7 +49,7 @@
 
 ## 반응형 레이아웃 (세로·iPhone / iPad)
 
-- **폰 기준 세로 UI + 태블릿에서 가로 여백·배경만 확장**하는 패턴은 `docs/DESIGN.md`의 responsive frame 규칙을 따른다.
+- **폰 기준 세로 UI + 태블릿에서 가로 여백·배경만 확장**하는 패턴은 `DESIGN.md`의 responsive frame 규칙을 따른다.
 - 새 화면·`GameWidget` 래퍼를 만들 때 배경과 콘텐츠 프레임을 분리하고, 논리 해상도·`FittedBox`·`MediaQuery` 덮어쓰기 적용 여부를 그 문서와 맞출 것.
 
 ---

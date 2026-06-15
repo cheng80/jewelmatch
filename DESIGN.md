@@ -1,8 +1,8 @@
-# Jewel Match Design
+# Stone Match Design
 
 ## Core Direction
 
-Jewel Match uses an ancient fantasy temple UI: obsidian stone, aged brass, teal magic, and restrained red danger accents. The jewels are the brightest objects on screen. UI chrome must support the jewels, not compete with them.
+Stone Match uses an ancient fantasy temple UI: obsidian stone, aged brass, teal magic, and restrained red danger accents. The jewels are the brightest objects on screen. UI chrome must support the jewels, not compete with them.
 
 ## Visual Hierarchy
 

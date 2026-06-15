@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:jewelmatch/game/jewel_game_mode.dart';
-import 'package:jewelmatch/services/game_settings.dart';
-import 'package:jewelmatch/utils/storage_helper.dart';
+import 'package:stonematch/game/jewel_game_mode.dart';
+import 'package:stonematch/services/game_settings.dart';
+import 'package:stonematch/utils/storage_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

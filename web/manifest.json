@@ -1,11 +1,11 @@
 {
-    "name": "Jewel Match",
-    "short_name": "Jewel Match",
+    "name": "Stone Match",
+    "short_name": "Stone Match",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",
     "theme_color": "#FFFFFF",
-    "description": "Jewel Match — 보석 매칭 퍼즐 게임.",
+    "description": "Stone Match — 보석 매칭 퍼즐 게임.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -1,9 +1,9 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:jewelmatch/services/game_settings.dart';
-import 'package:jewelmatch/utils/storage_helper.dart';
-import 'package:jewelmatch/views/title/player_name_dialog.dart';
+import 'package:stonematch/services/game_settings.dart';
+import 'package:stonematch/utils/storage_helper.dart';
+import 'package:stonematch/views/title/player_name_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

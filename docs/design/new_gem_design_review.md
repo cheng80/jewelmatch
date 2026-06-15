@@ -4,7 +4,7 @@ Date: 2026-06-13
 
 ## Goal
 
-Replace the current normal gem sprites that are visually close to Bejeweled 3 with an original Jewel Match design language.
+Replace the current normal gem sprites that are visually close to Bejeweled 3 with an original Stone Match design language.
 
 The current runtime uses:
 
@@ -68,7 +68,7 @@ Strengths:
 
 - Least similar to Bejeweled-style gemstone cuts.
 - Carved charm language is distinctive.
-- Special gems can become a clear Jewel Match signature if simplified.
+- Special gems can become a clear Stone Match signature if simplified.
 
 Risks:
 
