@@ -2,6 +2,8 @@
 
 Stone Match의 하단 아이템 슬롯, 인벤토리, 스테이지 종료 보상, 광고/코인/인앱 확장을 위한 기획 문서다. 이 문서는 구현 전 기준을 맞추기 위한 플랜이며, 실제 밸런스와 수익화 범위는 플레이 테스트 지표를 보고 조정한다.
 
+상세 구현 체크리스트는 [`item_slot_market_implementation_checklist.md`](item_slot_market_implementation_checklist.md)를 기준으로 갱신한다.
+
 ## 최종 목표
 
 - 한 스테이지에 최대 4개 아이템 슬롯을 제공한다.
