@@ -8,9 +8,16 @@ extension _SpecialEffectBurstLightDrawing on SpecialEffectBurst {
     List<Color> colors,
     List<double> stops,
   ) {
+    if (_glowScale <= 0) return;
+    final glowColors = _glowScale >= 1
+        ? colors
+        : [
+            for (final color in colors)
+              color.withValues(alpha: color.a * _glowScale),
+          ];
     _fillPaint
       ..maskFilter = null
-      ..shader = ui.Gradient.radial(center, radius, colors, stops);
+      ..shader = ui.Gradient.radial(center, radius, glowColors, stops);
     canvas.drawCircle(center, radius, _fillPaint);
     _fillPaint
       ..shader = null
@@ -40,12 +47,12 @@ extension _SpecialEffectBurstLightDrawing on SpecialEffectBurst {
     }
     path.lineTo(end.dx, end.dy);
 
-    if (glow) {
+    if (glow && _glowScale > 0) {
       _paint
         ..maskFilter = SpecialEffectBurst._glow
         ..strokeWidth = tileSize * 0.14
         ..color = SpecialEffectBurst._electricBlue.withValues(
-          alpha: 0.30 * fade,
+          alpha: 0.30 * fade * _glowScale,
         );
       canvas.drawPath(path, _paint);
     }
@@ -73,10 +80,14 @@ extension _SpecialEffectBurstLightDrawing on SpecialEffectBurst {
       }
     }
     path.close();
-    _fillPaint
-      ..maskFilter = SpecialEffectBurst._glow
-      ..color = SpecialEffectBurst._electricBlue.withValues(alpha: 0.62 * fade);
-    canvas.drawPath(path, _fillPaint);
+    if (_glowScale > 0) {
+      _fillPaint
+        ..maskFilter = SpecialEffectBurst._glow
+        ..color = SpecialEffectBurst._electricBlue.withValues(
+          alpha: 0.62 * fade * _glowScale,
+        );
+      canvas.drawPath(path, _fillPaint);
+    }
     _fillPaint
       ..maskFilter = null
       ..color = Colors.white.withValues(alpha: 0.92 * fade);
@@ -91,7 +102,8 @@ extension _SpecialEffectBurstLightDrawing on SpecialEffectBurst {
     required Color color,
   }) {
     if (affectedCenters.isEmpty) return;
-    final step = max(1, (affectedCenters.length / maxCells).ceil());
+    final scaledMaxCells = _scaledMaxCells(maxCells);
+    final step = max(1, (affectedCenters.length / scaledMaxCells).ceil());
     final radius = tileSize * (0.34 + 0.30 * sin(t * pi).abs());
     for (var i = 0; i < affectedCenters.length; i += step) {
       final center = affectedCenters[i].toOffset();

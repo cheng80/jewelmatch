@@ -19,6 +19,13 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
     return _overlaySprites[kind];
   }
 
+  Sprite? _compositedOverlaySpriteFor(BoardGem gem) {
+    final sprites = _compositedOverlaySprites[gem.kind];
+    if (sprites == null || sprites.isEmpty) return null;
+    final c = gem.color.clamp(1, 6);
+    return sprites[c - 1];
+  }
+
   /// 힌트로 고른 두 칸만, 보석 **위에** 흰색 펄스(다른 칸은 건드리지 않음).
   void _drawHintWhitePulse(Canvas canvas, double bx, double by, double ts) {
     final ha = logic.hintCellA;
@@ -64,7 +71,25 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
     final ox = x + (ts - drawW) / 2;
     final oy = y + (ts - drawH) / 2;
     final specialSprite = _specialSpriteFor(gem.kind);
+    final compositedOverlaySprite = _compositedOverlaySpriteFor(gem);
     final overlaySprite = _overlaySpriteFor(gem.kind);
+    if (compositedOverlaySprite != null && specialSprite == null) {
+      final overlayW = ts * _overlaySourceRatio;
+      final overlayH = ts * _overlaySourceRatio;
+      _spriteRenderPosition.setValues(
+        x + (ts - overlayW) / 2,
+        y + (ts - overlayH) / 2,
+      );
+      _spriteRenderSize.setValues(overlayW, overlayH);
+      compositedOverlaySprite.render(
+        canvas,
+        position: _spriteRenderPosition,
+        size: _spriteRenderSize,
+        overridePaint: _compositedSpritePaint,
+      );
+      return;
+    }
+
     final sprite = specialSprite ?? _sheetSprites[_spriteColumnFor(gem)];
     if (sprite != null) {
       _spriteRenderPosition.setValues(ox, oy);
@@ -75,7 +100,7 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
         size: _spriteRenderSize,
         overridePaint: _normalSpritePaint,
       );
-      if (overlaySprite != null) {
+      if (overlaySprite != null && compositedOverlaySprite == null) {
         final overlayW = ts * _overlaySourceRatio;
         final overlayH = ts * _overlaySourceRatio;
         _spriteRenderPosition.setValues(

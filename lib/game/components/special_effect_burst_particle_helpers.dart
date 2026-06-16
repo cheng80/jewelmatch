@@ -11,8 +11,9 @@ extension _SpecialEffectBurstParticleDrawing on SpecialEffectBurst {
     Color? color,
   }) {
     final sparkColor = color ?? baseColor;
-    final step = max(1, (count / 56).ceil());
-    for (var i = 0; i < count; i += step) {
+    final scaledCount = _scaledCount(count);
+    final step = max(1, (scaledCount / 56).ceil());
+    for (var i = 0; i < scaledCount; i += step) {
       final angle = i * 2.399963 + sin(i * 7.13) * 0.2;
       final velocity = (0.22 + _hash(i) * 0.78) * spread;
       final travel = Curves.easeOut.transform(t) * velocity;
@@ -38,7 +39,8 @@ extension _SpecialEffectBurstParticleDrawing on SpecialEffectBurst {
     required int count,
     required double spread,
   }) {
-    for (var i = 0; i < count; i++) {
+    final scaledCount = _scaledCount(count);
+    for (var i = 0; i < scaledCount; i++) {
       final angle = i * 2.399963 + 0.45;
       final travel = spread * (0.18 + _hash(i + 120) * 0.72) * t;
       final p = center + Offset(cos(angle), sin(angle)) * travel;

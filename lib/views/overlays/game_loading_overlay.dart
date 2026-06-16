@@ -109,25 +109,23 @@ class _GameLoadingOverlayState extends State<GameLoadingOverlay>
     final t = (_controller.value + phaseOffset) % 1.0;
     final pulse = 0.35 + 0.65 * (0.5 + 0.5 * (1 - (t * 2 - 1).abs()));
     final scale = 0.9 + pulse * 0.18;
-    return Opacity(
-      opacity: pulse.clamp(0.45, 1.0),
-      child: Transform.scale(
-        scale: scale,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                color: Colors.white.withValues(alpha: 0.12 * pulse),
-                blurRadius: 10 + pulse * 10,
-              ),
-            ],
-          ),
-          child: SpriteSheetFrame(
-            assetPath: 'assets/images/${AssetPaths.jewelSpriteSheet}',
-            frameIndex: frameIndex,
-            frameSize: 128,
-            size: 46,
-          ),
+    return Transform.scale(
+      scale: scale,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.12 * pulse),
+              blurRadius: 10 + pulse * 10,
+            ),
+          ],
+        ),
+        child: SpriteSheetFrame(
+          assetPath: 'assets/images/${AssetPaths.jewelSpriteSheet}',
+          frameIndex: frameIndex,
+          frameSize: 128,
+          size: 46,
+          opacity: pulse.clamp(0.45, 1.0),
         ),
       ),
     );

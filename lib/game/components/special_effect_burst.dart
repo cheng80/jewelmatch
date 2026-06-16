@@ -45,6 +45,18 @@ class SpecialEffectBurst extends PositionComponent {
     _active = true;
   }
 
+  void deactivateForPool() {
+    _active = false;
+    effectKind = GemKind.normal;
+    origin = Vector2.zero();
+    affectedCenters = const [];
+    tileSize = 0;
+    baseColor = Colors.white;
+    performanceTier = 0;
+    _elapsed = 0;
+    _lifetime = 0;
+  }
+
   GemKind effectKind = GemKind.normal;
   Vector2 origin = Vector2.zero();
   List<Vector2> affectedCenters = const [];
@@ -69,6 +81,48 @@ class SpecialEffectBurst extends PositionComponent {
   static const _hotOrange = Color(0xFFFF8C36);
   static const _electricBlue = Color(0xFF74F6FF);
   static const _electricViolet = Color(0xFFC88DFF);
+
+  int get _tier => performanceTier.clamp(0, 2);
+
+  double get _alphaScale {
+    switch (_tier) {
+      case 0:
+        return 1.0;
+      case 1:
+        return 0.72;
+      default:
+        return 0.52;
+    }
+  }
+
+  double get _glowScale {
+    switch (_tier) {
+      case 0:
+        return 1.0;
+      case 1:
+        return 0.48;
+      default:
+        return 0.0;
+    }
+  }
+
+  int _scaledCount(int count) {
+    final scale = switch (_tier) {
+      0 => 1.0,
+      1 => 0.62,
+      _ => 0.38,
+    };
+    return max(1, (count * scale).round());
+  }
+
+  int _scaledMaxCells(int count) {
+    final scale = switch (_tier) {
+      0 => 1.0,
+      1 => 0.55,
+      _ => 0.28,
+    };
+    return max(1, (count * scale).round());
+  }
 
   static double _lifetimeFor(GemKind kind) {
     switch (kind) {
@@ -109,25 +163,26 @@ class SpecialEffectBurst extends PositionComponent {
     final t = (_elapsed / _lifetime).clamp(0.0, 1.0);
     final fade = _easeOut(1 - t);
     if (fade <= 0) return;
+    final effectFade = fade * _alphaScale;
 
     switch (effectKind) {
       case GemKind.row:
-        _renderLightningSweep(canvas, t, fade, horizontal: true);
+        _renderLightningSweep(canvas, t, effectFade, horizontal: true);
         break;
       case GemKind.col:
-        _renderLightningSweep(canvas, t, fade, horizontal: false);
+        _renderLightningSweep(canvas, t, effectFade, horizontal: false);
         break;
       case GemKind.bomb:
-        _renderFlame(canvas, t, fade);
+        _renderFlame(canvas, t, effectFade);
         break;
       case GemKind.star:
-        _renderStarLightning(canvas, t, fade);
+        _renderStarLightning(canvas, t, effectFade);
         break;
       case GemKind.hyper:
-        _renderHypercube(canvas, t, fade);
+        _renderHypercube(canvas, t, effectFade);
         break;
       case GemKind.supernova:
-        _renderSupernova(canvas, t, fade);
+        _renderSupernova(canvas, t, effectFade);
         break;
       case GemKind.normal:
         break;

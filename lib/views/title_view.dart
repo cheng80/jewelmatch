@@ -65,7 +65,9 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
   Future<void> _cachePackageInfo() async {
     _cachedPackageInfo ??= await PackageInfo.fromPlatform();
     if (!mounted) return;
-    setState(() {});
+    if (_ready) {
+      setState(() {});
+    }
   }
 
   @override

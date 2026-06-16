@@ -6,13 +6,18 @@ import 'package:web/web.dart' as web;
 import 'match_board_game.dart';
 import 'match_board_qa_bridge.dart';
 
+MatchBoardGame? _installedGame;
+
 void installMatchBoardQaBridge(MatchBoardGame game) {
   if (Uri.base.queryParameters['qaPerf'] != '1') return;
+  _installedGame = game;
 
   web.window.setProperty(
     '__jewelMatchGetHintMove'.toJS,
     (() {
-      final move = game.readSimulationHintMove();
+      final currentGame = _installedGame;
+      if (currentGame == null) return null;
+      final move = currentGame.readSimulationHintMove();
       return move == null ? null : _moveToJs(move);
     }).toJS,
   );
@@ -20,18 +25,29 @@ void installMatchBoardQaBridge(MatchBoardGame game) {
   web.window.setProperty(
     '__jewelMatchGetState'.toJS,
     (() {
-      return _stateToJs(game.readSimulationState());
+      final currentGame = _installedGame;
+      if (currentGame == null) return null;
+      return _stateToJs(currentGame.readSimulationState());
     }).toJS,
   );
 
   web.window.setProperty(
     '__jewelMatchContinueLevelUp'.toJS,
     (() {
-      if (game.overlays.isActive('LevelUp')) {
-        game.continueAfterLevelUp();
+      final currentGame = _installedGame;
+      if (currentGame != null && currentGame.overlays.isActive('LevelUp')) {
+        currentGame.continueAfterLevelUp();
       }
     }).toJS,
   );
+}
+
+void uninstallMatchBoardQaBridge(MatchBoardGame game) {
+  if (_installedGame != game) return;
+  _installedGame = null;
+  web.window.setProperty('__jewelMatchGetHintMove'.toJS, (() => null).toJS);
+  web.window.setProperty('__jewelMatchGetState'.toJS, (() => null).toJS);
+  web.window.setProperty('__jewelMatchContinueLevelUp'.toJS, (() {}).toJS);
 }
 
 JSObject _moveToJs(SimulationHintMove move) {

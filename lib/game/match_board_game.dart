@@ -189,6 +189,14 @@ class MatchBoardGame extends FlameGame {
     }
   }
 
+  @override
+  void onRemove() {
+    uninstallMatchBoardQaBridge(this);
+    _particlePool.clear();
+    _specialEffectPool.clear();
+    super.onRemove();
+  }
+
   Future<void> _fetchTop1() async {
     final top = await RankingService.fetchTop1();
     if (top != null) {

@@ -17,15 +17,18 @@ extension _SpecialEffectBurstHypercubeDrawing on SpecialEffectBurst {
       const [0.0, 0.24, 0.55, 1.0],
     );
 
-    for (var i = 0; i < 4; i++) {
+    final arcCount = _scaledCount(4);
+    for (var i = 0; i < arcCount; i++) {
       final phase = i * pi / 2 + t * pi * 2.2;
       _paint
-        ..maskFilter = i == 0 ? SpecialEffectBurst._glow : null
+        ..maskFilter = i == 0 && _glowScale > 0
+            ? SpecialEffectBurst._glow
+            : null
         ..strokeWidth = tileSize * (0.045 + i * 0.006)
         ..color = Color.lerp(
           SpecialEffectBurst._electricViolet,
           baseColor,
-          i / 3,
+          i / max(1, arcCount - 1),
         )!.withValues(alpha: (0.52 - i * 0.07) * fade);
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius * (0.46 + i * 0.18)),
@@ -37,7 +40,8 @@ extension _SpecialEffectBurstHypercubeDrawing on SpecialEffectBurst {
     }
     _paint.maskFilter = null;
 
-    for (var i = 0; i < 18; i++) {
+    final orbitCount = _scaledCount(18);
+    for (var i = 0; i < orbitCount; i++) {
       final p = _orbitPoint(center, radius * 0.9, t, i);
       _fillPaint.color = Color.lerp(
         Colors.white,

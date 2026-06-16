@@ -171,47 +171,51 @@ class _GameViewState extends State<GameView> {
         AppConfig.debugLog &&
         widget.gameMode == JewelGameMode.simple &&
         _gameMounted;
+    final gameStack = Stack(
+      fit: StackFit.expand,
+      clipBehavior: Clip.none,
+      children: [
+        content,
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          child: _loadingVisible
+              ? GameLoadingOverlay(gameMode: widget.gameMode)
+              : const SizedBox.shrink(),
+        ),
+        if (showSfxLog)
+          const Positioned(
+            left: 10,
+            right: 10,
+            bottom: 6,
+            height: 148,
+            child: SfxPlayLogPanel(),
+          ),
+        if (_qaVfxEnabled)
+          Positioned.fill(
+            child: ExcludeSemantics(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _game?.debugTriggerSpecialEffects(),
+                child: const SizedBox.expand(),
+              ),
+            ),
+          ),
+      ],
+    );
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Center(
         child: PhoneFrame(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(kIsWeb ? 28 : 0),
-            child: Stack(
-              fit: StackFit.expand,
-              clipBehavior: Clip.none,
-              children: [
-                content,
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  child: _loadingVisible
-                      ? GameLoadingOverlay(gameMode: widget.gameMode)
-                      : const SizedBox.shrink(),
-                ),
-                if (showSfxLog)
-                  const Positioned(
-                    left: 10,
-                    right: 10,
-                    bottom: 6,
-                    height: 148,
-                    child: SfxPlayLogPanel(),
-                  ),
-                if (_qaVfxEnabled)
-                  Positioned.fill(
-                    child: ExcludeSemantics(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () => _game?.debugTriggerSpecialEffects(),
-                        child: const SizedBox.expand(),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
+          child: kIsWeb
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  clipBehavior: Clip.hardEdge,
+                  child: gameStack,
+                )
+              : gameStack,
         ),
       ),
     );

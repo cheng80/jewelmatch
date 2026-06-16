@@ -11,12 +11,14 @@ class SpriteSheetFrame extends StatelessWidget {
     required this.frameIndex,
     required this.frameSize,
     required this.size,
+    this.opacity = 1.0,
   });
 
   final String assetPath;
   final int frameIndex;
   final int frameSize;
   final double size;
+  final double opacity;
 
   static final Map<String, Future<ui.Image>> _imageCache =
       <String, Future<ui.Image>>{};
@@ -49,6 +51,7 @@ class SpriteSheetFrame extends StatelessWidget {
               image: snapshot.data!,
               frameIndex: frameIndex,
               frameSize: frameSize.toDouble(),
+              opacity: opacity,
             ),
           );
         },
@@ -62,11 +65,13 @@ class _SpriteSheetFramePainter extends CustomPainter {
     required this.image,
     required this.frameIndex,
     required this.frameSize,
+    required this.opacity,
   });
 
   final ui.Image image;
   final int frameIndex;
   final double frameSize;
+  final double opacity;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -78,18 +83,22 @@ class _SpriteSheetFramePainter extends CustomPainter {
       frameSize,
       frameSize,
     );
-    canvas.drawImageRect(
-      image,
-      srcRect,
-      Offset.zero & size,
-      Paint()..filterQuality = FilterQuality.medium,
-    );
+    final paint = Paint()..filterQuality = FilterQuality.medium;
+    final alpha = opacity.clamp(0.0, 1.0);
+    if (alpha < 1.0) {
+      paint.colorFilter = ColorFilter.mode(
+        Colors.white.withValues(alpha: alpha),
+        BlendMode.modulate,
+      );
+    }
+    canvas.drawImageRect(image, srcRect, Offset.zero & size, paint);
   }
 
   @override
   bool shouldRepaint(covariant _SpriteSheetFramePainter oldDelegate) {
     return oldDelegate.image != image ||
         oldDelegate.frameIndex != frameIndex ||
-        oldDelegate.frameSize != frameSize;
+        oldDelegate.frameSize != frameSize ||
+        oldDelegate.opacity != opacity;
   }
 }

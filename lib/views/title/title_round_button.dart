@@ -39,17 +39,17 @@ class TitleRoundButton extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              Opacity(
-                opacity: _panelOpacity,
-                child: ColorFiltered(
-                  colorFilter: ColorFilter.mode(panelColor, BlendMode.modulate),
-                  child: Image.asset(
-                    AssetPaths.modeButtonPanelBase,
-                    width: _width,
-                    height: _height,
-                    fit: BoxFit.fill,
-                    filterQuality: FilterQuality.high,
-                  ),
+              ColorFiltered(
+                colorFilter: ColorFilter.mode(
+                  panelColor.withValues(alpha: _panelOpacity),
+                  BlendMode.modulate,
+                ),
+                child: Image.asset(
+                  AssetPaths.modeButtonPanelBase,
+                  width: _width,
+                  height: _height,
+                  fit: BoxFit.fill,
+                  filterQuality: FilterQuality.high,
                 ),
               ),
               Image.asset(

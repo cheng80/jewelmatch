@@ -32,6 +32,8 @@ class MatchBoardRenderer extends PositionComponent
   final List<Sprite?> _sheetSprites = List<Sprite?>.filled(7, null);
   final Map<GemKind, Sprite?> _specialSprites = <GemKind, Sprite?>{};
   final Map<GemKind, Sprite?> _overlaySprites = <GemKind, Sprite?>{};
+  final Map<GemKind, List<Sprite?>> _compositedOverlaySprites =
+      <GemKind, List<Sprite?>>{};
 
   static const double _frameW = 128;
   static const double _frameH = 128;
@@ -88,6 +90,8 @@ class MatchBoardRenderer extends PositionComponent
       1,
       0,
     ]);
+  final Paint _compositedSpritePaint = Paint()
+    ..filterQuality = FilterQuality.medium;
   final Paint _proceduralShadowPaint = Paint();
   final Paint _proceduralGradientPaint = Paint();
   final Paint _proceduralStrokePaint = Paint()
@@ -100,8 +104,10 @@ class MatchBoardRenderer extends PositionComponent
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+    ui.Image? jewelImage;
     try {
       final img = await Flame.images.load(AssetPaths.jewelSpriteSheet);
+      jewelImage = img;
       for (var i = 0; i < 7; i++) {
         _sheetSprites[i] = Sprite(
           img,
@@ -136,6 +142,12 @@ class MatchBoardRenderer extends PositionComponent
           srcPosition: Vector2.zero(),
           srcSize: Vector2(_frameW, _frameH),
         );
+        if (jewelImage != null) {
+          _compositedOverlaySprites[entry.key] = _buildCompositedOverlaySprites(
+            jewelImage,
+            img,
+          );
+        }
       } catch (_) {
         _overlaySprites[entry.key] = null;
       }
@@ -146,7 +158,53 @@ class MatchBoardRenderer extends PositionComponent
   @override
   void onRemove() {
     _boardChromePicture?.dispose();
+    for (final sprites in _compositedOverlaySprites.values) {
+      for (final sprite in sprites) {
+        sprite?.image.dispose();
+      }
+    }
+    _compositedOverlaySprites.clear();
     super.onRemove();
+  }
+
+  List<Sprite?> _buildCompositedOverlaySprites(
+    ui.Image jewelImage,
+    ui.Image overlayImage,
+  ) {
+    return [
+      for (var i = 0; i < MatchBoardLogic.palette.length; i++)
+        _buildCompositedOverlaySprite(
+          jewelImage,
+          overlayImage,
+          _sheetColByColor1based[i],
+        ),
+    ];
+  }
+
+  Sprite _buildCompositedOverlaySprite(
+    ui.Image jewelImage,
+    ui.Image overlayImage,
+    int sheetColumn,
+  ) {
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    final dst = Rect.fromLTWH(0, 0, _frameW, _frameH);
+    final baseSize = _frameW * 0.82 / (112 / 128);
+    final baseInset = (_frameW - baseSize) / 2;
+    final baseDst = Rect.fromLTWH(baseInset, baseInset, baseSize, baseSize);
+    final src = Rect.fromLTWH(sheetColumn * _frameW, 0, _frameW, _frameH);
+    canvas
+      ..drawImageRect(jewelImage, src, baseDst, _normalSpritePaint)
+      ..drawImageRect(
+        overlayImage,
+        dst,
+        dst,
+        Paint()..filterQuality = FilterQuality.medium,
+      );
+    final picture = recorder.endRecording();
+    final image = picture.toImageSync(_frameW.toInt(), _frameH.toInt());
+    picture.dispose();
+    return Sprite(image);
   }
 
   @override

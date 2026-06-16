@@ -8,8 +8,9 @@ extension _SpecialEffectBurstExplosionDrawing on SpecialEffectBurst {
     double t,
     double fade,
   ) {
-    for (var i = 0; i < 9; i++) {
-      final angle = i * 2 * pi / 9 + sin(t * pi * 2 + i) * 0.13;
+    final tongueCount = _scaledCount(9);
+    for (var i = 0; i < tongueCount; i++) {
+      final angle = i * 2 * pi / tongueCount + sin(t * pi * 2 + i) * 0.13;
       final dir = Offset(cos(angle), sin(angle));
       final side = Offset(-dir.dy, dir.dx);
       final tip = center + dir * radius * (0.48 + (i % 3) * 0.13);
@@ -32,7 +33,7 @@ extension _SpecialEffectBurstExplosionDrawing on SpecialEffectBurst {
       _fillPaint.color = Color.lerp(
         SpecialEffectBurst._hotYellow,
         SpecialEffectBurst._hotOrange,
-        i / 8,
+        i / max(1, tongueCount - 1),
       )!.withValues(alpha: 0.42 * fade);
       canvas.drawPath(path, _fillPaint);
     }
@@ -47,12 +48,13 @@ extension _SpecialEffectBurstExplosionDrawing on SpecialEffectBurst {
   ) {
     final bloom = Curves.easeOutCubic.transform(t);
     final heatFade = fade * (1.0 - t * 0.26);
-    for (var i = 0; i < 13; i++) {
-      final angle = i * 2 * pi / 13 + sin(t * pi * 2 + i) * 0.18;
+    final lobeCount = _scaledCount(13);
+    for (var i = 0; i < lobeCount; i++) {
+      final angle = i * 2 * pi / lobeCount + sin(t * pi * 2 + i) * 0.18;
       final drift = radius * (0.12 + _hash(i + 3) * 0.38) * bloom;
       final lobeCenter = center + Offset(cos(angle), sin(angle)) * drift;
       final lobeRadius = radius * (0.20 + _hash(i + 11) * 0.22);
-      final mix = i / 12;
+      final mix = i / max(1, lobeCount - 1);
       final color = Color.lerp(
         i.isEven
             ? SpecialEffectBurst._hotYellow
@@ -70,8 +72,9 @@ extension _SpecialEffectBurstExplosionDrawing on SpecialEffectBurst {
       );
     }
 
-    for (var i = 0; i < 8; i++) {
-      final angle = i * 2 * pi / 8 + 0.35;
+    final smokeCount = _scaledCount(8);
+    for (var i = 0; i < smokeCount; i++) {
+      final angle = i * 2 * pi / smokeCount + 0.35;
       final drift = radius * (0.36 + _hash(i + 40) * 0.30) * bloom;
       final smokeCenter = center + Offset(cos(angle), sin(angle)) * drift;
       _drawOrganicBlob(
@@ -136,8 +139,9 @@ extension _SpecialEffectBurstExplosionDrawing on SpecialEffectBurst {
     required int count,
     required double length,
   }) {
-    for (var i = 0; i < count; i++) {
-      final angle = i * 2 * pi / count + _hash(i + 90) * 0.28;
+    final scaledCount = _scaledCount(count);
+    for (var i = 0; i < scaledCount; i++) {
+      final angle = i * 2 * pi / scaledCount + _hash(i + 90) * 0.28;
       final dir = Offset(cos(angle), sin(angle));
       final reach =
           length * (0.42 + _hash(i + 91) * 0.58) * Curves.easeOut.transform(t);
@@ -166,8 +170,9 @@ extension _SpecialEffectBurstExplosionDrawing on SpecialEffectBurst {
       ..maskFilter = null
       ..strokeWidth = tileSize * 0.045
       ..color = SpecialEffectBurst._hotYellow.withValues(alpha: 0.42 * fade);
-    for (var i = 0; i < 7; i++) {
-      final start = i * 2 * pi / 7 + t * 1.6;
+    final arcCount = _scaledCount(7);
+    for (var i = 0; i < arcCount; i++) {
+      final start = i * 2 * pi / arcCount + t * 1.6;
       canvas.drawArc(
         Rect.fromCircle(
           center: center,
@@ -190,7 +195,8 @@ extension _SpecialEffectBurstExplosionDrawing on SpecialEffectBurst {
     required double spread,
   }) {
     final progress = Curves.easeOutCubic.transform(t);
-    for (var i = 0; i < count; i++) {
+    final scaledCount = _scaledCount(count);
+    for (var i = 0; i < scaledCount; i++) {
       final angle = i * 2.399963 + _hash(i + 150) * 0.35;
       final dir = Offset(cos(angle), sin(angle));
       final distance = spread * (0.22 + _hash(i + 151) * 0.78) * progress;

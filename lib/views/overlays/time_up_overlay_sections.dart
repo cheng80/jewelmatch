@@ -1,13 +1,8 @@
 part of 'time_up_overlay.dart';
 
 class _TimeUpIntroTitle extends StatelessWidget {
-  const _TimeUpIntroTitle({
-    required this.controller,
-    required this.opacity,
-    required this.scale,
-  });
+  const _TimeUpIntroTitle({required this.opacity, required this.scale});
 
-  final AnimationController controller;
   final Animation<double> opacity;
   final Animation<double> scale;
 
@@ -16,37 +11,34 @@ class _TimeUpIntroTitle extends StatelessWidget {
     return ColoredBox(
       color: JewelCandyLuminaTheme.overlayScrim,
       child: Center(
-        child: AnimatedBuilder(
-          animation: controller,
-          builder: (_, _) => Opacity(
-            opacity: opacity.value,
-            child: Transform.scale(
-              scale: scale.value,
-              child: Text(
-                context.tr('timeUpTitle'),
-                style: TextStyle(
-                  color: JewelCandyLuminaTheme.textTitleGold,
-                  fontSize: 56,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 3,
-                  shadows: [
-                    Shadow(
-                      color: JewelCandyLuminaTheme.primaryPink,
-                      blurRadius: 30,
+        child: FadeTransition(
+          opacity: opacity,
+          child: ScaleTransition(
+            scale: scale,
+            child: Text(
+              context.tr('timeUpTitle'),
+              style: TextStyle(
+                color: JewelCandyLuminaTheme.textTitleGold,
+                fontSize: 56,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 3,
+                shadows: [
+                  Shadow(
+                    color: JewelCandyLuminaTheme.primaryPink,
+                    blurRadius: 30,
+                  ),
+                  Shadow(
+                    color: JewelCandyLuminaTheme.primaryPink.withValues(
+                      alpha: 0.8,
                     ),
-                    Shadow(
-                      color: JewelCandyLuminaTheme.primaryPink.withValues(
-                        alpha: 0.8,
-                      ),
-                      blurRadius: 60,
-                    ),
-                    Shadow(
-                      color: JewelCandyLuminaTheme.primaryDeep,
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
+                    blurRadius: 60,
+                  ),
+                  Shadow(
+                    color: JewelCandyLuminaTheme.primaryDeep,
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
             ),
           ),

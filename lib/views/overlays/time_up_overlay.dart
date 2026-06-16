@@ -102,11 +102,7 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
   @override
   Widget build(BuildContext context) {
     if (!_showPanel) {
-      return _TimeUpIntroTitle(
-        controller: _titleCtrl,
-        opacity: _titleOpacity,
-        scale: _titleScale,
-      );
+      return _TimeUpIntroTitle(opacity: _titleOpacity, scale: _titleScale);
     }
 
     return _TimeUpResultPanel(

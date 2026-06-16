@@ -59,6 +59,13 @@ class ParticleBurst extends PositionComponent {
     _initParticles();
   }
 
+  void deactivateForPool() {
+    _active = false;
+    _elapsed = 0;
+    _count = 0;
+    _withGlow = false;
+  }
+
   @override
   Future<void> onLoad() async {
     priority = 100;
@@ -187,11 +194,14 @@ class _Particle {
 class ParticlePool {
   ParticlePool(this._parent);
 
+  static const int _maxCachedBursts = 48;
+
   final Component _parent;
   final List<ParticleBurst> _pool = [];
-  int _activeCount = 0;
+  final Set<ParticleBurst> _active = <ParticleBurst>{};
 
-  int get activeCount => _activeCount;
+  int get activeCount => _active.length;
+  int get cachedCount => _pool.length;
 
   /// 풀에서 꺼내거나 새로 만들어 활성화한다.
   void spawn({
@@ -213,7 +223,7 @@ class ParticlePool {
       sizeScale: sizeScale,
       withGlow: withGlow,
     );
-    _activeCount++;
+    _active.add(burst);
     if (!burst.isMounted) {
       _parent.add(burst);
     }
@@ -226,7 +236,22 @@ class ParticlePool {
   }
 
   void _returnToPool(ParticleBurst burst) {
-    _activeCount = max(0, _activeCount - 1);
-    _pool.add(burst);
+    if (!_active.remove(burst)) return;
+    burst.deactivateForPool();
+    if (_pool.length < _maxCachedBursts && burst.parent != null) {
+      _pool.add(burst);
+    } else {
+      burst.removeFromParent();
+    }
+  }
+
+  void clear() {
+    final bursts = <ParticleBurst>{..._active, ..._pool};
+    _active.clear();
+    _pool.clear();
+    for (final burst in bursts) {
+      burst.deactivateForPool();
+      burst.removeFromParent();
+    }
   }
 }
