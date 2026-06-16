@@ -19,6 +19,13 @@
 | [`architecture/special_gems_rules.md`](architecture/special_gems_rules.md) | 특수 보석 생성, 발동, 연쇄, 하이퍼 스왑 규칙 |
 | [`architecture/progression_score_targets.md`](architecture/progression_score_targets.md) | 진행 모드 레벨별 목표 점수 산식 |
 
+## 기획
+
+| 문서 | 용도 |
+|------|------|
+| [`planning/item_slot_market_plan.md`](planning/item_slot_market_plan.md) | 아이템 슬롯, 인벤토리, 보상형 광고, 선택형 코인/인앱 플랜 |
+| [`planning/stone_match_execution_checklist.md`](planning/stone_match_execution_checklist.md) | 진행·배포 체크리스트 |
+
 ## 기술·운용 문서
 
 | 문서 | 용도 |
