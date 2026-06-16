@@ -61,21 +61,6 @@ class BoardGem {
   }
 }
 
-/// 제거 순간 플래시 이펙트.
-class FlashEffect {
-  FlashEffect({
-    required this.x,
-    required this.y,
-    required this.size,
-    required this.timer,
-  });
-
-  double x;
-  double y;
-  double size;
-  double timer;
-}
-
 class MatchGroup {
   MatchGroup({
     required this.direction,

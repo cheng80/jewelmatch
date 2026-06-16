@@ -20,7 +20,6 @@ extension MatchBoardResolution on MatchBoardLogic {
           specialBonus += _specialActivationScoreBonus(gem.kind);
         }
         removedCells.add((row: row, col: col, color: gem.color));
-        addFlashEffect(row, col);
         cells[row][col] = null;
         _releaseGem(gem);
       }

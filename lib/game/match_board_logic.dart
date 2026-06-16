@@ -92,7 +92,6 @@ class MatchBoardLogic {
   int _nextGemId = 1;
   bool inputLocked = false;
   double lockTimer = 0;
-  final List<FlashEffect> flashEffects = [];
 
   /// 직전 매치 데이터 — 파티클 판정(bigMatch 여부)에 사용.
   MatchData? _lastMatchData;
@@ -177,8 +176,6 @@ class MatchBoardLogic {
 
   /// 인트로 줄 낙하만 — 일반 스왑/중력과 분리. 전체 8줄 합쳐 약 1.5~1.6초(기본 타일·60fps 근사).
   static const double introTweenSpeed = 29;
-  static const double flashDuration = 0.18;
-  static const double flashAlpha = 0.7;
   static const int scoreBase = 100;
   static const int scoreExtraPerGem = 50;
 
@@ -420,13 +417,6 @@ class MatchBoardLogic {
       onSpecialActivated: stats.recordSpecialActivated,
     ),
   );
-
-  void addFlashEffect(int row, int col) {
-    final p = cellToPixel(row, col);
-    flashEffects.add(
-      FlashEffect(x: p.dx, y: p.dy, size: tileSize, timer: flashDuration),
-    );
-  }
 
   bool triggerSpecialSwap(int ar, int ac, int br, int bc) =>
       _triggerSpecialSwapImpl(ar, ac, br, bc);

@@ -60,7 +60,6 @@ class MatchBoardRenderer extends PositionComponent
   double? _cachedTileSize;
   double? _cachedBoardX;
   double? _cachedBoardY;
-  final Paint _flashPaint = Paint();
   final Paint _selectionPaint = Paint()
     ..color = JewelCandyLuminaTheme.secondaryCyan
     ..style = PaintingStyle.stroke
@@ -260,18 +259,6 @@ class MatchBoardRenderer extends PositionComponent
       // 보드 밖에서 내려오는 낙하/리필 연출일 때만 클립한다.
       canvas.save();
       canvas.clipRRect(innerR);
-    }
-
-    for (final fx in logic.flashEffects) {
-      final a =
-          (fx.timer / MatchBoardLogic.flashDuration).clamp(0.0, 1.0) *
-          MatchBoardLogic.flashAlpha;
-      final fr = RRect.fromRectAndRadius(
-        Rect.fromLTWH(fx.x + 4, fx.y + 4, fx.size - 8, fx.size - 8),
-        Radius.circular(ts * MatchBoardRenderer._cellCornerRatio),
-      );
-      _flashPaint.color = Colors.white.withValues(alpha: a);
-      canvas.drawRRect(fr, _flashPaint);
     }
 
     for (var r = 0; r < logic.rows; r++) {

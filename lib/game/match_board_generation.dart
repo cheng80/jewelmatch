@@ -39,7 +39,6 @@ extension MatchBoardGeneration on MatchBoardLogic {
     do {
       attempts++;
       resetCells();
-      flashEffects.clear();
       for (var r = 0; r < rows; r++) {
         for (var c = 0; c < cols; c++) {
           final color = randomAllowedColor(r, c);

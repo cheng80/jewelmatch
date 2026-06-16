@@ -22,8 +22,6 @@ extension MatchBoardUpdate on MatchBoardLogic {
     } else {
       _updateGemTweens(dt);
     }
-
-    _updateFlashEffects(dt);
   }
 
   void _updateIntroFill(double dt) {
@@ -75,15 +73,6 @@ extension MatchBoardUpdate on MatchBoardLogic {
           gem.x += (gem.targetX - gem.x) * s;
           gem.y += (gem.targetY - gem.y) * s;
         }
-      }
-    }
-  }
-
-  void _updateFlashEffects(double dt) {
-    for (var i = flashEffects.length - 1; i >= 0; i--) {
-      flashEffects[i].timer -= dt;
-      if (flashEffects[i].timer <= 0) {
-        flashEffects.removeAt(i);
       }
     }
   }
