@@ -1,6 +1,7 @@
 import 'dart:math' show max, pi, sin;
 
 import 'package:flame/components.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'match_board_models.dart';
 
@@ -13,6 +14,7 @@ class MatchBoardCameraShake {
   bool get isActive => _remaining > 0 && _duration > 0;
 
   void queue(SpecialEffectShake shake) {
+    if (kIsWeb) return;
     if (shake.intensity <= 0 || shake.duration <= 0) return;
     _intensity = max(_intensity, shake.intensity);
     _duration = max(_duration, shake.duration);
