@@ -33,6 +33,58 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
       sizeFactor: 0.62,
       offsetYFactor: 0.02,
     );
+    _drawHintBadge(canvas, r);
+  }
+
+  void _drawHintBadge(Canvas canvas, Rect buttonRect) {
+    final count = game.hintBadgeCount;
+    if (count == null) return;
+
+    final diameter = buttonRect.width * 0.36;
+    final center = Offset(
+      buttonRect.right - diameter * 0.18,
+      buttonRect.bottom - diameter * 0.18,
+    ).translate(-5, -5);
+    final badgePaint = Paint()
+      ..isAntiAlias = true
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFFFFF0A8), Color(0xFFC58A22)],
+      ).createShader(Rect.fromCircle(center: center, radius: diameter / 2));
+    final strokePaint = Paint()
+      ..isAntiAlias = true
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(1.2, buttonRect.width * 0.04)
+      ..color = const Color(0xFF2A1606);
+
+    canvas.drawCircle(center, diameter / 2, badgePaint);
+    canvas.drawCircle(center, diameter / 2, strokePaint);
+
+    final label = count > 99 ? '99+' : '$count';
+    final painter = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: _ts(
+          size: buttonRect.width * (label.length > 2 ? 0.18 : 0.22),
+          color: const Color(0xFF211204),
+          weight: FontWeight.w900,
+          shadows: [
+            Shadow(
+              color: Colors.white.withValues(alpha: 0.45),
+              offset: const Offset(0, 0.5),
+              blurRadius: 1,
+            ),
+          ],
+        ),
+      ),
+      textAlign: TextAlign.center,
+      textDirection: ui.TextDirection.ltr,
+    )..layout(maxWidth: diameter * 0.92);
+    painter.paint(
+      canvas,
+      center - Offset(painter.width / 2, painter.height / 2),
+    );
   }
 
   void _drawButtonIcon(

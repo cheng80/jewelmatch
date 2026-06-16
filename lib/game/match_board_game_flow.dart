@@ -68,6 +68,7 @@ extension MatchBoardGameFlow on MatchBoardGame {
     if (isProgressionMode) {
       _resetProgressionRound();
     }
+    _remainingHints = MatchBoardGame._initialHintsForMode(gameMode);
     if (hasTimedClock) {
       timeRemaining = roundSecondsForMode;
       _lastFlooredSecondForTimeTic = timeRemaining.floor();
@@ -87,7 +88,11 @@ extension MatchBoardGameFlow on MatchBoardGame {
       return;
     }
     if (board.state != 'idle') return;
+    if (hasLimitedHints && _remainingHints <= 0) return;
     if (board.showHint()) {
+      if (hasLimitedHints) {
+        _remainingHints -= 1;
+      }
       SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     }
   }

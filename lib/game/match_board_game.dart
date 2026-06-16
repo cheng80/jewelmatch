@@ -33,6 +33,7 @@ class MatchBoardGame extends FlameGame {
     this.safeAreaPadding = EdgeInsets.zero,
     this.gameMode = JewelGameMode.simple,
   }) {
+    _remainingHints = _initialHintsForMode(gameMode);
     board = MatchBoardLogic(
       rows: rows,
       cols: cols,
@@ -57,11 +58,20 @@ class MatchBoardGame extends FlameGame {
   final EdgeInsets safeAreaPadding;
   final JewelGameMode gameMode;
 
+  static int _initialHintsForMode(JewelGameMode mode) => switch (mode) {
+    JewelGameMode.simple => 0,
+    JewelGameMode.timed => timedModeInitialHints,
+    JewelGameMode.progression => progressionModeInitialHints,
+  };
+
   @override
   Color backgroundColor() => Colors.black.withValues(alpha: 0.4);
 
   /// 남은 시간이 이 초 이하로 떨어지면 매 정수 초마다 [sfxTimeTic] 재생.
   static const int timedLowTimeTickMaxSeconds = 10;
+  static const int timedModeInitialHints = 3;
+  static const int progressionModeInitialHints = 2;
+  static const int progressionModeHintsPerStage = 1;
 
   late final MatchBoardLogic board;
   late final ParticlePool _particlePool;
@@ -91,6 +101,7 @@ class MatchBoardGame extends FlameGame {
   bool isPlaying = true;
   bool timeUp = false;
   int _lastSavedScore = -1;
+  late int _remainingHints;
   int progressionLevel = 1;
   int levelUpFromLevel = 1;
   int levelUpToLevel = 1;
@@ -120,6 +131,13 @@ class MatchBoardGame extends FlameGame {
 
   int get progressionNextBoardBonusCount =>
       progressionNextBoardBonusKinds.length;
+
+  bool get hasLimitedHints =>
+      gameMode == JewelGameMode.timed || gameMode == JewelGameMode.progression;
+
+  int? get hintBadgeCount => hasLimitedHints ? _remainingHints : null;
+
+  int get remainingHints => _remainingHints;
 
   /// 상단 1열: 일시정지 + 최고 기록만.
   static const double hudTopBarScale = 0.54;

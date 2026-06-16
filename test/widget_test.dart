@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stonematch/game/jewel_game_mode.dart';
@@ -58,6 +59,61 @@ void main() {
       expect(_hintKey(game.board), firstCycle.first);
     },
   );
+
+  test('hint limits apply only to timed and progression modes', () async {
+    SharedPreferences.setMockInitialValues({});
+    await StorageHelper.init();
+    await StorageHelper.erase();
+    GameSettings.sfxMuted = true;
+
+    final simple = MatchBoardGame(gameMode: JewelGameMode.simple);
+    final timed = MatchBoardGame(gameMode: JewelGameMode.timed);
+    final progression = MatchBoardGame(gameMode: JewelGameMode.progression);
+    for (final game in [simple, timed, progression]) {
+      _setHintBoard(game.board);
+    }
+
+    expect(simple.hintBadgeCount, isNull);
+    expect(timed.hintBadgeCount, 3);
+    expect(progression.hintBadgeCount, 2);
+
+    simple.requestHint();
+    expect(simple.hintBadgeCount, isNull);
+    expect(simple.board.hintCellA, isNotNull);
+
+    timed.requestHint();
+    timed.requestHint();
+    timed.requestHint();
+    expect(timed.hintBadgeCount, 0);
+    expect(timed.board.hintCellA, isNotNull);
+    timed.board.clearHint();
+    timed.requestHint();
+    expect(timed.hintBadgeCount, 0);
+    expect(timed.board.hintCellA, isNull);
+
+    progression.requestHint();
+    expect(progression.hintBadgeCount, 1);
+    progression.levelUpToLevel = 2;
+    progression.overlays.addEntry(
+      'IntroBlock',
+      (_, _) => const SizedBox.shrink(),
+    );
+    progression.continueAfterLevelUp();
+    expect(progression.hintBadgeCount, 2);
+  });
+}
+
+void _setHintBoard(MatchBoardLogic board) {
+  _setRows(board, const [
+    [5, 1, 3, 3, 5, 1, 1, 6],
+    [6, 5, 4, 6, 2, 1, 4, 5],
+    [4, 3, 1, 6, 5, 5, 3, 2],
+    [5, -2, 2, 2, 4, 6, 2, 4],
+    [3, 4, 6, 4, 5, 1, 5, 1],
+    [2, -1, 1, 5, 2, 4, -1, 6],
+    [4, 5, 1, 1, 2, 6, 3, 3],
+    [1, 4, 6, 6, 3, 4, 1, 1],
+  ]);
 }
 
 void _setRows(MatchBoardLogic board, List<List<int>> rows) {

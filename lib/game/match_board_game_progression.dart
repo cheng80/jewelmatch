@@ -37,6 +37,7 @@ extension MatchBoardGameProgression on MatchBoardGame {
     overlays.remove('LevelUp');
     overlays.remove('NoMoves');
     progressionLevel = levelUpToLevel;
+    _remainingHints += MatchBoardGame.progressionModeHintsPerStage;
     board.score = 0;
     board.lastCombo = 0;
     board.maxCombo = 0;
