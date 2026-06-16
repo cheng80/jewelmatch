@@ -31,9 +31,9 @@ Required env:
 
 Flow:
   1. Remove stale build/web, match/, and match.zip.
-  2. flutter build web --release --base-href "/match/"
+  2. flutter build web --release --base-href "/match/" --wasm --no-web-resources-cdn
   3. Patch Flutter web deprecated Intl checks.
-  4. Copy build/web/* into local match/.
+  4. Copy build/web/* into local match/ and add Wasm isolation headers.
   5. Create match.zip and upload it to NAS deploy PHP.
 EOF
 }
@@ -178,7 +178,7 @@ log_info "removed build/web, match/, and match.zip"
 
 log_step 3 "Flutter 웹 릴리즈 빌드"
 log_info "base href: $BASE_HREF"
-flutter build web --release --base-href "$BASE_HREF"
+flutter build web --release --base-href "$BASE_HREF" --wasm --no-web-resources-cdn
 
 if [[ ! -f "$ROOT_DIR/build/web/index.html" ]]; then
   fail "Flutter build completed but build/web/index.html was not created."
@@ -197,6 +197,16 @@ cat > "$PACKAGE_DIR/.htaccess" <<'EOF'
 DirectoryIndex index.html
 ErrorDocument 404 /match/index.html
 
+<IfModule mod_mime.c>
+  AddType application/wasm .wasm
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set Cross-Origin-Opener-Policy "same-origin"
+  Header always set Cross-Origin-Embedder-Policy "require-corp"
+  Header always set Cross-Origin-Resource-Policy "same-origin"
+</IfModule>
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /match/
@@ -209,7 +219,7 @@ ErrorDocument 404 /match/index.html
 </IfModule>
 EOF
 
-log_info "added SPA fallback rewrite: .htaccess"
+log_info "added Wasm headers and SPA fallback rewrite: .htaccess"
 
 log_step 6 "zip 압축 및 NAS 업로드"
 log_info "zip path: $ZIP_PATH"

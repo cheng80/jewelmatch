@@ -95,7 +95,7 @@ flutter run
 | 플랫폼 | 명령 |
 |--------|------|
 | Android / iOS | `flutter build apk` / `flutter build ios` |
-| Web | `flutter build web --release --base-href "/match/" && dart run tools/patch_flutter_web_deprecations.dart` |
+| Web | `flutter build web --release --base-href "/match/" --wasm --no-web-resources-cdn && dart run tools/patch_flutter_web_deprecations.dart` |
 
 Web 배포·서브패스 설정: [`docs/tools/web_build.md`](docs/tools/web_build.md)
 
