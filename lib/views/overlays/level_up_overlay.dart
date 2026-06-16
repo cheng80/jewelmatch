@@ -7,6 +7,7 @@ import '../../resources/sound_manager.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../../widgets/lumina_buttons.dart';
 import '../../widgets/lumina_overlay_card.dart';
+import 'pause_menu_buttons.dart';
 
 class LevelUpOverlay extends StatefulWidget {
   const LevelUpOverlay({super.key, required this.game});
@@ -61,12 +62,12 @@ class _LevelUpOverlayState extends State<LevelUpOverlay>
           borderColor: JewelCandyLuminaTheme.goldStrong,
           shadowColor: JewelCandyLuminaTheme.tertiaryGold,
           maxCardWidth: 410,
-          maxHeightFactor: 0.72,
-          verticalMargin: 86,
+          maxHeightFactor: 0.82,
+          verticalMargin: 54,
           alignment: Alignment.topCenter,
           horizontalPadding: 28,
           verticalPadding: 24,
-          innerPadding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
+          innerPadding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -109,18 +110,23 @@ class _LevelUpOverlayState extends State<LevelUpOverlay>
                 ),
               ),
               const SizedBox(height: 24),
-              Center(
-                child: LuminaGradientButton(
-                  width: 260,
-                  colors: JewelCandyLuminaTheme.buttonShuffleCyanLime,
-                  label: context.tr('nextLevel'),
-                  onPressed: () {
-                    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                    game.continueAfterLevelUp();
-                  },
-                ),
+              LuminaGradientButton(
+                width: 260,
+                colors: JewelCandyLuminaTheme.buttonShuffleCyanLime,
+                label: context.tr('nextLevel'),
+                onPressed: () {
+                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                  game.continueAfterLevelUp();
+                },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
+              PauseMenuStatsButton(
+                onPressed: () {
+                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                  game.showGameStats();
+                },
+              ),
+              const SizedBox(height: 12),
             ],
           ),
         ),

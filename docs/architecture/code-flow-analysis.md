@@ -534,7 +534,7 @@ Pause 버튼 탭
 
 - **NoMoves**: 더 이상 유효한 스왑이 없을 때 오버레이. 표시 중에는 일시정지와 동일하게 `isPlaying=false`, BGM pause, `pauseEngine()` 상태가 되며, 셔플/새 보드를 선택하면 BGM과 엔진을 재개한다. 베스트 갱신은 모드별 점수 저장 API 사용.
 - **TimeUp**: Timed/Progression 모드 시간 소진 시 오버레이. Timed는 점수 랭킹, Progression은 레벨 랭킹으로 제출한다.
-- **GameStats**: TimeUp/NoMoves 게임 오버 화면의 통계 버튼에서 열리는 별도 팝업. 현재 판의 점수, 스왑/매치/제거/특수 보석 생성·발동 누계를 보여준다.
+- **GameStats**: TimeUp/NoMoves 게임 오버 화면, PauseMenu, LevelUp의 통계 버튼에서 열리는 별도 팝업. 현재 판의 점수, 스왑/매치/제거/특수 보석 생성·발동 누계를 보여준다.
 - **LevelCelebration / LevelUp**: Progression에서 목표 점수를 넘으면 게임을 멈추고 축하 연출 후 다음 레벨 확인 팝업을 표시한다.
 - **RankingList**: Timed 모드 HUD 랭킹 버튼에서 게임을 일시정지하고 표시한다.
 

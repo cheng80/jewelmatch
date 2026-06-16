@@ -113,7 +113,8 @@ extension MatchBoardGameFlow on MatchBoardGame {
   void _showGameStatsImpl() {
     if (!timeUp &&
         !overlays.isActive('NoMoves') &&
-        !overlays.isActive('PauseMenu')) {
+        !overlays.isActive('PauseMenu') &&
+        !overlays.isActive('LevelUp')) {
       return;
     }
     overlays.add('GameStats');
