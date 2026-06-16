@@ -43,7 +43,7 @@ flowchart TD
   Game -->|일시정지| Pause[PauseMenu 오버레이]
   Game -->|튜토리얼| HowToPlay[HowToPlay 오버레이]
   Game -->|타임 HUD 랭킹| Ranking[RankingList 오버레이]
-  Game -->|이동 불가| NoMoves[NoMoves 오버레이]
+  Game -->|이동 불가| NoMoves[NoMoves 오버레이 / 일시정지]
   Game -->|진행 목표 달성| Celebrate[LevelCelebration 오버레이]
   Celebrate --> LevelUp[LevelUp 오버레이]
   LevelUp -->|다음 레벨| Game
@@ -52,7 +52,7 @@ flowchart TD
   Pause -->|나가기| Title
   HowToPlay -->|닫기| Game
   Ranking -->|닫기| Game
-  NoMoves -->|셔플/새 보드| Game
+  NoMoves -->|셔플/새 보드 / 재개| Game
   TimeUp -->|재시도| Game
   TimeUp -->|나가기| Title
 ```

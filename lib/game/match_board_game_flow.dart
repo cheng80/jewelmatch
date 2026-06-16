@@ -18,6 +18,14 @@ extension MatchBoardGameFlow on MatchBoardGame {
     overlays.add('PauseMenu');
   }
 
+  void _showNoMovesOverlayImpl() {
+    if (timeUp || overlays.isActive('NoMoves')) return;
+    isPlaying = false;
+    SoundManager.pauseBgm();
+    pauseEngine();
+    overlays.add('NoMoves');
+  }
+
   void _resumeGameImpl() {
     if (timeUp) return;
     SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
@@ -116,16 +124,28 @@ extension MatchBoardGameFlow on MatchBoardGame {
   }
 
   void _shuffleBoardImpl() {
+    final shouldResume = overlays.isActive('NoMoves') && !timeUp;
     board.shuffle();
     overlays.remove('NoMoves');
     overlays.remove('GameStats');
     _syncIntroInputBlock();
+    if (shouldResume) {
+      SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
+      resumeEngine();
+      isPlaying = true;
+    }
   }
 
   void _newBoardImpl() {
+    final shouldResume = overlays.isActive('NoMoves') && !timeUp;
     _generateFreshBoardWithStartSfx();
     overlays.remove('NoMoves');
     overlays.remove('GameStats');
     _syncIntroInputBlock();
+    if (shouldResume) {
+      SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
+      resumeEngine();
+      isPlaying = true;
+    }
   }
 }

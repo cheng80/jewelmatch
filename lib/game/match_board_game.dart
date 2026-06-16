@@ -37,9 +37,7 @@ class MatchBoardGame extends FlameGame {
       rows: rows,
       cols: cols,
       colorCount: 6,
-      onNoMoves: () {
-        overlays.add('NoMoves');
-      },
+      onNoMoves: _showNoMovesOverlay,
       timedModeTimeRewardScale: timeRewardScaleForMode,
       timedModeBonusBaseUnits: timeBonusBaseUnitsForMode,
       timedModeBonusPerComboTierUnits: timeBonusPerComboTierUnitsForMode,
@@ -331,7 +329,7 @@ class MatchBoardGame extends FlameGame {
   void debugTriggerSpecialEffects() => _debugTriggerSpecialEffectsImpl();
 
   void debugShowNoMovesOverlay() {
-    overlays.add('NoMoves');
+    _showNoMovesOverlay();
   }
 
   void newBoard() => _newBoardImpl();
@@ -344,4 +342,6 @@ class MatchBoardGame extends FlameGame {
 
   void _applyTimedModeTimeBonus(int seconds) =>
       _applyTimedModeTimeBonusImpl(seconds);
+
+  void _showNoMovesOverlay() => _showNoMovesOverlayImpl();
 }
