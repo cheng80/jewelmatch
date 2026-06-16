@@ -116,6 +116,52 @@ class SpecialSpawn {
   final int color;
 }
 
+class MatchBoardGameStats {
+  MatchBoardGameStats();
+
+  int validSwaps = 0;
+  int matchGroups = 0;
+  int removedGems = 0;
+  final Map<GemKind, int> removedByKind = _emptyKindCounts();
+  int specialGemsCreated = 0;
+  final Map<GemKind, int> specialCreatedByKind = _emptyKindCounts();
+  int specialGemsActivated = 0;
+  final Map<GemKind, int> specialActivatedByKind = _emptyKindCounts();
+
+  int get removedSpecialGems => removedByKind.entries
+      .where((entry) => entry.key != GemKind.normal)
+      .fold(0, (total, entry) => total + entry.value);
+
+  void recordValidSwap() {
+    validSwaps++;
+  }
+
+  void recordMatchGroups(int count) {
+    matchGroups += count;
+  }
+
+  void recordGemRemoved(GemKind kind) {
+    removedGems++;
+    removedByKind[kind] = (removedByKind[kind] ?? 0) + 1;
+  }
+
+  void recordSpecialCreated(GemKind kind) {
+    if (kind == GemKind.normal) return;
+    specialGemsCreated++;
+    specialCreatedByKind[kind] = (specialCreatedByKind[kind] ?? 0) + 1;
+  }
+
+  void recordSpecialActivated(GemKind kind) {
+    if (kind == GemKind.normal) return;
+    specialGemsActivated++;
+    specialActivatedByKind[kind] = (specialActivatedByKind[kind] ?? 0) + 1;
+  }
+}
+
+Map<GemKind, int> _emptyKindCounts() => {
+  for (final kind in GemKind.values) kind: 0,
+};
+
 class SpecialEffectShake {
   const SpecialEffectShake({required this.intensity, required this.duration});
 

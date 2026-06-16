@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'match_board_matching.dart';
 import 'match_board_models.dart';
+import 'match_board_special_combos.dart';
 import 'match_board_spawn_classifier.dart';
 import 'match_board_specials.dart';
 
@@ -73,12 +74,16 @@ class MatchBoardLogic {
   int score = 0;
   int combo = 0;
   int lastCombo = 0;
+  MatchBoardGameStats stats = MatchBoardGameStats();
 
   /// 이번 라운드에서 달성한 연쇄 콤보 최댓값 (한 번의 스왑으로 이어진 매치 단계 기준).
   int maxCombo = 0;
   Point<int>? selected;
   Point<int>? _hintA;
   Point<int>? _hintB;
+  int _hintMoveIndex = 0;
+  String? _hintMovesSignature;
+  List<ValidMovePair> _shuffledHintMoves = const [];
 
   /// 힌트로 표시할 두 칸 (행·열). 없으면 null. 렌더러에서 이 두 칸에만 흰색 펄스.
   Point<int>? get hintCellA => _hintA;
@@ -283,9 +288,11 @@ class MatchBoardLogic {
   void generateFreshBoard({
     bool withIntroFill = true,
     BoardFillIntroKind introKind = BoardFillIntroKind.roundStart,
+    bool resetStats = true,
   }) => _generateFreshBoardImpl(
     withIntroFill: withIntroFill,
     introKind: introKind,
+    resetStats: resetStats,
   );
 
   bool areAdjacent(int ar, int ac, int br, int bc) {
@@ -410,6 +417,7 @@ class MatchBoardLogic {
       pickExistingColor: pickExistingColor,
       rows: rows,
       cols: cols,
+      onSpecialActivated: stats.recordSpecialActivated,
     ),
   );
 

@@ -58,7 +58,11 @@ extension MatchBoardGeneration on MatchBoardLogic {
   void _generateFreshBoardImpl({
     bool withIntroFill = true,
     BoardFillIntroKind introKind = BoardFillIntroKind.roundStart,
+    bool resetStats = true,
   }) {
+    if (resetStats) {
+      stats = MatchBoardGameStats();
+    }
     _fillBoardWithRandomValidLayout();
     if (withIntroFill) {
       prepareIntroFill(kind: introKind);
@@ -79,6 +83,7 @@ extension MatchBoardGeneration on MatchBoardLogic {
     generateFreshBoard(
       withIntroFill: true,
       introKind: BoardFillIntroKind.shuffleRefill,
+      resetStats: false,
     );
     lastActionText = 'shuffled';
   }

@@ -25,6 +25,7 @@ class NoMovesOverlay extends StatelessWidget {
       innerPadding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
       verticalMargin: 86,
       alignment: Alignment.topCenter,
+      scrollable: true,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -77,6 +78,17 @@ class NoMovesOverlay extends StatelessWidget {
             onPressed: () {
               SoundManager.playSfx(AssetPaths.sfxBtnSnd);
               game.newBoard();
+            },
+          ),
+          const SizedBox(height: 14),
+          LuminaOutlinedButton(
+            width: 246,
+            height: 54,
+            label: context.tr('statsButton'),
+            borderColor: JewelCandyLuminaTheme.tertiaryGold,
+            onPressed: () {
+              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+              game.showGameStats();
             },
           ),
           const SizedBox(height: 8),

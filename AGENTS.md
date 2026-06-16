@@ -9,8 +9,9 @@ Stone Match는 Flutter + Flame 기반 8×8 매치-3 퍼즐 게임이다. 기본 
 - 항상 한국어로 대화한다.
 
 ### Flutter SDK
-- Flutter SDK `3.38.x` (Dart `^3.10.8`)가 필요하다. `/opt/flutter/bin`이 `PATH`에 포함되어야 한다.
-- `~/.bashrc`에 `export PATH="/opt/flutter/bin:$PATH"`가 설정되어 있다.
+- 현재 로컬 검증 기준은 Flutter `3.44.0` (Dart `3.12.0`)이다.
+- Flutter SDK는 `/Users/cheng80/flutter`에 설치되어 있으며, `/Users/cheng80/flutter/bin`이 `PATH`에 포함되어야 한다.
+- Android SDK는 `/Users/cheng80/Library/Android/sdk`에 설치되어 있다.
 
 ### 주요 명령어
 | 작업 | 명령어 |
@@ -20,12 +21,15 @@ Stone Match는 Flutter + Flame 기반 8×8 매치-3 퍼즐 게임이다. 기본 
 | 테스트 | `flutter test` |
 | 웹 빌드 | `flutter build web --release` |
 | 웹 개발 서버 | `flutter run -d chrome` 또는 빌드 후 `python3 -m http.server 8080 --directory build/web` |
+| Android 빌드 | `flutter build apk --release` 또는 `flutter build appbundle --release` |
+| iOS 빌드 | `flutter build ipa --release` |
 
 ### 주의사항
-- Android SDK는 설치되어 있지 않다. 웹(`chrome`)과 Linux 데스크톱(`linux`) 타겟만 사용 가능.
+- Android SDK와 Xcode가 설치되어 있으며 Android, iOS, Web 타겟을 사용할 수 있다.
+- 연결 가능한 기기는 실행 시점의 `flutter devices` 결과를 기준으로 판단한다. iOS 실기기/무선 디바이스는 잠금 해제, 케이블 연결 또는 동일 네트워크, Developer Mode 설정이 필요할 수 있다.
 - `pubspec.lock`이 커밋되어 있지 않으므로 `flutter pub get` 실행 시 의존성이 새로 resolve된다.
 - `flutter analyze` 실행 시 `use_build_context_synchronously` info 1건 발생하는데 이는 기존 코드의 경고이다 (에러 아님).
-- Linux 데스크톱 빌드에는 `libgtk-3-dev`, `cmake`, `ninja-build`, `clang`, `pkg-config` 패키지가 필요하다.
+- Linux 데스크톱 빌드는 macOS 로컬 우선 타겟이 아니며, 필요 시 Linux 빌드 환경에서 `libgtk-3-dev`, `cmake`, `ninja-build`, `clang`, `pkg-config` 패키지를 준비한다.
 - 랭킹 서버(PHP)는 선택사항이며, 앱은 서버 없이도 정상 동작한다.
 
 ### QA 산출물 관리

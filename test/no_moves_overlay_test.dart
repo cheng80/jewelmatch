@@ -34,6 +34,7 @@ void main() {
     expect(find.text('더 이상 이동할 수\n없습니다'), findsOneWidget);
     expect(find.text('셔플'), findsOneWidget);
     expect(find.text('새 보드'), findsOneWidget);
+    expect(find.text('통계'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

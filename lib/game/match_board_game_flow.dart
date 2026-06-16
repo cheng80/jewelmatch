@@ -51,6 +51,7 @@ extension MatchBoardGameFlow on MatchBoardGame {
     overlays.remove('RankingList');
     overlays.remove('LevelCelebration');
     overlays.remove('LevelUp');
+    overlays.remove('GameStats');
     timeUp = false;
     board.score = 0;
     board.lastCombo = 0;
@@ -101,15 +102,30 @@ extension MatchBoardGameFlow on MatchBoardGame {
     isPlaying = true;
   }
 
+  void _showGameStatsImpl() {
+    if (!timeUp &&
+        !overlays.isActive('NoMoves') &&
+        !overlays.isActive('PauseMenu')) {
+      return;
+    }
+    overlays.add('GameStats');
+  }
+
+  void _closeGameStatsImpl() {
+    overlays.remove('GameStats');
+  }
+
   void _shuffleBoardImpl() {
     board.shuffle();
     overlays.remove('NoMoves');
+    overlays.remove('GameStats');
     _syncIntroInputBlock();
   }
 
   void _newBoardImpl() {
     _generateFreshBoardWithStartSfx();
     overlays.remove('NoMoves');
+    overlays.remove('GameStats');
     _syncIntroInputBlock();
   }
 }

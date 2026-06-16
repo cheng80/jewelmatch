@@ -115,7 +115,16 @@ class _TimeUpResultPanel extends StatelessWidget {
             label: context.tr('retry'),
             onPressed: onRetry,
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
+          LuminaOutlinedButton(
+            label: context.tr('statsButton'),
+            borderColor: JewelCandyLuminaTheme.tertiaryGold,
+            onPressed: () {
+              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+              game.showGameStats();
+            },
+          ),
+          const SizedBox(height: 14),
           LuminaOutlinedButton(label: context.tr('exit'), onPressed: onExit),
           const SizedBox(height: 12),
         ],

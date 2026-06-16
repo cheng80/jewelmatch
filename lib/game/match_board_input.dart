@@ -45,6 +45,18 @@ extension MatchBoardInput on MatchBoardLogic {
       return true;
     }
 
+    final combo = buildNonHyperSpecialSwapCombo(
+      a: gemA,
+      b: gemB,
+      getGem: getGem,
+      rows: rows,
+      cols: cols,
+    );
+    if (combo != null) {
+      resolveSpecialSwap(combo.removalSet, combo.queue, combo.label);
+      return true;
+    }
+
     return false;
   }
 
@@ -59,6 +71,7 @@ extension MatchBoardInput on MatchBoardLogic {
     if (gemA == null || gemB == null) return false;
 
     if (triggerSpecialSwap(ar, ac, br, bc)) {
+      stats.recordValidSwap();
       selected = null;
       return true;
     }
@@ -76,6 +89,7 @@ extension MatchBoardInput on MatchBoardLogic {
     }
 
     resolveMatchCascade(MoveInfo(movedA: Point(br, bc), movedB: Point(ar, ac)));
+    stats.recordValidSwap();
     selected = null;
     return true;
   }
@@ -89,10 +103,34 @@ extension MatchBoardInput on MatchBoardLogic {
     if (state != 'idle' || inputLocked) return false;
     final moves = getAllValidMoves();
     if (moves.isEmpty) return false;
-    final pick = moves[_random.nextInt(moves.length)];
+    final signature = _hintMoveSignature(moves);
+    if (_hintMovesSignature != signature) {
+      _hintMovesSignature = signature;
+      _hintMoveIndex = 0;
+      _shuffledHintMoves = List<ValidMovePair>.of(moves)..shuffle(_random);
+    }
+    final shuffledMoves = _shuffledHintMoves;
+    final pick = shuffledMoves[_hintMoveIndex % shuffledMoves.length];
+    _hintMoveIndex = (_hintMoveIndex + 1) % shuffledMoves.length;
     _hintA = pick.a;
     _hintB = pick.b;
     return true;
+  }
+
+  String _hintMoveSignature(List<ValidMovePair> moves) {
+    final buffer = StringBuffer();
+    for (final move in moves) {
+      buffer
+        ..write(move.a.x)
+        ..write(':')
+        ..write(move.a.y)
+        ..write('>')
+        ..write(move.b.x)
+        ..write(':')
+        ..write(move.b.y)
+        ..write(';');
+    }
+    return buffer.toString();
   }
 
   List<ValidMovePair> _getAllValidMovesImpl() {
@@ -111,7 +149,16 @@ extension MatchBoardInput on MatchBoardLogic {
           if (gemA == null || gemB == null) continue;
 
           var isValid = false;
-          if (gemA.kind == GemKind.hyper || gemB.kind == GemKind.hyper) {
+          final specialCombo = buildNonHyperSpecialSwapCombo(
+            a: gemA,
+            b: gemB,
+            getGem: getGem,
+            rows: rows,
+            cols: cols,
+          );
+          if (gemA.kind == GemKind.hyper ||
+              gemB.kind == GemKind.hyper ||
+              specialCombo != null) {
             isValid = true;
           } else {
             swapCells(row, col, or, oc);

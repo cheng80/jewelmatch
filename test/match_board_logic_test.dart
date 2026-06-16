@@ -106,18 +106,21 @@ void main() {
     }
   });
 
-  test('non-hyper special gem does not trigger by swapping with any gem', () {
-    final board = _filledBoard();
-    board.setGem(3, 3, board.createGem(3, 3, 2, GemKind.bomb));
-    board.setGem(3, 4, board.createGem(3, 4, 5, GemKind.normal));
+  test(
+    'non-hyper special gem does not trigger by swapping with normal gem',
+    () {
+      final board = _filledBoard();
+      board.setGem(3, 3, board.createGem(3, 3, 2, GemKind.bomb));
+      board.setGem(3, 4, board.createGem(3, 4, 5, GemKind.normal));
 
-    final swapped = board.trySwap(3, 3, 3, 4);
+      final swapped = board.trySwap(3, 3, 3, 4);
 
-    expect(swapped, isFalse);
-    expect(board.getGem(3, 3)?.kind, GemKind.bomb);
-    expect(board.getGem(3, 4)?.kind, GemKind.normal);
-    expect(board.consumeSpecialEffectEvents(), isEmpty);
-  });
+      expect(swapped, isFalse);
+      expect(board.getGem(3, 3)?.kind, GemKind.bomb);
+      expect(board.getGem(3, 4)?.kind, GemKind.normal);
+      expect(board.consumeSpecialEffectEvents(), isEmpty);
+    },
+  );
 
   test('non-hyper special gem matches same-color normal gems', () {
     final board = _filledBoard();
@@ -160,28 +163,22 @@ void main() {
     expect(board.consumeSpecialEffectEvents().single.effectKind, GemKind.hyper);
   });
 
-  test(
-    'hint candidates exclude adjacent non-hyper specials without a match',
-    () {
-      final board = _filledBoard();
-      board.setGem(3, 3, board.createGem(3, 3, 2, GemKind.bomb));
-      board.setGem(3, 4, board.createGem(3, 4, 5, GemKind.star));
+  test('hint candidates include adjacent non-hyper special combos', () {
+    final board = _filledBoard();
+    board.setGem(3, 3, board.createGem(3, 3, 2, GemKind.bomb));
+    board.setGem(3, 4, board.createGem(3, 4, 5, GemKind.star));
 
-      final moves = board.getAllValidMoves();
+    final moves = board.getAllValidMoves();
 
-      expect(
-        moves,
-        isNot(
-          contains(
-            predicate<ValidMovePair>(
-              (move) =>
-                  move.a == const Point(3, 3) && move.b == const Point(3, 4),
-            ),
-          ),
+    expect(
+      moves,
+      contains(
+        predicate<ValidMovePair>(
+          (move) => move.a == const Point(3, 3) && move.b == const Point(3, 4),
         ),
-      );
-    },
-  );
+      ),
+    );
+  });
 
   test('screenshot board has valid moves under color match rules', () {
     final board = MatchBoardLogic(rows: 8, cols: 8);
@@ -215,6 +212,92 @@ void main() {
     expect(b, isNotNull);
     expect(board.areAdjacent(a!.x, a.y, b!.x, b.y), isTrue);
     expect(board.trySwap(a.x, a.y, b.x, b.y), isTrue);
+  });
+
+  test(
+    'stats count valid swaps, match groups, created specials, and removals',
+    () {
+      final board = _filledBoard();
+      board.setGem(2, 0, board.createGem(2, 0, 2, GemKind.normal));
+      board.setGem(3, 0, board.createGem(3, 0, 5, GemKind.normal));
+      board.setGem(3, 1, board.createGem(3, 1, 2, GemKind.normal));
+      board.setGem(3, 2, board.createGem(3, 2, 2, GemKind.normal));
+      board.setGem(3, 3, board.createGem(3, 3, 2, GemKind.normal));
+      board.setGem(3, 4, board.createGem(3, 4, 6, GemKind.normal));
+
+      final swapped = board.trySwap(2, 0, 3, 0);
+      final removalSet = board.pendingRemovalSet!;
+
+      expect(swapped, isTrue);
+      expect(board.stats.validSwaps, 1);
+      expect(board.stats.matchGroups, 1);
+      expect(board.stats.specialGemsCreated, 1);
+      expect(board.stats.specialCreatedByKind[GemKind.bomb], 1);
+      expect(removalSet, isNot(containsPair('3:0', true)));
+
+      board.removeMarkedGems(removalSet);
+
+      expect(board.stats.removedGems, 3);
+      expect(board.stats.removedByKind[GemKind.normal], 3);
+    },
+  );
+
+  test('showHint cycles through one shuffled valid move order', () {
+    final board = MatchBoardLogic(rows: 8, cols: 8);
+    _setRows(board, const [
+      [5, 1, 3, 3, 5, 1, 1, 6],
+      [6, 5, 4, 6, 2, 1, 4, 5],
+      [4, 3, 1, 6, 5, 5, 3, 2],
+      [5, -2, 2, 2, 4, 6, 2, 4],
+      [3, 4, 6, 4, 5, 1, 5, 1],
+      [2, -1, 1, 5, 2, 4, -1, 6],
+      [4, 5, 1, 1, 2, 6, 3, 3],
+      [1, 4, 6, 6, 3, 4, 1, 1],
+    ]);
+    final moves = board.getAllValidMoves();
+
+    expect(moves.length, greaterThan(1));
+    final firstCycle = <String>[];
+    for (var index = 0; index < moves.length; index++) {
+      expect(board.showHint(), isTrue);
+      final hint = _hintKey(board);
+
+      expect(_moveKeys(moves), contains(hint));
+      firstCycle.add(hint);
+    }
+    expect(firstCycle.toSet(), hasLength(moves.length));
+
+    expect(board.showHint(), isTrue);
+
+    expect(_hintKey(board), firstCycle.first);
+  });
+
+  test('showHint reshuffles and restarts when valid moves change', () {
+    final board = MatchBoardLogic(rows: 8, cols: 8);
+    _setRows(board, const [
+      [5, 1, 3, 3, 5, 1, 1, 6],
+      [6, 5, 4, 6, 2, 1, 4, 5],
+      [4, 3, 1, 6, 5, 5, 3, 2],
+      [5, -2, 2, 2, 4, 6, 2, 4],
+      [3, 4, 6, 4, 5, 1, 5, 1],
+      [2, -1, 1, 5, 2, 4, -1, 6],
+      [4, 5, 1, 1, 2, 6, 3, 3],
+      [1, 4, 6, 6, 3, 4, 1, 1],
+    ]);
+    expect(board.showHint(), isTrue);
+    board.setGem(0, 0, board.createGem(0, 0, 1, GemKind.hyper));
+    board.setGem(0, 1, board.createGem(0, 1, 2, GemKind.normal));
+    final changedMoves = board.getAllValidMoves();
+
+    expect(board.showHint(), isTrue);
+    final changedFirstHint = _hintKey(board);
+    for (var index = 1; index < changedMoves.length; index++) {
+      expect(board.showHint(), isTrue);
+    }
+    expect(board.showHint(), isTrue);
+
+    expect(_moveKeys(changedMoves), contains(changedFirstHint));
+    expect(_hintKey(board), changedFirstHint);
   });
 }
 
@@ -250,4 +333,18 @@ MatchBoardLogic _filledBoard() {
     }
   }
   return board;
+}
+
+String _hintKey(MatchBoardLogic board) {
+  final a = board.hintCellA;
+  final b = board.hintCellB;
+  expect(a, isNotNull);
+  expect(b, isNotNull);
+  return '${a!.x}:${a.y}>${b!.x}:${b.y}';
+}
+
+Set<String> _moveKeys(List<ValidMovePair> moves) {
+  return {
+    for (final move in moves) '${move.a.x}:${move.a.y}>${move.b.x}:${move.b.y}',
+  };
 }

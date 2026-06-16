@@ -109,6 +109,7 @@ List<SpecialEffectEvent> activateSpecialsForBoard({
   required ExistingColorPicker pickExistingColor,
   required int rows,
   required int cols,
+  void Function(GemKind kind)? onSpecialActivated,
 }) {
   final events = <SpecialEffectEvent>[];
   final queued = <String, bool>{};
@@ -124,6 +125,7 @@ List<SpecialEffectEvent> activateSpecialsForBoard({
     final key = specialCellKey(item.row, item.col);
     if (processed.containsKey(key)) continue;
     processed[key] = true;
+    onSpecialActivated?.call(item.kind);
 
     final affectedKeys = <String, bool>{};
     final affectedCells = <Point<int>>[];

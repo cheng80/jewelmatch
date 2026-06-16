@@ -322,6 +322,10 @@ class MatchBoardGame extends FlameGame {
 
   void closeHowToPlay() => _closeHowToPlayImpl();
 
+  void showGameStats() => _showGameStatsImpl();
+
+  void closeGameStats() => _closeGameStatsImpl();
+
   void shuffleBoard() => _shuffleBoardImpl();
 
   void debugTriggerSpecialEffects() => _debugTriggerSpecialEffectsImpl();

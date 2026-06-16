@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../resources/asset_paths.dart';
@@ -113,40 +114,91 @@ class PauseMenuActionButton extends StatelessWidget {
 class PauseMenuSettingsButton extends StatelessWidget {
   const PauseMenuSettingsButton({super.key, required this.onPressed});
 
-  static const String _iconFrameAsset =
-      'assets/images/${AssetPaths.obsidianIconButtonFrame}';
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return PauseMenuIconButton(
+      tooltip: context.tr('settings'),
+      icon: Image.asset(
+        AssetPaths.modeIconSettings,
+        width: 34,
+        height: 34,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
+      ),
+      onPressed: onPressed,
+    );
+  }
+}
+
+class PauseMenuStatsButton extends StatelessWidget {
+  const PauseMenuStatsButton({super.key, required this.onPressed});
 
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 74,
-      height: 74,
-      child: Material(
-        color: Colors.transparent,
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onPressed,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Image.asset(
-                _iconFrameAsset,
-                width: 74,
-                height: 74,
-                fit: BoxFit.contain,
-                filterQuality: FilterQuality.high,
-              ),
-              Image.asset(
-                AssetPaths.modeIconSettings,
-                width: 34,
-                height: 34,
-                fit: BoxFit.contain,
-                filterQuality: FilterQuality.high,
-              ),
-            ],
+    return PauseMenuIconButton(
+      tooltip: context.tr('statsButton'),
+      icon: Icon(
+        Icons.bar_chart_rounded,
+        color: JewelCandyLuminaTheme.tertiaryGold,
+        size: 38,
+        shadows: [
+          Shadow(
+            color: Colors.black.withValues(alpha: 0.92),
+            offset: const Offset(0, 2),
+            blurRadius: 4,
+          ),
+        ],
+      ),
+      onPressed: onPressed,
+    );
+  }
+}
+
+class PauseMenuIconButton extends StatelessWidget {
+  const PauseMenuIconButton({
+    super.key,
+    required this.icon,
+    required this.onPressed,
+    required this.tooltip,
+  });
+
+  static const String _iconFrameAsset =
+      'assets/images/${AssetPaths.obsidianIconButtonFrame}';
+
+  final Widget icon;
+  final VoidCallback onPressed;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: SizedBox(
+        width: 74,
+        height: 74,
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onPressed,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Image.asset(
+                  _iconFrameAsset,
+                  width: 74,
+                  height: 74,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                ),
+                icon,
+              ],
+            ),
           ),
         ),
       ),

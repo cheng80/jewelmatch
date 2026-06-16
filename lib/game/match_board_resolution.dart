@@ -14,6 +14,7 @@ extension MatchBoardResolution on MatchBoardLogic {
       final gem = getGem(row, col);
       if (gem != null) {
         removed++;
+        stats.recordGemRemoved(gem.kind);
         if (_isSpecial(gem.kind)) {
           hasSpecial = true;
           specialBonus += _specialActivationScoreBonus(gem.kind);
@@ -133,12 +134,16 @@ extension MatchBoardResolution on MatchBoardLogic {
     }
 
     _lastMatchData = matchData;
+    stats.recordMatchGroups(matchData.groups.length);
 
     final mi = pendingMoveInfo;
     final spawns = classifyMatchGroups(matchData, mi?.movedA, mi?.movedB);
     var removalSet = buildRemovalSet(matchData, spawns);
     final queue = buildSpecialQueue(removalSet);
 
+    for (final spawn in spawns) {
+      stats.recordSpecialCreated(spawn.kind);
+    }
     applySpawnInfo(spawns);
     activateSpecials(removalSet, queue);
     pendingMoveInfo = null;

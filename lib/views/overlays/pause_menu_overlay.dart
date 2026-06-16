@@ -87,11 +87,23 @@ class PauseMenuOverlay extends StatelessWidget {
             },
           ),
           const SizedBox(height: 18),
-          PauseMenuSettingsButton(
-            onPressed: () {
-              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-              context.push(RoutePaths.setting);
-            },
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              PauseMenuSettingsButton(
+                onPressed: () {
+                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                  context.push(RoutePaths.setting);
+                },
+              ),
+              const SizedBox(width: 16),
+              PauseMenuStatsButton(
+                onPressed: () {
+                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                  game.showGameStats();
+                },
+              ),
+            ],
           ),
         ],
       ),

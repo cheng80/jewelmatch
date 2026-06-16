@@ -52,6 +52,7 @@ void main() {
     expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
     expect(find.byIcon(Icons.restart_alt_rounded), findsOneWidget);
     expect(find.byIcon(Icons.logout_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.bar_chart_rounded), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
