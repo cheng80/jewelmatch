@@ -62,7 +62,7 @@ extension MatchBoardInput on MatchBoardLogic {
 
   bool _trySwapImpl(int ar, int ac, int br, int bc) {
     clearHint();
-    if (inputLocked || state != 'idle') return false;
+    if (!_canTrySwapNow(ar, ac, br, bc)) return false;
     if (!isInside(ar, ac) || !isInside(br, bc)) return false;
     if (!areAdjacent(ar, ac, br, bc)) return false;
 
@@ -92,6 +92,47 @@ extension MatchBoardInput on MatchBoardLogic {
     stats.recordValidSwap();
     selected = null;
     return true;
+  }
+
+  bool _canTrySwapNow(int ar, int ac, int br, int bc) {
+    if (inputLocked) return false;
+    if (state == 'idle') return true;
+    if (!_allowsStableZoneSwapState) return false;
+    return _isStableSwapCell(ar, ac) && _isStableSwapCell(br, bc);
+  }
+
+  bool get _allowsStableZoneSwapState =>
+      state == 'falling' || state == 'refilling' || state == 'checking';
+
+  bool _canSelectCellNow(int row, int col) {
+    if (state == 'idle') return true;
+    if (!_allowsStableZoneSwapState) return false;
+    return _isStableSwapCell(row, col);
+  }
+
+  bool _isStableSwapCell(int row, int col) {
+    if (!isInside(row, col)) return false;
+    if (pendingRemovalSet?.containsKey(_cellKey(row, col)) ?? false) {
+      return false;
+    }
+    final gem = getGem(row, col);
+    if (gem == null) return false;
+    if (gem.row != row || gem.col != col) return false;
+    if (!_isGemVisuallySettled(gem)) return false;
+    return !_hasEmptyCellBelow(row, col);
+  }
+
+  bool _isGemVisuallySettled(BoardGem gem) {
+    const epsilon = 0.45;
+    return (gem.x - gem.targetX).abs() <= epsilon &&
+        (gem.y - gem.targetY).abs() <= epsilon;
+  }
+
+  bool _hasEmptyCellBelow(int row, int col) {
+    for (var r = row + 1; r < rows; r++) {
+      if (getGem(r, col) == null) return true;
+    }
+    return false;
   }
 
   void _clearHintImpl() {
@@ -198,6 +239,11 @@ extension MatchBoardInput on MatchBoardLogic {
     }
     final row = cell.x;
     final col = cell.y;
+
+    if (!_canSelectCellNow(row, col)) {
+      selected = null;
+      return;
+    }
 
     if (selected == null) {
       selectCell(row, col);

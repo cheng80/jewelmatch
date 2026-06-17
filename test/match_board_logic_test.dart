@@ -242,6 +242,108 @@ void main() {
     },
   );
 
+  test('settled gems can swap while board is resolving', () {
+    for (final state in const ['falling', 'refilling', 'checking']) {
+      final board = _stableZoneMatchBoard();
+      board.state = state;
+      board.stageTimer = 12;
+
+      final swapped = board.trySwap(6, 0, 7, 0);
+
+      expect(swapped, isTrue, reason: state);
+      expect(board.state, 'removing', reason: state);
+      expect(board.stageTimer, MatchBoardLogic.removeDelay, reason: state);
+      expect(board.stats.validSwaps, 1, reason: state);
+      expect(board.selected, isNull, reason: state);
+      expect(board.pendingRemovalSet, containsPair('7:0', true), reason: state);
+      expect(board.pendingRemovalSet, containsPair('7:1', true), reason: state);
+      expect(board.pendingRemovalSet, containsPair('7:2', true), reason: state);
+    }
+  });
+
+  test('swap touching empty cell is blocked while board is falling', () {
+    final board = _filledBoard();
+    board.state = 'falling';
+    board.stageTimer = 12;
+    board.setGem(7, 0, null);
+
+    final swapped = board.trySwap(6, 0, 7, 0);
+
+    expect(swapped, isFalse);
+    expect(board.state, 'falling');
+    expect(board.stageTimer, 12);
+  });
+
+  test('swap touching unsettled or gravity-pending gem is blocked while falling', () {
+    final board = _filledBoard();
+    board.state = 'falling';
+    board.stageTimer = 12;
+    final unsettled = board.getGem(7, 0)!;
+    unsettled.y = unsettled.targetY - board.tileSize;
+
+    expect(board.trySwap(6, 0, 7, 0), isFalse);
+
+    unsettled.y = unsettled.targetY;
+    board.setGem(7, 0, null);
+
+    expect(board.trySwap(5, 0, 6, 0), isFalse);
+    expect(board.state, 'falling');
+    expect(board.stageTimer, 12);
+  });
+
+  test('spawned and mismatched gems are blocked while refilling', () {
+    final board = _filledBoard();
+    board.state = 'refilling';
+    board.setGem(6, 0, board.createGem(6, 0, 2, GemKind.normal));
+    board.setGem(
+      7,
+      0,
+      board.createGem(7, 0, 5, GemKind.normal, spawnOffsetRows: 1),
+    );
+
+    expect(board.trySwap(6, 0, 7, 0), isFalse);
+
+    final mismatched = board.createGem(7, 0, 5, GemKind.normal);
+    mismatched.row = 6;
+    board.cells[7][0] = mismatched;
+
+    expect(board.trySwap(6, 0, 7, 0), isFalse);
+    expect(board.state, 'refilling');
+  });
+
+  test('stable-zone matchless swap keeps invalid swap behavior', () {
+    var invalidSwaps = 0;
+    final board = _filledBoard(onInvalidSwap: () => invalidSwaps++);
+    board.state = 'checking';
+
+    final swapped = board.trySwap(0, 0, 0, 1);
+
+    expect(swapped, isFalse);
+    expect(board.state, 'checking');
+    expect(board.lastActionText, 'bad swap');
+    expect(board.inputLocked, isTrue);
+    expect(invalidSwaps, 1);
+    expect(board.getGem(0, 0)?.color, 1);
+    expect(board.getGem(0, 1)?.color, 2);
+  });
+
+  test('stable-zone tap selection ignores unstable cells', () {
+    final board = _stableZoneMatchBoard();
+    board.state = 'falling';
+    final unstable = board.getGem(6, 0)!;
+    unstable.y = unstable.targetY - board.tileSize;
+
+    final start = board.cellToPixel(6, 0);
+    board.handleTap(start.dx + 1, start.dy + 1);
+
+    expect(board.selected, isNull);
+
+    unstable.y = unstable.targetY;
+    board.handleTap(start.dx + 1, start.dy + 1);
+
+    expect(board.selected, const Point(6, 0));
+  });
+
   test('showHint cycles through one shuffled valid move order', () {
     final board = MatchBoardLogic(rows: 8, cols: 8);
     _setRows(board, const [
@@ -324,14 +426,24 @@ void _setRows(MatchBoardLogic board, List<List<int>> rows) {
   }
 }
 
-MatchBoardLogic _filledBoard() {
-  final board = MatchBoardLogic(rows: 8, cols: 8);
+MatchBoardLogic _filledBoard({void Function()? onInvalidSwap}) {
+  final board = MatchBoardLogic(rows: 8, cols: 8, onInvalidSwap: onInvalidSwap);
   for (var row = 0; row < 8; row++) {
     for (var col = 0; col < 8; col++) {
       final color = (row + col) % 6 + 1;
       board.setGem(row, col, board.createGem(row, col, color, GemKind.normal));
     }
   }
+  return board;
+}
+
+MatchBoardLogic _stableZoneMatchBoard() {
+  final board = _filledBoard();
+  board.setGem(6, 0, board.createGem(6, 0, 2, GemKind.normal));
+  board.setGem(7, 0, board.createGem(7, 0, 5, GemKind.normal));
+  board.setGem(7, 1, board.createGem(7, 1, 2, GemKind.normal));
+  board.setGem(7, 2, board.createGem(7, 2, 2, GemKind.normal));
+  board.setGem(7, 3, board.createGem(7, 3, 4, GemKind.normal));
   return board;
 }
 

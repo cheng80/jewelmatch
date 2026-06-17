@@ -131,6 +131,42 @@ void main() {
     expect(game.timeRemaining, lessThan(timeAfterTargeting));
   });
 
+  test('stable-zone swipe works through MatchBoardGame input surface', () {
+    final game = MatchBoardGame(gameMode: JewelGameMode.simple);
+    _setStableZoneMatchBoard(game.board);
+    game.board.setGeometry(x: 0, y: 0, tile: 10);
+    game.board.introFillInProgress = false;
+    game.board.state = 'falling';
+    game.board.stageTimer = 12;
+
+    final start = game.board.cellToPixel(6, 0);
+    game.handleBoardSwipe(start.dx + 1, start.dy + 1, 1, 0);
+
+    expect(game.board.state, 'removing');
+    expect(game.board.stageTimer, MatchBoardLogic.removeDelay);
+    expect(game.board.pendingRemovalSet, containsPair('7:0', true));
+    expect(game.board.pendingRemovalSet, containsPair('7:1', true));
+    expect(game.board.pendingRemovalSet, containsPair('7:2', true));
+  });
+
+  test('stable-zone swipe blocks unsettled cells through game surface', () {
+    final game = MatchBoardGame(gameMode: JewelGameMode.simple);
+    _setStableZoneMatchBoard(game.board);
+    game.board.setGeometry(x: 0, y: 0, tile: 10);
+    game.board.introFillInProgress = false;
+    game.board.state = 'falling';
+    game.board.stageTimer = 12;
+    final unstable = game.board.getGem(6, 0)!;
+    unstable.y = unstable.targetY - game.board.tileSize;
+
+    final start = game.board.cellToPixel(6, 0);
+    game.handleBoardSwipe(start.dx + 1, start.dy + 1, 1, 0);
+
+    expect(game.board.state, 'falling');
+    expect(game.board.stageTimer, 12);
+    expect(game.board.pendingRemovalSet, isNull);
+  });
+
   test('prism item requires explicit target color before board target', () {
     final game = MatchBoardGame(gameMode: JewelGameMode.timed);
     _setHintBoard(game.board);
@@ -236,6 +272,20 @@ void _setRows(MatchBoardLogic board, List<List<int>> rows) {
       board.setGem(row, col, board.createGem(row, col, color, kind));
     }
   }
+}
+
+void _setStableZoneMatchBoard(MatchBoardLogic board) {
+  for (var row = 0; row < MatchBoardGame.rows; row++) {
+    for (var col = 0; col < MatchBoardGame.cols; col++) {
+      final color = (row + col) % 6 + 1;
+      board.setGem(row, col, board.createGem(row, col, color, GemKind.normal));
+    }
+  }
+  board.setGem(6, 0, board.createGem(6, 0, 2, GemKind.normal));
+  board.setGem(7, 0, board.createGem(7, 0, 5, GemKind.normal));
+  board.setGem(7, 1, board.createGem(7, 1, 2, GemKind.normal));
+  board.setGem(7, 2, board.createGem(7, 2, 2, GemKind.normal));
+  board.setGem(7, 3, board.createGem(7, 3, 4, GemKind.normal));
 }
 
 String _hintKey(MatchBoardLogic board) {
