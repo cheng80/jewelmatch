@@ -12,6 +12,7 @@ import 'components/match_board_renderer.dart';
 import 'components/match_game_hud.dart';
 import 'components/particle_burst.dart';
 import 'components/special_effect_pool.dart';
+import 'item_kind.dart';
 import 'jewel_game_mode.dart';
 import 'jewel_rank_progression.dart';
 import 'match_board_camera_shake.dart';
@@ -106,6 +107,11 @@ class MatchBoardGame extends FlameGame {
   int levelUpFromLevel = 1;
   int levelUpToLevel = 1;
   List<GemKind> progressionNextBoardBonusKinds = const [];
+  ItemKind? activeTargetItem;
+  int? selectedPrismColor;
+  ItemKind? pendingImmediateItemConfirm;
+  String? _itemFeedbackText;
+  double _itemFeedbackTimer = 0;
 
   /// `true`이면 `onGameResize`에서 기하만 갱신하고, 보석 데이터는 유지한다.
   /// (첫 유효 레이아웃에서 한 번만 `generateFreshBoard` — 문서 5절 `onLoad` 이후 레이아웃 확정 흐름과 동일한 단계)
@@ -138,6 +144,32 @@ class MatchBoardGame extends FlameGame {
   int? get hintBadgeCount => hasLimitedHints ? _remainingHints : null;
 
   int get remainingHints => _remainingHints;
+  bool get isItemTargeting => activeTargetItem != null;
+  ItemKind? get targetingItem => activeTargetItem;
+  bool get hasPendingImmediateItemConfirm =>
+      pendingImmediateItemConfirm != null;
+  bool get isPrismColorPicking =>
+      activeTargetItem == ItemKind.prismTransform && selectedPrismColor == null;
+  String? get itemFeedbackText {
+    final targetItem = activeTargetItem;
+    if (targetItem != null) return _itemTargetPrompt(targetItem);
+    if (_itemFeedbackTimer <= 0) return null;
+    return _itemFeedbackText;
+  }
+
+  double get itemFeedbackOpacity {
+    if (activeTargetItem != null) return 1;
+    if (_itemFeedbackText == null || _itemFeedbackTimer <= 0) return 0;
+    return _itemFeedbackTimer < 0.24 ? _itemFeedbackTimer / 0.24 : 1;
+  }
+
+  List<ItemKind> get phaseOneTestItems => ItemKindMeta.phaseOneLoadout;
+  Map<ItemKind, Rect> debugReadItemSlotRects() =>
+      _hud?.debugReadItemSlotRects() ?? const {};
+  Map<int, Rect> debugReadPrismColorRects() =>
+      _hud?.debugReadPrismColorRects() ?? const {};
+  Map<String, Rect> debugReadAlignedHudRects() =>
+      _hud?.debugReadAlignedHudRects() ?? const {};
 
   /// 상단 1열: 일시정지 + 최고 기록만.
   static const double hudTopBarScale = 0.54;
@@ -151,7 +183,7 @@ class MatchBoardGame extends FlameGame {
   double get hudGapScoreToCombo => hudScale * 0.04;
 
   /// 콤보(현재·최대) 고정 줄 높이 — 점수 블록과 보드 사이.
-  double get hudComboStripHeight => hudScale * 0.88;
+  double get hudComboStripHeight => hudScale * 0.77;
 
   /// 콤보 줄과 타임바 사이 간격.
   double get hudGapComboToTimeBar => hudScale * 0.18;
@@ -159,12 +191,12 @@ class MatchBoardGame extends FlameGame {
   /// 타임바와 보드 사이 간격.
   double get hudGapTimeBarToBoard => hudScale * 0.24;
 
-  static const double hudBottomTimeBarScale = 0.5;
+  static const double hudBottomTimeBarScale = 0.44;
 
   double get hudBottomTimeBarHeight => hudScale * hudBottomTimeBarScale;
 
   /// [layoutRef] 계산 시 보드 아래에 확보할 최소 하단 여백.
-  double get bottomChromeHeight => hudScale * 0.12;
+  double get bottomChromeHeight => safeAreaPadding.bottom + hudScale * 1.68 + 8;
 
   /// 상단: 안전영역 + 상단바 + 점수 + 콤보 + 타임바 + 보드 전 간격.
   double get topChromeHeight =>
@@ -246,6 +278,12 @@ class MatchBoardGame extends FlameGame {
   /// 보드(셀) 영역 하단 Y — HUD에서 하단 패널 배치·히트 테스트에 사용.
   double get boardPixelBottom => _boardPixelBottomImpl;
 
+  /// 실제 8×8 셀 묶음의 가로 영역. HUD 하단/상단 보조 바와 폭을 맞추는 기준.
+  Rect get boardContentRect => _boardContentRectImpl;
+
+  /// 화면에 보이는 보드 프레임 외곽 영역.
+  Rect get boardFrameRect => _boardFrameRectImpl;
+
   /// 인트로 중에는 Flutter [IntroBlock] 오버레이로 전체 입력 차단(투명).
   void _syncIntroInputBlock() => _syncIntroInputBlockImpl();
 
@@ -300,6 +338,7 @@ class MatchBoardGame extends FlameGame {
     board.update(dt);
     _spawnSpecialEffectEvents();
     _updateCameraShake(dt);
+    _updateItemFeedback(dt);
 
     _updateTimedModeClock(dt);
     _updateProgressionMode();
@@ -314,6 +353,10 @@ class MatchBoardGame extends FlameGame {
         board.introFillInProgress) {
       return;
     }
+    if (activeTargetItem != null) {
+      _handleItemTargetTap(x, y);
+      return;
+    }
     board.handleTap(x, y);
   }
 
@@ -322,7 +365,8 @@ class MatchBoardGame extends FlameGame {
     if (!isPlaying ||
         timeUp ||
         board.inputLocked ||
-        board.introFillInProgress) {
+        board.introFillInProgress ||
+        activeTargetItem != null) {
       return;
     }
     board.clearHint();
@@ -338,6 +382,281 @@ class MatchBoardGame extends FlameGame {
   }
 
   void requestHint() => _requestHintImpl();
+
+  bool isItemEnabled(ItemKind item) => switch (item) {
+    ItemKind.timeSlip => hasTimedClock && !timeUp,
+    ItemKind.hintPlus => hasLimitedHints,
+    _ => true,
+  };
+
+  bool canUseTestItem(ItemKind item) {
+    if (!isItemEnabled(item)) return false;
+    return isPlaying &&
+        !timeUp &&
+        !board.inputLocked &&
+        !board.introFillInProgress &&
+        board.state == 'idle';
+  }
+
+  bool startItemTargeting(ItemKind item) {
+    if (!item.needsTarget || !canUseTestItem(item)) {
+      _showItemFeedback(_blockedItemMessage(item));
+      return false;
+    }
+    activeTargetItem = item;
+    selectedPrismColor = null;
+    _clearItemFeedback();
+    board.state = 'itemTargeting';
+    board.stageTimer = 3600;
+    board.selected = null;
+    dismissHint();
+    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    return true;
+  }
+
+  bool useTestItem(ItemKind item) {
+    if (activeTargetItem == item) {
+      cancelItemTargeting();
+      return true;
+    }
+    if (!isPlaying ||
+        timeUp ||
+        board.inputLocked ||
+        board.introFillInProgress ||
+        board.state != 'idle') {
+      _showItemFeedback('잠시 후 사용하세요');
+      return false;
+    }
+    if (!isItemEnabled(item)) {
+      _showItemFeedback(_blockedItemMessage(item));
+      SoundManager.playSfx(AssetPaths.sfxFail);
+      return false;
+    }
+    dismissHint();
+    if (item.needsTarget) {
+      return startItemTargeting(item);
+    }
+    return _activateImmediateItem(item);
+  }
+
+  bool usePhaseOneItem(ItemKind item) {
+    if (item.needsTarget) return useTestItem(item);
+    return requestImmediateItemConfirm(item);
+  }
+
+  bool requestImmediateItemConfirm(ItemKind item) {
+    if (item.needsTarget) return false;
+    if (!isPlaying ||
+        timeUp ||
+        board.inputLocked ||
+        board.introFillInProgress ||
+        board.state != 'idle') {
+      _showItemFeedback('잠시 후 사용하세요');
+      return false;
+    }
+    if (!isItemEnabled(item)) {
+      _showItemFeedback(_blockedItemMessage(item));
+      SoundManager.playSfx(AssetPaths.sfxFail);
+      return false;
+    }
+    activeTargetItem = null;
+    selectedPrismColor = null;
+    pendingImmediateItemConfirm = item;
+    dismissHint();
+    _clearItemFeedback();
+    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    return true;
+  }
+
+  bool confirmImmediateItemUse() {
+    final item = pendingImmediateItemConfirm;
+    if (item == null) return false;
+    pendingImmediateItemConfirm = null;
+    if (item.needsTarget) return false;
+    if (!isPlaying ||
+        timeUp ||
+        board.inputLocked ||
+        board.introFillInProgress ||
+        board.state != 'idle') {
+      _showItemFeedback('잠시 후 사용하세요');
+      return false;
+    }
+    return _activateImmediateItem(item);
+  }
+
+  void cancelImmediateItemConfirm() {
+    if (pendingImmediateItemConfirm == null) return;
+    pendingImmediateItemConfirm = null;
+    _showItemFeedback('아이템 사용 취소');
+    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+  }
+
+  bool selectPrismTargetColor(int color) {
+    if (activeTargetItem != ItemKind.prismTransform) return false;
+    if (color < 1 || color > board.colorCount) return false;
+    selectedPrismColor = color;
+    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    return true;
+  }
+
+  void cancelItemTargeting() {
+    if (activeTargetItem == null) return;
+    activeTargetItem = null;
+    selectedPrismColor = null;
+    pendingImmediateItemConfirm = null;
+    if (board.state == 'itemTargeting') {
+      board.state = 'idle';
+      board.stageTimer = 0;
+    }
+    board.selected = null;
+    _showItemFeedback('아이템 선택 취소');
+    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+  }
+
+  void _handleItemTargetTap(double x, double y) {
+    final item = activeTargetItem;
+    if (item == null) return;
+    if (item == ItemKind.prismTransform && selectedPrismColor == null) {
+      SoundManager.playSfx(AssetPaths.sfxFail);
+      return;
+    }
+    final cell = board.pixelToCell(x, y);
+    if (cell == null) {
+      cancelItemTargeting();
+      return;
+    }
+    activeTargetItem = null;
+    final prismColor = selectedPrismColor;
+    selectedPrismColor = null;
+    if (board.state == 'itemTargeting') {
+      board.state = 'idle';
+      board.stageTimer = 0;
+    }
+    final used = _activateTargetedItem(
+      item,
+      cell.x,
+      cell.y,
+      prismColor: prismColor,
+    );
+    _showItemFeedback(used ? _targetUsedMessage(item) : '선택한 보석에는 사용할 수 없습니다');
+    SoundManager.playSfx(used ? AssetPaths.sfxSpecialGem : AssetPaths.sfxFail);
+  }
+
+  bool _activateTargetedItem(
+    ItemKind item,
+    int row,
+    int col, {
+    int? prismColor,
+  }) => switch (item) {
+    ItemKind.runeHammer => board.removeSingleCellForItem(row, col),
+    ItemKind.ancientBomb => board.triggerAreaItem(
+      row,
+      col,
+      GemKind.bomb,
+      'ancient bomb',
+    ),
+    ItemKind.thorHammer => board.triggerAreaItem(
+      row,
+      col,
+      GemKind.star,
+      'thor hammer',
+    ),
+    ItemKind.hyperCube => board.triggerHyperCubeItem(row, col),
+    ItemKind.prismTransform => board.useBoardItem(
+      item,
+      row: row,
+      col: col,
+      prismColor: prismColor,
+    ),
+    ItemKind.fateShuffle || ItemKind.timeSlip || ItemKind.hintPlus => false,
+  };
+
+  bool _activateImmediateItem(ItemKind item) {
+    var used = false;
+    var feedback = '지금은 사용할 수 없습니다';
+    switch (item) {
+      case ItemKind.fateShuffle:
+        used = board.shuffleOrdinaryGemsPreservingSpecials();
+        feedback = used ? '보드를 섞었습니다' : '지금은 섞을 수 없습니다';
+      case ItemKind.timeSlip:
+        final before = timeRemaining;
+        used = _applyTimeSlipItem();
+        final gained = (timeRemaining - before).round();
+        feedback = used ? '타임 슬립 +$gained초' : '시간이 이미 최대입니다';
+      case ItemKind.hintPlus:
+        final before = remainingHints;
+        used = _applyHintPlusItem();
+        final gained = remainingHints - before;
+        feedback = used ? '힌트 +$gained' : '힌트를 늘릴 수 없습니다';
+      case ItemKind.runeHammer ||
+          ItemKind.ancientBomb ||
+          ItemKind.thorHammer ||
+          ItemKind.hyperCube ||
+          ItemKind.prismTransform:
+        break;
+    }
+    _showItemFeedback(feedback);
+    SoundManager.playSfx(used ? AssetPaths.sfxSpecialGem : AssetPaths.sfxFail);
+    return used;
+  }
+
+  bool _applyTimeSlipItem() {
+    if (!hasTimedClock || timeUp) return false;
+    final before = timeRemaining;
+    _applyTimedModeTimeBonus(10);
+    return timeRemaining > before;
+  }
+
+  bool _applyHintPlusItem() {
+    if (!hasLimitedHints) return false;
+    _remainingHints += 1;
+    return true;
+  }
+
+  void _updateItemFeedback(double dt) {
+    if (_itemFeedbackTimer <= 0) return;
+    _itemFeedbackTimer -= dt;
+    if (_itemFeedbackTimer <= 0) {
+      _clearItemFeedback();
+    }
+  }
+
+  void _showItemFeedback(String text, {double seconds = 1.4}) {
+    _itemFeedbackText = text;
+    _itemFeedbackTimer = seconds;
+  }
+
+  void _clearItemFeedback() {
+    _itemFeedbackText = null;
+    _itemFeedbackTimer = 0;
+  }
+
+  String _itemTargetPrompt(ItemKind item) => switch (item) {
+    ItemKind.runeHammer => '룬 망치: 제거할 보석 선택',
+    ItemKind.ancientBomb => '고대 폭탄: 폭발 중심 선택',
+    ItemKind.thorHammer => '토르 망치: 십자 중심 선택',
+    ItemKind.hyperCube => '하이퍼 큐브: 같은 색 제거할 보석 선택',
+    ItemKind.prismTransform =>
+      selectedPrismColor == null ? '프리즘: 바꿀 색 선택' : '프리즘: 바꿀 보석 선택',
+    ItemKind.fateShuffle ||
+    ItemKind.timeSlip ||
+    ItemKind.hintPlus => '보석을 선택하세요',
+  };
+
+  String _targetUsedMessage(ItemKind item) => switch (item) {
+    ItemKind.runeHammer => '보석을 제거했습니다',
+    ItemKind.ancientBomb => '폭발 아이템 발동',
+    ItemKind.thorHammer => '십자 번개 발동',
+    ItemKind.hyperCube => '같은 색 보석 제거',
+    ItemKind.prismTransform => '보석 변환 완료',
+    ItemKind.fateShuffle || ItemKind.timeSlip || ItemKind.hintPlus => '아이템 발동',
+  };
+
+  String _blockedItemMessage(ItemKind item) => switch (item) {
+    ItemKind.timeSlip => hasTimedClock ? '지금은 사용할 수 없습니다' : '타임 모드 전용 아이템',
+    ItemKind.hintPlus => hasLimitedHints ? '지금은 사용할 수 없습니다' : '힌트 제한 모드 전용 아이템',
+    _ => '잠시 후 사용하세요',
+  };
 
   /// 힌트 디밍만 해제 (보드 탭 외 UI 탭 등).
   void dismissHint() => _dismissHintImpl();

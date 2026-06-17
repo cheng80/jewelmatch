@@ -188,6 +188,114 @@ extension MatchBoardResolution on MatchBoardLogic {
     _startRemovalPhaseImpl(removalSet);
   }
 
+  bool _removeSingleCellForItemImpl(int row, int col) {
+    if (inputLocked || state != 'idle' || !isInside(row, col)) return false;
+    if (getGem(row, col) == null) return false;
+    combo = 1;
+    lastCombo = 1;
+    if (maxCombo < 1) {
+      maxCombo = 1;
+    }
+    pendingResultLabel = 'rune hammer';
+    _startRemovalPhaseImpl({_cellKey(row, col): true});
+    return true;
+  }
+
+  bool _useBoardItemImpl(
+    ItemKind item, {
+    required int row,
+    required int col,
+    int? prismColor,
+  }) {
+    if (item == ItemKind.prismTransform && prismColor != null) {
+      return _transformCellForPrismItemImpl(row, col, prismColor: prismColor);
+    }
+    return switch (item) {
+      ItemKind.runeHammer => _removeSingleCellForItemImpl(row, col),
+      ItemKind.ancientBomb => _triggerAreaItemImpl(
+        row,
+        col,
+        GemKind.bomb,
+        'ancient bomb',
+      ),
+      ItemKind.thorHammer => _triggerAreaItemImpl(
+        row,
+        col,
+        GemKind.star,
+        'thor hammer',
+      ),
+      ItemKind.hyperCube => _triggerHyperCubeItemImpl(row, col),
+      ItemKind.prismTransform => _transformCellForPrismItemImpl(row, col),
+      ItemKind.fateShuffle || ItemKind.timeSlip || ItemKind.hintPlus => false,
+    };
+  }
+
+  bool _triggerAreaItemImpl(int row, int col, GemKind kind, String label) {
+    if (inputLocked || state != 'idle' || !isInside(row, col)) return false;
+    if (getGem(row, col) == null) return false;
+    final removalSet = <String, bool>{_cellKey(row, col): true};
+    final queue = <MatchChainItem>[
+      MatchChainItem(row: row, col: col, kind: kind, triggerColor: null),
+    ];
+    resolveSpecialSwap(removalSet, queue, label);
+    return true;
+  }
+
+  bool _triggerHyperCubeItemImpl(int row, int col) {
+    if (inputLocked || state != 'idle' || !isInside(row, col)) return false;
+    final gem = getGem(row, col);
+    if (gem == null) return false;
+    final removalSet = <String, bool>{_cellKey(row, col): true};
+    final queue = <MatchChainItem>[
+      MatchChainItem(
+        row: row,
+        col: col,
+        kind: GemKind.hyper,
+        triggerColor: gem.color,
+      ),
+    ];
+    resolveSpecialSwap(removalSet, queue, 'hyper cube');
+    return true;
+  }
+
+  bool _transformCellForPrismItemImpl(int row, int col, {int? prismColor}) {
+    if (inputLocked || state != 'idle' || !isInside(row, col)) return false;
+    final gem = getGem(row, col);
+    if (gem == null || gem.kind == GemKind.hyper) return false;
+
+    final original = gem.color;
+    if (prismColor != null) {
+      if (prismColor < 1 || prismColor > colorCount) return false;
+      gem.color = prismColor;
+    } else {
+      var chosen = 0;
+      for (var color = 1; color <= colorCount; color++) {
+        if (color == original) continue;
+        gem.color = color;
+        if (findMatchesAt(row, col).groups.isNotEmpty) {
+          chosen = color;
+          break;
+        }
+      }
+      if (chosen == 0) {
+        chosen = original % colorCount + 1;
+        gem.color = chosen;
+      }
+    }
+
+    selected = null;
+    pendingResultLabel = 'prism';
+    final matchData = findAllMatches();
+    if (matchData.groups.isEmpty) {
+      lastActionText = 'prism';
+      return true;
+    }
+    resolveMatchCascade(
+      MoveInfo(movedA: Point(row, col), movedB: Point(row, col)),
+    );
+    return true;
+  }
+
   void _advanceResolutionStepImpl() {
     if (state == 'removing') {
       _removeMarkedGemsImpl(pendingRemovalSet ?? {});

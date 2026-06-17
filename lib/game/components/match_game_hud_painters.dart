@@ -147,7 +147,7 @@ extension _MatchGameHudPainterCache on MatchGameHud {
       text: TextSpan(
         text: game.localeString('combo', 'Combo'),
         style: _ts(
-          size: 16 * t,
+          size: 12 * t,
           color: const Color(0xFFFFFDE7),
           weight: FontWeight.w600,
           shadows: sh,
@@ -160,7 +160,7 @@ extension _MatchGameHudPainterCache on MatchGameHud {
       text: TextSpan(
         text: '×$cur',
         style: _ts(
-          size: 30 * t,
+          size: 22 * t,
           color: JewelCandyLuminaTheme.secondaryCyan,
           weight: FontWeight.w800,
           shadows: sh,
@@ -173,7 +173,7 @@ extension _MatchGameHudPainterCache on MatchGameHud {
       text: TextSpan(
         text: game.localeString('maxComboLabel', 'Max'),
         style: _ts(
-          size: 16 * t,
+          size: 12 * t,
           color: const Color(0xFFFFFDE7),
           weight: FontWeight.w600,
           shadows: sh,
@@ -186,7 +186,7 @@ extension _MatchGameHudPainterCache on MatchGameHud {
       text: TextSpan(
         text: '×$mx',
         style: _ts(
-          size: 30 * t,
+          size: 22 * t,
           color: JewelCandyLuminaTheme.goldStrong,
           weight: FontWeight.w800,
           shadows: sh,

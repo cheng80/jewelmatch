@@ -9,9 +9,8 @@ class HowToPlaySpecialGemGuide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         HowToPlaySpecialGemCard(
           kind: GemKind.bomb,
@@ -19,18 +18,21 @@ class HowToPlaySpecialGemGuide extends StatelessWidget {
           title: context.tr('howToPlaySpecialFlameTitle'),
           desc: context.tr('howToPlaySpecialFlameDesc'),
         ),
+        const SizedBox(height: 10),
         HowToPlaySpecialGemCard(
           kind: GemKind.star,
           gemSheetCol: 3,
           title: context.tr('howToPlaySpecialStarTitle'),
           desc: context.tr('howToPlaySpecialStarDesc'),
         ),
+        const SizedBox(height: 10),
         HowToPlaySpecialGemCard(
           kind: GemKind.hyper,
           gemSheetCol: 1,
           title: context.tr('howToPlaySpecialHyperTitle'),
           desc: context.tr('howToPlaySpecialHyperDesc'),
         ),
+        const SizedBox(height: 10),
         HowToPlaySpecialGemCard(
           kind: GemKind.supernova,
           gemSheetCol: 5,

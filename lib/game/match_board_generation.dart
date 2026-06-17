@@ -86,4 +86,42 @@ extension MatchBoardGeneration on MatchBoardLogic {
     );
     lastActionText = 'shuffled';
   }
+
+  bool _shuffleOrdinaryGemsPreservingSpecialsImpl() {
+    if (inputLocked || state != 'idle') return false;
+
+    final ordinaryCells = <Point<int>>[];
+    final ordinaryColors = <int>[];
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        final gem = getGem(r, c);
+        if (gem == null || gem.kind != GemKind.normal) continue;
+        ordinaryCells.add(Point(r, c));
+        ordinaryColors.add(gem.color);
+      }
+    }
+    if (ordinaryCells.length < 2) return false;
+
+    final originalColors = <int>[...ordinaryColors];
+    for (var attempt = 0; attempt < 80; attempt++) {
+      ordinaryColors.shuffle(_random);
+      for (var i = 0; i < ordinaryCells.length; i++) {
+        final cell = ordinaryCells[i];
+        getGem(cell.x, cell.y)?.color = ordinaryColors[i];
+      }
+      if (!hasMatches() && hasAnyValidMove()) {
+        selected = null;
+        clearHint();
+        lastActionText = 'fate shuffle';
+        lockInput(MatchBoardLogic.shuffleLock);
+        return true;
+      }
+    }
+
+    for (var i = 0; i < ordinaryCells.length; i++) {
+      final cell = ordinaryCells[i];
+      getGem(cell.x, cell.y)?.color = originalColors[i];
+    }
+    return false;
+  }
 }

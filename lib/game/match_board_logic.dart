@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import 'item_kind.dart';
 import 'match_board_matching.dart';
 import 'match_board_models.dart';
 import 'match_board_special_combos.dart';
@@ -434,6 +435,31 @@ class MatchBoardLogic {
   List<ValidMovePair> getAllValidMoves() => _getAllValidMovesImpl();
 
   void shuffle() => _shuffleImpl();
+
+  bool useBoardItem(
+    ItemKind item, {
+    required int row,
+    required int col,
+    int? prismColor,
+  }) => _useBoardItemImpl(item, row: row, col: col, prismColor: prismColor);
+
+  bool useUntargetedBoardItem(ItemKind item) =>
+      item == ItemKind.fateShuffle && shuffleOrdinaryGemsPreservingSpecials();
+
+  bool removeSingleCellForItem(int row, int col) =>
+      _removeSingleCellForItemImpl(row, col);
+
+  bool triggerAreaItem(int row, int col, GemKind kind, String label) =>
+      _triggerAreaItemImpl(row, col, kind, label);
+
+  bool triggerHyperCubeItem(int row, int col) =>
+      _triggerHyperCubeItemImpl(row, col);
+
+  bool transformCellForPrismItem(int row, int col) =>
+      _transformCellForPrismItemImpl(row, col);
+
+  bool shuffleOrdinaryGemsPreservingSpecials() =>
+      _shuffleOrdinaryGemsPreservingSpecialsImpl();
 
   int removeMarkedGems(Map<String, bool> removalSet) =>
       _removeMarkedGemsImpl(removalSet);

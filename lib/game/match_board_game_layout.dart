@@ -9,10 +9,10 @@ extension MatchBoardGameLayout on MatchBoardGame {
 
   double get _panelCenterYImpl => safeAreaPadding.top + hudScale * 0.62;
 
-  double get _safeContentLeftImpl => safeAreaPadding.left + size.x * 0.03;
+  double get _safeContentLeftImpl => safeAreaPadding.left + size.x * 0.012;
 
   double get _safeContentRightImpl =>
-      size.x - safeAreaPadding.right - size.x * 0.03;
+      size.x - safeAreaPadding.right - size.x * 0.012;
 
   double get _safeContentWidthImpl =>
       (safeContentRight - safeContentLeft).clamp(0.0, double.infinity);
@@ -35,6 +35,26 @@ extension MatchBoardGameLayout on MatchBoardGame {
     return board.boardY + MatchBoardGame.rows * t;
   }
 
+  Rect get _boardContentRectImpl {
+    final t = board.tileSize;
+    if (t <= 0) {
+      return Rect.fromLTWH(safeContentLeft, gridTopY, safeContentWidth, 0);
+    }
+    return Rect.fromLTWH(
+      board.boardX,
+      board.boardY,
+      MatchBoardGame.cols * t,
+      MatchBoardGame.rows * t,
+    );
+  }
+
+  Rect get _boardFrameRectImpl {
+    final content = boardContentRect;
+    if (content.height <= 0 || board.tileSize <= 0) return content;
+    final frame = (board.tileSize * 0.17).clamp(7.0, 14.0);
+    return content.inflate(frame);
+  }
+
   void _syncIntroInputBlockImpl() {
     if (board.introFillInProgress) {
       if (!overlays.isActive('IntroBlock')) {
@@ -51,7 +71,7 @@ extension MatchBoardGameLayout on MatchBoardGame {
     final ref = layoutRef;
     if (ref <= 0 || !ref.isFinite) return;
 
-    const spacingRatio = 0.06;
+    const spacingRatio = 0.025;
     final denom =
         MatchBoardGame.cols + spacingRatio * (MatchBoardGame.cols + 1);
     final tile = ref / denom;

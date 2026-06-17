@@ -57,8 +57,57 @@ extension MatchBoardSimulationState on MatchBoardGame {
       'levelCelebrationActive': overlays.isActive('LevelCelebration'),
       'timeUp': timeUp,
       'timeRemaining': timeRemaining,
+      'remainingHints': remainingHints,
+      'hasLimitedHints': hasLimitedHints,
+      'hasTimedClock': hasTimedClock,
       'isPlaying': isPlaying,
       'boardState': board.state,
+      'boardGeometry': {
+        'x': board.boardX,
+        'y': board.boardY,
+        'tileSize': board.tileSize,
+        'rows': MatchBoardGame.rows,
+        'cols': MatchBoardGame.cols,
+      },
+      'alignedHudRects': {
+        for (final entry in debugReadAlignedHudRects().entries)
+          entry.key: {
+            'left': entry.value.left,
+            'top': entry.value.top,
+            'right': entry.value.right,
+            'bottom': entry.value.bottom,
+            'width': entry.value.width,
+            'height': entry.value.height,
+          },
+      },
+      'itemSlotRects': {
+        for (final entry in debugReadItemSlotRects().entries)
+          entry.key.name: {
+            'left': entry.value.left,
+            'top': entry.value.top,
+            'right': entry.value.right,
+            'bottom': entry.value.bottom,
+            'centerX': entry.value.center.dx,
+            'centerY': entry.value.center.dy,
+          },
+      },
+      'isItemTargeting': isItemTargeting,
+      'activeTargetItem': activeTargetItem?.name,
+      'selectedPrismColor': selectedPrismColor,
+      'pendingImmediateItemConfirm': pendingImmediateItemConfirm?.name,
+      'prismColorRects': {
+        for (final entry in debugReadPrismColorRects().entries)
+          '${entry.key}': {
+            'left': entry.value.left,
+            'top': entry.value.top,
+            'right': entry.value.right,
+            'bottom': entry.value.bottom,
+            'centerX': entry.value.center.dx,
+            'centerY': entry.value.center.dy,
+          },
+      },
+      'itemFeedbackText': itemFeedbackText,
+      'itemFeedbackOpacity': itemFeedbackOpacity,
       'hasActiveVisualEffects': hasActiveVisualEffects,
       'introFillInProgress': board.introFillInProgress,
     };

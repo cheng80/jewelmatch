@@ -65,6 +65,9 @@ class AssetPaths {
   static const String obsidianPanelFrame =
       'assets/images/ui/obsidian_panel_frame.png';
 
+  /// Obsidian Rune Temple 나인패치 프레임. Flame image cache용.
+  static const String obsidianPanelFrameFlame = 'ui/obsidian_panel_frame.png';
+
   /// Obsidian Rune Temple 원형 아이콘 버튼 프레임.
   static const String obsidianIconButtonFrame =
       'ui/obsidian_icon_button_frame.png';
@@ -81,6 +84,16 @@ class AssetPaths {
   /// 랭킹 버튼용 금속 왕관 아이콘.
   static const String obsidianRankingCrownIcon =
       'ui/obsidian_ranking_crown_icon.png';
+
+  static const String itemIconRuneHammer = 'ui/item_icons/rune_hammer.png';
+  static const String itemIconAncientBomb = 'ui/item_icons/ancient_bomb.png';
+  static const String itemIconThorHammer = 'ui/item_icons/thor_hammer.png';
+  static const String itemIconHyperCube = 'ui/item_icons/hyper_cube.png';
+  static const String itemIconPrismTransform =
+      'ui/item_icons/prism_transform.png';
+  static const String itemIconFateShuffle = 'ui/item_icons/fate_shuffle.png';
+  static const String itemIconTimeSlip = 'ui/item_icons/time_slip.png';
+  static const String itemIconHintPlus = 'ui/item_icons/hint_plus.png';
 
   static const String stoneMatchTitle =
       'assets/images/ui/stone_match_title.png';

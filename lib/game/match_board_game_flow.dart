@@ -12,6 +12,7 @@ extension MatchBoardGameFlow on MatchBoardGame {
 
   void _pauseGameImpl() {
     if (!isPlaying || timeUp) return;
+    cancelItemTargeting();
     isPlaying = false;
     SoundManager.pauseBgm();
     pauseEngine();
@@ -61,6 +62,7 @@ extension MatchBoardGameFlow on MatchBoardGame {
     overlays.remove('LevelUp');
     overlays.remove('GameStats');
     timeUp = false;
+    activeTargetItem = null;
     board.score = 0;
     board.lastCombo = 0;
     board.maxCombo = 0;
@@ -101,6 +103,7 @@ extension MatchBoardGameFlow on MatchBoardGame {
 
   void _showHowToPlayImpl() {
     if (!isPlaying || timeUp) return;
+    cancelItemTargeting();
     isPlaying = false;
     SoundManager.pauseBgm();
     pauseEngine();

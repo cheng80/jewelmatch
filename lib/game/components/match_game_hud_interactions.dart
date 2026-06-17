@@ -59,6 +59,11 @@ extension _MatchGameHudInteractions on MatchGameHud {
     _renderScoreBlock(canvas);
     _renderComboStrip(canvas);
     _renderTimeBar(canvas);
+    _drawItemDecisionScrim(canvas);
+    _drawItemConfirmPopup(canvas);
+    _drawItemFeedbackBanner(canvas);
+    _drawPrismColorPicker(canvas);
+    _drawItemSlots(canvas);
     _drawHintButton(canvas);
     if (onRankingPressed != null && _rankingRect.width > 0) {
       _drawRankingButton(canvas);
@@ -69,9 +74,13 @@ extension _MatchGameHudInteractions on MatchGameHud {
   void _handleTapDown(TapDownEvent event) {
     final p = event.localPosition;
     if (_handleUiButtonTap(p)) return;
+    if (game.hasPendingImmediateItemConfirm) return;
     final bt = game.board.boardY;
     final bb = game.boardPixelBottom;
     if (p.y < bt || p.y > bb) {
+      if (game.activeTargetItem != null) {
+        game.cancelItemTargeting();
+      }
       game.dismissHint();
       return;
     }
@@ -112,15 +121,38 @@ extension _MatchGameHudInteractions on MatchGameHud {
   bool _isUiButton(Vector2 p) {
     final o = Offset(p.x, p.y);
     return _pauseRect.contains(o) ||
+        (game.hasPendingImmediateItemConfirm && _itemConfirmRect.contains(o)) ||
         _hintRect.contains(o) ||
         (onRankingPressed != null &&
             _rankingRect.width > 0 &&
             _rankingRect.contains(o)) ||
-        _tutorialRect.contains(o);
+        _tutorialRect.contains(o) ||
+        (game.isPrismColorPicking &&
+            _prismColorRects.values.any((rect) => rect.contains(o))) ||
+        _itemRects.values.any((rect) => rect.contains(o));
   }
 
   bool _handleUiButtonTap(Vector2 p) {
     final o = Offset(p.x, p.y);
+    if (game.hasPendingImmediateItemConfirm) {
+      if (_itemConfirmCancelRect.contains(o)) {
+        game.cancelImmediateItemConfirm();
+        return true;
+      }
+      if (_itemConfirmUseRect.contains(o)) {
+        game.confirmImmediateItemUse();
+        return true;
+      }
+      return _itemConfirmRect.contains(o);
+    }
+    if (game.isPrismColorPicking) {
+      for (final entry in _prismColorRects.entries) {
+        if (entry.value.contains(o)) {
+          game.selectPrismTargetColor(entry.key);
+          return true;
+        }
+      }
+    }
     if (_pauseRect.contains(o)) {
       game.dismissHint();
       onPausePressed();
@@ -141,6 +173,12 @@ extension _MatchGameHudInteractions on MatchGameHud {
       game.dismissHint();
       onTutorialPressed();
       return true;
+    }
+    for (final entry in _itemRects.entries) {
+      if (entry.value.contains(o)) {
+        game.usePhaseOneItem(entry.key);
+        return true;
+      }
     }
     return false;
   }

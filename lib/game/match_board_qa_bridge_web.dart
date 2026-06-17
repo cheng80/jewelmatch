@@ -87,8 +87,62 @@ JSObject _stateToJs(SimulationGameState state) {
     'timeRemaining'.toJS,
     (state['timeRemaining'] as double).toJS,
   );
+  object.setProperty(
+    'remainingHints'.toJS,
+    (state['remainingHints'] as int).toJS,
+  );
+  object.setProperty(
+    'hasLimitedHints'.toJS,
+    (state['hasLimitedHints'] as bool).toJS,
+  );
+  object.setProperty(
+    'hasTimedClock'.toJS,
+    (state['hasTimedClock'] as bool).toJS,
+  );
   object.setProperty('isPlaying'.toJS, (state['isPlaying'] as bool).toJS);
   object.setProperty('boardState'.toJS, (state['boardState'] as String).toJS);
+  object.setProperty(
+    'boardGeometry'.toJS,
+    _mapToJsObject(state['boardGeometry'] as Map<String, Object?>),
+  );
+  object.setProperty(
+    'alignedHudRects'.toJS,
+    _nestedMapToJsObject(
+      state['alignedHudRects'] as Map<String, Map<String, double>>,
+    ),
+  );
+  object.setProperty(
+    'itemSlotRects'.toJS,
+    _nestedMapToJsObject(
+      state['itemSlotRects'] as Map<String, Map<String, double>>,
+    ),
+  );
+  object.setProperty(
+    'isItemTargeting'.toJS,
+    (state['isItemTargeting'] as bool).toJS,
+  );
+  final activeTargetItem = state['activeTargetItem'] as String?;
+  object.setProperty('activeTargetItem'.toJS, activeTargetItem?.toJS);
+  final selectedPrismColor = state['selectedPrismColor'] as int?;
+  object.setProperty('selectedPrismColor'.toJS, selectedPrismColor?.toJS);
+  final pendingImmediateItemConfirm =
+      state['pendingImmediateItemConfirm'] as String?;
+  object.setProperty(
+    'pendingImmediateItemConfirm'.toJS,
+    pendingImmediateItemConfirm?.toJS,
+  );
+  object.setProperty(
+    'prismColorRects'.toJS,
+    _nestedMapToJsObject(
+      state['prismColorRects'] as Map<String, Map<String, double>>,
+    ),
+  );
+  final itemFeedbackText = state['itemFeedbackText'] as String?;
+  object.setProperty('itemFeedbackText'.toJS, itemFeedbackText?.toJS);
+  object.setProperty(
+    'itemFeedbackOpacity'.toJS,
+    (state['itemFeedbackOpacity'] as double).toJS,
+  );
   object.setProperty(
     'hasActiveVisualEffects'.toJS,
     (state['hasActiveVisualEffects'] as bool).toJS,
@@ -97,5 +151,30 @@ JSObject _stateToJs(SimulationGameState state) {
     'introFillInProgress'.toJS,
     (state['introFillInProgress'] as bool).toJS,
   );
+  return object;
+}
+
+JSObject _nestedMapToJsObject(Map<String, Map<String, double>> source) {
+  final object = JSObject();
+  for (final entry in source.entries) {
+    object.setProperty(entry.key.toJS, _mapToJsObject(entry.value));
+  }
+  return object;
+}
+
+JSObject _mapToJsObject(Map<String, Object?> source) {
+  final object = JSObject();
+  for (final entry in source.entries) {
+    final value = entry.value;
+    if (value is int) {
+      object.setProperty(entry.key.toJS, value.toJS);
+    } else if (value is double) {
+      object.setProperty(entry.key.toJS, value.toJS);
+    } else if (value is bool) {
+      object.setProperty(entry.key.toJS, value.toJS);
+    } else if (value is String) {
+      object.setProperty(entry.key.toJS, value.toJS);
+    }
+  }
   return object;
 }

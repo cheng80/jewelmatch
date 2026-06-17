@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import '../../resources/asset_paths.dart';
 import '../../services/game_settings.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
+import '../item_kind.dart';
 import '../match_board_game.dart';
 
 part 'match_game_hud_buttons.dart';
@@ -59,6 +60,13 @@ class MatchGameHud extends PositionComponent
   late Rect _tutorialRect;
   late Rect _timeBarRect;
   late Rect _comboRect;
+  Rect _itemTrayRect = Rect.zero;
+  Rect _prismColorPickerRect = Rect.zero;
+  Rect _itemConfirmRect = Rect.zero;
+  Rect _itemConfirmCancelRect = Rect.zero;
+  Rect _itemConfirmUseRect = Rect.zero;
+  final Map<ItemKind, Rect> _itemRects = {};
+  final Map<int, Rect> _prismColorRects = {};
 
   double _scoreBlockTop = 0;
   int? _cachedBest;
@@ -88,19 +96,50 @@ class MatchGameHud extends PositionComponent
     ..strokeWidth = 1.0;
   final Paint _timeFillPaint = Paint();
   final Paint _untimedFillPaint = Paint();
+  final Paint _itemTrayPaint = Paint()..isAntiAlias = true;
+  final Paint _itemTrayStrokePaint = Paint()
+    ..isAntiAlias = true
+    ..style = PaintingStyle.stroke;
   ui.Image? _iconButtonFrameImage;
   ui.Image? _hintBulbIconImage;
   ui.Image? _tutorialIconImage;
   ui.Image? _pauseIconImage;
   ui.Image? _rankingCrownIconImage;
+  ui.Image? _jewelSpriteSheetImage;
+  ui.Image? _obsidianPanelFrameImage;
+  final Map<ItemKind, ui.Image> _itemIconImages = {};
 
   final _fmt = NumberFormat.decimalPattern();
+  static const List<ItemKind> _phaseOneItems = [
+    ItemKind.runeHammer,
+    ItemKind.ancientBomb,
+    ItemKind.thorHammer,
+    ItemKind.hyperCube,
+    ItemKind.prismTransform,
+    ItemKind.fateShuffle,
+    ItemKind.timeSlip,
+    ItemKind.hintPlus,
+  ];
+
+  static const Map<ItemKind, String> _phaseOneItemIconPaths = {
+    ItemKind.runeHammer: AssetPaths.itemIconRuneHammer,
+    ItemKind.ancientBomb: AssetPaths.itemIconAncientBomb,
+    ItemKind.thorHammer: AssetPaths.itemIconThorHammer,
+    ItemKind.hyperCube: AssetPaths.itemIconHyperCube,
+    ItemKind.prismTransform: AssetPaths.itemIconPrismTransform,
+    ItemKind.fateShuffle: AssetPaths.itemIconFateShuffle,
+    ItemKind.timeSlip: AssetPaths.itemIconTimeSlip,
+    ItemKind.hintPlus: AssetPaths.itemIconHintPlus,
+  };
 
   static const List<String> _fallbackFonts = [
     'PingFang SC',
     'Apple SD Gothic Neo',
     'sans-serif',
   ];
+
+  static const List<int> _gemSheetColByColor1based = [0, 6, 3, 2, 4, 5];
+  static const double _gemFrameSize = 128;
 
   TextStyle _ts({
     required double size,
@@ -146,6 +185,15 @@ class MatchGameHud extends PositionComponent
     _rankingCrownIconImage = await Flame.images.load(
       AssetPaths.obsidianRankingCrownIcon,
     );
+    _jewelSpriteSheetImage = await Flame.images.load(
+      AssetPaths.jewelSpriteSheet,
+    );
+    _obsidianPanelFrameImage = await Flame.images.load(
+      AssetPaths.obsidianPanelFrameFlame,
+    );
+    for (final entry in _phaseOneItemIconPaths.entries) {
+      _itemIconImages[entry.key] = await Flame.images.load(entry.value);
+    }
     _layout();
   }
 
@@ -212,22 +260,163 @@ class MatchGameHud extends PositionComponent
 
     _scoreBlockTop = top + row1H;
 
+    final boardRect = g.boardFrameRect;
+    final stripLeft = boardRect.width > 0 ? boardRect.left : left + barPad;
+    final stripWidth = boardRect.width > 0
+        ? boardRect.width
+        : (right - left) - barPad * 2;
+
     _comboRect = Rect.fromLTWH(
-      left + barPad,
+      stripLeft,
       _scoreBlockTop + g.hudMainScoreBlockHeight + g.hudGapScoreToCombo,
-      (right - left) - barPad * 2,
+      stripWidth,
       g.hudComboStripHeight,
     );
 
     _timeBarRect = Rect.fromLTWH(
-      left + barPad,
+      stripLeft,
       _comboRect.bottom + g.hudGapComboToTimeBar,
-      (right - left) - barPad * 2,
+      stripWidth,
       g.hudBottomTimeBarHeight,
     );
 
+    _layoutItemSlots();
+    _layoutPrismColorPicker();
+    _layoutItemConfirmPopup();
+
     _rebuildStaticPainters();
   }
+
+  void _layoutItemSlots() {
+    _itemRects.clear();
+    _itemTrayRect = Rect.zero;
+    final g = game;
+    final left = g.safeContentLeft;
+    final right = g.safeContentRight;
+    final boardRect = g.boardFrameRect;
+    final alignLeft = boardRect.width > 0 ? boardRect.left : left;
+    final width = boardRect.width > 0 ? boardRect.width : right - left;
+    if (width <= 0) return;
+
+    final gap = math.max(9.0, g.hudScale * 0.105);
+    final rowGap = math.max(7.0, g.hudScale * 0.085);
+    final slotSide = math
+        .min((width - gap * 3) / 4, g.hudScale * 0.54)
+        .clamp(36.0, 48.0);
+    final totalW = slotSide * 4 + gap * 3;
+    final gridLeft = alignLeft + (width - totalW) / 2;
+    final totalH = slotSide * 2 + rowGap;
+    final trayPadY = math.max(4.0, g.hudScale * 0.055);
+    final frameOverhang = slotSide * 0.08;
+    final bottom =
+        size.y -
+        g.safeAreaPadding.bottom -
+        math.max(5.0, gap) -
+        math.max(trayPadY, frameOverhang);
+    final top = bottom - totalH;
+    _itemTrayRect = Rect.fromLTWH(
+      alignLeft,
+      top - trayPadY,
+      width,
+      totalH + trayPadY * 2,
+    );
+
+    for (var i = 0; i < _phaseOneItems.length; i++) {
+      final row = i ~/ 4;
+      final col = i % 4;
+      _itemRects[_phaseOneItems[i]] = Rect.fromLTWH(
+        gridLeft + col * (slotSide + gap),
+        top + row * (slotSide + rowGap),
+        slotSide,
+        slotSide,
+      );
+    }
+  }
+
+  void _layoutPrismColorPicker() {
+    _prismColorRects.clear();
+    _prismColorPickerRect = Rect.zero;
+    final g = game;
+    if (_itemTrayRect.isEmpty || g.safeContentWidth <= 0) return;
+
+    final boardRect = g.boardFrameRect;
+    if (boardRect.isEmpty) return;
+
+    final colorCount = g.board.colorCount;
+    final gap = math.max(8.0, g.hudScale * 0.10);
+    final maxSwatch =
+        (boardRect.width * 0.76 - gap * (colorCount - 1)) / colorCount;
+    final swatch = math
+        .min(math.max(g.board.tileSize * 0.92, g.hudScale * 0.42), maxSwatch)
+        .clamp(34.0, 52.0);
+    final width = swatch * colorCount + gap * (colorCount - 1);
+    _prismColorPickerRect = boardRect;
+
+    var left = _prismColorPickerRect.center.dx - width / 2;
+    final swatchTop = _prismColorPickerRect.center.dy - swatch * 0.18;
+    for (var color = 1; color <= colorCount; color++) {
+      _prismColorRects[color] = Rect.fromLTWH(left, swatchTop, swatch, swatch);
+      left += swatch + gap;
+    }
+  }
+
+  void _layoutItemConfirmPopup() {
+    _itemConfirmRect = Rect.zero;
+    _itemConfirmCancelRect = Rect.zero;
+    _itemConfirmUseRect = Rect.zero;
+    final g = game;
+    if (_itemTrayRect.isEmpty || g.safeContentWidth <= 0) return;
+
+    final boardRect = g.boardFrameRect;
+    final center = boardRect.isEmpty
+        ? Offset(g.safeContentLeft + g.safeContentWidth / 2, g.size.y / 2)
+        : boardRect.center;
+    _itemConfirmRect = boardRect.isEmpty
+        ? Rect.fromCenter(
+            center: center,
+            width: g.safeContentWidth,
+            height: math.max(220.0, g.hudScale * 2.4),
+          )
+        : boardRect;
+
+    final buttonGap = math.max(10.0, g.hudScale * 0.12);
+    final buttonHeight = math.max(34.0, g.hudScale * 0.38);
+    final buttonSidePadding = math.max(
+      g.hudScale * 0.44,
+      _itemConfirmRect.width * 0.18,
+    );
+    final buttonWidth = math.min(
+      (_itemConfirmRect.width - buttonSidePadding * 2 - buttonGap) / 2,
+      g.hudScale * 1.42,
+    );
+    final groupWidth = buttonWidth * 2 + buttonGap;
+    final buttonTop = _itemConfirmRect.center.dy + g.hudScale * 0.17;
+    final buttonLeft = _itemConfirmRect.center.dx - groupWidth / 2;
+    _itemConfirmCancelRect = Rect.fromLTWH(
+      buttonLeft,
+      buttonTop,
+      buttonWidth,
+      buttonHeight,
+    );
+    _itemConfirmUseRect = Rect.fromLTWH(
+      _itemConfirmCancelRect.right + buttonGap,
+      buttonTop,
+      buttonWidth,
+      buttonHeight,
+    );
+  }
+
+  Map<ItemKind, Rect> debugReadItemSlotRects() =>
+      Map<ItemKind, Rect>.unmodifiable(_itemRects);
+
+  Map<int, Rect> debugReadPrismColorRects() =>
+      Map<int, Rect>.unmodifiable(_prismColorRects);
+
+  Map<String, Rect> debugReadAlignedHudRects() => {
+    'combo': _comboRect,
+    'timeBar': _timeBarRect,
+    'itemTray': _itemTrayRect,
+  };
 
   @override
   void update(double dt) {

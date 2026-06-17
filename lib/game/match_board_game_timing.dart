@@ -2,7 +2,12 @@ part of 'match_board_game.dart';
 
 extension MatchBoardGameTiming on MatchBoardGame {
   void _updateTimedModeClock(double dt) {
-    if (!hasTimedClock || !isPlaying || timeUp || board.introFillInProgress) {
+    if (!hasTimedClock ||
+        !isPlaying ||
+        timeUp ||
+        board.introFillInProgress ||
+        hasPendingImmediateItemConfirm ||
+        isPrismColorPicking) {
       return;
     }
 

@@ -119,6 +119,7 @@ flutter:
     - assets/images/backgrounds/
     - assets/images/sprites/
     - assets/images/ui/
+    - assets/images/ui/item_icons/
     - assets/images/ui/normal_buttons/
     - assets/images/ui/mode_buttons/
     - assets/images/ui/mode_icons/
