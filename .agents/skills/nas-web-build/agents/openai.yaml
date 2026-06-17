@@ -1,4 +1,0 @@
-interface:
-  display_name: "NAS Web Build"
-  short_description: "Run Jewel Match NAS web deploy and verify remote hashes."
-  default_prompt: "나스웹빌드 해줘"
