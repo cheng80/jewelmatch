@@ -30,9 +30,9 @@ class StageRewardEvaluator {
     final grants = <StageRewardGrant>[];
     final targetRatio = targetScore <= 0 ? 1.0 : score / targetScore;
 
-    if (stats.removedGems >= 80 ||
-        stats.matchGroups >= 14 ||
-        (targetRatio >= 1.05 && stats.removedGems >= 60)) {
+    if (stats.removedGems >= 100 ||
+        stats.matchGroups >= 18 ||
+        (targetRatio >= 1.12 && stats.removedGems >= 75)) {
       grants.add(
         const StageRewardGrant(
           item: ItemKind.runeHammer,
@@ -41,9 +41,9 @@ class StageRewardEvaluator {
         ),
       );
     }
-    if (maxCombo >= 4 ||
-        stats.removedSpecialGems >= 3 ||
-        (targetRatio >= 1.10 && maxCombo >= 3)) {
+    if (maxCombo >= 5 ||
+        stats.removedSpecialGems >= 5 ||
+        (targetRatio >= 1.18 && maxCombo >= 4)) {
       grants.add(
         const StageRewardGrant(
           item: ItemKind.ancientBomb,
@@ -52,9 +52,10 @@ class StageRewardEvaluator {
         ),
       );
     }
-    if (stats.specialGemsCreated >= 4 ||
-        (stats.specialCreatedByKind[GemKind.hyper] ?? 0) >= 1 ||
-        (targetRatio >= 1.15 && stats.specialGemsCreated >= 2)) {
+    if (stats.specialGemsCreated >= 6 ||
+        (targetRatio >= 1.10 &&
+            (stats.specialCreatedByKind[GemKind.hyper] ?? 0) >= 1) ||
+        (targetRatio >= 1.25 && stats.specialGemsCreated >= 3)) {
       grants.add(
         const StageRewardGrant(
           item: ItemKind.prismTransform,
@@ -63,9 +64,9 @@ class StageRewardEvaluator {
         ),
       );
     }
-    if (stats.specialGemsActivated >= 2 ||
-        (stats.specialActivatedByKind[GemKind.star] ?? 0) >= 1 ||
-        (targetRatio >= 1.12 && stats.specialGemsActivated >= 1)) {
+    if (stats.specialGemsActivated >= 4 ||
+        (stats.specialActivatedByKind[GemKind.star] ?? 0) >= 2 ||
+        (targetRatio >= 1.22 && stats.specialGemsActivated >= 2)) {
       grants.add(
         const StageRewardGrant(
           item: ItemKind.thorHammer,
@@ -75,8 +76,8 @@ class StageRewardEvaluator {
       );
     }
     if (stats.validSwaps > 0 &&
-        stats.validSwaps <= 12 &&
-        stats.removedGems >= 45) {
+        stats.validSwaps <= 9 &&
+        stats.removedGems >= 60) {
       grants.add(
         const StageRewardGrant(
           item: ItemKind.timeSlip,
@@ -85,8 +86,8 @@ class StageRewardEvaluator {
         ),
       );
     }
-    if (stats.matchGroups >= 18 &&
-        (maxCombo >= 3 || stats.specialGemsCreated >= 2)) {
+    if (stats.matchGroups >= 24 &&
+        (maxCombo >= 4 || stats.specialGemsCreated >= 3)) {
       grants.add(
         const StageRewardGrant(
           item: ItemKind.fateShuffle,
@@ -95,7 +96,10 @@ class StageRewardEvaluator {
         ),
       );
     }
-    if (remainingHints >= stageStartRemainingHints && stats.validSwaps >= 1) {
+    if (remainingHints >= stageStartRemainingHints &&
+        stats.validSwaps >= 1 &&
+        targetRatio >= 1.15 &&
+        maxCombo >= 3) {
       grants.add(
         const StageRewardGrant(
           item: ItemKind.hintPlus,
@@ -104,10 +108,10 @@ class StageRewardEvaluator {
         ),
       );
     }
-    if ((stats.removedGems >= 120 && maxCombo >= 5) ||
-        (targetRatio >= 1.25 &&
-            maxCombo >= 4 &&
-            stats.specialGemsCreated >= 5)) {
+    if ((stats.removedGems >= 160 && maxCombo >= 6) ||
+        (targetRatio >= 1.35 &&
+            maxCombo >= 5 &&
+            stats.specialGemsCreated >= 7)) {
       grants.add(
         const StageRewardGrant(
           item: ItemKind.hyperCube,

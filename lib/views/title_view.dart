@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -5,12 +7,14 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../app_config.dart' show RoutePaths;
+import '../game/jewel_game_mode.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import '../services/game_settings.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import '../widgets/ranking_list_popup.dart';
 import '../services/in_app_review_service.dart';
+import 'overlays/game_loading_overlay.dart';
 import 'overlays/how_to_play_overlay.dart';
 import 'title/title_icon_button.dart';
 import 'title/player_name_dialog.dart';
@@ -38,6 +42,7 @@ class TitleView extends StatefulWidget {
 
 class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
   bool _ready = false;
+  bool _prepareStarted = false;
 
   /// PackageInfo는 변하지 않으므로 앱 전역 캐싱.
   static PackageInfo? _cachedPackageInfo;
@@ -48,7 +53,6 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     SoundManager.playBgm(AssetPaths.bgmMenu);
     _cachePackageInfo();
-    _scheduleReady();
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted && !kIsWeb) {
         InAppReviewService.maybeRequestReviewOnTitleIfEligible();
@@ -56,8 +60,21 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
     });
   }
 
-  Future<void> _scheduleReady() async {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_prepareStarted) return;
+    _prepareStarted = true;
+    unawaited(_prepareTitleSurface());
+  }
+
+  Future<void> _prepareTitleSurface() async {
     await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    await Future.wait([
+      for (final path in _titleAssetPaths)
+        precacheImage(AssetImage(path), context),
+    ]);
     if (!mounted) return;
     setState(() => _ready = true);
   }
@@ -104,7 +121,9 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     if (!_ready) {
-      return const Scaffold(backgroundColor: Colors.transparent);
+      return const PhoneFrameScaffold(
+        child: GameLoadingOverlay(gameMode: JewelGameMode.simple),
+      );
     }
     final content = _TitleContent(
       onShowNameDialog: (mode) => _showNameDialog(context, mode),
@@ -114,6 +133,19 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
     return PhoneFrameScaffold(child: content);
   }
 }
+
+const List<String> _titleAssetPaths = [
+  AssetPaths.stoneMatchTitle,
+  AssetPaths.modeButtonPanelBase,
+  AssetPaths.modeButtonFrameFront,
+  AssetPaths.modeIconSimple,
+  AssetPaths.modeIconProgression,
+  AssetPaths.modeIconTimed,
+  AssetPaths.modeIconRanking,
+  AssetPaths.modeIconSettings,
+  'assets/images/${AssetPaths.obsidianIconButtonFrame}',
+  'assets/images/${AssetPaths.obsidianTutorialIcon}',
+];
 
 class _TitleContent extends StatelessWidget {
   const _TitleContent({required this.onShowNameDialog, this.packageInfo});

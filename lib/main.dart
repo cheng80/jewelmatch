@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flame/flame.dart';
 import 'package:flutter/foundation.dart';
@@ -24,13 +26,12 @@ void main() async {
   await EasyLocalization.ensureInitialized();
   await StorageHelper.init();
   await InAppReviewService.saveFirstLaunchDateIfNeeded();
-  await Future.wait([
-    SoundManager.preload(),
-    Flame.images.load(AssetPaths.jewelSpriteSheet),
-    Flame.images.load(AssetPaths.specialSpriteSheet),
-    SpriteSheetFrame.precache('assets/images/${AssetPaths.jewelSpriteSheet}'),
-    SpriteSheetFrame.precache('assets/images/${AssetPaths.specialSpriteSheet}'),
-  ]);
+  if (kIsWeb) {
+    unawaited(SoundManager.preload());
+    unawaited(_preloadGameVisualAssets());
+  } else {
+    await Future.wait([SoundManager.preload(), _preloadGameVisualAssets()]);
+  }
   _applyKeepScreenOn();
   runApp(
     ProviderScope(
@@ -49,6 +50,15 @@ void main() async {
       ),
     ),
   );
+}
+
+Future<void> _preloadGameVisualAssets() {
+  return Future.wait([
+    Flame.images.load(AssetPaths.jewelSpriteSheet),
+    Flame.images.load(AssetPaths.specialSpriteSheet),
+    SpriteSheetFrame.precache('assets/images/${AssetPaths.jewelSpriteSheet}'),
+    SpriteSheetFrame.precache('assets/images/${AssetPaths.specialSpriteSheet}'),
+  ]);
 }
 
 /// 저장된 설정에 따라 화면 꺼짐 방지 적용.

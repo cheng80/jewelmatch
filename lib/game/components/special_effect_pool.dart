@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flame/components.dart';
@@ -20,6 +21,21 @@ class SpecialEffectPool {
   int get cachedCount => _pool.length;
   int get activeLineSweepCount => _activeLineSweeps;
   int get activeCount => _active.length;
+
+  Future<void> warm({required int burstCount}) async {
+    final pendingLoads = <Future<void>>[];
+    while (_pool.length < burstCount) {
+      final burst = _createBurst();
+      final added = _parent.add(burst);
+      if (added is Future<void>) {
+        pendingLoads.add(added);
+      }
+      _pool.add(burst);
+    }
+    if (pendingLoads.isNotEmpty) {
+      await Future.wait(pendingLoads);
+    }
+  }
 
   void spawn({
     required GemKind effectKind,

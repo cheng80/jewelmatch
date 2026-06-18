@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flame/components.dart';
@@ -64,6 +65,13 @@ class ParticleBurst extends PositionComponent {
     _elapsed = 0;
     _count = 0;
     _withGlow = false;
+  }
+
+  void warmForPool({required int particleCapacity}) {
+    while (_particles.length < particleCapacity) {
+      _particles.add(_Particle());
+    }
+    deactivateForPool();
   }
 
   @override
@@ -202,6 +210,25 @@ class ParticlePool {
 
   int get activeCount => _active.length;
   int get cachedCount => _pool.length;
+
+  Future<void> warm({
+    required int burstCount,
+    required int particleCapacity,
+  }) async {
+    final pendingLoads = <Future<void>>[];
+    while (_pool.length < burstCount) {
+      final burst = _createBurst();
+      burst.warmForPool(particleCapacity: particleCapacity);
+      final added = _parent.add(burst);
+      if (added is Future<void>) {
+        pendingLoads.add(added);
+      }
+      _pool.add(burst);
+    }
+    if (pendingLoads.isNotEmpty) {
+      await Future.wait(pendingLoads);
+    }
+  }
 
   /// 풀에서 꺼내거나 새로 만들어 활성화한다.
   void spawn({

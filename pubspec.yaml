@@ -91,13 +91,13 @@ flutter_launcher_icons:
 
 flutter_native_splash:
   color: "#040A18"
-  image: assets/images/ui/stone_match_title.png
+  image: assets/images/ui/stone_match_splash_logo.png
   # android: true
   # ios: true
   # web: false
 
   android_12:
-    image: assets/images/ui/stone_match_title.png
+    image: assets/images/ui/stone_match_splash_logo.png
     color: "#040A18"
 
 #Flutter Native Splash 세팅 끝 >>>>>>>>>>

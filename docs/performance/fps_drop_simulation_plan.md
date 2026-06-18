@@ -14,6 +14,23 @@
 
 하지만 이 결과는 “평균 상태”만 보여준다. 다음 세션에서는 프레임이 떨어지는 순간을 잡아야 하므로, 프레임 샘플을 이벤트 단위로 기록해야 한다.
 
+## 모바일 웹 초기 진입 대응
+
+모바일 웹에서는 PC 웹보다 첫 화면 진입과 첫 매치 이펙트에서 체감 지연이 크게 보일 수 있다. 현재 대응은 초기 작업을 실제 플레이 입력 전에 끝내는 방식이다.
+
+- 타이틀 화면은 버튼/아이콘 이미지 `precacheImage`가 끝나기 전까지 로딩 오버레이를 유지한다.
+- 게임 화면은 `MatchBoardGame.loaded`와 `SoundManager.preload()`가 완료될 때까지 로딩 오버레이를 유지한다.
+- 로딩 오버레이가 보이는 동안 `AbsorbPointer`로 게임 입력을 막는다.
+- 웹에서는 `ParticlePool`, `SpecialEffectPool`을 `onLoad` 중 미리 warm-up 해서 첫 매치 이펙트 생성 비용을 플레이 중이 아니라 로딩 단계에서 부담한다.
+- `SoundManager.preload()`는 중복 호출 시 같은 `Future`를 재사용한다.
+- 웹 `main()`은 앱 셸 표시를 막지 않도록 사운드/스프라이트 프리로드를 백그라운드로 시작하고, 실제 게임 진입 게이트에서 완료를 기다린다.
+
+QA 기준:
+
+- 모바일 폭 Chrome에서 타이틀 버튼이 준비 전 부분 렌더링되지 않는다.
+- 게임 진입 후 첫 매치/수동 VFX 캡처에서 콘솔 overflow/error 플래그가 없어야 한다.
+- 관련 캡처는 `tmp/qa/mobile_title_after_loading_gate.png`, `tmp/qa/mobile_game_after_warmup_vfx.png`, `tmp/qa/mobile_game_manual_vfx_after_warmup.png`처럼 `tmp/qa/` 아래에 저장한다.
+
 ## 테스트 전 상태 확인
 
 테스트 전에 아래를 먼저 확인한다.

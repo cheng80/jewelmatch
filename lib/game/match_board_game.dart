@@ -2,6 +2,7 @@ import 'dart:math' show min;
 
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../resources/asset_paths.dart';
@@ -186,16 +187,8 @@ class MatchBoardGame extends FlameGame {
   bool get hasPendingStageInventoryUnlock =>
       recentlyUnlockedLoadoutSlotIndices.isNotEmpty;
   bool get usesPhase2Inventory => isProgressionMode;
-  List<StageLoadoutSlot> get hudLoadoutSlots => usesPhase2Inventory
-      ? stageLoadout.slots
-      : [
-          for (var i = 0; i < ItemKindMeta.phaseOneLoadout.length; i++)
-            StageLoadoutSlot(
-              index: i,
-              item: ItemKindMeta.phaseOneLoadout[i],
-              locked: false,
-            ),
-        ];
+  List<StageLoadoutSlot> get hudLoadoutSlots =>
+      usesPhase2Inventory ? stageLoadout.slots : const [];
   Map<ItemKind, Rect> debugReadItemSlotRects() =>
       _hud?.debugReadItemSlotRects() ?? const {};
   Map<int, Rect> debugReadPrismColorRects() =>
@@ -264,12 +257,22 @@ class MatchBoardGame extends FlameGame {
 
     _particlePool = ParticlePool(world);
     _specialEffectPool = SpecialEffectPool(world);
+    if (kIsWeb) {
+      await _warmInitialEffectPools();
+    }
     _effectPoolsReady = true;
     installMatchBoardQaBridge(this);
 
     if (isTimedMode) {
       _fetchTop1();
     }
+  }
+
+  Future<void> _warmInitialEffectPools() {
+    return Future.wait([
+      _particlePool.warm(burstCount: 10, particleCapacity: 18),
+      _specialEffectPool.warm(burstCount: 8),
+    ]);
   }
 
   @override

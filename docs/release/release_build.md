@@ -27,6 +27,31 @@ flutter build appbundle --release --build-name 1.0.1 --build-number 2
 flutter build ipa --release --build-name 1.0.1 --build-number 2
 ```
 
+## 스플래시 로고
+
+웹과 네이티브 스플래시는 `flutter_native_splash` 설정을 통해 생성한다. 앱 내부 타이틀 로고와 별도로, 스플래시 전용 자산은 다음 파일을 사용한다.
+
+```text
+assets/images/ui/stone_match_splash_logo.png
+```
+
+이 자산은 원본 타이틀 로고를 그대로 꽉 채우지 않고, 모바일 화면에서 좌우 여백이 남도록 투명 패딩과 가로 중심 보정을 포함한다. `pubspec.yaml`의 `flutter_native_splash.image`와 `android_12.image`는 이 스플래시 전용 자산을 가리켜야 한다.
+
+스플래시 자산을 바꾼 뒤에는 생성 리소스를 함께 갱신한다.
+
+```bash
+dart run flutter_native_splash:create
+```
+
+갱신 대상:
+
+- `web/splash/img/*`
+- `android/app/src/main/res/drawable*/splash.png`
+- `android/app/src/main/res/drawable*/android12splash.png`
+- `ios/Runner/Assets.xcassets/LaunchImage.imageset/*`
+
+모바일 웹 QA는 Flutter 부트스트랩을 차단한 상태에서 순수 스플래시 화면을 캡처해, 로고가 가로 중앙에 있고 화면 폭을 과도하게 채우지 않는지 확인한다.
+
 ## Android
 
 Play Store 업로드용은 AAB를 쓴다.

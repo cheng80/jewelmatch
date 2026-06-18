@@ -39,12 +39,12 @@ void main() {
 
   test('target over-score needs supporting performance stats for rewards', () {
     final stats = MatchBoardGameStats()
-      ..removedGems = 61
-      ..specialGemsCreated = 2;
+      ..removedGems = 76
+      ..specialGemsCreated = 3;
 
     final rewards = StageRewardEvaluator.evaluate(
       stats: stats,
-      score: 9000,
+      score: 9500,
       targetScore: 7500,
       maxCombo: 1,
       remainingHints: 0,
@@ -65,20 +65,20 @@ void main() {
 
   test('reward evaluator grants every matched item without max count cap', () {
     final stats = MatchBoardGameStats()
-      ..validSwaps = 10
-      ..matchGroups = 20
-      ..removedGems = 130
-      ..specialGemsCreated = 4
-      ..specialGemsActivated = 2;
-    stats.removedByKind[GemKind.bomb] = 3;
+      ..validSwaps = 8
+      ..matchGroups = 24
+      ..removedGems = 170
+      ..specialGemsCreated = 7
+      ..specialGemsActivated = 4;
+    stats.removedByKind[GemKind.bomb] = 5;
     stats.specialCreatedByKind[GemKind.hyper] = 1;
-    stats.specialActivatedByKind[GemKind.star] = 1;
+    stats.specialActivatedByKind[GemKind.star] = 2;
 
     final rewards = StageRewardEvaluator.evaluate(
       stats: stats,
-      score: 130000,
+      score: 140000,
       targetScore: 100000,
-      maxCombo: 5,
+      maxCombo: 6,
       remainingHints: 2,
       stageStartRemainingHints: 2,
       isClear: true,

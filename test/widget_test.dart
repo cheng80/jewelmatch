@@ -103,6 +103,16 @@ void main() {
     expect(progression.hintBadgeCount, 2);
   });
 
+  test('item loadout slots are shown only in progression mode', () {
+    final simple = MatchBoardGame(gameMode: JewelGameMode.simple);
+    final timed = MatchBoardGame(gameMode: JewelGameMode.timed);
+    final progression = MatchBoardGame(gameMode: JewelGameMode.progression);
+
+    expect(simple.hudLoadoutSlots, isEmpty);
+    expect(timed.hudLoadoutSlots, isEmpty);
+    expect(progression.hudLoadoutSlots, hasLength(4));
+  });
+
   test('phase 1 targeted item selection keeps clock running', () {
     final game = MatchBoardGame(gameMode: JewelGameMode.timed);
     _setHintBoard(game.board);
@@ -352,10 +362,13 @@ void _clearProgressionStage(MatchBoardGame game, {required int level}) {
 }
 
 void _primeMultiRewardStats(MatchBoardGame game) {
-  game.board.maxCombo = 4;
+  game.board.maxCombo = 5;
   game.board.stats.recordValidSwap();
-  game.board.stats.recordMatchGroups(14);
-  for (var i = 0; i < 80; i++) {
+  game.board.stats.recordMatchGroups(24);
+  game.board.stats.recordSpecialCreated(GemKind.bomb);
+  game.board.stats.recordSpecialCreated(GemKind.star);
+  game.board.stats.recordSpecialCreated(GemKind.hyper);
+  for (var i = 0; i < 100; i++) {
     game.board.stats.recordGemRemoved(GemKind.normal);
   }
 }

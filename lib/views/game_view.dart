@@ -86,6 +86,11 @@ class _GameViewState extends State<GameView> {
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
     setState(() => _gameMounted = true);
+    final game = await _waitForGame();
+    if (game != null) {
+      await Future.wait([game.loaded, SoundManager.preload()]);
+    }
+    if (!mounted) return;
 
     final remain = _minLoadingOverlay - DateTime.now().difference(startedAt);
     if (remain > Duration.zero) {
@@ -118,6 +123,15 @@ class _GameViewState extends State<GameView> {
         }),
       );
     }
+  }
+
+  Future<MatchBoardGame?> _waitForGame() async {
+    while (mounted) {
+      final game = _game;
+      if (game != null) return game;
+      await WidgetsBinding.instance.endOfFrame;
+    }
+    return null;
   }
 
   @override
@@ -184,7 +198,9 @@ class _GameViewState extends State<GameView> {
           switchInCurve: Curves.easeOutCubic,
           switchOutCurve: Curves.easeInCubic,
           child: _loadingVisible
-              ? GameLoadingOverlay(gameMode: widget.gameMode)
+              ? AbsorbPointer(
+                  child: GameLoadingOverlay(gameMode: widget.gameMode),
+                )
               : const SizedBox.shrink(),
         ),
         if (showSfxLog)

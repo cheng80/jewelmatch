@@ -23,6 +23,7 @@ class SoundManager {
   static bool _webPrimeInFlight = false;
   static Timer? _webPrimeTimer;
   static DateTime? _lastWebPrimeAt;
+  static Future<void>? _preloadFuture;
 
   /// 웹: 첫 사용자 상호작용 시 호출. 대기 중인 BGM 재생.
   /// 현재는 "첫 1회 unlock"이 아니라 포인터다운마다 재-priming을 허용한다.
@@ -46,6 +47,12 @@ class SoundManager {
 
   /// 게임·메뉴 BGM과 효과음을 미리 로드한다. 앱 시작 시 호출.
   static Future<void> preload() async {
+    final existing = _preloadFuture;
+    if (existing != null) return existing;
+    return _preloadFuture = _preload();
+  }
+
+  static Future<void> _preload() async {
     await Future.wait([
       FlameAudio.audioCache.load(AssetPaths.bgmMenu),
       FlameAudio.audioCache.load(AssetPaths.bgmMain),

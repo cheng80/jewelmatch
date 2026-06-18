@@ -289,6 +289,9 @@ class MatchGameHud extends PositionComponent
     final width = boardRect.width > 0 ? boardRect.width : right - left;
     if (width <= 0) return;
 
+    final slots = g.hudLoadoutSlots;
+    if (slots.isEmpty) return;
+
     final phase2 = g.usesPhase2Inventory;
     final gap = phase2
         ? math.max(13.0, g.hudScale * 0.15)
@@ -326,7 +329,6 @@ class MatchGameHud extends PositionComponent
       totalH + trayPadY * 2,
     );
 
-    final slots = g.hudLoadoutSlots;
     for (var i = 0; i < slots.length; i++) {
       final row = phase2 ? 0 : i ~/ 4;
       final col = i % 4;
