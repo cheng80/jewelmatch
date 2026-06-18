@@ -245,6 +245,12 @@ class _LoadoutSlotButton extends StatelessWidget {
 class _InventoryGrid extends StatelessWidget {
   const _InventoryGrid({required this.game, required this.onEquipItem});
 
+  static const int _columnCount = 4;
+  static const int _rowCount = 2;
+  static const double _preferredCellSize = 52;
+  static const double _preferredGap = 8;
+  static const double _minGap = 5;
+
   final MatchBoardGame game;
   final ValueChanged<ItemKind> onEquipItem;
 
@@ -263,39 +269,62 @@ class _InventoryGrid extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 7),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (var row = 0; row < 2; row++) ...[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    for (var col = 0; col < 4; col++) ...[
-                      SizedBox.square(
-                        dimension: 52,
-                        child: _InventoryItemCell(
-                          item: ItemKindMeta.phaseOneLoadout[row * 4 + col],
-                          quantity: game.runInventory.quantityOf(
-                            ItemKindMeta.phaseOneLoadout[row * 4 + col],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final preferredWidth =
+                  (_preferredCellSize * _columnCount) +
+                  (_preferredGap * (_columnCount - 1));
+              final gap = constraints.maxWidth >= preferredWidth
+                  ? _preferredGap
+                  : _minGap;
+              final cellSize = constraints.maxWidth >= preferredWidth
+                  ? _preferredCellSize
+                  : (constraints.maxWidth - (gap * (_columnCount - 1))) /
+                        _columnCount;
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var row = 0; row < _rowCount; row++) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        for (var col = 0; col < _columnCount; col++) ...[
+                          SizedBox.square(
+                            dimension: cellSize,
+                            child: _InventoryItemCell(
+                              item: ItemKindMeta
+                                  .phaseOneLoadout[row * _columnCount + col],
+                              quantity: game.runInventory.quantityOf(
+                                ItemKindMeta.phaseOneLoadout[row *
+                                        _columnCount +
+                                    col],
+                              ),
+                              enabled: game.isInventoryItemAvailable(
+                                ItemKindMeta.phaseOneLoadout[row *
+                                        _columnCount +
+                                    col],
+                              ),
+                              selected: game.nextStageLoadoutDraft.contains(
+                                ItemKindMeta.phaseOneLoadout[row *
+                                        _columnCount +
+                                    col],
+                              ),
+                              onTap: () => onEquipItem(
+                                ItemKindMeta.phaseOneLoadout[row *
+                                        _columnCount +
+                                    col],
+                              ),
+                            ),
                           ),
-                          enabled: game.isInventoryItemAvailable(
-                            ItemKindMeta.phaseOneLoadout[row * 4 + col],
-                          ),
-                          selected: game.nextStageLoadoutDraft.contains(
-                            ItemKindMeta.phaseOneLoadout[row * 4 + col],
-                          ),
-                          onTap: () => onEquipItem(
-                            ItemKindMeta.phaseOneLoadout[row * 4 + col],
-                          ),
-                        ),
-                      ),
-                      if (col != 3) const SizedBox(width: 8),
-                    ],
+                          if (col != _columnCount - 1) SizedBox(width: gap),
+                        ],
+                      ],
+                    ),
+                    if (row == 0) SizedBox(height: gap),
                   ],
-                ),
-                if (row == 0) const SizedBox(height: 8),
-              ],
-            ],
+                ],
+              );
+            },
           ),
         ],
       ),

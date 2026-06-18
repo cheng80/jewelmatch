@@ -152,6 +152,11 @@ class _LevelUpOverlayState extends State<LevelUpOverlay>
 class _StageRewardSummary extends StatelessWidget {
   const _StageRewardSummary({required this.game});
 
+  static const double _chipSpacing = 6;
+  static const double _chipMinHeight = 34;
+  static const double _maxRewardListHeight =
+      (_chipMinHeight * 4) + (_chipSpacing * 3);
+
   final MatchBoardGame game;
 
   @override
@@ -189,14 +194,31 @@ class _StageRewardSummary extends StatelessWidget {
               ),
             )
           else
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                for (final reward in rewards)
-                  _RewardChip(item: reward.item, quantity: reward.quantity),
-              ],
+            ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxHeight: _maxRewardListHeight,
+              ),
+              child: SingleChildScrollView(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final chipWidth = (constraints.maxWidth - _chipSpacing) / 2;
+                    return Wrap(
+                      spacing: _chipSpacing,
+                      runSpacing: _chipSpacing,
+                      children: [
+                        for (final reward in rewards)
+                          SizedBox(
+                            width: chipWidth,
+                            child: _RewardChip(
+                              item: reward.item,
+                              quantity: reward.quantity,
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              ),
             ),
         ],
       ),
@@ -223,16 +245,20 @@ class _RewardChip extends StatelessWidget {
         ),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.max,
         children: [
           SizedBox.square(dimension: 24, child: _ItemIcon(item: item)),
           const SizedBox(width: 5),
-          Text(
-            '${_oneLineItemName(item)} x$quantity',
-            style: TextStyle(
-              color: JewelCandyLuminaTheme.textParchment,
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
+          Expanded(
+            child: Text(
+              '${_oneLineItemName(item)} x$quantity',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: JewelCandyLuminaTheme.textParchment,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ],
@@ -333,35 +359,38 @@ class _LevelBadge extends StatelessWidget {
           width: 2,
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            '${context.tr('levelLabel')} ${game.levelUpFromLevel}',
-            style: TextStyle(
-              color: JewelCandyLuminaTheme.textParchment.withValues(
-                alpha: 0.72,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '${context.tr('levelLabel')} ${game.levelUpFromLevel}',
+              style: TextStyle(
+                color: JewelCandyLuminaTheme.textParchment.withValues(
+                  alpha: 0.72,
+                ),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
               ),
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
             ),
-          ),
-          const SizedBox(width: 10),
-          Icon(
-            Icons.keyboard_double_arrow_down_rounded,
-            color: JewelCandyLuminaTheme.focusTeal,
-            size: 22,
-          ),
-          const SizedBox(width: 10),
-          Text(
-            '${context.tr('levelLabel')} ${game.levelUpToLevel}',
-            style: TextStyle(
-              color: JewelCandyLuminaTheme.goldStrong,
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
+            const SizedBox(width: 10),
+            Icon(
+              Icons.keyboard_double_arrow_down_rounded,
+              color: JewelCandyLuminaTheme.focusTeal,
+              size: 22,
             ),
-          ),
-        ],
+            const SizedBox(width: 10),
+            Text(
+              '${context.tr('levelLabel')} ${game.levelUpToLevel}',
+              style: TextStyle(
+                color: JewelCandyLuminaTheme.goldStrong,
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
