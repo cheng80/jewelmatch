@@ -37,6 +37,8 @@
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
   
   
+  
+  
   <style id="splash-screen-style">
     html {
       height: 100%
@@ -56,6 +58,21 @@
       left: 50%;
       -ms-transform: translate(-50%, -50%);
       transform: translate(-50%, -50%);
+    }
+
+    #splash {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    #splash img.center {
+      position: static;
+      transform: none;
+      -ms-transform: none;
     }
 
     .contain {
@@ -113,7 +130,9 @@
   
   
   
+  
   <script src="flutter_bootstrap.js" async=""></script>
+
 
 
 
