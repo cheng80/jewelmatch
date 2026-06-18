@@ -115,4 +115,6 @@ class AssetPaths {
       'assets/images/ui/mode_icons/mode_icon_settings_gear_256.png';
   static const String modeIconRanking =
       'assets/images/ui/mode_icons/mode_icon_ranking_crown_256.png';
+  static const String modeIconInventory =
+      'assets/images/ui/mode_icons/mode_icon_inventory_256.png';
 }

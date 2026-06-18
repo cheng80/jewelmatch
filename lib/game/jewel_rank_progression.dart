@@ -11,10 +11,21 @@ class JewelRankProgression {
   static const int xpStep = 250000;
   static const int scoreToXpScale = 100;
   static const int scoreTargetScale = 3;
+  static const int relaxedStageStartLevel = 6;
+  static const int relaxedScoreIncrement = 5000;
 
   static int xpFromScore(int score) => score * scoreToXpScale;
-  static int scoreTargetForLevel(int level) =>
-      (xpNeededForNextLevel(level) ~/ scoreToXpScale) * scoreTargetScale;
+  static int scoreTargetForLevel(int level) {
+    final linearTarget =
+        (xpNeededForNextLevel(level) ~/ scoreToXpScale) * scoreTargetScale;
+    if (level < relaxedStageStartLevel) return linearTarget;
+
+    final levelFiveTarget =
+        (xpNeededForNextLevel(relaxedStageStartLevel - 1) ~/ scoreToXpScale) *
+        scoreTargetScale;
+    return levelFiveTarget +
+        (level - relaxedStageStartLevel + 1) * relaxedScoreIncrement;
+  }
 
   static String formatCompactScore(int score) {
     if (score < 10000) return _fmt.format(score);

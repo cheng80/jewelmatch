@@ -127,10 +127,23 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
 
   void _drawItemSlots(Canvas canvas) {
     _drawItemTray(canvas);
-    for (final item in MatchGameHud._phaseOneItems) {
-      final r = _itemRects[item];
+    for (final slot in game.hudLoadoutSlots) {
+      final r = _loadoutSlotRects[slot.index];
       if (r == null || r.isEmpty) continue;
-      _drawItemSlot(canvas, r, item);
+      final item = slot.item;
+      if (slot.locked || item == null) {
+        _drawLockedItemSlot(canvas, r);
+        continue;
+      }
+      _drawItemSlot(
+        canvas,
+        r,
+        item,
+        enabledOverride: game.isLoadoutSlotUsable(slot),
+        quantity: game.usesPhase2Inventory
+            ? game.runInventory.quantityOf(item)
+            : null,
+      );
     }
   }
 
@@ -316,7 +329,7 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
   String _immediateItemConfirmBody(ItemKind item) => switch (item) {
     ItemKind.fateShuffle => '현재 보드를 섞습니다',
     ItemKind.timeSlip => '남은 시간을 늘립니다',
-    ItemKind.hintPlus => '힌트 횟수를 1개 늘립니다',
+    ItemKind.hintPlus => '힌트를 바로 표시합니다',
     _ => '아이템을 사용합니다',
   };
 
@@ -532,21 +545,29 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
       _itemTrayStrokePaint,
     );
 
-    final groovePaint = Paint()
-      ..isAntiAlias = true
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.1
-      ..color = const Color(0xFF7F5A2A).withValues(alpha: 0.72);
-    final y = r.center.dy;
-    canvas.drawLine(
-      Offset(r.left + r.width * 0.05, y),
-      Offset(r.right - r.width * 0.05, y),
-      groovePaint,
-    );
+    if (!game.usesPhase2Inventory) {
+      final groovePaint = Paint()
+        ..isAntiAlias = true
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.1
+        ..color = const Color(0xFF7F5A2A).withValues(alpha: 0.72);
+      final y = r.center.dy;
+      canvas.drawLine(
+        Offset(r.left + r.width * 0.05, y),
+        Offset(r.right - r.width * 0.05, y),
+        groovePaint,
+      );
+    }
   }
 
-  void _drawItemSlot(Canvas canvas, Rect r, ItemKind item) {
-    final enabled = game.isItemEnabled(item);
+  void _drawItemSlot(
+    Canvas canvas,
+    Rect r,
+    ItemKind item, {
+    bool? enabledOverride,
+    int? quantity,
+  }) {
+    final enabled = enabledOverride ?? game.isItemEnabled(item);
     final active = game.activeTargetItem == item;
     _drawIconButtonFrame(canvas, r);
 
@@ -587,6 +608,9 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
         dst,
         imagePaint,
       );
+      if (quantity != null) {
+        _drawItemQuantityBadge(canvas, r, quantity);
+      }
       return;
     }
 
@@ -612,6 +636,89 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
     painter.paint(
       canvas,
       Offset(r.center.dx - painter.width / 2, r.center.dy - painter.height / 2),
+    );
+    if (quantity != null) {
+      _drawItemQuantityBadge(canvas, r, quantity);
+    }
+  }
+
+  void _drawLockedItemSlot(Canvas canvas, Rect r) {
+    _drawIconButtonFrame(canvas, r);
+    final lockPaint = Paint()
+      ..isAntiAlias = true
+      ..color = const Color(0xFF0B0908).withValues(alpha: 0.56);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(r.deflate(4), Radius.circular(r.width * 0.18)),
+      lockPaint,
+    );
+
+    final shacklePaint = Paint()
+      ..isAntiAlias = true
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(2.0, r.width * 0.07)
+      ..strokeCap = StrokeCap.round
+      ..color = const Color(0xFF7F5A2A).withValues(alpha: 0.78);
+    final bodyPaint = Paint()
+      ..isAntiAlias = true
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: const [Color(0xFF9E7A44), Color(0xFF3E2A13)],
+      ).createShader(r);
+    final shackle = Rect.fromCenter(
+      center: r.center.translate(0, -r.height * 0.08),
+      width: r.width * 0.34,
+      height: r.height * 0.34,
+    );
+    canvas.drawArc(shackle, math.pi, math.pi, false, shacklePaint);
+    final body = Rect.fromCenter(
+      center: r.center.translate(0, r.height * 0.10),
+      width: r.width * 0.46,
+      height: r.height * 0.34,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(body, Radius.circular(r.width * 0.07)),
+      bodyPaint,
+    );
+  }
+
+  void _drawItemQuantityBadge(Canvas canvas, Rect r, int quantity) {
+    final badge = Rect.fromCircle(
+      center: Offset(r.right - r.width * 0.13, r.bottom - r.height * 0.13),
+      radius: r.width * 0.16,
+    );
+    final fill = Paint()
+      ..isAntiAlias = true
+      ..shader = const LinearGradient(
+        colors: [Color(0xFFFFF0A8), Color(0xFFC58A22)],
+      ).createShader(badge);
+    final stroke = Paint()
+      ..isAntiAlias = true
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..color = const Color(0xFF2A1606);
+    canvas.drawOval(badge, fill);
+    canvas.drawOval(badge, stroke);
+
+    final text = quantity > 99 ? '99+' : '$quantity';
+    final painter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: _ts(
+          size: r.width * (text.length > 2 ? 0.16 : 0.20),
+          color: const Color(0xFF211204),
+          weight: FontWeight.w900,
+        ),
+      ),
+      textAlign: TextAlign.center,
+      textDirection: ui.TextDirection.ltr,
+    )..layout(maxWidth: badge.width);
+    painter.paint(
+      canvas,
+      Offset(
+        badge.center.dx - painter.width / 2,
+        badge.center.dy - painter.height / 2,
+      ),
     );
   }
 }

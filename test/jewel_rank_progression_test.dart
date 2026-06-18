@@ -26,11 +26,14 @@ void main() {
     );
   });
 
-  test('scoreTargetForLevel follows per-stage Blitz rank increments', () {
+  test('scoreTargetForLevel eases stage pressure after level 5', () {
     expect(JewelRankProgression.scoreTargetForLevel(1), 7500);
     expect(JewelRankProgression.scoreTargetForLevel(2), 15000);
     expect(JewelRankProgression.scoreTargetForLevel(3), 22500);
     expect(JewelRankProgression.scoreTargetForLevel(4), 30000);
+    expect(JewelRankProgression.scoreTargetForLevel(5), 37500);
+    expect(JewelRankProgression.scoreTargetForLevel(6), 42500);
+    expect(JewelRankProgression.scoreTargetForLevel(10), 62500);
   });
 
   test('levelForScore follows scaled score targets', () {
@@ -38,6 +41,8 @@ void main() {
     expect(JewelRankProgression.levelForScore(7500), 2);
     expect(JewelRankProgression.levelForScore(14999), 2);
     expect(JewelRankProgression.levelForScore(15000), 3);
+    expect(JewelRankProgression.levelForScore(42499), 6);
+    expect(JewelRankProgression.levelForScore(42500), 7);
   });
 
   test('stageProgressRatio measures the current stage score target', () {

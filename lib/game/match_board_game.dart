@@ -12,12 +12,14 @@ import 'components/match_board_renderer.dart';
 import 'components/match_game_hud.dart';
 import 'components/particle_burst.dart';
 import 'components/special_effect_pool.dart';
+import 'item_inventory.dart';
 import 'item_kind.dart';
 import 'jewel_game_mode.dart';
 import 'jewel_rank_progression.dart';
 import 'match_board_camera_shake.dart';
 import 'match_board_logic.dart';
 import 'match_board_qa_bridge.dart';
+import 'stage_reward.dart';
 
 part 'match_board_game_vfx.dart';
 part 'match_board_game_debug_vfx.dart';
@@ -54,6 +56,11 @@ class MatchBoardGame extends FlameGame {
       timeRemaining = roundSecondsForMode;
       _lastFlooredSecondForTimeTic = timeRemaining.floor();
     }
+    runInventory = RunInventory.phase2Initial();
+    stageLoadout = StageLoadout.phase2Default(runInventory);
+    nextStageLoadoutDraft = stageLoadout;
+    latestStageRewards = const [];
+    _stageStartRemainingHints = _remainingHints;
   }
 
   final EdgeInsets safeAreaPadding;
@@ -78,6 +85,7 @@ class MatchBoardGame extends FlameGame {
   late final ParticlePool _particlePool;
   late final SpecialEffectPool _specialEffectPool;
   final MatchBoardCameraShake _cameraShake = MatchBoardCameraShake();
+  bool _effectPoolsReady = false;
   MatchGameHud? _hud;
   final Map<String, String> _localeStrings = {};
 
@@ -110,6 +118,15 @@ class MatchBoardGame extends FlameGame {
   ItemKind? activeTargetItem;
   int? selectedPrismColor;
   ItemKind? pendingImmediateItemConfirm;
+  late RunInventory runInventory;
+  late StageLoadout stageLoadout;
+  late StageLoadout nextStageLoadoutDraft;
+  List<StageRewardGrant> latestStageRewards = const [];
+  int stageLoadoutOpenSlotCount = StageLoadout.phase2InitialOpenSlotCount;
+  List<int> recentlyUnlockedLoadoutSlotIndices = const [];
+  String? _stageRewardClaimKey;
+  late int _stageStartRemainingHints;
+  final List<int> _recentStageRewardTotals = <int>[];
   String? _itemFeedbackText;
   double _itemFeedbackTimer = 0;
 
@@ -164,6 +181,21 @@ class MatchBoardGame extends FlameGame {
   }
 
   List<ItemKind> get phaseOneTestItems => ItemKindMeta.phaseOneLoadout;
+  int get stageStartRemainingHints => _stageStartRemainingHints;
+  String? get stageRewardClaimKey => _stageRewardClaimKey;
+  bool get hasPendingStageInventoryUnlock =>
+      recentlyUnlockedLoadoutSlotIndices.isNotEmpty;
+  bool get usesPhase2Inventory => isProgressionMode;
+  List<StageLoadoutSlot> get hudLoadoutSlots => usesPhase2Inventory
+      ? stageLoadout.slots
+      : [
+          for (var i = 0; i < ItemKindMeta.phaseOneLoadout.length; i++)
+            StageLoadoutSlot(
+              index: i,
+              item: ItemKindMeta.phaseOneLoadout[i],
+              locked: false,
+            ),
+        ];
   Map<ItemKind, Rect> debugReadItemSlotRects() =>
       _hud?.debugReadItemSlotRects() ?? const {};
   Map<int, Rect> debugReadPrismColorRects() =>
@@ -232,6 +264,7 @@ class MatchBoardGame extends FlameGame {
 
     _particlePool = ParticlePool(world);
     _specialEffectPool = SpecialEffectPool(world);
+    _effectPoolsReady = true;
     installMatchBoardQaBridge(this);
 
     if (isTimedMode) {
@@ -242,8 +275,11 @@ class MatchBoardGame extends FlameGame {
   @override
   void onRemove() {
     uninstallMatchBoardQaBridge(this);
-    _particlePool.clear();
-    _specialEffectPool.clear();
+    if (_effectPoolsReady) {
+      _particlePool.clear();
+      _specialEffectPool.clear();
+      _effectPoolsReady = false;
+    }
     super.onRemove();
   }
 
@@ -306,6 +342,8 @@ class MatchBoardGame extends FlameGame {
   void continueAfterLevelUp() => _continueAfterLevelUpImpl();
   void showLevelUpPopupAfterCelebration() =>
       _showLevelUpPopupAfterCelebrationImpl();
+  void showStageInventory() => _showStageInventoryImpl();
+  void closeStageInventory() => _closeStageInventoryImpl();
 
   @override
   void lifecycleStateChange(AppLifecycleState state) {
@@ -389,8 +427,34 @@ class MatchBoardGame extends FlameGame {
     _ => true,
   };
 
+  bool isInventoryItemAvailable(ItemKind item) =>
+      runInventory.quantityOf(item) > 0 && isItemEnabled(item);
+
+  bool isLoadoutSlotUsable(StageLoadoutSlot slot) {
+    final item = slot.item;
+    return !slot.locked &&
+        item != null &&
+        isItemEnabled(item) &&
+        (!usesPhase2Inventory || runInventory.quantityOf(item) > 0);
+  }
+
+  bool assignNextStageLoadoutSlot(int slotIndex, ItemKind item) {
+    final before = nextStageLoadoutDraft;
+    nextStageLoadoutDraft = nextStageLoadoutDraft.assignOpenSlot(
+      slotIndex: slotIndex,
+      item: item,
+      inventory: runInventory,
+      isAllowed: isItemEnabled,
+    );
+    return !identical(before, nextStageLoadoutDraft);
+  }
+
   bool canUseTestItem(ItemKind item) {
     if (!isItemEnabled(item)) return false;
+    if (usesPhase2Inventory &&
+        (!stageLoadout.contains(item) || runInventory.quantityOf(item) <= 0)) {
+      return false;
+    }
     return isPlaying &&
         !timeUp &&
         !board.inputLocked &&
@@ -538,6 +602,9 @@ class MatchBoardGame extends FlameGame {
       cell.y,
       prismColor: prismColor,
     );
+    if (used) {
+      _consumeRunInventoryIfNeeded(item);
+    }
     _showItemFeedback(used ? _targetUsedMessage(item) : '선택한 보석에는 사용할 수 없습니다');
     SoundManager.playSfx(used ? AssetPaths.sfxSpecialGem : AssetPaths.sfxFail);
   }
@@ -584,10 +651,8 @@ class MatchBoardGame extends FlameGame {
         final gained = (timeRemaining - before).round();
         feedback = used ? '타임 슬립 +$gained초' : '시간이 이미 최대입니다';
       case ItemKind.hintPlus:
-        final before = remainingHints;
         used = _applyHintPlusItem();
-        final gained = remainingHints - before;
-        feedback = used ? '힌트 +$gained' : '힌트를 늘릴 수 없습니다';
+        feedback = used ? '힌트를 표시했습니다' : '표시할 힌트가 없습니다';
       case ItemKind.runeHammer ||
           ItemKind.ancientBomb ||
           ItemKind.thorHammer ||
@@ -595,9 +660,17 @@ class MatchBoardGame extends FlameGame {
           ItemKind.prismTransform:
         break;
     }
+    if (used) {
+      _consumeRunInventoryIfNeeded(item);
+    }
     _showItemFeedback(feedback);
     SoundManager.playSfx(used ? AssetPaths.sfxSpecialGem : AssetPaths.sfxFail);
     return used;
+  }
+
+  void _consumeRunInventoryIfNeeded(ItemKind item) {
+    if (!usesPhase2Inventory || !stageLoadout.contains(item)) return;
+    runInventory.tryConsume(item);
   }
 
   bool _applyTimeSlipItem() {
@@ -609,8 +682,7 @@ class MatchBoardGame extends FlameGame {
 
   bool _applyHintPlusItem() {
     if (!hasLimitedHints) return false;
-    _remainingHints += 1;
-    return true;
+    return board.showHint();
   }
 
   void _updateItemFeedback(double dt) {

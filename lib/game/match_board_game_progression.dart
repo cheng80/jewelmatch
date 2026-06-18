@@ -15,6 +15,7 @@ extension MatchBoardGameProgression on MatchBoardGame {
     levelUpFromLevel = progressionLevel;
     levelUpToLevel = nextLevel;
     progressionNextBoardBonusKinds = _bonusKindsForNextLevel();
+    _grantStageRewardsOnce();
     GameSettings.saveBestProgressionRecordIfBetter(
       level: levelUpToLevel,
       score: board.score,
@@ -30,23 +31,35 @@ extension MatchBoardGameProgression on MatchBoardGame {
     levelUpFromLevel = 1;
     levelUpToLevel = 1;
     progressionNextBoardBonusKinds = const [];
+    latestStageRewards = const [];
+    stageLoadoutOpenSlotCount = StageLoadout.phase2InitialOpenSlotCount;
+    recentlyUnlockedLoadoutSlotIndices = const [];
+    _recentStageRewardTotals.clear();
+    _stageRewardClaimKey = null;
   }
 
   void _continueAfterLevelUpImpl() {
     if (!isProgressionMode) return;
     overlays.remove('LevelUp');
+    overlays.remove('StageInventory');
     overlays.remove('NoMoves');
     progressionLevel = levelUpToLevel;
     _remainingHints += MatchBoardGame.progressionModeHintsPerStage;
     board.score = 0;
     board.lastCombo = 0;
     board.maxCombo = 0;
+    stageLoadout = nextStageLoadoutDraft;
     timeUp = false;
     timeRemaining = roundSecondsForMode;
     _lastFlooredSecondForTimeTic = timeRemaining.floor();
     _generateFreshBoardWithStartSfx();
     _applyNextBoardBonusKinds();
+    nextStageLoadoutDraft = stageLoadout;
     progressionNextBoardBonusKinds = const [];
+    latestStageRewards = const [];
+    recentlyUnlockedLoadoutSlotIndices = const [];
+    _stageRewardClaimKey = null;
+    _stageStartRemainingHints = _remainingHints;
     _syncIntroInputBlock();
     resumeEngine();
     isPlaying = true;
@@ -58,6 +71,9 @@ extension MatchBoardGameProgression on MatchBoardGame {
     if (!overlays.isActive('LevelUp')) {
       overlays.add('LevelUp');
     }
+    if (hasPendingStageInventoryUnlock) {
+      overlays.add('StageInventory');
+    }
   }
 
   List<GemKind> _bonusKindsForNextLevel() {
@@ -65,6 +81,62 @@ extension MatchBoardGameProgression on MatchBoardGame {
       maxCombo: board.maxCombo,
       nextLevel: levelUpToLevel,
     );
+  }
+
+  void _grantStageRewardsOnce() {
+    final claimKey = '$levelUpFromLevel->$levelUpToLevel:${board.score}';
+    if (_stageRewardClaimKey == claimKey) return;
+    final rewards = StageRewardEvaluator.evaluate(
+      stats: board.stats,
+      score: board.score,
+      targetScore: progressionTargetScore,
+      maxCombo: board.maxCombo,
+      remainingHints: _remainingHints,
+      stageStartRemainingHints: _stageStartRemainingHints,
+      isClear: true,
+    );
+    for (final reward in rewards) {
+      runInventory.add(reward.item, reward.quantity);
+    }
+    latestStageRewards = List<StageRewardGrant>.unmodifiable(rewards);
+    _stageRewardClaimKey = claimKey;
+    _recordStageRewardTotal(
+      rewards.fold<int>(0, (total, reward) => total + reward.quantity),
+    );
+    _updateLoadoutUnlocksForClear();
+    nextStageLoadoutDraft = nextStageLoadoutDraft.withOpenSlotCount(
+      stageLoadoutOpenSlotCount,
+    );
+  }
+
+  void _recordStageRewardTotal(int total) {
+    _recentStageRewardTotals.add(total);
+    if (_recentStageRewardTotals.length > 3) {
+      _recentStageRewardTotals.removeAt(0);
+    }
+  }
+
+  void _updateLoadoutUnlocksForClear() {
+    final before = stageLoadoutOpenSlotCount;
+    var target = before;
+    if (levelUpFromLevel >= StageLoadout.phase2Slot3UnlockClearLevel) {
+      target = target < 3 ? 3 : target;
+    }
+    final hasRecentMultiReward = _recentStageRewardTotals.any(
+      (total) => total >= 2,
+    );
+    if (levelUpFromLevel >= StageLoadout.phase2Slot4UnlockClearLevel &&
+        hasRecentMultiReward) {
+      target = StageLoadout.phase2SlotCount;
+    }
+    if (target == before) {
+      recentlyUnlockedLoadoutSlotIndices = const [];
+      return;
+    }
+    stageLoadoutOpenSlotCount = target;
+    recentlyUnlockedLoadoutSlotIndices = [
+      for (var slot = before; slot < target; slot++) slot,
+    ];
   }
 
   void _applyNextBoardBonusKinds() {

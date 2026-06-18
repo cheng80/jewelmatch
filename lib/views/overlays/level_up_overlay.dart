@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
+import '../../game/item_kind.dart';
 import '../../game/match_board_game.dart';
 import '../../resources/asset_paths.dart';
 import '../../resources/sound_manager.dart';
@@ -62,12 +63,12 @@ class _LevelUpOverlayState extends State<LevelUpOverlay>
           borderColor: JewelCandyLuminaTheme.goldStrong,
           shadowColor: JewelCandyLuminaTheme.tertiaryGold,
           maxCardWidth: 410,
-          maxHeightFactor: 0.82,
-          verticalMargin: 54,
+          maxHeightFactor: 0.96,
+          verticalMargin: 14,
           alignment: Alignment.topCenter,
-          horizontalPadding: 28,
-          verticalPadding: 24,
-          innerPadding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+          horizontalPadding: 20,
+          verticalPadding: 16,
+          innerPadding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -76,14 +77,14 @@ class _LevelUpOverlayState extends State<LevelUpOverlay>
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: JewelCandyLuminaTheme.goldStrong,
-                  fontSize: 34,
+                  fontSize: 26,
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 8),
               _LevelBadge(game: game),
               if (game.progressionNextBoardBonusCount > 0) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: 6),
                 Text(
                   context.tr(
                     'nextBoardBonus',
@@ -94,24 +95,32 @@ class _LevelUpOverlayState extends State<LevelUpOverlay>
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: JewelCandyLuminaTheme.tertiaryGold,
-                    fontSize: 17,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
-              const SizedBox(height: 18),
+              const SizedBox(height: 10),
+              _StageRewardSummary(game: game),
+              const SizedBox(height: 10),
+              _InventoryOpenButton(onPressed: game.showStageInventory),
+              const SizedBox(height: 12),
+              const _SectionDivider(),
+              const SizedBox(height: 10),
               Text(
                 context.tr('levelUpDesc'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: JewelCandyLuminaTheme.textParchment,
-                  fontSize: 17,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 8),
               LuminaGradientButton(
-                width: 260,
+                width: 220,
+                height: 42,
+                fontSize: 16,
                 colors: JewelCandyLuminaTheme.buttonShuffleCyanLime,
                 label: context.tr('nextLevel'),
                 onPressed: () {
@@ -119,16 +128,187 @@ class _LevelUpOverlayState extends State<LevelUpOverlay>
                   game.continueAfterLevelUp();
                 },
               ),
-              const SizedBox(height: 14),
-              PauseMenuStatsButton(
-                onPressed: () {
-                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                  game.showGameStats();
-                },
+              const SizedBox(height: 6),
+              SizedBox(
+                width: 48,
+                height: 48,
+                child: FittedBox(
+                  child: PauseMenuStatsButton(
+                    onPressed: () {
+                      SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                      game.showGameStats();
+                    },
+                  ),
+                ),
               ),
-              const SizedBox(height: 12),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StageRewardSummary extends StatelessWidget {
+  const _StageRewardSummary({required this.game});
+
+  final MatchBoardGame game;
+
+  @override
+  Widget build(BuildContext context) {
+    final rewards = game.latestStageRewards;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 13),
+      decoration: BoxDecoration(
+        color: JewelCandyLuminaTheme.surfaceStoneDark.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: JewelCandyLuminaTheme.outlineBright.withValues(alpha: 0.58),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            context.tr('stageRewardsTitle'),
+            style: TextStyle(
+              color: JewelCandyLuminaTheme.goldStrong,
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 7),
+          if (rewards.isEmpty)
+            Text(
+              context.tr('stageRewardsEmpty'),
+              style: TextStyle(
+                color: JewelCandyLuminaTheme.textMutedGold,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            )
+          else
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final reward in rewards)
+                  _RewardChip(item: reward.item, quantity: reward.quantity),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RewardChip extends StatelessWidget {
+  const _RewardChip({required this.item, required this.quantity});
+
+  final ItemKind item;
+  final int quantity;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 34),
+      padding: const EdgeInsets.fromLTRB(7, 5, 9, 5),
+      decoration: BoxDecoration(
+        color: JewelCandyLuminaTheme.surfaceStone.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: JewelCandyLuminaTheme.outlineBright.withValues(alpha: 0.72),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox.square(dimension: 24, child: _ItemIcon(item: item)),
+          const SizedBox(width: 5),
+          Text(
+            '${_oneLineItemName(item)} x$quantity',
+            style: TextStyle(
+              color: JewelCandyLuminaTheme.textParchment,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _oneLineItemName(ItemKind item) => item.label.replaceAll('\n', ' ');
+
+class _InventoryOpenButton extends StatelessWidget {
+  const _InventoryOpenButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: context.tr('openInventory'),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 2, 10, 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                AssetPaths.modeIconInventory,
+                width: 56,
+                height: 56,
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                context.tr('openInventory'),
+                style: TextStyle(
+                  color: JewelCandyLuminaTheme.tertiaryGold,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withValues(alpha: 0.72),
+                      offset: const Offset(0, 1),
+                      blurRadius: 2,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionDivider extends StatelessWidget {
+  const _SectionDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 2,
+      margin: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            JewelCandyLuminaTheme.outlineBright.withValues(alpha: 0),
+            JewelCandyLuminaTheme.outlineBright.withValues(alpha: 0.86),
+            JewelCandyLuminaTheme.tertiaryGold.withValues(alpha: 0.96),
+            JewelCandyLuminaTheme.outlineBright.withValues(alpha: 0.86),
+            JewelCandyLuminaTheme.outlineBright.withValues(alpha: 0),
+          ],
         ),
       ),
     );
@@ -144,16 +324,17 @@ class _LevelBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
         color: JewelCandyLuminaTheme.surfaceVariant.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: JewelCandyLuminaTheme.tertiaryGold.withValues(alpha: 0.8),
           width: 2,
         ),
       ),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             '${context.tr('levelLabel')} ${game.levelUpFromLevel}',
@@ -161,22 +342,22 @@ class _LevelBadge extends StatelessWidget {
               color: JewelCandyLuminaTheme.textParchment.withValues(
                 alpha: 0.72,
               ),
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(width: 10),
           Icon(
             Icons.keyboard_double_arrow_down_rounded,
             color: JewelCandyLuminaTheme.focusTeal,
-            size: 30,
+            size: 22,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(width: 10),
           Text(
             '${context.tr('levelLabel')} ${game.levelUpToLevel}',
             style: TextStyle(
               color: JewelCandyLuminaTheme.goldStrong,
-              fontSize: 34,
+              fontSize: 22,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -185,3 +366,30 @@ class _LevelBadge extends StatelessWidget {
     );
   }
 }
+
+class _ItemIcon extends StatelessWidget {
+  const _ItemIcon({required this.item});
+
+  final ItemKind item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      _itemIconAsset(item),
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.high,
+    );
+  }
+}
+
+String _itemIconAsset(ItemKind item) => switch (item) {
+  ItemKind.runeHammer => 'assets/images/${AssetPaths.itemIconRuneHammer}',
+  ItemKind.ancientBomb => 'assets/images/${AssetPaths.itemIconAncientBomb}',
+  ItemKind.thorHammer => 'assets/images/${AssetPaths.itemIconThorHammer}',
+  ItemKind.hyperCube => 'assets/images/${AssetPaths.itemIconHyperCube}',
+  ItemKind.prismTransform =>
+    'assets/images/${AssetPaths.itemIconPrismTransform}',
+  ItemKind.fateShuffle => 'assets/images/${AssetPaths.itemIconFateShuffle}',
+  ItemKind.timeSlip => 'assets/images/${AssetPaths.itemIconTimeSlip}',
+  ItemKind.hintPlus => 'assets/images/${AssetPaths.itemIconHintPlus}',
+};

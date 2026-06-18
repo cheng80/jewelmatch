@@ -60,6 +60,7 @@ extension MatchBoardGameFlow on MatchBoardGame {
     overlays.remove('RankingList');
     overlays.remove('LevelCelebration');
     overlays.remove('LevelUp');
+    overlays.remove('StageInventory');
     overlays.remove('GameStats');
     timeUp = false;
     activeTargetItem = null;
@@ -70,7 +71,19 @@ extension MatchBoardGameFlow on MatchBoardGame {
     if (isProgressionMode) {
       _resetProgressionRound();
     }
+    runInventory = RunInventory.phase2Initial();
+    stageLoadoutOpenSlotCount = StageLoadout.phase2InitialOpenSlotCount;
+    recentlyUnlockedLoadoutSlotIndices = const [];
+    _recentStageRewardTotals.clear();
+    stageLoadout = StageLoadout.phase2Default(
+      runInventory,
+      openSlotCount: stageLoadoutOpenSlotCount,
+    );
+    nextStageLoadoutDraft = stageLoadout;
+    latestStageRewards = const [];
+    _stageRewardClaimKey = null;
     _remainingHints = MatchBoardGame._initialHintsForMode(gameMode);
+    _stageStartRemainingHints = _remainingHints;
     if (hasTimedClock) {
       timeRemaining = roundSecondsForMode;
       _lastFlooredSecondForTimeTic = timeRemaining.floor();
@@ -130,6 +143,16 @@ extension MatchBoardGameFlow on MatchBoardGame {
 
   void _closeGameStatsImpl() {
     overlays.remove('GameStats');
+  }
+
+  void _showStageInventoryImpl() {
+    if (!overlays.isActive('StageInventory')) {
+      overlays.add('StageInventory');
+    }
+  }
+
+  void _closeStageInventoryImpl() {
+    overlays.remove('StageInventory');
   }
 
   void _shuffleBoardImpl() {

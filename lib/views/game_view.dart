@@ -22,6 +22,7 @@ import 'overlays/level_up_overlay.dart';
 import 'overlays/game_loading_overlay.dart';
 import 'overlays/game_stats_overlay.dart';
 import 'overlays/ranking_overlay.dart';
+import 'overlays/stage_inventory_overlay.dart';
 
 /// 매치-3 게임 화면. [gameMode]는 타이틀에서 Simple / Timed 로 전달한다.
 class GameView extends StatefulWidget {
@@ -156,6 +157,8 @@ class _GameViewState extends State<GameView> {
         'LevelCelebration': (_, MatchBoardGame g) =>
             LevelCelebrationOverlay(game: g),
         'LevelUp': (_, MatchBoardGame g) => LevelUpOverlay(game: g),
+        'StageInventory': (_, MatchBoardGame g) =>
+            StageInventoryOverlay(game: g),
         'TimeUp': (_, MatchBoardGame g) => TimeUpOverlay(game: g),
         'GameStats': (_, MatchBoardGame g) => GameStatsOverlay(game: g),
         'HowToPlay': (_, MatchBoardGame g) => HowToPlayOverlay(game: g),

@@ -24,6 +24,7 @@
 | 문서 | 용도 |
 |------|------|
 | [`planning/item_slot_market_plan.md`](planning/item_slot_market_plan.md) | 아이템 슬롯, 인벤토리, 보상형 광고, 선택형 코인/인앱 플랜 |
+| [`planning/stage_reward_system.md`](planning/stage_reward_system.md) | 레벨 클리어 후 스테이지 아이템 보상 지급 규칙 |
 | [`planning/item_slot_market_implementation_checklist.md`](planning/item_slot_market_implementation_checklist.md) | 아이템 슬롯·인벤토리 플랜의 단계별 상세 구현 체크리스트 |
 | [`planning/stone_match_execution_checklist.md`](planning/stone_match_execution_checklist.md) | 진행·배포 체크리스트 |
 

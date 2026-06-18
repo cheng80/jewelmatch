@@ -54,12 +54,37 @@ extension MatchBoardSimulationState on MatchBoardGame {
       'level': progressionLevel,
       'targetScore': progressionTargetScore,
       'levelUpActive': overlays.isActive('LevelUp'),
+      'stageInventoryActive': overlays.isActive('StageInventory'),
       'levelCelebrationActive': overlays.isActive('LevelCelebration'),
       'timeUp': timeUp,
       'timeRemaining': timeRemaining,
       'remainingHints': remainingHints,
       'hasLimitedHints': hasLimitedHints,
       'hasTimedClock': hasTimedClock,
+      'runInventory': {
+        for (final entry in runInventory.snapshot().entries)
+          entry.key.name: entry.value,
+      },
+      'stageLoadout': [
+        for (final slot in stageLoadout.slots)
+          {
+            'index': slot.index,
+            'item': slot.item?.name,
+            'locked': slot.locked,
+            'open': slot.open,
+          },
+      ],
+      'latestStageRewards': [
+        for (final reward in latestStageRewards)
+          {
+            'item': reward.item.name,
+            'quantity': reward.quantity,
+            'reasonKey': reward.reasonKey,
+          },
+      ],
+      'stageRewardClaimKey': stageRewardClaimKey,
+      'stageLoadoutOpenSlotCount': stageLoadoutOpenSlotCount,
+      'recentlyUnlockedLoadoutSlotIndices': recentlyUnlockedLoadoutSlotIndices,
       'isPlaying': isPlaying,
       'boardState': board.state,
       'boardGeometry': {

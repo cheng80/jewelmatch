@@ -201,6 +201,8 @@ void main() {
   test('phase 1 untargeted items respect mode restrictions', () {
     final simple = MatchBoardGame(gameMode: JewelGameMode.simple);
     final timed = MatchBoardGame(gameMode: JewelGameMode.timed);
+    _setHintBoard(timed.board);
+    timed.board.introFillInProgress = false;
 
     expect(simple.canUseTestItem(ItemKind.timeSlip), isFalse);
     expect(simple.canUseTestItem(ItemKind.hintPlus), isFalse);
@@ -212,14 +214,19 @@ void main() {
     expect(timed.timeRemaining, greaterThanOrEqualTo(beforeTime));
     expect(timed.itemFeedbackText, contains('타임 슬립 +'));
 
+    expect(timed.board.hintCellA, isNull);
     final beforeHints = timed.remainingHints;
     expect(timed.useTestItem(ItemKind.hintPlus), isTrue);
-    expect(timed.remainingHints, beforeHints + 1);
-    expect(timed.itemFeedbackText, '힌트 +1');
+    expect(timed.remainingHints, beforeHints);
+    expect(timed.board.hintCellA, isNotNull);
+    expect(timed.board.hintCellB, isNotNull);
+    expect(timed.itemFeedbackText, '힌트를 표시했습니다');
   });
 
   test('phase 1 untargeted hud items require confirmation', () {
     final timed = MatchBoardGame(gameMode: JewelGameMode.timed);
+    _setHintBoard(timed.board);
+    timed.board.introFillInProgress = false;
 
     final beforeTime = timed.timeRemaining;
     expect(timed.usePhaseOneItem(ItemKind.timeSlip), isTrue);
@@ -238,12 +245,119 @@ void main() {
     final beforeHintConfirmTime = timed.timeRemaining;
     timed.update(5);
     expect(timed.timeRemaining, beforeHintConfirmTime);
+    expect(timed.board.hintCellA, isNull);
     final beforeHints = timed.remainingHints;
     expect(timed.confirmImmediateItemUse(), isTrue);
     expect(timed.pendingImmediateItemConfirm, isNull);
-    expect(timed.remainingHints, beforeHints + 1);
-    expect(timed.itemFeedbackText, '힌트 +1');
+    expect(timed.remainingHints, beforeHints);
+    expect(timed.board.hintCellA, isNotNull);
+    expect(timed.board.hintCellB, isNotNull);
+    expect(timed.itemFeedbackText, '힌트를 표시했습니다');
   });
+
+  test('phase 2 progression loadout is edited from next stage draft', () {
+    final game = MatchBoardGame(gameMode: JewelGameMode.progression);
+
+    expect(game.stageLoadout.slots, hasLength(4));
+    expect(game.stageLoadout.slots[0].item, ItemKind.runeHammer);
+    expect(game.stageLoadout.slots[1].item, ItemKind.ancientBomb);
+    expect(game.stageLoadout.slots[2].locked, isTrue);
+    expect(game.stageLoadout.slots[3].locked, isTrue);
+
+    game.runInventory.add(ItemKind.thorHammer);
+    expect(game.assignNextStageLoadoutSlot(1, ItemKind.thorHammer), isTrue);
+    expect(game.nextStageLoadoutDraft.slots[1].item, ItemKind.thorHammer);
+    expect(game.stageLoadout.slots[1].item, ItemKind.ancientBomb);
+
+    game.levelUpToLevel = 2;
+    game.overlays.addEntry('IntroBlock', (_, _) => const SizedBox.shrink());
+    game.continueAfterLevelUp();
+
+    expect(game.progressionLevel, 2);
+    expect(game.stageLoadout.slots[1].item, ItemKind.thorHammer);
+  });
+
+  test(
+    'phase 2 progression clear unlocks loadout slots with inventory popup',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      await StorageHelper.init();
+      await StorageHelper.erase();
+      GameSettings.sfxMuted = true;
+      final game = MatchBoardGame(gameMode: JewelGameMode.progression);
+      game.overlays.addEntry('IntroBlock', (_, _) => const SizedBox());
+      game.overlays.addEntry('LevelCelebration', (_, _) => const SizedBox());
+      game.overlays.addEntry('LevelUp', (_, _) => const SizedBox());
+      game.overlays.addEntry('StageInventory', (_, _) => const SizedBox());
+
+      expect(game.stageLoadoutOpenSlotCount, 2);
+
+      _clearProgressionStage(game, level: 6);
+
+      expect(game.levelUpFromLevel, 6);
+      expect(game.stageLoadoutOpenSlotCount, 3);
+      expect(game.recentlyUnlockedLoadoutSlotIndices, [2]);
+      expect(game.nextStageLoadoutDraft.slots[2].locked, isFalse);
+      expect(game.nextStageLoadoutDraft.slots[2].item, isNull);
+      expect(game.overlays.isActive('LevelCelebration'), isTrue);
+
+      game.showLevelUpPopupAfterCelebration();
+
+      expect(game.overlays.isActive('LevelUp'), isTrue);
+      expect(game.overlays.isActive('StageInventory'), isTrue);
+
+      game.continueAfterLevelUp();
+      expect(game.stageLoadout.openSlotCount, 3);
+      expect(game.recentlyUnlockedLoadoutSlotIndices, isEmpty);
+
+      _primeMultiRewardStats(game);
+      _clearProgressionStage(game, level: 12);
+
+      expect(game.stageLoadoutOpenSlotCount, 4);
+      expect(game.recentlyUnlockedLoadoutSlotIndices, [3]);
+
+      game.showLevelUpPopupAfterCelebration();
+
+      expect(game.overlays.isActive('StageInventory'), isTrue);
+    },
+  );
+
+  test(
+    'phase 2 progression item use consumes temporary inventory on success',
+    () {
+      final game = MatchBoardGame(gameMode: JewelGameMode.progression);
+      _setHintBoard(game.board);
+      game.board.setGeometry(x: 0, y: 0, tile: 10);
+      game.board.introFillInProgress = false;
+
+      expect(game.runInventory.quantityOf(ItemKind.runeHammer), 1);
+      expect(game.usePhaseOneItem(ItemKind.runeHammer), isTrue);
+      expect(game.isItemTargeting, isTrue);
+
+      game.handleBoardTap(5, 5);
+
+      expect(game.isItemTargeting, isFalse);
+      expect(game.runInventory.quantityOf(ItemKind.runeHammer), 0);
+      expect(game.usePhaseOneItem(ItemKind.runeHammer), isFalse);
+    },
+  );
+}
+
+void _clearProgressionStage(MatchBoardGame game, {required int level}) {
+  game.progressionLevel = level;
+  game.board.score = game.progressionTargetScore;
+  game.board.introFillInProgress = false;
+  game.isPlaying = true;
+  game.update(0);
+}
+
+void _primeMultiRewardStats(MatchBoardGame game) {
+  game.board.maxCombo = 4;
+  game.board.stats.recordValidSwap();
+  game.board.stats.recordMatchGroups(14);
+  for (var i = 0; i < 80; i++) {
+    game.board.stats.recordGemRemoved(GemKind.normal);
+  }
 }
 
 void _setHintBoard(MatchBoardLogic board) {

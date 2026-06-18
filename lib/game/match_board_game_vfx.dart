@@ -2,11 +2,13 @@ part of 'match_board_game.dart';
 
 extension MatchBoardGameVfx on MatchBoardGame {
   bool get hasActiveVisualEffects =>
-      _particlePool.activeCount > 0 ||
-      _specialEffectPool.activeCount > 0 ||
-      _cameraShake.isActive;
+      _effectPoolsReady &&
+      (_particlePool.activeCount > 0 ||
+          _specialEffectPool.activeCount > 0 ||
+          _cameraShake.isActive);
 
   void _spawnSpecialEffectEvents() {
+    if (!_effectPoolsReady) return;
     final events = board.consumeSpecialEffectEvents();
     if (events.isEmpty || board.tileSize <= 0) return;
 

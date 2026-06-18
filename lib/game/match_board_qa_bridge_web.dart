@@ -40,6 +40,20 @@ void installMatchBoardQaBridge(MatchBoardGame game) {
       }
     }).toJS,
   );
+
+  web.window.setProperty(
+    '__jewelMatchDebugShowSlot3Unlock'.toJS,
+    (() {
+      final currentGame = _installedGame;
+      if (currentGame == null || !currentGame.isProgressionMode) return;
+      currentGame.progressionLevel = 6;
+      currentGame.board.score = currentGame.progressionTargetScore;
+      currentGame.board.introFillInProgress = false;
+      currentGame.isPlaying = true;
+      currentGame.update(0);
+      currentGame.showLevelUpPopupAfterCelebration();
+    }).toJS,
+  );
 }
 
 void uninstallMatchBoardQaBridge(MatchBoardGame game) {
@@ -48,6 +62,7 @@ void uninstallMatchBoardQaBridge(MatchBoardGame game) {
   web.window.setProperty('__jewelMatchGetHintMove'.toJS, (() => null).toJS);
   web.window.setProperty('__jewelMatchGetState'.toJS, (() => null).toJS);
   web.window.setProperty('__jewelMatchContinueLevelUp'.toJS, (() {}).toJS);
+  web.window.setProperty('__jewelMatchDebugShowSlot3Unlock'.toJS, (() {}).toJS);
 }
 
 JSObject _moveToJs(SimulationHintMove move) {
@@ -79,6 +94,10 @@ JSObject _stateToJs(SimulationGameState state) {
     (state['levelUpActive'] as bool).toJS,
   );
   object.setProperty(
+    'stageInventoryActive'.toJS,
+    (state['stageInventoryActive'] as bool).toJS,
+  );
+  object.setProperty(
     'levelCelebrationActive'.toJS,
     (state['levelCelebrationActive'] as bool).toJS,
   );
@@ -98,6 +117,32 @@ JSObject _stateToJs(SimulationGameState state) {
   object.setProperty(
     'hasTimedClock'.toJS,
     (state['hasTimedClock'] as bool).toJS,
+  );
+  object.setProperty(
+    'runInventory'.toJS,
+    _mapToJsObject(state['runInventory'] as Map<String, Object?>),
+  );
+  object.setProperty(
+    'stageLoadout'.toJS,
+    _listToIndexedJsObject(state['stageLoadout'] as List<Map<String, Object?>>),
+  );
+  object.setProperty(
+    'latestStageRewards'.toJS,
+    _listToIndexedJsObject(
+      state['latestStageRewards'] as List<Map<String, Object?>>,
+    ),
+  );
+  final stageRewardClaimKey = state['stageRewardClaimKey'] as String?;
+  object.setProperty('stageRewardClaimKey'.toJS, stageRewardClaimKey?.toJS);
+  object.setProperty(
+    'stageLoadoutOpenSlotCount'.toJS,
+    (state['stageLoadoutOpenSlotCount'] as int).toJS,
+  );
+  object.setProperty(
+    'recentlyUnlockedLoadoutSlotIndices'.toJS,
+    _intListToIndexedJsObject(
+      state['recentlyUnlockedLoadoutSlotIndices'] as List<int>,
+    ),
   );
   object.setProperty('isPlaying'.toJS, (state['isPlaying'] as bool).toJS);
   object.setProperty('boardState'.toJS, (state['boardState'] as String).toJS);
@@ -159,6 +204,24 @@ JSObject _nestedMapToJsObject(Map<String, Map<String, double>> source) {
   for (final entry in source.entries) {
     object.setProperty(entry.key.toJS, _mapToJsObject(entry.value));
   }
+  return object;
+}
+
+JSObject _listToIndexedJsObject(List<Map<String, Object?>> source) {
+  final object = JSObject();
+  for (var i = 0; i < source.length; i++) {
+    object.setProperty('$i'.toJS, _mapToJsObject(source[i]));
+  }
+  object.setProperty('length'.toJS, source.length.toJS);
+  return object;
+}
+
+JSObject _intListToIndexedJsObject(List<int> source) {
+  final object = JSObject();
+  for (var i = 0; i < source.length; i++) {
+    object.setProperty('$i'.toJS, source[i].toJS);
+  }
+  object.setProperty('length'.toJS, source.length.toJS);
   return object;
 }
 

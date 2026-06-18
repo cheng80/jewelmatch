@@ -66,6 +66,7 @@ class MatchGameHud extends PositionComponent
   Rect _itemConfirmCancelRect = Rect.zero;
   Rect _itemConfirmUseRect = Rect.zero;
   final Map<ItemKind, Rect> _itemRects = {};
+  final Map<int, Rect> _loadoutSlotRects = {};
   final Map<int, Rect> _prismColorRects = {};
 
   double _scoreBlockTop = 0;
@@ -110,17 +111,6 @@ class MatchGameHud extends PositionComponent
   final Map<ItemKind, ui.Image> _itemIconImages = {};
 
   final _fmt = NumberFormat.decimalPattern();
-  static const List<ItemKind> _phaseOneItems = [
-    ItemKind.runeHammer,
-    ItemKind.ancientBomb,
-    ItemKind.thorHammer,
-    ItemKind.hyperCube,
-    ItemKind.prismTransform,
-    ItemKind.fateShuffle,
-    ItemKind.timeSlip,
-    ItemKind.hintPlus,
-  ];
-
   static const Map<ItemKind, String> _phaseOneItemIconPaths = {
     ItemKind.runeHammer: AssetPaths.itemIconRuneHammer,
     ItemKind.ancientBomb: AssetPaths.itemIconAncientBomb,
@@ -289,6 +279,7 @@ class MatchGameHud extends PositionComponent
 
   void _layoutItemSlots() {
     _itemRects.clear();
+    _loadoutSlotRects.clear();
     _itemTrayRect = Rect.zero;
     final g = game;
     final left = g.safeContentLeft;
@@ -298,14 +289,27 @@ class MatchGameHud extends PositionComponent
     final width = boardRect.width > 0 ? boardRect.width : right - left;
     if (width <= 0) return;
 
-    final gap = math.max(9.0, g.hudScale * 0.105);
+    final phase2 = g.usesPhase2Inventory;
+    final gap = phase2
+        ? math.max(13.0, g.hudScale * 0.15)
+        : math.max(9.0, g.hudScale * 0.105);
     final rowGap = math.max(7.0, g.hudScale * 0.085);
-    final slotSide = math
-        .min((width - gap * 3) / 4, g.hudScale * 0.54)
-        .clamp(36.0, 48.0);
+    final slotSide = phase2
+        ? math.min((width - gap * 3) / 4, g.hudScale * 0.74).clamp(52.0, 66.0)
+        : math.min((width - gap * 3) / 4, g.hudScale * 0.54).clamp(36.0, 48.0);
     final totalW = slotSide * 4 + gap * 3;
     final gridLeft = alignLeft + (width - totalW) / 2;
-    final totalH = slotSide * 2 + rowGap;
+    final phaseOneSlotSide = math
+        .min(
+          (width - math.max(9.0, g.hudScale * 0.105) * 3) / 4,
+          g.hudScale * 0.54,
+        )
+        .clamp(36.0, 48.0);
+    final phaseOneTrayH = phaseOneSlotSide * 2 + rowGap;
+    final rowCount = phase2 ? 1 : 2;
+    final totalH = phase2
+        ? math.max(phaseOneTrayH, slotSide)
+        : slotSide * rowCount + rowGap;
     final trayPadY = math.max(4.0, g.hudScale * 0.055);
     final frameOverhang = slotSide * 0.08;
     final bottom =
@@ -314,6 +318,7 @@ class MatchGameHud extends PositionComponent
         math.max(5.0, gap) -
         math.max(trayPadY, frameOverhang);
     final top = bottom - totalH;
+    final slotTop = phase2 ? top + (totalH - slotSide) / 2 : top;
     _itemTrayRect = Rect.fromLTWH(
       alignLeft,
       top - trayPadY,
@@ -321,15 +326,21 @@ class MatchGameHud extends PositionComponent
       totalH + trayPadY * 2,
     );
 
-    for (var i = 0; i < _phaseOneItems.length; i++) {
-      final row = i ~/ 4;
+    final slots = g.hudLoadoutSlots;
+    for (var i = 0; i < slots.length; i++) {
+      final row = phase2 ? 0 : i ~/ 4;
       final col = i % 4;
-      _itemRects[_phaseOneItems[i]] = Rect.fromLTWH(
+      final rect = Rect.fromLTWH(
         gridLeft + col * (slotSide + gap),
-        top + row * (slotSide + rowGap),
+        slotTop + row * (slotSide + rowGap),
         slotSide,
         slotSide,
       );
+      _loadoutSlotRects[slots[i].index] = rect;
+      final item = slots[i].item;
+      if (item != null) {
+        _itemRects[item] = rect;
+      }
     }
   }
 
