@@ -62,14 +62,27 @@ extension _SpecialEffectBurstExplosionDrawing on SpecialEffectBurst {
         baseColor,
         mix * 0.12,
       )!;
-      _drawOrganicBlob(
-        canvas,
-        lobeCenter,
-        lobeRadius,
-        seed: i * 19 + 7,
-        t: t,
-        color: color.withValues(alpha: (0.35 + _hash(i) * 0.22) * heatFade),
+      final lobeColor = color.withValues(
+        alpha: (0.35 + _hash(i) * 0.22) * heatFade,
       );
+      if (_tier >= 2) {
+        _fillPaint
+          ..shader = null
+          ..maskFilter = null
+          ..blendMode = BlendMode.srcOver
+          ..color = lobeColor;
+        canvas.drawCircle(lobeCenter, lobeRadius * 0.86, _fillPaint);
+        _fillPaint.blendMode = BlendMode.plus;
+      } else {
+        _drawOrganicBlob(
+          canvas,
+          lobeCenter,
+          lobeRadius,
+          seed: i * 19 + 7,
+          t: t,
+          color: lobeColor,
+        );
+      }
     }
 
     _fillPaint
@@ -80,10 +93,12 @@ extension _SpecialEffectBurstExplosionDrawing on SpecialEffectBurst {
     canvas.drawCircle(center, radius * (0.16 + bloom * 0.16), _fillPaint);
 
     _paint
-      ..maskFilter = SpecialEffectBurst._glow
+      ..maskFilter = _glowScale > 0 ? SpecialEffectBurst._glow : null
       ..strokeCap = StrokeCap.round
       ..strokeWidth = tileSize * (0.14 + 0.06 * (1 - t))
-      ..color = SpecialEffectBurst._hotYellow.withValues(alpha: 0.74 * fade);
+      ..color = SpecialEffectBurst._hotYellow.withValues(
+        alpha: 0.74 * fade * max(_glowScale, 0.38),
+      );
     final arcRect = Rect.fromCenter(
       center: center + Offset(0, radius * 0.07),
       width: radius * (1.62 + bloom * 0.46),
@@ -103,7 +118,9 @@ extension _SpecialEffectBurstExplosionDrawing on SpecialEffectBurst {
       _paint,
     );
 
-    _drawFlameTongues(canvas, center, radius * 0.92, t, fade * 0.72);
+    if (_tier < 2) {
+      _drawFlameTongues(canvas, center, radius * 0.92, t, fade * 0.72);
+    }
   }
 
   void _drawOrganicBlob(

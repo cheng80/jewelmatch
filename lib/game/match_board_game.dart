@@ -18,7 +18,6 @@ import 'item_inventory.dart';
 import 'item_kind.dart';
 import 'jewel_game_mode.dart';
 import 'jewel_rank_progression.dart';
-import 'match_board_camera_shake.dart';
 import 'match_board_logic.dart';
 import 'match_board_qa_bridge.dart';
 import 'stage_reward.dart';
@@ -87,7 +86,6 @@ class MatchBoardGame extends FlameGame {
   late final MatchBoardLogic board;
   late final ParticlePool _particlePool;
   late final SpecialEffectPool _specialEffectPool;
-  final MatchBoardCameraShake _cameraShake = MatchBoardCameraShake();
   bool _effectPoolsReady = false;
   MatchGameHud? _hud;
   final Map<String, String> _localeStrings = {};
@@ -441,7 +439,6 @@ class MatchBoardGame extends FlameGame {
   void update(double dt) {
     board.update(dt);
     _spawnSpecialEffectEvents();
-    _updateCameraShake(dt);
     _updateItemFeedback(dt);
 
     _updateTimedModeClock(dt);

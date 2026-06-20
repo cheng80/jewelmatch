@@ -169,7 +169,7 @@ class MatchBoardLogic {
   /// 인트로가 끝나 모든 보석이 제자리에 안착했을 때 한 번 호출 (종류에 따라 SFX 분기).
   void Function(BoardFillIntroKind kind)? onIntroFillComplete;
 
-  static const double removeDelay = 0.09;
+  static const double removeDelay = 0.18;
   static const double fallingDelay = 0.11;
   static const double refillDelay = 0.11;
   static const double checkingDelay = 0.09;

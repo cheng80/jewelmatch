@@ -13,63 +13,54 @@ extension MatchBoardGameDebugVfx on MatchBoardGame {
         rowOffset: -3,
         colOffset: 0,
         colorIndex: 1,
-        shake: SpecialEffectShake(intensity: 2.6, duration: 0.22),
       ),
       const _DebugSpecialEffect(
         kind: GemKind.col,
         rowOffset: 0,
         colOffset: -3,
         colorIndex: 1,
-        shake: SpecialEffectShake(intensity: 2.6, duration: 0.22),
       ),
       const _DebugSpecialEffect(
         kind: GemKind.row,
         rowOffset: 2,
         colOffset: 0,
         colorIndex: 1,
-        shake: SpecialEffectShake(intensity: 2.6, duration: 0.22),
       ),
       const _DebugSpecialEffect(
         kind: GemKind.col,
         rowOffset: 0,
         colOffset: 2,
         colorIndex: 1,
-        shake: SpecialEffectShake(intensity: 2.6, duration: 0.22),
       ),
       const _DebugSpecialEffect(
         kind: GemKind.row,
         rowOffset: 0,
         colOffset: 0,
         colorIndex: 1,
-        shake: SpecialEffectShake(intensity: 2.6, duration: 0.22),
       ),
       const _DebugSpecialEffect(
         kind: GemKind.bomb,
         rowOffset: -1,
         colOffset: -1,
         colorIndex: 0,
-        shake: SpecialEffectShake(intensity: 4.8, duration: 0.30),
       ),
       const _DebugSpecialEffect(
         kind: GemKind.star,
         rowOffset: -1,
         colOffset: 0,
         colorIndex: 1,
-        shake: SpecialEffectShake(intensity: 4.2, duration: 0.26),
       ),
       const _DebugSpecialEffect(
         kind: GemKind.hyper,
         rowOffset: 0,
         colOffset: -1,
         colorIndex: 2,
-        shake: SpecialEffectShake(intensity: 5.4, duration: 0.36),
       ),
       const _DebugSpecialEffect(
         kind: GemKind.supernova,
         rowOffset: 0,
         colOffset: 0,
         colorIndex: 3,
-        shake: SpecialEffectShake(intensity: 7.2, duration: 0.46),
       ),
     ];
 
@@ -89,7 +80,6 @@ extension MatchBoardGameDebugVfx on MatchBoardGame {
         tileSize: board.tileSize,
         baseColor: MatchBoardLogic.palette[effect.colorIndex],
       );
-      _queueCameraShake(effect.shake);
     }
   }
 
@@ -158,12 +148,10 @@ class _DebugSpecialEffect {
     required this.rowOffset,
     required this.colOffset,
     required this.colorIndex,
-    required this.shake,
   });
 
   final GemKind kind;
   final int rowOffset;
   final int colOffset;
   final int colorIndex;
-  final SpecialEffectShake shake;
 }

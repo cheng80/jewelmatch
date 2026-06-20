@@ -75,7 +75,7 @@ void main() {
 
   test('line sweep effects use adaptive performance tiers', () {
     final parent = Component();
-    final pool = SpecialEffectPool(parent);
+    final pool = SpecialEffectPool(parent, constrainedDevice: false);
 
     for (var i = 0; i < 5; i++) {
       pool.spawn(
@@ -101,5 +101,59 @@ void main() {
 
     expect(pool.activeLineSweepCount, 0);
     expect(pool.cachedCount, 5);
+  });
+
+  test('constrained devices preserve bomb detail and reduce wider effects', () {
+    final parent = Component();
+    final pool = SpecialEffectPool(parent, constrainedDevice: true);
+
+    pool.spawn(
+      effectKind: GemKind.bomb,
+      origin: Vector2.zero(),
+      affectedCenters: const [],
+      tileSize: 64,
+      baseColor: Colors.orange,
+    );
+    pool.spawn(
+      effectKind: GemKind.hyper,
+      origin: Vector2.all(10),
+      affectedCenters: const [],
+      tileSize: 64,
+      baseColor: Colors.purple,
+    );
+
+    final tiers = parent.children
+        .whereType<SpecialEffectBurst>()
+        .map((burst) => burst.performanceTier)
+        .toList(growable: false);
+
+    expect(tiers, equals([1, 2]));
+  });
+
+  test('desktop high impact effects still avoid full cost when overlapping', () {
+    final parent = Component();
+    final pool = SpecialEffectPool(parent, constrainedDevice: false);
+
+    pool.spawn(
+      effectKind: GemKind.bomb,
+      origin: Vector2.zero(),
+      affectedCenters: const [],
+      tileSize: 64,
+      baseColor: Colors.orange,
+    );
+    pool.spawn(
+      effectKind: GemKind.bomb,
+      origin: Vector2.all(10),
+      affectedCenters: const [],
+      tileSize: 64,
+      baseColor: Colors.orange,
+    );
+
+    final tiers = parent.children
+        .whereType<SpecialEffectBurst>()
+        .map((burst) => burst.performanceTier)
+        .toList(growable: false);
+
+    expect(tiers, equals([1, 2]));
   });
 }

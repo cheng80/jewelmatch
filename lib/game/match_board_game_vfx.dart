@@ -3,9 +3,7 @@ part of 'match_board_game.dart';
 extension MatchBoardGameVfx on MatchBoardGame {
   bool get hasActiveVisualEffects =>
       _effectPoolsReady &&
-      (_particlePool.activeCount > 0 ||
-          _specialEffectPool.activeCount > 0 ||
-          _cameraShake.isActive);
+      (_particlePool.activeCount > 0 || _specialEffectPool.activeCount > 0);
 
   void _spawnSpecialEffectEvents() {
     if (!_effectPoolsReady) return;
@@ -28,7 +26,6 @@ extension MatchBoardGameVfx on MatchBoardGame {
         tileSize: board.tileSize,
         baseColor: color,
       );
-      _queueCameraShake(event.shake);
     }
   }
 
@@ -49,14 +46,6 @@ extension MatchBoardGameVfx on MatchBoardGame {
     return Colors.white;
   }
 
-  void _queueCameraShake(SpecialEffectShake shake) {
-    _cameraShake.queue(shake);
-  }
-
-  void _updateCameraShake(double dt) {
-    camera.viewfinder.position = _cameraShake.update(dt);
-  }
-
   /// 매치 제거 시 파티클 스폰 + 추가 SFX.
   void _spawnParticles(
     List<({int row, int col, int color})> cells,
@@ -75,52 +64,5 @@ extension MatchBoardGameVfx on MatchBoardGame {
       SoundManager.playSfx(AssetPaths.sfxCollect);
     }
 
-    final ts = board.tileSize;
-    final half = ts / 2;
-
-    final bool intense = combo >= 3 || (bigMatch && combo >= 2);
-    final bool medium = !intense && (bigMatch || combo >= 2);
-
-    final int count;
-    final double speed;
-    final double size;
-    final double life;
-    final bool glow;
-    if (intense) {
-      count = 28;
-      speed = 1.38;
-      size = 1.38;
-      life = 0.62;
-      glow = true;
-    } else if (medium) {
-      count = 18;
-      speed = 1.1;
-      size = 1.14;
-      life = 0.52;
-      glow = true;
-    } else {
-      count = 18;
-      speed = 1.05;
-      size = 1.25;
-      life = 0.52;
-      glow = true;
-    }
-
-    for (final c in cells) {
-      final px = board.boardX + c.col * ts + half;
-      final py = board.boardY + c.row * ts + half;
-      final color = c.color >= 1 && c.color <= MatchBoardLogic.palette.length
-          ? MatchBoardLogic.palette[c.color - 1]
-          : Colors.white;
-      _particlePool.spawn(
-        center: Vector2(px, py),
-        baseColor: color,
-        count: count,
-        lifetime: life,
-        speedScale: speed,
-        sizeScale: size,
-        withGlow: glow,
-      );
-    }
   }
 }

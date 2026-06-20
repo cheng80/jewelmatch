@@ -27,6 +27,32 @@ class MatchBoardRenderer extends PositionComponent
   final MatchBoardLogic logic;
 
   static const double _cellCornerRatio = 0.04;
+  static const double _removalMinAlpha = 0.08;
+  static const double _removalMinScale = 0.72;
+  static const double _removalMaxRotation = math.pi;
+  static const double _removalMaxFlashAlpha = 0.20;
+  static const List<double> _normalSpriteColorMatrix = <double>[
+    0.90556,
+    0.06296,
+    0.01848,
+    0,
+    0,
+    0.02556,
+    0.93704,
+    0.01848,
+    0,
+    0,
+    0.02556,
+    0.06296,
+    0.89848,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+  ];
 
   /// 기본 보석 스프라이트 시트 열 0~6 (각 128×128).
   final List<Sprite?> _sheetSprites = List<Sprite?>.filled(7, null);
@@ -67,30 +93,14 @@ class MatchBoardRenderer extends PositionComponent
   final Paint _hintPulsePaint = Paint();
   final Paint _normalSpritePaint = Paint()
     ..filterQuality = FilterQuality.medium
-    ..colorFilter = const ColorFilter.matrix(<double>[
-      0.90556,
-      0.06296,
-      0.01848,
-      0,
-      0,
-      0.02556,
-      0.93704,
-      0.01848,
-      0,
-      0,
-      0.02556,
-      0.06296,
-      0.89848,
-      0,
-      0,
-      0,
-      0,
-      0,
-      1,
-      0,
-    ]);
+    ..colorFilter = const ColorFilter.matrix(_normalSpriteColorMatrix);
+  final Paint _removingNormalSpritePaint = Paint()
+    ..filterQuality = FilterQuality.medium;
+  final Paint _removingCompositedSpritePaint = Paint()
+    ..filterQuality = FilterQuality.medium;
   final Paint _compositedSpritePaint = Paint()
     ..filterQuality = FilterQuality.medium;
+  final Paint _removalFlashPaint = Paint();
   final Paint _proceduralShadowPaint = Paint();
   final Paint _proceduralGradientPaint = Paint();
   final Paint _proceduralStrokePaint = Paint()
@@ -99,6 +109,14 @@ class MatchBoardRenderer extends PositionComponent
   final Paint _proceduralHighlightPaint = Paint();
   final Vector2 _spriteRenderPosition = Vector2.zero();
   final Vector2 _spriteRenderSize = Vector2.zero();
+  final List<double> _removingNormalSpriteColorMatrix = List<double>.of(
+    _normalSpriteColorMatrix,
+  );
+  bool _showRemovalVisuals = false;
+  double _removalVisualAlpha = 1;
+  double _removalVisualScale = 1;
+  double _removalVisualRotation = 0;
+  double _removalFlashAlpha = 0;
 
   @override
   Future<void> onLoad() async {
@@ -250,6 +268,8 @@ class MatchBoardRenderer extends PositionComponent
     if (_boardChromePicture != null) {
       canvas.drawPicture(_boardChromePicture!);
     }
+
+    _updateRemovalVisualState();
 
     final needsBoardClip =
         logic.introFillInProgress ||

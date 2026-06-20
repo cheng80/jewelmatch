@@ -36,7 +36,7 @@ class App extends StatelessWidget {
           const Positioned.fill(child: ColoredBox(color: Colors.black)),
           Positioned.fill(child: StarryBackground.instance),
           Positioned.fill(child: app),
-          if (kDebugMode)
+          if (_showFpsPanel)
             Positioned(
               top: 12,
               right: 12,
@@ -56,6 +56,13 @@ class App extends StatelessWidget {
       );
     }
     return root;
+  }
+
+  bool get _showFpsPanel {
+    if (kDebugMode) return true;
+    if (!kIsWeb) return false;
+    final params = Uri.base.queryParameters;
+    return params['fps'] == '1' || params['qaPerf'] == '1';
   }
 }
 

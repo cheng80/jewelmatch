@@ -2,18 +2,21 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flame/components.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../match_board_logic.dart';
 import 'special_effect_burst.dart';
 
 class SpecialEffectPool {
-  SpecialEffectPool(this._parent);
+  SpecialEffectPool(this._parent, {bool? constrainedDevice})
+    : _constrainedDevice = constrainedDevice ?? _defaultConstrainedDevice;
 
   static const int _maxCachedBursts = 24;
 
   final Component _parent;
+  final bool _constrainedDevice;
   final List<SpecialEffectBurst> _pool = [];
   final Set<SpecialEffectBurst> _active = <SpecialEffectBurst>{};
   int _activeLineSweeps = 0;
@@ -21,6 +24,18 @@ class SpecialEffectPool {
   int get cachedCount => _pool.length;
   int get activeLineSweepCount => _activeLineSweeps;
   int get activeCount => _active.length;
+
+  static bool get _defaultConstrainedDevice {
+    if (kIsWeb) return true;
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.android ||
+      TargetPlatform.iOS ||
+      TargetPlatform.fuchsia => true,
+      TargetPlatform.linux ||
+      TargetPlatform.macOS ||
+      TargetPlatform.windows => false,
+    };
+  }
 
   Future<void> warm({required int burstCount}) async {
     final pendingLoads = <Future<void>>[];
@@ -49,9 +64,12 @@ class SpecialEffectPool {
     final lineSweepTier = isLineSweep
         ? (_activeLineSweeps >= 4 ? 2 : (_activeLineSweeps >= 2 ? 1 : 0))
         : 0;
-    final concurrentTier = activeCount >= 5 ? 2 : (activeCount >= 2 ? 1 : 0);
-    final webTier = kIsWeb ? 1 : 0;
-    final performanceTier = max(max(lineSweepTier, concurrentTier), webTier);
+    final concurrentTier = _concurrentTierFor(effectKind);
+    final deviceTier = _deviceTierFor(effectKind);
+    final performanceTier = max(
+      max(lineSweepTier, concurrentTier),
+      deviceTier,
+    );
     if (isLineSweep) {
       _activeLineSweeps++;
     }
@@ -67,6 +85,30 @@ class SpecialEffectPool {
     if (!burst.isMounted) {
       _parent.add(burst);
     }
+  }
+
+  int _concurrentTierFor(GemKind kind) {
+    final highImpact = _isHighImpact(kind);
+    if (activeCount >= 5 || (highImpact && activeCount >= 1)) return 2;
+    if (activeCount >= 2 || highImpact) return 1;
+    return 0;
+  }
+
+  int _deviceTierFor(GemKind kind) {
+    if (!_constrainedDevice) return 0;
+    return switch (kind) {
+      GemKind.bomb => 1,
+      GemKind.hyper || GemKind.supernova => 2,
+      GemKind.row || GemKind.col || GemKind.star => 1,
+      GemKind.normal => 0,
+    };
+  }
+
+  bool _isHighImpact(GemKind kind) {
+    return switch (kind) {
+      GemKind.bomb || GemKind.hyper || GemKind.supernova => true,
+      GemKind.row || GemKind.col || GemKind.star || GemKind.normal => false,
+    };
   }
 
   SpecialEffectBurst _createBurst() {
