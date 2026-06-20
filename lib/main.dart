@@ -6,13 +6,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'app.dart';
 import 'resources/asset_paths.dart';
 import 'resources/sound_manager.dart';
 import 'services/game_settings.dart';
 import 'services/in_app_review_service.dart';
+import 'services/wakelock_service.dart';
 import 'utils/storage_helper.dart';
 import 'widgets/sprite_sheet_frame.dart';
 
@@ -63,9 +63,5 @@ Future<void> _preloadGameVisualAssets() {
 
 /// 저장된 설정에 따라 화면 꺼짐 방지 적용.
 void _applyKeepScreenOn() {
-  if (GameSettings.keepScreenOn) {
-    WakelockPlus.enable();
-  } else {
-    WakelockPlus.disable();
-  }
+  WakelockService.apply(GameSettings.keepScreenOn);
 }

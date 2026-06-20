@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../resources/sound_manager.dart';
 import '../services/game_settings.dart';
+import '../services/wakelock_service.dart';
 
 /// 오디오·화면 설정 상태. SettingView와 PauseMenuOverlay가 공유한다.
 class SettingsState {
@@ -113,11 +113,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
   void setKeepScreenOn(bool v) {
     if (state.keepScreenOn == v) return;
     GameSettings.keepScreenOn = v;
-    if (v) {
-      WakelockPlus.enable();
-    } else {
-      WakelockPlus.disable();
-    }
+    WakelockService.apply(v);
     state = state.copyWith(keepScreenOn: v);
   }
 }
