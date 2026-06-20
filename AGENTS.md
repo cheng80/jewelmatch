@@ -10,7 +10,7 @@ Stone Match는 Flutter + Flame 기반 8×8 매치-3 퍼즐 게임이다. 기본 
 
 ### Flutter SDK
 - 현재 로컬 검증 기준은 Flutter `3.44.0` (Dart `3.12.0`)이다.
-- Flutter SDK는 `/Users/cheng80/flutter`에 설치되어 있으며, `/Users/cheng80/flutter/bin`이 `PATH`에 포함되어야 한다.
+- Flutter/Dart 실행 파일은 현재 셸의 `PATH`에서 해석한다. 검증 전 `command -v flutter`와 `command -v dart`가 기대한 SDK를 가리키는지 확인한다.
 - Android SDK는 `/Users/cheng80/Library/Android/sdk`에 설치되어 있다.
 
 ### 주요 명령어
