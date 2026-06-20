@@ -187,8 +187,15 @@ class MatchBoardGame extends FlameGame {
   bool get hasPendingStageInventoryUnlock =>
       recentlyUnlockedLoadoutSlotIndices.isNotEmpty;
   bool get usesPhase2Inventory => isProgressionMode;
-  List<StageLoadoutSlot> get hudLoadoutSlots =>
-      usesPhase2Inventory ? stageLoadout.slots : const [];
+  List<StageLoadoutSlot> get hudLoadoutSlots {
+    if (usesPhase2Inventory) return stageLoadout.slots;
+    if (gameMode != JewelGameMode.simple) return const [];
+    return [
+      for (final (index, item) in phaseOneTestItems.indexed)
+        StageLoadoutSlot(index: index, item: item, locked: false),
+    ];
+  }
+
   Map<ItemKind, Rect> debugReadItemSlotRects() =>
       _hud?.debugReadItemSlotRects() ?? const {};
   Map<int, Rect> debugReadPrismColorRects() =>
