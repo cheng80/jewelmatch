@@ -12,19 +12,27 @@ class PhoneFrameScaffold extends StatelessWidget {
     super.key,
     required this.child,
     this.useSafeArea = true,
+    this.backgroundOverlay,
   });
 
   final Widget child;
   final bool useSafeArea;
+  final Widget? backgroundOverlay;
 
   @override
   Widget build(BuildContext context) {
     final framedChild = Center(child: PhoneFrame(child: child));
+    final frame = useSafeArea ? SafeArea(child: framedChild) : framedChild;
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: useSafeArea
-          ? SafeArea(child: framedChild)
-          : framedChild,
+      body: backgroundOverlay == null
+          ? frame
+          : Stack(
+              children: [
+                Positioned.fill(child: backgroundOverlay!),
+                Positioned.fill(child: frame),
+              ],
+            ),
     );
   }
 }
@@ -39,9 +47,9 @@ class PhoneFrame extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final logicalChild = MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            size: const Size(kPhoneFrameRefW, kPhoneFrameRefH),
-          ),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(size: const Size(kPhoneFrameRefW, kPhoneFrameRefH)),
           child: SizedBox(
             width: kPhoneFrameRefW,
             height: kPhoneFrameRefH,
