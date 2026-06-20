@@ -49,6 +49,7 @@ void installMatchBoardQaBridge(MatchBoardGame game) {
       currentGame.progressionLevel = 6;
       currentGame.board.score = currentGame.progressionTargetScore;
       currentGame.board.introFillInProgress = false;
+      currentGame.board.introFillPaused = false;
       currentGame.isPlaying = true;
       currentGame.update(0);
       currentGame.showLevelUpPopupAfterCelebration();

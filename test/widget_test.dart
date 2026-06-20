@@ -1,3 +1,4 @@
+import 'package:flame/components.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -119,6 +120,64 @@ void main() {
     expect(timed.hudLoadoutSlots, isEmpty);
     expect(progression.hudLoadoutSlots, hasLength(4));
   });
+
+  test(
+    'round start intro is released after loading for every game mode',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      await StorageHelper.init();
+      await StorageHelper.erase();
+      GameSettings.sfxMuted = true;
+
+      for (final mode in JewelGameMode.values) {
+        final game = MatchBoardGame(gameMode: mode);
+        game.overlays.addEntry('IntroBlock', (_, _) => const SizedBox.shrink());
+
+        game.onGameResize(Vector2(390, 844));
+
+        expect(
+          game.board.introFillInProgress,
+          isTrue,
+          reason: '$mode should start with the board fill intro active',
+        );
+        expect(
+          game.board.introFillPaused,
+          isTrue,
+          reason: '$mode should hold the intro while the loading overlay is up',
+        );
+
+        final timeBeforeLoadingRelease = game.timeRemaining;
+        game.update(1);
+        expect(
+          game.board.introFillPaused,
+          isTrue,
+          reason: '$mode should not consume the intro while loading is visible',
+        );
+        expect(game.timeRemaining, timeBeforeLoadingRelease);
+
+        game.releaseRoundStartIntro();
+        expect(game.board.introFillPaused, isFalse);
+
+        for (var frame = 0; frame < 180; frame++) {
+          game.update(1 / 60);
+          if (!game.board.introFillInProgress) break;
+        }
+        expect(
+          game.board.introFillInProgress,
+          isFalse,
+          reason: '$mode should finish the visible intro after release',
+        );
+
+        final timeAfterIntro = game.timeRemaining;
+        game.update(1);
+        if (game.hasTimedClock) {
+          expect(game.timeRemaining, lessThan(timeAfterIntro));
+        } else {
+          expect(game.timeRemaining, timeAfterIntro);
+        }
+      }
+    },
+  );
 
   test('phase 1 targeted item selection keeps clock running', () {
     final game = MatchBoardGame(gameMode: JewelGameMode.timed);

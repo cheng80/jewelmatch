@@ -4,10 +4,17 @@ extension MatchBoardGameFlow on MatchBoardGame {
   void _generateFreshBoardWithStartSfx({
     BoardFillIntroKind introKind = BoardFillIntroKind.roundStart,
   }) {
-    if (introKind == BoardFillIntroKind.roundStart) {
-      SoundManager.playSfx(AssetPaths.sfxStart);
-    }
     board.generateFreshBoard(introKind: introKind);
+    if (introKind == BoardFillIntroKind.roundStart) {
+      board.introFillPaused = true;
+      _playStartSfxWhenBoardReady();
+    }
+  }
+
+  void releaseRoundStartIntro() {
+    if (board.introFillInProgress) {
+      board.introFillPaused = false;
+    }
   }
 
   void _pauseGameImpl() {

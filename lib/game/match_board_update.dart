@@ -18,7 +18,9 @@ extension MatchBoardUpdate on MatchBoardLogic {
     }
 
     if (introFillInProgress) {
-      _updateIntroFill(dt);
+      if (!introFillPaused) {
+        _updateIntroFill(dt);
+      }
     } else {
       _updateGemTweens(dt);
     }
@@ -58,6 +60,7 @@ extension MatchBoardUpdate on MatchBoardLogic {
       _introWaveIndex++;
       if (_introWaveIndex >= rows) {
         introFillInProgress = false;
+        introFillPaused = false;
         _introWaveIndex = 0;
         onIntroFillComplete?.call(_pendingIntroKind);
       }

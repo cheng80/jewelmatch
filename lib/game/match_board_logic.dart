@@ -158,6 +158,9 @@ class MatchBoardLogic {
   /// 첫 보드·재시작 시 낙하 인트로 연출 중이면 true.
   bool introFillInProgress = false;
 
+  /// 로딩 오버레이가 내려가기 전 라운드 시작 낙하 인트로를 정지한다.
+  bool introFillPaused = false;
+
   /// 인트로: **한 줄씩** 낙하(0 = 맨 아래 줄, … rows-1 = 맨 위 줄). 총 [rows]번이면 전부 착지.
   int _introWaveIndex = 0;
 

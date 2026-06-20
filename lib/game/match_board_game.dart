@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' show min;
 
 import 'package:flame/components.dart';
@@ -51,6 +52,7 @@ class MatchBoardGame extends FlameGame {
     );
     board.onIntroFillComplete = (BoardFillIntroKind kind) {
       overlays.remove('IntroBlock');
+      _markRoundStartIntroComplete(kind);
     };
     board.onGemsRemoved = _spawnParticles;
     if (hasTimedClock) {
@@ -89,6 +91,10 @@ class MatchBoardGame extends FlameGame {
   bool _effectPoolsReady = false;
   MatchGameHud? _hud;
   final Map<String, String> _localeStrings = {};
+  final Completer<void> _firstBoardFrameCompleter = Completer<void>();
+  final Completer<void> _firstRoundReadyCompleter = Completer<void>();
+  bool _firstBoardFrameRendered = false;
+  bool _roundStartSfxPending = false;
 
   /// 타임 모드: 서버 1위 이름·점수 (비동기 fetch 완료 후 갱신).
   String? rankingTop1Name;
@@ -187,6 +193,8 @@ class MatchBoardGame extends FlameGame {
   bool get hasPendingStageInventoryUnlock =>
       recentlyUnlockedLoadoutSlotIndices.isNotEmpty;
   bool get usesPhase2Inventory => isProgressionMode;
+  Future<void> get firstBoardFrameRendered => _firstBoardFrameCompleter.future;
+  Future<void> get firstRoundReady => _firstRoundReadyCompleter.future;
   List<StageLoadoutSlot> get hudLoadoutSlots {
     if (usesPhase2Inventory) return stageLoadout.slots;
     if (gameMode != JewelGameMode.simple) return const [];
@@ -335,10 +343,58 @@ class MatchBoardGame extends FlameGame {
 
   void _syncLayout() => _syncLayoutImpl();
 
+  bool get _roundStartBoardReady =>
+      _firstBoardFrameRendered && !board.introFillInProgress;
+
+  void _playStartSfxWhenBoardReady() {
+    if (_roundStartBoardReady) {
+      scheduleMicrotask(() => SoundManager.playSfx(AssetPaths.sfxStart));
+    } else {
+      _roundStartSfxPending = true;
+    }
+  }
+
+  void _markRoundStartIntroComplete(BoardFillIntroKind kind) {
+    if (kind != BoardFillIntroKind.roundStart) return;
+    if (!_firstRoundReadyCompleter.isCompleted) {
+      _firstRoundReadyCompleter.complete();
+    }
+    if (_roundStartSfxPending && _roundStartBoardReady) {
+      _roundStartSfxPending = false;
+      scheduleMicrotask(() => SoundManager.playSfx(AssetPaths.sfxStart));
+    }
+  }
+
+  bool get _canMarkFirstBoardFrameRendered {
+    if (_firstBoardFrameRendered || !hasLayout || size.x <= 0 || size.y <= 0) {
+      return false;
+    }
+    if (board.tileSize <= 0 || board.getGem(0, 0) == null) return false;
+    return true;
+  }
+
+  void _markFirstBoardFrameRenderedIfReady() {
+    if (!_canMarkFirstBoardFrameRendered) return;
+    _firstBoardFrameRendered = true;
+    if (!_firstBoardFrameCompleter.isCompleted) {
+      _firstBoardFrameCompleter.complete();
+    }
+    if (_roundStartSfxPending && _roundStartBoardReady) {
+      _roundStartSfxPending = false;
+      scheduleMicrotask(() => SoundManager.playSfx(AssetPaths.sfxStart));
+    }
+  }
+
   @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
     _syncLayout();
+  }
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+    _markFirstBoardFrameRenderedIfReady();
   }
 
   void pauseGame() => _pauseGameImpl();

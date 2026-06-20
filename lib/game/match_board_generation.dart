@@ -52,6 +52,7 @@ extension MatchBoardGeneration on MatchBoardLogic {
     lastActionText = attempts > 1 ? 'board regen x$attempts' : 'ready';
     clearHint();
     introFillInProgress = false;
+    introFillPaused = false;
   }
 
   void _generateFreshBoardImpl({

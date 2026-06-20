@@ -45,6 +45,7 @@ class GameView extends StatefulWidget {
 
 class _GameViewState extends State<GameView> {
   static const Duration _minLoadingOverlay = Duration(milliseconds: 350);
+  static const Duration _loadingFadeDuration = Duration(milliseconds: 220);
 
   /// Flame GameWidget — initState가 아닌 didChangeDependencies에서 1회만 생성.
   /// build()에서 매번 생성하면 rebuild마다 엔진이 재초기화된다.
@@ -79,8 +80,8 @@ class _GameViewState extends State<GameView> {
     super.dispose();
   }
 
-  /// 페이드 전환(500ms)과 Flame 초기화가 같은 프레임에 겹치지 않도록
-  /// 첫 프레임 렌더 후 GameWidget을 마운트하고, 짧은 로딩 오버레이 뒤에 노출한다.
+  /// 페이드 전환과 Flame 초기화가 같은 프레임에 겹치지 않도록
+  /// 첫 보드 프레임까지 준비한 뒤 노출한다. 이후 보석 인트로는 화면에서 재생한다.
   Future<void> _scheduleGameMount() async {
     final startedAt = DateTime.now();
     await WidgetsBinding.instance.endOfFrame;
@@ -89,6 +90,10 @@ class _GameViewState extends State<GameView> {
     final game = await _waitForGame();
     if (game != null) {
       await Future.wait([game.loaded, SoundManager.preload()]);
+      await game.firstBoardFrameRendered.timeout(
+        const Duration(seconds: 2),
+        onTimeout: () {},
+      );
     }
     if (!mounted) return;
 
@@ -99,6 +104,10 @@ class _GameViewState extends State<GameView> {
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
     setState(() => _loadingVisible = false);
+    await Future<void>.delayed(_loadingFadeDuration);
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    _game?.releaseRoundStartIntro();
     if (_qaVfxEnabled && !_qaVfxPreviewScheduled) {
       _qaVfxPreviewScheduled = true;
       unawaited(
@@ -194,7 +203,7 @@ class _GameViewState extends State<GameView> {
       children: [
         content,
         AnimatedSwitcher(
-          duration: const Duration(milliseconds: 220),
+          duration: _loadingFadeDuration,
           switchInCurve: Curves.easeOutCubic,
           switchOutCurve: Curves.easeInCubic,
           child: _loadingVisible
