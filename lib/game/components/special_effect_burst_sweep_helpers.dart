@@ -9,10 +9,11 @@ extension _SpecialEffectBurstSweepDrawing on SpecialEffectBurst {
       tileSize * (1.4 + t * 0.8),
       [
         Colors.white.withValues(alpha: 0.56 * fade),
-        SpecialEffectBurst._electricBlue.withValues(alpha: 0.34 * fade),
+        SpecialEffectBurst._hotYellow.withValues(alpha: 0.36 * fade),
+        SpecialEffectBurst._electricBlue.withValues(alpha: 0.24 * fade),
         Colors.transparent,
       ],
-      const [0.0, 0.36, 1.0],
+      const [0.0, 0.28, 0.58, 1.0],
     );
 
     final left = _axisExtreme(horizontal: true, first: true);
@@ -77,12 +78,15 @@ extension _SpecialEffectBurstSweepDrawing on SpecialEffectBurst {
         tileSize * (tier == 0 ? 1.2 : 0.86),
         [
           Colors.white.withValues(alpha: (tier == 0 ? 0.45 : 0.24) * fade),
+          SpecialEffectBurst._hotYellow.withValues(
+            alpha: (tier == 0 ? 0.28 : 0.14) * fade,
+          ),
           SpecialEffectBurst._electricBlue.withValues(
-            alpha: (tier == 0 ? 0.28 : 0.16) * fade,
+            alpha: (tier == 0 ? 0.20 : 0.10) * fade,
           ),
           Colors.transparent,
         ],
-        const [0.0, 0.4, 1.0],
+        const [0.0, 0.34, 0.62, 1.0],
       );
     }
     _drawSparks(

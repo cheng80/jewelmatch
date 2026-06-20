@@ -28,15 +28,8 @@ class ParticleBurst extends PositionComponent {
   static const MaskFilter _glowBlur = MaskFilter.blur(BlurStyle.normal, 4);
 
   static final Random _rng = Random();
-
-  static const _accentColors = [
-    Color(0xFFFFFFFF),
-    Color(0xFFF4D58A),
-    Color(0xFF8EDFE7),
-    Color(0xFFF48AB6),
-    Color(0xFFA897DA),
-    Color(0xFF7FDCB4),
-  ];
+  static const _matchGold = Color(0xFFFFD052);
+  static const _matchHotYellow = Color(0xFFFFF0A6);
 
   /// 풀에서 꺼낸 뒤 파라미터를 설정하고 활성화한다.
   void activate({
@@ -88,32 +81,18 @@ class ParticleBurst extends PositionComponent {
       final p = _particles[i];
       final angle = _rng.nextDouble() * 2 * pi;
       final speed = (_rng.nextDouble() * 180 + 60) * _speedScale;
-      final hsl = HSLColor.fromColor(_baseColor);
-
-      Color tweaked;
-      if (_rng.nextDouble() < 0.3) {
-        final accent = _accentColors[_rng.nextInt(_accentColors.length)];
-        tweaked = Color.lerp(
-          _baseColor,
-          accent,
-          0.35 + _rng.nextDouble() * 0.3,
-        )!;
-      } else {
-        tweaked = hsl
-            .withLightness(
-              (hsl.lightness + _rng.nextDouble() * 0.4).clamp(0, 1),
-            )
-            .withSaturation(
-              (hsl.saturation + _rng.nextDouble() * 0.2 - 0.1).clamp(0, 1),
-            )
-            .toColor();
-      }
+      final color = Color.lerp(
+        _baseColor,
+        _rng.nextBool() ? _matchGold : _matchHotYellow,
+        0.72 + _rng.nextDouble() * 0.22,
+      )!;
 
       p.reset(
         dx: cos(angle) * speed,
         dy: sin(angle) * speed,
-        radius: (_rng.nextDouble() * 2.8 + 1.0) * _sizeScale,
-        color: tweaked,
+        length: (_rng.nextDouble() * 8.0 + 7.0) * _sizeScale,
+        width: (_rng.nextDouble() * 1.6 + 1.2) * _sizeScale,
+        color: color,
       );
     }
   }
@@ -149,24 +128,45 @@ class ParticleBurst extends PositionComponent {
     final showGlow = _withGlow && progress < 0.72;
     for (var i = 0; i < _count; i++) {
       final p = _particles[i];
-      final r = p.radius * (1.0 - progress * 0.3);
-      if (showGlow && r > 1.6) {
-        // blur를 크게 늘리지 않고도 가장자리를 조금 더 부드럽게 보이게 하는 저비용 halo
+      final sharpness = 1.0 - progress * 0.24;
+      final length = p.length * sharpness;
+      final width = p.width * sharpness;
+      final velocity = Offset(p.dx, p.dy);
+      final speed = velocity.distance;
+      if (speed < 0.1) continue;
+      final dir = velocity / speed;
+      final side = Offset(-dir.dy, dir.dx);
+      final center = Offset(p.x, p.y);
+      final tip = center + dir * length * 0.62;
+      final tail = center - dir * length * 0.46;
+      final path = Path()
+        ..moveTo(tip.dx, tip.dy)
+        ..lineTo((center + side * width).dx, (center + side * width).dy)
+        ..lineTo(tail.dx, tail.dy)
+        ..lineTo((center - side * width).dx, (center - side * width).dy)
+        ..close();
+      if (showGlow) {
         _particlePaint
-          ..color = p.color.withValues(alpha: alpha * 0.12)
-          ..maskFilter = null;
-        canvas.drawCircle(Offset(p.x, p.y), r * 1.65, _particlePaint);
+          ..color = _matchGold.withValues(alpha: alpha * 0.26)
+          ..maskFilter = _glowBlur
+          ..strokeWidth = width * 2.2
+          ..strokeCap = StrokeCap.round;
+        canvas.drawLine(tail, tip, _particlePaint);
       }
-      _particlePaint.color = p.color.withValues(alpha: alpha);
-      canvas.drawCircle(Offset(p.x, p.y), r, _particlePaint);
-      if (showGlow && r > 2.0) {
-        _particlePaint
-          ..color = p.color.withValues(alpha: alpha * 0.22)
-          ..maskFilter = _glowBlur;
-        canvas.drawCircle(Offset(p.x, p.y), r * 2.0, _particlePaint);
-        _particlePaint.maskFilter = null;
-      }
+      _particlePaint
+        ..maskFilter = null
+        ..style = PaintingStyle.fill
+        ..color = p.color.withValues(alpha: alpha * 0.96);
+      canvas.drawPath(path, _particlePaint);
+      _particlePaint
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = width * 0.52
+        ..color = Colors.white.withValues(alpha: alpha * 0.72);
+      canvas.drawLine(center - dir * length * 0.10, tip, _particlePaint);
     }
+    _particlePaint
+      ..style = PaintingStyle.fill
+      ..maskFilter = null;
   }
 }
 
@@ -175,20 +175,23 @@ class _Particle {
   double y = 0;
   double dx = 0;
   double dy = 0;
-  double radius = 1;
+  double length = 1;
+  double width = 1;
   Color color = Colors.white;
 
   void reset({
     required double dx,
     required double dy,
-    required double radius,
+    required double length,
+    required double width,
     required Color color,
   }) {
     x = 0;
     y = 0;
     this.dx = dx;
     this.dy = dy;
-    this.radius = radius;
+    this.length = length;
+    this.width = width;
     this.color = color;
   }
 }

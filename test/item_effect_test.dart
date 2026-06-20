@@ -12,6 +12,11 @@ void main() {
 
     board.finishResolutionFlow();
     expect(board.useBoardItem(ItemKind.ancientBomb, row: 0, col: 0), isTrue);
+    final ancientBombEffects = board.consumeSpecialEffectEvents();
+    expect(ancientBombEffects, hasLength(1));
+    expect(ancientBombEffects.single.effectKind, GemKind.bomb);
+    expect(ancientBombEffects.single.origin.x, 0);
+    expect(ancientBombEffects.single.origin.y, 0);
     expect(board.pendingRemovalSet, containsPair('0:0', true));
     expect(board.pendingRemovalSet, containsPair('0:1', true));
     expect(board.pendingRemovalSet, containsPair('1:0', true));
