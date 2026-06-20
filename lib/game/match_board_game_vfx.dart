@@ -99,11 +99,11 @@ extension MatchBoardGameVfx on MatchBoardGame {
       life = 0.52;
       glow = true;
     } else {
-      count = 12;
-      speed = 0.9;
-      size = 0.9;
-      life = 0.46;
-      glow = false;
+      count = 18;
+      speed = 1.05;
+      size = 1.25;
+      life = 0.52;
+      glow = true;
     }
 
     for (final c in cells) {

@@ -50,6 +50,13 @@ extension _SpecialEffectBurstLightDrawing on SpecialEffectBurst {
     if (glow && _glowScale > 0) {
       _paint
         ..maskFilter = SpecialEffectBurst._glow
+        ..strokeWidth = tileSize * 0.20
+        ..color = SpecialEffectBurst._hotYellow.withValues(
+          alpha: 0.26 * fade * _glowScale,
+        );
+      canvas.drawPath(path, _paint);
+      _paint
+        ..maskFilter = SpecialEffectBurst._glow
         ..strokeWidth = tileSize * 0.14
         ..color = SpecialEffectBurst._electricBlue.withValues(
           alpha: 0.30 * fade * _glowScale,
@@ -83,6 +90,12 @@ extension _SpecialEffectBurstLightDrawing on SpecialEffectBurst {
     if (_glowScale > 0) {
       _fillPaint
         ..maskFilter = SpecialEffectBurst._glow
+        ..color = SpecialEffectBurst._hotYellow.withValues(
+          alpha: 0.42 * fade * _glowScale,
+        );
+      canvas.drawPath(path, _fillPaint);
+      _fillPaint
+        ..maskFilter = SpecialEffectBurst._glow
         ..color = SpecialEffectBurst._electricBlue.withValues(
           alpha: 0.62 * fade * _glowScale,
         );
@@ -112,11 +125,12 @@ extension _SpecialEffectBurstLightDrawing on SpecialEffectBurst {
         center,
         radius,
         [
-          Colors.white.withValues(alpha: 0.20 * fade),
-          color.withValues(alpha: 0.24 * fade),
+          Colors.white.withValues(alpha: 0.22 * fade),
+          SpecialEffectBurst._hotYellow.withValues(alpha: 0.20 * fade),
+          color.withValues(alpha: 0.18 * fade),
           Colors.transparent,
         ],
-        const [0.0, 0.42, 1.0],
+        const [0.0, 0.34, 0.62, 1.0],
       );
     }
   }

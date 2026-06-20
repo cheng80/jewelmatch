@@ -34,7 +34,7 @@ extension _SpecialEffectBurstExplosionDrawing on SpecialEffectBurst {
         SpecialEffectBurst._hotYellow,
         SpecialEffectBurst._hotOrange,
         i / max(1, tongueCount - 1),
-      )!.withValues(alpha: 0.42 * fade);
+      )!.withValues(alpha: 0.34 * fade);
       canvas.drawPath(path, _fillPaint);
     }
   }
@@ -47,20 +47,20 @@ extension _SpecialEffectBurstExplosionDrawing on SpecialEffectBurst {
     double fade,
   ) {
     final bloom = Curves.easeOutCubic.transform(t);
-    final heatFade = fade * (1.0 - t * 0.26);
-    final lobeCount = _scaledCount(13);
+    final heatFade = fade * (1.0 - t * 0.18);
+    final lobeCount = _scaledCount(10);
     for (var i = 0; i < lobeCount; i++) {
-      final angle = i * 2 * pi / lobeCount + sin(t * pi * 2 + i) * 0.18;
-      final drift = radius * (0.12 + _hash(i + 3) * 0.38) * bloom;
+      final angle = i * 2 * pi / lobeCount + sin(t * pi * 1.7 + i) * 0.10;
+      final drift = radius * (0.10 + _hash(i + 3) * 0.28) * bloom;
       final lobeCenter = center + Offset(cos(angle), sin(angle)) * drift;
-      final lobeRadius = radius * (0.20 + _hash(i + 11) * 0.22);
+      final lobeRadius = radius * (0.18 + _hash(i + 11) * 0.24);
       final mix = i / max(1, lobeCount - 1);
       final color = Color.lerp(
         i.isEven
             ? SpecialEffectBurst._hotYellow
             : SpecialEffectBurst._hotOrange,
         baseColor,
-        mix * 0.32,
+        mix * 0.12,
       )!;
       _drawOrganicBlob(
         canvas,
@@ -68,28 +68,42 @@ extension _SpecialEffectBurstExplosionDrawing on SpecialEffectBurst {
         lobeRadius,
         seed: i * 19 + 7,
         t: t,
-        color: color.withValues(alpha: (0.18 + _hash(i) * 0.18) * heatFade),
+        color: color.withValues(alpha: (0.35 + _hash(i) * 0.22) * heatFade),
       );
     }
 
-    final smokeCount = _scaledCount(8);
-    for (var i = 0; i < smokeCount; i++) {
-      final angle = i * 2 * pi / smokeCount + 0.35;
-      final drift = radius * (0.36 + _hash(i + 40) * 0.30) * bloom;
-      final smokeCenter = center + Offset(cos(angle), sin(angle)) * drift;
-      _drawOrganicBlob(
-        canvas,
-        smokeCenter,
-        radius * (0.18 + _hash(i + 50) * 0.18),
-        seed: i * 31 + 5,
-        t: t + 0.2,
-        color: const Color(
-          0xFF9CB5A8,
-        ).withValues(alpha: (0.13 + _hash(i + 70) * 0.12) * fade),
-      );
-    }
+    _fillPaint
+      ..shader = null
+      ..maskFilter = null
+      ..blendMode = BlendMode.plus
+      ..color = SpecialEffectBurst._hotYellow.withValues(alpha: 0.58 * fade);
+    canvas.drawCircle(center, radius * (0.16 + bloom * 0.16), _fillPaint);
 
-    _drawFlameTongues(canvas, center, radius * 0.92, t, fade * 0.54);
+    _paint
+      ..maskFilter = SpecialEffectBurst._glow
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = tileSize * (0.14 + 0.06 * (1 - t))
+      ..color = SpecialEffectBurst._hotYellow.withValues(alpha: 0.74 * fade);
+    final arcRect = Rect.fromCenter(
+      center: center + Offset(0, radius * 0.07),
+      width: radius * (1.62 + bloom * 0.46),
+      height: radius * (0.62 + bloom * 0.18),
+    );
+    canvas.drawArc(arcRect, pi * 0.04, pi * 0.92, false, _paint);
+
+    _paint
+      ..maskFilter = null
+      ..strokeWidth = tileSize * 0.060
+      ..color = SpecialEffectBurst._hotOrange.withValues(alpha: 0.68 * fade);
+    canvas.drawArc(
+      arcRect.inflate(tileSize * 0.08),
+      pi * 0.08,
+      pi * 0.82,
+      false,
+      _paint,
+    );
+
+    _drawFlameTongues(canvas, center, radius * 0.92, t, fade * 0.72);
   }
 
   void _drawOrganicBlob(
@@ -144,17 +158,17 @@ extension _SpecialEffectBurstExplosionDrawing on SpecialEffectBurst {
       final angle = i * 2 * pi / scaledCount + _hash(i + 90) * 0.28;
       final dir = Offset(cos(angle), sin(angle));
       final reach =
-          length * (0.42 + _hash(i + 91) * 0.58) * Curves.easeOut.transform(t);
+          length * (0.38 + _hash(i + 91) * 0.62) * Curves.easeOut.transform(t);
       final start = center + dir * tileSize * 0.08;
-      final tip = center + dir * reach * 0.78;
+      final tip = center + dir * reach;
       _paint
         ..maskFilter = null
-        ..strokeWidth = tileSize * (0.012 + _hash(i + 92) * 0.018)
+        ..strokeWidth = tileSize * (0.018 + _hash(i + 92) * 0.026)
         ..color = Color.lerp(
           Colors.white,
           SpecialEffectBurst._hotYellow,
           _hash(i + 93) * 0.55,
-        )!.withValues(alpha: 0.24 * fade);
+        )!.withValues(alpha: 0.38 * fade);
       canvas.drawLine(start, tip, _paint);
     }
   }
@@ -168,18 +182,18 @@ extension _SpecialEffectBurstExplosionDrawing on SpecialEffectBurst {
   ) {
     _paint
       ..maskFilter = null
-      ..strokeWidth = tileSize * 0.045
-      ..color = SpecialEffectBurst._hotYellow.withValues(alpha: 0.42 * fade);
-    final arcCount = _scaledCount(7);
+      ..strokeWidth = tileSize * 0.065
+      ..color = SpecialEffectBurst._hotYellow.withValues(alpha: 0.50 * fade);
+    final arcCount = _scaledCount(4);
     for (var i = 0; i < arcCount; i++) {
-      final start = i * 2 * pi / arcCount + t * 1.6;
+      final start = i * 2 * pi / arcCount + t * 1.2;
       canvas.drawArc(
         Rect.fromCircle(
           center: center,
-          radius: radius * (0.54 + _hash(i) * 0.24),
+          radius: radius * (0.56 + _hash(i) * 0.22),
         ),
         start,
-        pi * (0.16 + _hash(i + 12) * 0.18),
+        pi * (0.22 + _hash(i + 12) * 0.26),
         false,
         _paint,
       );
@@ -200,21 +214,21 @@ extension _SpecialEffectBurstExplosionDrawing on SpecialEffectBurst {
       final angle = i * 2.399963 + _hash(i + 150) * 0.35;
       final dir = Offset(cos(angle), sin(angle));
       final distance = spread * (0.22 + _hash(i + 151) * 0.78) * progress;
-      final start = center + dir * max(0, distance - tileSize * 0.42);
+      final start = center + dir * max(0, distance - tileSize * 0.50);
       final end = center + dir * distance;
       _paint
         ..maskFilter = null
-        ..strokeWidth = tileSize * (0.014 + _hash(i + 152) * 0.020)
+        ..strokeWidth = tileSize * (0.020 + _hash(i + 152) * 0.032)
         ..color = Color.lerp(
           SpecialEffectBurst._hotYellow,
-          baseColor,
-          _hash(i + 153) * 0.35,
-        )!.withValues(alpha: 0.34 * fade);
+          SpecialEffectBurst._hotOrange,
+          _hash(i + 153) * 0.65,
+        )!.withValues(alpha: 0.40 * fade);
       canvas.drawLine(start, end, _paint);
 
       if (i.isEven) {
         _fillPaint.color = SpecialEffectBurst._hotOrange.withValues(
-          alpha: 0.28 * fade,
+          alpha: 0.22 * fade,
         );
         canvas.drawCircle(
           end,

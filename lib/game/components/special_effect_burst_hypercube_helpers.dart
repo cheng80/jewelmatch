@@ -10,11 +10,12 @@ extension _SpecialEffectBurstHypercubeDrawing on SpecialEffectBurst {
       radius * 1.25,
       [
         Colors.white.withValues(alpha: 0.42 * fade),
-        SpecialEffectBurst._electricViolet.withValues(alpha: 0.36 * fade),
-        baseColor.withValues(alpha: 0.20 * fade),
+        SpecialEffectBurst._hotYellow.withValues(alpha: 0.30 * fade),
+        SpecialEffectBurst._electricViolet.withValues(alpha: 0.26 * fade),
+        baseColor.withValues(alpha: 0.16 * fade),
         Colors.transparent,
       ],
-      const [0.0, 0.24, 0.55, 1.0],
+      const [0.0, 0.22, 0.50, 0.72, 1.0],
     );
 
     final arcCount = _scaledCount(4);
@@ -37,6 +38,21 @@ extension _SpecialEffectBurstHypercubeDrawing on SpecialEffectBurst {
         false,
         _paint,
       );
+      if (i == 0 && _glowScale > 0) {
+        _paint
+          ..maskFilter = SpecialEffectBurst._glow
+          ..strokeWidth = tileSize * 0.095
+          ..color = SpecialEffectBurst._hotYellow.withValues(
+            alpha: 0.26 * fade * _glowScale,
+          );
+        canvas.drawArc(
+          Rect.fromCircle(center: center, radius: radius * 0.46),
+          phase,
+          pi * 1.22,
+          false,
+          _paint,
+        );
+      }
     }
     _paint.maskFilter = null;
 

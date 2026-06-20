@@ -103,12 +103,19 @@ void main() {
     expect(progression.hintBadgeCount, 2);
   });
 
-  test('item loadout slots are shown only in progression mode', () {
+  test('item loadout slots show test items in simple mode', () {
     final simple = MatchBoardGame(gameMode: JewelGameMode.simple);
     final timed = MatchBoardGame(gameMode: JewelGameMode.timed);
     final progression = MatchBoardGame(gameMode: JewelGameMode.progression);
 
-    expect(simple.hudLoadoutSlots, isEmpty);
+    expect(
+      simple.hudLoadoutSlots,
+      hasLength(ItemKindMeta.phaseOneLoadout.length),
+    );
+    expect(
+      simple.hudLoadoutSlots.map((slot) => slot.item),
+      ItemKindMeta.phaseOneLoadout,
+    );
     expect(timed.hudLoadoutSlots, isEmpty);
     expect(progression.hudLoadoutSlots, hasLength(4));
   });

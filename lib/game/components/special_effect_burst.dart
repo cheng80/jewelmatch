@@ -173,7 +173,7 @@ class SpecialEffectBurst extends PositionComponent {
         _renderLightningSweep(canvas, t, effectFade, horizontal: false);
         break;
       case GemKind.bomb:
-        _renderFlame(canvas, t, effectFade);
+        _renderExplosion(canvas, t, effectFade);
         break;
       case GemKind.star:
         _renderStarLightning(canvas, t, effectFade);

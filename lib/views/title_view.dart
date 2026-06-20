@@ -17,6 +17,7 @@ import '../services/in_app_review_service.dart';
 import 'overlays/game_loading_overlay.dart';
 import 'overlays/how_to_play_overlay.dart';
 import 'title/title_icon_button.dart';
+import 'title/title_mystic_smoke_effect.dart';
 import 'title/player_name_dialog.dart';
 import 'title/title_round_button.dart';
 import 'title/title_version_footer.dart';
@@ -130,7 +131,10 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
       packageInfo: _cachedPackageInfo,
     );
 
-    return PhoneFrameScaffold(child: content);
+    return PhoneFrameScaffold(
+      backgroundOverlay: const TitleMysticSmokeEffect(),
+      child: content,
+    );
   }
 }
 
