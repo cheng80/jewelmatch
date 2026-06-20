@@ -3,10 +3,11 @@ part of 'match_board_game.dart';
 extension MatchBoardGameFlow on MatchBoardGame {
   void _generateFreshBoardWithStartSfx({
     BoardFillIntroKind introKind = BoardFillIntroKind.roundStart,
+    bool pauseIntroUntilRelease = false,
   }) {
     board.generateFreshBoard(introKind: introKind);
     if (introKind == BoardFillIntroKind.roundStart) {
-      board.introFillPaused = true;
+      board.introFillPaused = pauseIntroUntilRelease;
       _playStartSfxWhenBoardReady();
     }
   }

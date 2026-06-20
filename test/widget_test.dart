@@ -179,6 +179,40 @@ void main() {
     },
   );
 
+  test('manual board regeneration does not keep the fill intro paused', () async {
+    SharedPreferences.setMockInitialValues({});
+    await StorageHelper.init();
+    await StorageHelper.erase();
+    GameSettings.bgmMuted = true;
+    GameSettings.sfxMuted = true;
+
+    final game = MatchBoardGame(gameMode: JewelGameMode.simple);
+    game.overlays.addEntry('IntroBlock', (_, _) => const SizedBox.shrink());
+    game.onGameResize(Vector2(390, 844));
+    game.releaseRoundStartIntro();
+
+    for (var frame = 0; frame < 180; frame++) {
+      game.update(1 / 60);
+      if (!game.board.introFillInProgress) break;
+    }
+    expect(game.board.introFillInProgress, isFalse);
+
+    game.newBoard();
+
+    expect(game.board.introFillInProgress, isTrue);
+    expect(game.board.introFillPaused, isFalse);
+    for (var frame = 0; frame < 180; frame++) {
+      game.update(1 / 60);
+      if (!game.board.introFillInProgress) break;
+    }
+    expect(
+      game.board.introFillInProgress,
+      isFalse,
+      reason:
+          'manual regeneration should let the intro advance without a loading overlay',
+    );
+  });
+
   test('phase 1 targeted item selection keeps clock running', () {
     final game = MatchBoardGame(gameMode: JewelGameMode.timed);
     _setHintBoard(game.board);
