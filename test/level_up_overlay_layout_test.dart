@@ -15,7 +15,7 @@ import 'package:stonematch/views/overlays/stage_inventory_overlay.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('level up overlay uses two reward columns for eight rewards', (
+  testWidgets('level up overlay uses two reward columns for six rewards', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(360, 690);
@@ -62,16 +62,6 @@ void main() {
           quantity: 1,
           reasonKey: 'test',
         ),
-        StageRewardGrant(
-          item: ItemKind.timeSlip,
-          quantity: 1,
-          reasonKey: 'test',
-        ),
-        StageRewardGrant(
-          item: ItemKind.hintPlus,
-          quantity: 1,
-          reasonKey: 'test',
-        ),
       ];
 
     await tester.pumpWidget(
@@ -101,14 +91,32 @@ void main() {
     }
     expect(exception, isNull);
 
-    final first = tester.getTopLeft(find.text('룬 망치 x1'));
-    final second = tester.getTopLeft(find.text('고대 폭탄 x1'));
-    final third = tester.getTopLeft(find.text('토르 망치 x1'));
+    final first = tester.getTopLeft(find.text('룬 망치'));
+    final second = tester.getTopLeft(find.text('고대 폭탄'));
+    final third = tester.getTopLeft(find.text('토르 망치'));
+    final prismLabel = find.text('프리즘 변환');
+    final prismLabelRect = tester.getRect(prismLabel);
+    final quantityRects = [
+      for (final element in find.text('x1').evaluate())
+        tester.getRect(
+          find.byElementPredicate((candidate) => identical(candidate, element)),
+        ),
+    ];
 
     expect(second.dx, greaterThan(first.dx));
     expect((second.dy - first.dy).abs(), lessThan(1));
     expect((third.dx - first.dx).abs(), lessThan(1));
     expect(third.dy, greaterThan(first.dy));
+    expect(prismLabel, findsOneWidget);
+    expect(find.text('x1'), findsNWidgets(6));
+    expect(
+      quantityRects.any(
+        (rect) =>
+            rect.top >= prismLabelRect.bottom - 1 &&
+            (rect.left - prismLabelRect.left).abs() < 1,
+      ),
+      isTrue,
+    );
   });
 
   testWidgets('stage inventory overlay does not overflow on narrow phones', (

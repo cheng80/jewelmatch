@@ -159,6 +159,47 @@ extension MatchBoardGameProgression on MatchBoardGame {
         overlays.isActive('LevelCelebration')) {
       return;
     }
+    if (Uri.base.queryParameters['qaSixRewards'] == '1') {
+      levelUpFromLevel = progressionLevel;
+      levelUpToLevel = progressionLevel + 1;
+      progressionNextBoardBonusKinds = _bonusKindsForNextLevel();
+      latestStageRewards = const [
+        StageRewardGrant(
+          item: ItemKind.runeHammer,
+          quantity: 1,
+          reasonKey: 'qa',
+        ),
+        StageRewardGrant(
+          item: ItemKind.ancientBomb,
+          quantity: 1,
+          reasonKey: 'qa',
+        ),
+        StageRewardGrant(
+          item: ItemKind.thorHammer,
+          quantity: 1,
+          reasonKey: 'qa',
+        ),
+        StageRewardGrant(
+          item: ItemKind.hyperCube,
+          quantity: 1,
+          reasonKey: 'qa',
+        ),
+        StageRewardGrant(
+          item: ItemKind.prismTransform,
+          quantity: 1,
+          reasonKey: 'qa',
+        ),
+        StageRewardGrant(
+          item: ItemKind.fateShuffle,
+          quantity: 1,
+          reasonKey: 'qa',
+        ),
+      ];
+      isPlaying = false;
+      pauseEngine();
+      overlays.add('LevelUp');
+      return;
+    }
     board.score = JewelRankProgression.scoreTargetForLevel(progressionLevel);
     board.maxCombo = 5;
   }

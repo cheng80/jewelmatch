@@ -63,8 +63,8 @@ class _LevelUpOverlayState extends State<LevelUpOverlay>
           borderColor: JewelCandyLuminaTheme.goldStrong,
           shadowColor: JewelCandyLuminaTheme.tertiaryGold,
           maxCardWidth: 410,
-          maxHeightFactor: 0.96,
-          verticalMargin: 14,
+          maxHeightFactor: 0.98,
+          verticalMargin: 10,
           alignment: Alignment.topCenter,
           horizontalPadding: 20,
           verticalPadding: 16,
@@ -153,9 +153,11 @@ class _StageRewardSummary extends StatelessWidget {
   const _StageRewardSummary({required this.game});
 
   static const double _chipSpacing = 6;
-  static const double _chipMinHeight = 34;
+  static const double _chipMinHeight = 48;
+  static const int _visibleRewardRows = 3;
   static const double _maxRewardListHeight =
-      (_chipMinHeight * 4) + (_chipSpacing * 3);
+      (_chipMinHeight * _visibleRewardRows) +
+      (_chipSpacing * (_visibleRewardRows - 1));
 
   final MatchBoardGame game;
 
@@ -235,8 +237,8 @@ class _RewardChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 34),
-      padding: const EdgeInsets.fromLTRB(7, 5, 9, 5),
+      constraints: const BoxConstraints(minHeight: 48),
+      padding: const EdgeInsets.fromLTRB(7, 6, 8, 6),
       decoration: BoxDecoration(
         color: JewelCandyLuminaTheme.surfaceStone.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(8),
@@ -247,18 +249,34 @@ class _RewardChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.max,
         children: [
-          SizedBox.square(dimension: 24, child: _ItemIcon(item: item)),
-          const SizedBox(width: 5),
+          SizedBox.square(dimension: 26, child: _ItemIcon(item: item)),
+          const SizedBox(width: 6),
           Expanded(
-            child: Text(
-              '${_oneLineItemName(item)} x$quantity',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: JewelCandyLuminaTheme.textParchment,
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _oneLineItemName(item),
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: JewelCandyLuminaTheme.textParchment,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    height: 1.05,
+                  ),
+                ),
+                Text(
+                  'x$quantity',
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: JewelCandyLuminaTheme.tertiaryGold,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    height: 1.05,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
