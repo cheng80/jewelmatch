@@ -7,15 +7,16 @@
 
 - 보드는 8×8이고 좌표는 0 기반 `(row, col)`이다.
 - 일반 매치는 가로 또는 세로로 같은 색 보석이 3개 이상 이어질 때 성립한다.
-- `hyper` 보석은 색 매치 스캔에서 제외된다. 즉 `hyper`는 3매치 일부가 되지 않고, 인접 보석과 스왑할 때 별도 규칙으로 발동한다.
-- `bomb`, `star`, `supernova`, legacy `row`, `col` 보석은 색을 가진다. 같은 색 일반 보석과 함께 3매치에 포함될 수 있다.
-- 특수 보석은 “같은 종류끼리 3개 모아야” 발동하는 방식이 아니다. 특수 보석이 제거 대상에 포함되면 그 보석의 효과가 큐에 들어간다.
+- 색 매치 스캔은 `GemKind.normal`만 대상으로 삼는다. `bomb`, `star`, `hyper`, `supernova`, legacy `row`, `col`은 더 이상 색상 보석으로 취급하지 않는다.
+- 특수 보석은 다른 보석의 3매치 일부가 되지 않는다. 즉 같은 색 일반 보석 2개 사이에 특수 보석이 있어도 3매치가 성립하지 않는다.
+- 특수 보석은 “같은 종류끼리 3개 모아야” 발동하는 방식이 아니다. 보드에서 해당 특수 보석을 탭하면 즉시 발동한다.
+- 특수 보석 효과 범위 안에 다른 특수 보석이 있으면 연쇄 처리된다. 단, `hyper`는 다른 특수 보석의 범위에 휘말려도 제거만 되고 연쇄 발동 큐에는 들어가지 않는다.
 
 관련 구현:
 
 - 생성 판정: `lib/game/match_board_spawn_classifier.dart`
 - 특수 발동 범위와 연쇄 큐: `lib/game/match_board_specials.dart`
-- 하이퍼 스왑: `lib/game/match_board_input.dart`
+- 탭 발동과 스왑 입력: `lib/game/match_board_input.dart`
 - 제거, 점수, 상태 전이: `lib/game/match_board_resolution.dart`
 - 보석 종류 모델: `lib/game/match_board_models.dart`
 
@@ -23,9 +24,9 @@
 
 | 종류 | 현재 표시 이름 | 생성 조건 | 단독 효과 |
 |------|----------------|-----------|-----------|
-| `bomb` | Flame 계열 | 같은 색 4개 일렬 | 중심 포함 주변 3×3 제거 |
+| `bomb` | Bomb 계열 | 같은 색 4개 일렬 | 중심 포함 주변 3×3 제거 |
 | `star` | Star 계열 | T/L/+ 교차 매치 | 해당 행 전체 + 해당 열 전체 제거 |
-| `hyper` | Hypercube 계열 | 같은 색 5개 일렬 | 스왑한 상대 색 전체 제거 |
+| `hyper` | Hypercube 계열 | 같은 색 5개 일렬 | 기존 normal 보석 색 중 하나를 골라 해당 색 normal 보석 제거 |
 | `supernova` | Supernova 계열 | 같은 색 6개 이상 일렬 | 주변 3×3 + 해당 행 전체 + 해당 열 전체 제거 |
 | `row` | legacy row | 현재 일반 생성 규칙에서는 만들지 않음 | 해당 행 전체 제거 |
 | `col` | legacy col | 현재 일반 생성 규칙에서는 만들지 않음 | 해당 열 전체 제거 |
@@ -64,19 +65,19 @@ T / L / + 교차 매치
 
 ## 5. 발동 조건
 
-특수 보석 발동은 “제거 대상에 들어갔는지”로 결정된다.
+특수 보석 발동은 기본적으로 “유저가 해당 보석을 탭했는지”로 결정된다.
 
+- `bomb`, `star`, `supernova`, `row`, `col`, `hyper`
+  - 보드에서 해당 특수 보석을 탭하면 발동한다.
+  - 일반 보석과 단순히 스왑하는 것만으로는 발동하지 않는다.
+  - 특수 보석은 색 매치 스캔에 참여하지 않으므로 같은 색 3매치에 포함되어 발동하는 경로가 없다.
 - `bomb`, `star`, `supernova`, `row`, `col`
-  - 같은 색 3매치에 포함되면 발동한다.
-  - 다른 특수 보석 효과 범위에 휘말리면 발동한다.
-  - 일반 보석과 단순히 스왑하는 것만으로는 발동하지 않는다. 스왑 후 색 매치가 성립해야 한다.
-  - non-hyper 특수 보석끼리 인접 스왑하면 색 매치 없이도 조합 효과로 발동한다.
+  - 다른 특수 보석 효과 범위에 휘말리면 연쇄 발동 큐에 들어간다.
 - `hyper`
-  - 인접한 아무 보석과 스왑하면 바로 발동한다.
-  - `hyper`끼리 스왑하면 보드 전체 제거로 처리한다.
-  - 색 매치 스캔에는 참여하지 않는다.
+  - 직접 탭하면 발동한다.
+  - 다른 특수 보석 효과 범위에 휘말리면 제거 대상에는 들어가지만 연쇄 발동 큐에는 들어가지 않는다.
 
-힌트 후보도 같은 규칙을 따른다. `hyper`가 포함된 인접 스왑과 non-hyper 특수 보석끼리의 조합 스왑은 유효 후보가 될 수 있다.
+힌트 후보는 일반 매치 스왑만 대상으로 한다. 특수 보석 스왑, `hyper` 스왑, non-hyper 특수 보석끼리의 인접 스왑은 더 이상 힌트 후보가 아니다.
 
 ## 6. 발동 효과 범위
 
@@ -86,57 +87,52 @@ T / L / + 교차 매치
 | `col` | 발동 위치의 열 전체 |
 | `bomb` | 발동 위치 중심의 3×3. 보드 밖 좌표는 무시 |
 | `star` | 발동 위치의 행 전체와 열 전체 |
-| `hyper` | `triggerColor`와 같은 색의 모든 non-hyper 보석 |
+| `hyper` | `triggerColor`와 같은 색의 모든 normal 보석. `triggerColor`가 없으면 보드에 존재하는 normal 보석 색 중 하나를 고름 |
 | `supernova` | 발동 위치 중심의 3×3 + 행 전체 + 열 전체 |
 
-효과 범위 안에 다른 특수 보석이 있으면 그 보석도 큐에 들어간다. 이 때문에 특수 보석은 연쇄적으로 발동할 수 있다.
+효과 범위 안에 다른 non-hyper 특수 보석이 있으면 그 보석도 큐에 들어간다. 이 때문에 `bomb`, `star`, `supernova`, `row`, `col`은 연쇄적으로 발동할 수 있다. `hyper`는 범위에 들어가도 제거만 되고 연쇄 발동하지 않는다.
 
-## 7. 하이퍼 스왑 규칙
+## 7. 하이퍼 발동 규칙
 
-### 7-1. Hyper + 일반 보석
-
-```text
-hyper + color N
-  -> hyper와 상대 보석 제거
-  -> color N인 모든 non-hyper 보석 제거
-```
-
-같은 색 특수 보석이 범위 안에 있으면 해당 특수 효과도 큐에 들어간다.
-
-### 7-2. Hyper + 특수 보석
+### 7-1. 보드의 `hyper` 직접 탭
 
 ```text
-hyper + special(color N)
-  -> hyper와 상대 특수 보석 제거
-  -> color N인 모든 non-hyper 보석 제거
-  -> 그 범위에 포함된 특수 보석은 각자의 효과를 추가 발동
+tap hyper
+  -> hyper 제거
+  -> 보드에 존재하는 normal 보석 색 중 하나를 선택
+  -> 선택된 색의 normal 보석 모두 제거
 ```
 
-이 조합은 Stone Match식 대체 구현이다. Bejeweled식 “선택 색 전체를 Flame/Star로 변환한 뒤 발동”은 현재 구현되어 있지 않다. Stone Match는 변환이 아니라 같은 색 보석 제거와 기존 특수 보석의 연쇄 발동으로 처리한다.
+직접 탭한 `hyper`는 상대 보석이 없으므로 `pickExistingColor()`로 보드에 남아 있는 normal 보석 색 중 하나를 고른다.
 
-### 7-3. Hyper + Hyper
+### 7-2. 아이템 `hyperCube`
 
 ```text
-hyper + hyper
-  -> 보드 전체 제거
+hyperCube item on normal color N
+  -> 선택한 normal 보석 제거
+  -> color N인 모든 normal 보석 제거
 ```
 
-이 경우 별도 특수 큐 없이 모든 칸을 제거 대상으로 넣는다.
+아이템 `hyperCube`는 normal 보석을 대상으로만 사용할 수 있다. 특수 보석은 색상 보석이 아니므로 아이템 대상에서 제외된다.
 
-## 8. Non-hyper 특수 보석 조합
+### 7-3. Hyper 스왑
 
-`bomb`, `star`, legacy `row`, `col`, `supernova`처럼 `hyper`가 아닌 특수 보석끼리는 인접 스왑만으로도 발동한다.
-현재 전용 조합 범위가 있는 조합은 다음과 같다.
+현재 구현에서는 `hyper`를 다른 보석과 스왑해도 발동하지 않는다. `hyper + hyper` 보드 전체 제거도 현재 플레이 규칙에서 비활성화되어 있다.
 
-| 조합 | 효과 |
-|------|------|
-| `bomb + bomb` | 두 발동 위치 각각을 중심으로 5×5 대형 폭발 |
-| `bomb + star` | `star` 위치의 행/열 경로를 따라 각 칸 주변 3×3 폭발 |
-| `star + star` | 두 `star`의 행 전체와 열 전체 제거 |
+## 8. 특수 보석 스왑 조합
 
-이 조합들은 조합 전용 제거 범위를 먼저 만든 뒤, 두 특수 보석 자체도 큐에 넣는다. 따라서 조합 범위 안의 다른 특수 보석도 기존 연쇄 규칙대로 추가 발동할 수 있다.
+현재 구현에서는 인접한 특수 보석끼리 스왑해도 조합 효과가 발동하지 않는다.
 
-위 표에 없는 non-hyper 특수 보석 조합은 인접 스왑으로 유효 처리하고, 두 특수 보석의 기본 효과를 각각 큐에 넣는 방식으로 처리한다.
+- `bomb + bomb`
+- `bomb + star`
+- `star + star`
+- `hyper + normal`
+- `hyper + special`
+- `hyper + hyper`
+
+위 조합들은 과거 또는 Bejeweled 참고 규칙으로는 후보였지만, 현재 Stone Match 플레이 규칙에서는 “특수 보석 직접 탭 발동”으로 대체되어 있다.
+
+특수 보석 간 상호작용은 스왑이 아니라 효과 범위 기반 연쇄로 처리한다. 예를 들어 `bomb` 3×3 범위 안에 `star`가 있으면 `star`가 추가 발동한다. 같은 범위 안에 `hyper`가 있으면 `hyper`는 제거되지만 추가 발동하지 않는다.
 
 ## 9. 연쇄 해소 순서
 
@@ -161,6 +157,16 @@ resolveMatchCascade()
 
 각 해소 사이클마다 `combo`가 1 증가한다. 제거, 낙하, 리필 뒤 새 매치가 생기면 같은 유저 스왑에서 이어진 콤보로 본다.
 
+특수 보석 탭 발동은 매치 스캔 없이 다음 흐름으로 시작한다.
+
+```text
+triggerSpecialCell(row, col)
+├─ 탭한 특수 보석을 removalSet에 추가
+├─ 탭한 특수 보석을 초기 queue에 추가
+├─ activateSpecials()
+└─ removing → falling → refilling → checking
+```
+
 ## 10. 점수와 시간 보상
 
 제거 단계에서 점수는 다음 방식으로 더한다.
@@ -169,6 +175,8 @@ resolveMatchCascade()
 base = 100 + max(0, removed - 3) * 50
 score += (base + specialBonus) * max(1, combo)
 ```
+
+4개 매치로 특수 보석이 생성되면 생성 위치 1칸은 제거되지 않고 `bomb`으로 남으며, 나머지 3칸만 제거된다. 따라서 기본 점수는 `removed = 3` 기준으로 `100`점이 될 수 있다.
 
 특수 보석 발동 보너스:
 
@@ -196,26 +204,29 @@ raw <= 0이면 보상 없음
 
 | 조합/규칙 | Bejeweled 참고 문서 | Stone Match 현재 구현 |
 |-----------|---------------------|------------------------|
-| Flame + Flame | 대형 폭발 | 두 `bomb` 위치 각각을 중심으로 5×5 대형 폭발 |
-| Flame + Star | 십자 경로마다 폭발 | `star` 행/열 경로의 각 칸 주변 3×3 폭발 |
-| Hyper + Flame | 선택 색을 Flame으로 변환 후 폭발 | Stone Match식 대체 구현. 변환 없음. 상대 색 전체 제거 + 범위 내 기존 특수 보석 연쇄 |
-| Hyper + Star | 선택 색을 Star로 변환 후 발동 | Stone Match식 대체 구현. 변환 없음. 상대 색 전체 제거 + 범위 내 기존 특수 보석 연쇄 |
-| Star + Star | 다수 행/열 제거 | 두 `star`의 행 전체와 열 전체 제거 |
-| Hyper + Hyper | 보드 전체 제거 | 구현됨 |
+| Flame + Flame | 대형 폭발 | 스왑 조합 비활성화. 각 `bomb`은 직접 탭하거나 다른 효과 범위에 들어갈 때 기본 3×3으로 발동 |
+| Flame + Star | 십자 경로마다 폭발 | 스왑 조합 비활성화. `bomb` 범위에 `star`가 들어가면 `star` 기본 십자 효과가 연쇄 발동 |
+| Hyper + Flame | 선택 색을 Flame으로 변환 후 폭발 | 스왑 조합 비활성화. `hyper`는 직접 탭 또는 `hyperCube` 아이템으로 normal 색 제거 |
+| Hyper + Star | 선택 색을 Star로 변환 후 발동 | 스왑 조합 비활성화. 특수 보석은 색상 대상이 아니며 변환 없음 |
+| Star + Star | 다수 행/열 제거 | 스왑 조합 비활성화. 두 `star`가 서로 범위에 들어가면 효과 범위 기반으로 연쇄 가능 |
+| Hyper + Hyper | 보드 전체 제거 | 현재 플레이 규칙에서는 비활성화 |
 
-새 조합 효과를 추가하려면 먼저 이 문서를 갱신하고, `match_board_input.dart`, `match_board_special_combos.dart`, `match_board_specials.dart`, 관련 테스트를 함께 수정한다.
+새 조합 효과를 다시 추가하려면 먼저 이 문서를 갱신하고, `match_board_input.dart`, `match_board_special_combos.dart`, `match_board_specials.dart`, 관련 테스트를 함께 수정한다.
 
 ## 12. 테스트 기준
 
 현재 특수 보석 규칙은 주로 다음 테스트가 지킨다.
 
 - `test/special_gem_combo_test.dart`
-  - `bomb + bomb`, `bomb + star`, `star + star` 조합 발동
+  - 특수 보석끼리 스왑해도 발동하지 않음
+  - 탭한 `bomb` 범위 안의 `star`는 연쇄 발동
+  - 범위 안의 `hyper`는 제거만 되고 연쇄 발동하지 않음
 - `test/match_board_logic_test.dart`
   - 4/5/6개 매치와 T/L 생성 규칙
-  - `star`, `supernova`, `hyper` 발동
-  - non-hyper 특수 보석의 일반 스왑/색 매치/힌트 후보 규칙
-  - 힌트 후보 규칙
+  - `star`, `supernova`, `hyper` 기본 발동 범위
+  - 특수 보석의 탭 발동
+  - 특수 보석이 색 매치 토큰이 아님
+  - 특수 스왑/힌트 후보 제외 규칙
 - `test/special_effect_event_test.dart`
   - 특수 보석별 effect descriptor와 흔들림 값
 - `test/special_effect_pool_test.dart`

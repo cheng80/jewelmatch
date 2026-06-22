@@ -29,6 +29,7 @@ QA 기준 이미지:
 - `assets/images/ui/obsidian_panel_frame.png`
 - `assets/images/sprites/Jewel_Arcane.png`
 - `assets/images/sprites/Special_Arcane.png`
+- `assets/images/sprites/Special_Action_Arcane.png`
 
 ## 생성 목표
 

@@ -244,7 +244,7 @@ extension MatchBoardResolution on MatchBoardLogic {
   bool _triggerHyperCubeItemImpl(int row, int col) {
     if (inputLocked || state != 'idle' || !isInside(row, col)) return false;
     final gem = getGem(row, col);
-    if (gem == null) return false;
+    if (gem == null || gem.kind != GemKind.normal) return false;
     final removalSet = <String, bool>{_cellKey(row, col): true};
     final queue = <MatchChainItem>[
       MatchChainItem(
@@ -261,7 +261,7 @@ extension MatchBoardResolution on MatchBoardLogic {
   bool _transformCellForPrismItemImpl(int row, int col, {int? prismColor}) {
     if (inputLocked || state != 'idle' || !isInside(row, col)) return false;
     final gem = getGem(row, col);
-    if (gem == null || gem.kind == GemKind.hyper) return false;
+    if (gem == null || gem.kind != GemKind.normal) return false;
 
     final original = gem.color;
     if (prismColor != null) {

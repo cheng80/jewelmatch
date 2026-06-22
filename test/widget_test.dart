@@ -33,16 +33,7 @@ void main() {
       await StorageHelper.erase();
       GameSettings.sfxMuted = true;
       final game = MatchBoardGame(gameMode: JewelGameMode.simple);
-      _setRows(game.board, const [
-        [5, 1, 3, 3, 5, 1, 1, 6],
-        [6, 5, 4, 6, 2, 1, 4, 5],
-        [4, 3, 1, 6, 5, 5, 3, 2],
-        [5, -2, 2, 2, 4, 6, 2, 4],
-        [3, 4, 6, 4, 5, 1, 5, 1],
-        [2, -1, 1, 5, 2, 4, -1, 6],
-        [4, 5, 1, 1, 2, 6, 3, 3],
-        [1, 4, 6, 6, 3, 4, 1, 1],
-      ]);
+      _setRows(game.board, _validMoveRows);
       final moves = game.board.getAllValidMoves();
 
       expect(moves.length, greaterThan(1));
@@ -488,17 +479,19 @@ void _primeMultiRewardStats(MatchBoardGame game) {
 }
 
 void _setHintBoard(MatchBoardLogic board) {
-  _setRows(board, const [
-    [5, 1, 3, 3, 5, 1, 1, 6],
-    [6, 5, 4, 6, 2, 1, 4, 5],
-    [4, 3, 1, 6, 5, 5, 3, 2],
-    [5, -2, 2, 2, 4, 6, 2, 4],
-    [3, 4, 6, 4, 5, 1, 5, 1],
-    [2, -1, 1, 5, 2, 4, -1, 6],
-    [4, 5, 1, 1, 2, 6, 3, 3],
-    [1, 4, 6, 6, 3, 4, 1, 1],
-  ]);
+  _setRows(board, _validMoveRows);
 }
+
+const _validMoveRows = [
+  [1, 2, 1, 4, 5, 6, 1, 2],
+  [2, 1, 4, 5, 6, 1, 2, 3],
+  [3, 4, 3, 6, 1, 2, 3, 4],
+  [4, 3, 6, 1, 2, 3, 4, 5],
+  [5, 6, 1, 2, 3, 4, 5, 6],
+  [6, 1, 2, 3, 4, 5, 6, 1],
+  [1, 2, 3, 4, 5, 6, 1, 2],
+  [2, 3, 4, 5, 6, 1, 2, 3],
+];
 
 void _setRows(MatchBoardLogic board, List<List<int>> rows) {
   for (var row = 0; row < rows.length; row++) {

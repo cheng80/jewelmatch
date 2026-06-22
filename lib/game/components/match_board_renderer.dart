@@ -16,7 +16,7 @@ part 'match_board_procedural_renderer.dart';
 
 /// 매치 보드 격자·보석·플래시·선택 표시.
 /// `Jewel_Arcane.png`(896×128, 7프레임×128), row/col legacy 특수 시트,
-/// bomb/star/supernova 독립 오버레이 스프라이트 사용.
+/// bomb/star/hyper/supernova 액션 특수 시트 사용.
 ///
 /// 힌트: [MatchBoardLogic.showHint]가 고른 **한 쌍**만, 보석 위에 흰색 펄스(느리게 깜박임).
 /// 다른 칸에는 오버레이를 그리지 않는다.
@@ -67,10 +67,14 @@ class MatchBoardRenderer extends PositionComponent
     GemKind.col,
     GemKind.row,
   ];
+  static const List<GemKind> _specialActionSheetKinds = <GemKind>[
+    GemKind.bomb,
+    GemKind.star,
+    GemKind.hyper,
+    GemKind.supernova,
+  ];
   static const Map<GemKind, String> _overlayAssetPaths = <GemKind, String>{
-    GemKind.bomb: AssetPaths.flameOverlay,
     GemKind.star: AssetPaths.starOverlay,
-    GemKind.supernova: AssetPaths.supernovaOverlay,
   };
 
   /// 힌트 펄스 위상 속도(낮을수록 느리게 한 박자).
@@ -148,6 +152,20 @@ class MatchBoardRenderer extends PositionComponent
       }
     } catch (_) {
       for (final kind in _specialSheetKinds) {
+        _specialSprites[kind] = null;
+      }
+    }
+    try {
+      final img = await Flame.images.load(AssetPaths.specialActionSpriteSheet);
+      for (var i = 0; i < _specialActionSheetKinds.length; i++) {
+        _specialSprites[_specialActionSheetKinds[i]] = Sprite(
+          img,
+          srcPosition: Vector2(i * _frameW, 0),
+          srcSize: Vector2(_frameW, _frameH),
+        );
+      }
+    } catch (_) {
+      for (final kind in _specialActionSheetKinds) {
         _specialSprites[kind] = null;
       }
     }

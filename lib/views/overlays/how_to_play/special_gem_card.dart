@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../game/match_board_logic.dart';
-import '../../../resources/asset_paths.dart';
 import '../../../theme/jewel_candy_lumina_theme.dart';
 import 'gem_examples.dart';
 
@@ -85,11 +84,21 @@ class HowToPlaySpecialGemPreview extends StatelessWidget {
       GemKind.hyper ||
       GemKind.supernova => null,
     };
+    final actionSpecialSheetCol = switch (kind) {
+      GemKind.bomb => 0,
+      GemKind.star => 1,
+      GemKind.hyper => 2,
+      GemKind.supernova => 3,
+      GemKind.normal || GemKind.row || GemKind.col => null,
+    };
     final overlayAssetPath = switch (kind) {
-      GemKind.bomb => AssetPaths.flameOverlay,
-      GemKind.star => AssetPaths.starOverlay,
-      GemKind.supernova => AssetPaths.supernovaOverlay,
-      GemKind.normal || GemKind.row || GemKind.col || GemKind.hyper => null,
+      GemKind.normal ||
+      GemKind.row ||
+      GemKind.col ||
+      GemKind.bomb ||
+      GemKind.star ||
+      GemKind.hyper ||
+      GemKind.supernova => null,
     };
 
     return SizedBox(
@@ -102,6 +111,11 @@ class HowToPlaySpecialGemPreview extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(4),
               child: HowToPlaySpecialGemClip(specialSheetCol),
+            )
+          else if (actionSpecialSheetCol != null)
+            Padding(
+              padding: const EdgeInsets.all(4),
+              child: HowToPlayActionSpecialGemClip(actionSpecialSheetCol),
             )
           else if (overlayAssetPath != null && gemSheetCol != null)
             Padding(

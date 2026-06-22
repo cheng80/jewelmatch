@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:stonematch/game/match_board_logic.dart';
 
 void main() {
-  test('4 in a row creates a flame gem', () {
+  test('4 in a row creates a bomb gem', () {
     final board = _boardWithLine(length: 4);
     final matches = board.findAllMatches();
 
@@ -122,7 +122,7 @@ void main() {
     },
   );
 
-  test('non-hyper special gem matches same-color normal gems', () {
+  test('special gem does not match same-color normal gems', () {
     final board = _filledBoard();
     board.setGem(3, 1, board.createGem(3, 1, 2, GemKind.normal));
     board.setGem(3, 2, board.createGem(3, 2, 3, GemKind.normal));
@@ -132,11 +132,8 @@ void main() {
 
     final swapped = board.trySwap(3, 2, 4, 2);
 
-    expect(swapped, isTrue);
-    expect(
-      board.consumeSpecialEffectEvents().map((event) => event.effectKind),
-      contains(GemKind.star),
-    );
+    expect(swapped, isFalse);
+    expect(board.consumeSpecialEffectEvents(), isEmpty);
   });
 
   test('non-hyper special gems do not match by kind across colors', () {
@@ -152,18 +149,18 @@ void main() {
     expect(board.consumeSpecialEffectEvents(), isEmpty);
   });
 
-  test('hyper gem still triggers by swapping with a normal gem', () {
+  test('hyper gem does not trigger by swapping with a normal gem', () {
     final board = _filledBoard();
     board.setGem(3, 3, board.createGem(3, 3, 0, GemKind.hyper));
     board.setGem(3, 4, board.createGem(3, 4, 5, GemKind.normal));
 
     final swapped = board.trySwap(3, 3, 3, 4);
 
-    expect(swapped, isTrue);
-    expect(board.consumeSpecialEffectEvents().single.effectKind, GemKind.hyper);
+    expect(swapped, isFalse);
+    expect(board.consumeSpecialEffectEvents(), isEmpty);
   });
 
-  test('hint candidates include adjacent non-hyper special combos', () {
+  test('hint candidates exclude adjacent non-hyper special combos', () {
     final board = _filledBoard();
     board.setGem(3, 3, board.createGem(3, 3, 2, GemKind.bomb));
     board.setGem(3, 4, board.createGem(3, 4, 5, GemKind.star));
@@ -172,26 +169,85 @@ void main() {
 
     expect(
       moves,
-      contains(
-        predicate<ValidMovePair>(
-          (move) => move.a == const Point(3, 3) && move.b == const Point(3, 4),
+      isNot(
+        contains(
+          predicate<ValidMovePair>(
+            (move) =>
+                move.a == const Point(3, 3) && move.b == const Point(3, 4),
+          ),
         ),
       ),
     );
   });
 
+  test('tapping a special gem activates it immediately', () {
+    final board = _filledBoard();
+    board.setGeometry(x: 0, y: 0, tile: 10);
+    board.setGem(3, 3, board.createGem(3, 3, 2, GemKind.bomb));
+
+    board.handleTap(35, 35);
+
+    expect(board.state, 'removing');
+    expect(board.pendingRemovalSet, containsPair('3:3', true));
+    expect(board.pendingRemovalSet, containsPair('2:2', true));
+    expect(board.pendingRemovalSet, containsPair('4:4', true));
+    expect(board.stats.specialActivatedByKind[GemKind.bomb], 1);
+    expect(board.consumeSpecialEffectEvents().single.effectKind, GemKind.bomb);
+  });
+
+  test('special chain activation skips hyper gems inside the blast', () {
+    final board = _filledBoard();
+    board.setGem(3, 3, board.createGem(3, 3, 2, GemKind.bomb));
+    board.setGem(3, 4, board.createGem(3, 4, 4, GemKind.star));
+    board.setGem(4, 4, board.createGem(4, 4, 0, GemKind.hyper));
+
+    expect(board.triggerSpecialCell(3, 3), isTrue);
+
+    expect(board.pendingRemovalSet, containsPair('3:4', true));
+    expect(board.pendingRemovalSet, containsPair('4:4', true));
+    for (var col = 0; col < 8; col++) {
+      expect(board.pendingRemovalSet, containsPair('3:$col', true));
+    }
+    for (var row = 0; row < 8; row++) {
+      expect(board.pendingRemovalSet, containsPair('$row:4', true));
+    }
+    expect(board.stats.specialActivatedByKind[GemKind.bomb], 1);
+    expect(board.stats.specialActivatedByKind[GemKind.star], 1);
+    expect(board.stats.specialActivatedByKind[GemKind.hyper] ?? 0, 0);
+    expect(
+      board.consumeSpecialEffectEvents().map((event) => event.effectKind),
+      [GemKind.bomb, GemKind.star],
+    );
+  });
+
+  test('tapping a hyper gem removes only normal gems of the picked color', () {
+    final board = _filledBoard();
+    board.setGem(0, 0, board.createGem(0, 0, 0, GemKind.hyper));
+    board.setGem(0, 1, board.createGem(0, 1, 1, GemKind.star));
+    board.setGem(0, 2, board.createGem(0, 2, 1, GemKind.normal));
+
+    expect(board.triggerSpecialCell(0, 0), isTrue);
+
+    expect(board.pendingRemovalSet, containsPair('0:0', true));
+    expect(board.pendingRemovalSet, isNot(containsPair('0:1', true)));
+    expect(
+      board.consumeSpecialEffectEvents().map((event) => event.effectKind),
+      contains(GemKind.hyper),
+    );
+  });
+
+  test('special gems are not color match tokens', () {
+    final board = _filledBoard();
+    board.setGem(2, 0, board.createGem(2, 0, 4, GemKind.normal));
+    board.setGem(2, 1, board.createGem(2, 1, 4, GemKind.bomb));
+    board.setGem(2, 2, board.createGem(2, 2, 4, GemKind.normal));
+
+    expect(board.findAllMatches().groups, isEmpty);
+  });
+
   test('screenshot board has valid moves under color match rules', () {
     final board = MatchBoardLogic(rows: 8, cols: 8);
-    _setRows(board, const [
-      [5, 1, 3, 3, 5, 1, 1, 6],
-      [6, 5, 4, 6, 2, 1, 4, 5],
-      [4, 3, 1, 6, 5, 5, 3, 2],
-      [5, -2, 2, 2, 4, 6, 2, 4],
-      [3, 4, 6, 4, 5, 1, 5, 1],
-      [2, -1, 1, 5, 2, 4, -1, 6],
-      [4, 5, 1, 1, 2, 6, 3, 3],
-      [1, 4, 6, 6, 3, 4, 1, 1],
-    ]);
+    _setRows(board, _validMoveRows);
 
     final moves = board.getAllValidMoves();
 
@@ -234,6 +290,8 @@ void main() {
       expect(board.stats.specialGemsCreated, 1);
       expect(board.stats.specialCreatedByKind[GemKind.bomb], 1);
       expect(removalSet, isNot(containsPair('3:0', true)));
+      expect(board.getGem(3, 0)?.kind, GemKind.bomb);
+      expect(board.getGem(3, 0)?.color, 2);
 
       board.removeMarkedGems(removalSet);
 
@@ -426,16 +484,7 @@ void main() {
 
   test('showHint cycles through one shuffled valid move order', () {
     final board = MatchBoardLogic(rows: 8, cols: 8);
-    _setRows(board, const [
-      [5, 1, 3, 3, 5, 1, 1, 6],
-      [6, 5, 4, 6, 2, 1, 4, 5],
-      [4, 3, 1, 6, 5, 5, 3, 2],
-      [5, -2, 2, 2, 4, 6, 2, 4],
-      [3, 4, 6, 4, 5, 1, 5, 1],
-      [2, -1, 1, 5, 2, 4, -1, 6],
-      [4, 5, 1, 1, 2, 6, 3, 3],
-      [1, 4, 6, 6, 3, 4, 1, 1],
-    ]);
+    _setRows(board, _validMoveRows);
     final moves = board.getAllValidMoves();
 
     expect(moves.length, greaterThan(1));
@@ -456,16 +505,7 @@ void main() {
 
   test('showHint reshuffles and restarts when valid moves change', () {
     final board = MatchBoardLogic(rows: 8, cols: 8);
-    _setRows(board, const [
-      [5, 1, 3, 3, 5, 1, 1, 6],
-      [6, 5, 4, 6, 2, 1, 4, 5],
-      [4, 3, 1, 6, 5, 5, 3, 2],
-      [5, -2, 2, 2, 4, 6, 2, 4],
-      [3, 4, 6, 4, 5, 1, 5, 1],
-      [2, -1, 1, 5, 2, 4, -1, 6],
-      [4, 5, 1, 1, 2, 6, 3, 3],
-      [1, 4, 6, 6, 3, 4, 1, 1],
-    ]);
+    _setRows(board, _validMoveRows);
     expect(board.showHint(), isTrue);
     board.setGem(0, 0, board.createGem(0, 0, 1, GemKind.hyper));
     board.setGem(0, 1, board.createGem(0, 1, 2, GemKind.normal));
@@ -505,6 +545,17 @@ void _setRows(MatchBoardLogic board, List<List<int>> rows) {
     }
   }
 }
+
+const _validMoveRows = [
+  [1, 2, 1, 4, 5, 6, 1, 2],
+  [2, 1, 4, 5, 6, 1, 2, 3],
+  [3, 4, 3, 6, 1, 2, 3, 4],
+  [4, 3, 6, 1, 2, 3, 4, 5],
+  [5, 6, 1, 2, 3, 4, 5, 6],
+  [6, 1, 2, 3, 4, 5, 6, 1],
+  [1, 2, 3, 4, 5, 6, 1, 2],
+  [2, 3, 4, 5, 6, 1, 2, 3],
+];
 
 MatchBoardLogic _filledBoard({void Function()? onInvalidSwap}) {
   final board = MatchBoardLogic(rows: 8, cols: 8, onInvalidSwap: onInvalidSwap);

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'item_kind.dart';
 import 'match_board_matching.dart';
 import 'match_board_models.dart';
-import 'match_board_special_combos.dart';
 import 'match_board_spawn_classifier.dart';
 import 'match_board_specials.dart';
 
@@ -372,7 +371,7 @@ class MatchBoardLogic {
     for (var r = 0; r < rows; r++) {
       for (var c = 0; c < cols; c++) {
         final gem = getGem(r, c);
-        if (gem != null && gem.kind != GemKind.hyper) {
+        if (gem != null && gem.kind == GemKind.normal) {
           colors.add(gem.color);
         }
       }
@@ -437,6 +436,9 @@ class MatchBoardLogic {
 
   bool triggerSpecialSwap(int ar, int ac, int br, int bc) =>
       _triggerSpecialSwapImpl(ar, ac, br, bc);
+
+  bool triggerSpecialCell(int row, int col) =>
+      _triggerSpecialCellImpl(row, col);
 
   bool trySwap(int ar, int ac, int br, int bc) => _trySwapImpl(ar, ac, br, bc);
 

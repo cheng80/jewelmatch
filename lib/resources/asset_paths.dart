@@ -41,16 +41,20 @@ class AssetPaths {
   /// 7열×128px 보석 스프라이트 시트 (색은 코드에서 열 인덱스로 매핑)
   static const String jewelSpriteSheet = 'sprites/Jewel_Arcane.png';
 
-  /// 3열×128px 특수 보석 시트 (순서: legacy col, legacy row, flame)
+  /// 2열×128px legacy 특수 보석 시트 (순서: legacy col, legacy row)
   static const String specialSpriteSheet = 'sprites/Special_Arcane.png';
 
-  /// 폭탄 보석용 독립 오버레이.
+  /// 4열×128px 액션 특수 보석 시트 (순서: bomb, star, hyper, supernova)
+  static const String specialActionSpriteSheet =
+      'sprites/Special_Action_Arcane.png';
+
+  /// 레거시 폭탄 보석용 독립 오버레이. 현재 메인 보드 렌더에서는 사용하지 않는다.
   static const String flameOverlay = 'sprites/flame_overlay.png';
 
   /// 별 보석용 독립 오버레이.
   static const String starOverlay = 'sprites/star_overlay.png';
 
-  /// 초신성 보석용 독립 오버레이.
+  /// 레거시 초신성 보석용 독립 오버레이. 현재 메인 보드 렌더에서는 사용하지 않는다.
   static const String supernovaOverlay = 'sprites/supernova_overlay.png';
 
   /// 고대 판타지 유적 배경. Flutter 위젯에서는 전체 assets 경로를 사용한다.

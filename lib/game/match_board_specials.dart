@@ -62,10 +62,14 @@ void enqueueTriggeredSpecialForBoard({
   required int row,
   required int col,
   required int? triggerColor,
+  bool includeHyper = true,
 }) {
   final gem = getGem(row, col);
   final key = specialCellKey(row, col);
-  if (gem != null && isSpecialGemKind(gem.kind) && !queued.containsKey(key)) {
+  if (gem != null &&
+      isSpecialGemKind(gem.kind) &&
+      (includeHyper || gem.kind != GemKind.hyper) &&
+      !queued.containsKey(key)) {
     queue.add(
       MatchChainItem(
         row: row,
@@ -99,6 +103,7 @@ void markSpecialCellForRemoval({
     row: row,
     col: col,
     triggerColor: triggerColor,
+    includeHyper: false,
   );
 }
 
@@ -189,7 +194,7 @@ List<SpecialEffectEvent> activateSpecialsForBoard({
           for (var c = 0; c < cols; c++) {
             final gem = getGem(r, c);
             if (gem != null &&
-                gem.kind != GemKind.hyper &&
+                gem.kind == GemKind.normal &&
                 gem.color == targetColor) {
               markAffected(r, c, targetColor);
             }

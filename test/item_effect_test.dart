@@ -36,11 +36,12 @@ void main() {
   });
 
   test(
-    'hyper cube removes same-color non-hyper gems using selected gem color',
+    'hyper cube removes same-color normal gems using selected normal color',
     () {
       final board = _filledBoard();
-      board.setGem(0, 0, board.createGem(0, 0, 2, GemKind.star));
+      board.setGem(0, 0, board.createGem(0, 0, 2, GemKind.normal));
       board.setGem(0, 1, board.createGem(0, 1, 2, GemKind.hyper));
+      board.setGem(0, 2, board.createGem(0, 2, 2, GemKind.star));
       board.setGem(1, 0, board.createGem(1, 0, 2, GemKind.normal));
       board.setGem(1, 1, board.createGem(1, 1, 3, GemKind.normal));
 
@@ -49,6 +50,7 @@ void main() {
       expect(board.pendingRemovalSet, containsPair('0:0', true));
       expect(board.pendingRemovalSet, containsPair('1:0', true));
       expect(board.pendingRemovalSet, isNot(containsPair('0:1', true)));
+      expect(board.pendingRemovalSet, isNot(containsPair('0:2', true)));
       expect(board.pendingRemovalSet, isNot(containsPair('1:1', true)));
     },
   );

@@ -186,6 +186,7 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
 
     final sprite = specialSprite ?? _sheetSprites[_spriteColumnFor(gem)];
     if (sprite != null) {
+      final spritePaint = specialSprite == null ? normalPaint : compositedPaint;
       _withRemovalTransform(canvas, gem, ts, isRemovalVisualCell, () {
         _spriteRenderPosition.setValues(ox, oy);
         _spriteRenderSize.setValues(drawW, drawH);
@@ -193,7 +194,7 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
           canvas,
           position: _spriteRenderPosition,
           size: _spriteRenderSize,
-          overridePaint: normalPaint,
+          overridePaint: spritePaint,
         );
         if (overlaySprite != null && compositedOverlaySprite == null) {
           final overlayW = ts * _overlaySourceRatio;

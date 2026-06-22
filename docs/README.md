@@ -16,7 +16,7 @@
 |------|------|
 | [`architecture/code-flow-analysis.md`](architecture/code-flow-analysis.md) | 앱 초기화, 화면, Flame 계층, 주요 파일 역할 |
 | [`architecture/game_flow.md`](architecture/game_flow.md) | 매치-3 규칙, 모드, 오버레이 흐름 |
-| [`architecture/special_gems_rules.md`](architecture/special_gems_rules.md) | 특수 보석 생성, 발동, 연쇄, 하이퍼 스왑 규칙 |
+| [`architecture/special_gems_rules.md`](architecture/special_gems_rules.md) | 특수 보석 생성, 탭 발동, 연쇄, 하이퍼 처리 규칙 |
 | [`architecture/progression_score_targets.md`](architecture/progression_score_targets.md) | 진행 모드 레벨별 목표 점수 산식 |
 
 ## 기획

@@ -20,12 +20,12 @@
 |------|----------|------|
 | 4개 일렬 | `bomb` | 주변 3×3 제거 |
 | T/L 모양 | `star` | 해당 행과 열 제거 |
-| 5개 일렬 | `hyper` | 스왑한 상대 색 전체 제거 |
+| 5개 일렬 | `hyper` | 탭 발동 시 기존 normal 색 하나를 골라 해당 색 normal 보석 제거 |
 | 6개 이상 일렬 | `supernova` | 주변 3×3 + 해당 행과 열 제거 |
 
 `row`/`col` 특수 보석은 legacy 종류로 남아 있으며, 현재 주 생성 규칙은 위 4종을 사용한다.
-`bomb + bomb`, `bomb + star`, `star + star`, `hyper + hyper`는 전용 조합 효과가 있다.
-생성 우선순위, 발동 조건, 조합 스왑, Bejeweled 참고 룰과의 차이는 [`special_gems_rules.md`](special_gems_rules.md)를 본다. Bejeweled식 원본과 다른 Hyper + Flame/Star 처리는 해당 문서에 Stone Match식 대체 구현으로 표시되어 있다.
+특수 보석은 색상 매치 대상이 아니며, 스왑 조합이 아니라 해당 보석을 탭해서 발동한다. 효과 범위 안에 들어간 non-hyper 특수 보석은 연쇄 발동하지만 `hyper`는 제거만 되고 연쇄 발동하지 않는다.
+생성 우선순위, 발동 조건, Bejeweled 참고 룰과의 차이는 [`special_gems_rules.md`](special_gems_rules.md)를 본다.
 
 ## 3. 화면·오버레이 흐름
 

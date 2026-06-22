@@ -2,62 +2,40 @@ part of 'match_board_logic.dart';
 
 extension MatchBoardInput on MatchBoardLogic {
   bool _triggerSpecialSwapImpl(int ar, int ac, int br, int bc) {
-    final gemA = getGem(ar, ac)!;
-    final gemB = getGem(br, bc)!;
-    final removalSet = <String, bool>{};
-    final queue = <MatchChainItem>[];
-
-    if (gemA.kind == GemKind.hyper && gemB.kind == GemKind.hyper) {
-      for (var r = 0; r < rows; r++) {
-        for (var c = 0; c < cols; c++) {
-          removalSet[_cellKey(r, c)] = true;
-        }
-      }
-      resolveSpecialSwap(removalSet, queue, 'hyper x2');
-      return true;
-    }
-
-    if (gemA.kind == GemKind.hyper || gemB.kind == GemKind.hyper) {
-      late int hyperR, hyperC;
-      late BoardGem other;
-      if (gemA.kind == GemKind.hyper) {
-        hyperR = ar;
-        hyperC = ac;
-        other = gemB;
-      } else {
-        hyperR = br;
-        hyperC = bc;
-        other = gemA;
-      }
-      removalSet[_cellKey(ar, ac)] = true;
-      removalSet[_cellKey(br, bc)] = true;
-      queue.add(
-        MatchChainItem(
-          row: hyperR,
-          col: hyperC,
-          kind: GemKind.hyper,
-          triggerColor: other.kind == GemKind.hyper
-              ? pickExistingColor()
-              : other.color,
-        ),
-      );
-      resolveSpecialSwap(removalSet, queue, 'hyper');
-      return true;
-    }
-
-    final combo = buildNonHyperSpecialSwapCombo(
-      a: gemA,
-      b: gemB,
-      getGem: getGem,
-      rows: rows,
-      cols: cols,
-    );
-    if (combo != null) {
-      resolveSpecialSwap(combo.removalSet, combo.queue, combo.label);
-      return true;
-    }
-
+    // 특수 보석은 스왑 콤보가 아니라 해당 보석 탭으로만 발동한다.
     return false;
+  }
+
+  bool _triggerSpecialCellImpl(int row, int col) {
+    if (inputLocked || !isInside(row, col)) return false;
+    if (!_canSelectCellNow(row, col)) return false;
+    final gem = getGem(row, col);
+    if (gem == null || !isSpecialGemKind(gem.kind)) return false;
+
+    final removalSet = <String, bool>{_cellKey(row, col): true};
+    final queue = <MatchChainItem>[
+      MatchChainItem(
+        row: row,
+        col: col,
+        kind: gem.kind,
+        triggerColor: gem.kind == GemKind.hyper ? null : gem.color,
+      ),
+    ];
+    selected = null;
+    resolveSpecialSwap(removalSet, queue, _specialTapLabel(gem.kind));
+    return true;
+  }
+
+  String _specialTapLabel(GemKind kind) {
+    return switch (kind) {
+      GemKind.bomb => 'bomb',
+      GemKind.star => 'star',
+      GemKind.hyper => 'hyper',
+      GemKind.supernova => 'supernova',
+      GemKind.row => 'row',
+      GemKind.col => 'col',
+      GemKind.normal => 'special',
+    };
   }
 
   bool _trySwapImpl(int ar, int ac, int br, int bc) {
@@ -189,25 +167,11 @@ extension MatchBoardInput on MatchBoardLogic {
           final gemB = getGem(or, oc);
           if (gemA == null || gemB == null) continue;
 
-          var isValid = false;
-          final specialCombo = buildNonHyperSpecialSwapCombo(
-            a: gemA,
-            b: gemB,
-            getGem: getGem,
-            rows: rows,
-            cols: cols,
-          );
-          if (gemA.kind == GemKind.hyper ||
-              gemB.kind == GemKind.hyper ||
-              specialCombo != null) {
-            isValid = true;
-          } else {
-            swapCells(row, col, or, oc);
-            final matchA = findMatchesAt(or, oc);
-            final matchB = findMatchesAt(row, col);
-            swapCells(row, col, or, oc);
-            isValid = matchA.groups.isNotEmpty || matchB.groups.isNotEmpty;
-          }
+          swapCells(row, col, or, oc);
+          final matchA = findMatchesAt(or, oc);
+          final matchB = findMatchesAt(row, col);
+          swapCells(row, col, or, oc);
+          final isValid = matchA.groups.isNotEmpty || matchB.groups.isNotEmpty;
 
           if (isValid) {
             moves.add(ValidMovePair(a: Point(row, col), b: Point(or, oc)));
@@ -242,6 +206,12 @@ extension MatchBoardInput on MatchBoardLogic {
 
     if (!_canSelectCellNow(row, col)) {
       selected = null;
+      return;
+    }
+
+    final gem = getGem(row, col);
+    if (gem != null && isSpecialGemKind(gem.kind)) {
+      triggerSpecialCell(row, col);
       return;
     }
 

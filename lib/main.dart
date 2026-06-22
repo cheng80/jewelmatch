@@ -56,8 +56,12 @@ Future<void> _preloadGameVisualAssets() {
   return Future.wait([
     Flame.images.load(AssetPaths.jewelSpriteSheet),
     Flame.images.load(AssetPaths.specialSpriteSheet),
+    Flame.images.load(AssetPaths.specialActionSpriteSheet),
     SpriteSheetFrame.precache('assets/images/${AssetPaths.jewelSpriteSheet}'),
     SpriteSheetFrame.precache('assets/images/${AssetPaths.specialSpriteSheet}'),
+    SpriteSheetFrame.precache(
+      'assets/images/${AssetPaths.specialActionSpriteSheet}',
+    ),
   ]);
 }
 

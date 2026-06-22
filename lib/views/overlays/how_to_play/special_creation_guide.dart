@@ -9,7 +9,7 @@ import 'special_gem_card.dart';
 class HowToPlaySpecialCreationGuide extends StatelessWidget {
   const HowToPlaySpecialCreationGuide({super.key});
 
-  static const int _flameExampleSheetCol = 0;
+  static const int _bombExampleSheetCol = 0;
   static const int _starExampleSheetCol = 2;
   static const int _hyperExampleSheetCol = 3;
   static const int _supernovaExampleSheetCol = 5;
@@ -20,13 +20,13 @@ class HowToPlaySpecialCreationGuide extends StatelessWidget {
       children: [
         _SpecialCreationRow(
           before: const _CreationMatchRow([
-            _flameExampleSheetCol,
-            _flameExampleSheetCol,
-            _flameExampleSheetCol,
-            _flameExampleSheetCol,
+            _bombExampleSheetCol,
+            _bombExampleSheetCol,
+            _bombExampleSheetCol,
+            _bombExampleSheetCol,
           ]),
           afterKind: GemKind.bomb,
-          afterSheetCol: _flameExampleSheetCol,
+          afterSheetCol: _bombExampleSheetCol,
           label: context.tr('howToPlaySpecialMakeFlame'),
         ),
         const SizedBox(height: 10),

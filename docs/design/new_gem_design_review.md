@@ -8,8 +8,10 @@ Replace the current normal gem sprites that are visually close to Bejeweled 3 wi
 
 The current runtime uses:
 
-- Normal gems: `assets/images/sprites/Jewel.png`, 7 cells, `896x128`, each cell `128x128`.
-- Special gems: `assets/images/sprites/Special.png`, 3 cells, `384x128`, each cell `128x128`.
+- Normal gems: `assets/images/sprites/Jewel_Arcane.png`, 7 cells, `896x128`, each cell `128x128`.
+- Legacy row/col specials: `assets/images/sprites/Special_Arcane.png`, 2 cells, `256x128`, each cell `128x128`, in current legacy `col`/`row` order.
+- Action specials: `assets/images/sprites/Special_Action_Arcane.png`, 4 cells, `512x128`, each cell `128x128`, in `bomb`, `star`, `hyper`, `supernova` order.
+- Supernova: standalone 8-point starburst frame in `Special_Action_Arcane.png`; it no longer renders as a normal gem plus `supernova_overlay.png`.
 - Runtime render size: about `0.82 * tileSize`, centered in each board tile.
 
 ## Generated Concepts
@@ -51,7 +53,7 @@ Strengths:
 
 - Clearest at small size.
 - Simple material language, easy to convert into clean sprite cells.
-- Most practical for fast replacement of `Jewel.png`.
+- Most practical for fast replacement of the normal gem sheet (`Jewel_Arcane.png` in the current runtime).
 
 Risks:
 
@@ -89,7 +91,7 @@ Strengths:
 
 Risks:
 
-- The horizontal special gem remains wider by design; when composing `Special.png`, it should still be centered in a `128x128` cell and reviewed in-game.
+- The horizontal special gem remains wider by design; when composing a special sheet, it should still be centered in a `128x128` cell and reviewed in-game.
 - Fine rune grooves may need simplification after actual 128px alpha extraction.
 
 Verdict: current preferred visual target.
@@ -102,7 +104,7 @@ Strengths:
 
 - Solves the long-bar problem from 3c specials: the outer silhouette fills the square cell, while the inner rune/light channel communicates vertical or horizontal effect.
 - Preserves the Option 3 carved mineral charm style.
-- The `384x128` preview reads as three similarly weighted special gems.
+- The special-sheet preview should keep each special gem readable as its own silhouette.
 
 Risks:
 
@@ -122,7 +124,7 @@ Production constraints for the next pass:
 - Do not add gold hardware, vines, straps, mechanical parts, badges, or framed equipment details.
 - Avoid classic faceted diamond/triangle/octal silhouettes where possible.
 - Use the 3d special-gem approach: broad square-cell-filling outer silhouettes, with vertical/horizontal behavior shown by the inner rune/light channel instead of by a long bar-shaped gem.
-- Use `sprite-gen`-style QA before integration: alpha cleanup, per-cell extraction, `Jewel.png`/`Special.png` composition, and in-game screenshot review.
+- Use `sprite-gen`-style QA before integration: alpha cleanup, per-cell extraction, normal/special sheet composition, and in-game screenshot review.
 
 ## Next Sprite-Gen Plan
 
@@ -136,7 +138,7 @@ Expected deliverables:
 
 - `sprite-request.json`
 - isolated transparent gem frames
-- composed `Jewel.png` candidate, 7 cells, `896x128`
-- composed `Special.png` candidate, 3 cells, `384x128`
+- composed normal gem sheet candidate, 7 cells, `896x128`
+- composed special gem sheet candidate, frame-count per current runtime sheet
 - QA contact sheet
 - in-game board screenshot comparison
