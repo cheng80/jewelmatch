@@ -230,7 +230,7 @@ void main() {
 
     final beforeA = game.board.getGem(0, 0);
     final beforeB = game.board.getGem(0, 1);
-    game.handleBoardSwipe(5, 5, 0, 1);
+    game.handleBoardSwipe(5, 5, 5, 15, 0, 1);
     expect(game.board.getGem(0, 0), same(beforeA));
     expect(game.board.getGem(0, 1), same(beforeB));
 
@@ -250,7 +250,14 @@ void main() {
     game.board.stageTimer = 12;
 
     final start = game.board.cellToPixel(6, 0);
-    game.handleBoardSwipe(start.dx + 1, start.dy + 1, 1, 0);
+    game.handleBoardSwipe(
+      start.dx + 1,
+      start.dy + 1,
+      start.dx + 1,
+      start.dy + 11,
+      1,
+      0,
+    );
 
     expect(game.board.state, 'removing');
     expect(game.board.stageTimer, MatchBoardLogic.removeDelay);
@@ -270,7 +277,14 @@ void main() {
     unstable.y = unstable.targetY - game.board.tileSize;
 
     final start = game.board.cellToPixel(6, 0);
-    game.handleBoardSwipe(start.dx + 1, start.dy + 1, 1, 0);
+    game.handleBoardSwipe(
+      start.dx + 1,
+      start.dy + 1,
+      start.dx + 1,
+      start.dy + 11,
+      1,
+      0,
+    );
 
     expect(game.board.state, 'falling');
     expect(game.board.stageTimer, 12);

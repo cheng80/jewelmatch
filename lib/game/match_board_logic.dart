@@ -109,6 +109,13 @@ class MatchBoardLogic {
   /// BoardGem 오브젝트 풀. 제거된 보석을 여기 반납하고, 생성 시 재활용한다.
   final List<BoardGem> _gemPool = [];
   final List<SpecialEffectEvent> _specialEffectEvents = [];
+  BoardGem? _invalidDragGem;
+  double _invalidDragOffsetX = 0;
+  double _invalidDragOffsetY = 0;
+  BoardGem? _invalidDragReturnGem;
+  double _invalidDragReturnStartX = 0;
+  double _invalidDragReturnStartY = 0;
+  double _invalidDragReturnElapsed = 0;
 
   /// 풀에서 꺼내거나 새로 생성한 BoardGem을 반환한다.
   BoardGem _acquireGem({
@@ -177,6 +184,8 @@ class MatchBoardLogic {
   static const double shuffleLock = 0.08;
   static const double defaultLock = 0.10;
   static const double tweenSpeed = 18;
+  static const double invalidDragReturnDuration = 0.16;
+  static const double _invalidDragReturnOvershoot = 1.7;
 
   /// 인트로 줄 낙하만 — 일반 스왑/중력과 분리. 전체 8줄 합쳐 약 1.5~1.6초(기본 타일·60fps 근사).
   static const double introTweenSpeed = 29;
@@ -208,6 +217,7 @@ class MatchBoardLogic {
       row >= 0 && row < rows && col >= 0 && col < cols;
 
   void resetCells() {
+    _clearInvalidDragFeedback();
     for (final row in cells) {
       for (final gem in row) {
         if (gem != null) _releaseGem(gem);
@@ -251,6 +261,9 @@ class MatchBoardLogic {
   Offset cellToPixel(int row, int col) => _cellToPixelImpl(row, col);
 
   Point<int>? pixelToCell(double px, double py) => _pixelToCellImpl(px, py);
+
+  bool isPixelInsideBoard(double px, double py) =>
+      _isPixelInsideBoardImpl(px, py);
 
   BoardGem createGem(
     int row,
@@ -502,4 +515,29 @@ class MatchBoardLogic {
 
   /// 화면 좌표 탭. 첫 탭은 선택, 인접 두 번째 탭은 스왑.
   void handleTap(double px, double py) => _handleTapImpl(px, py);
+
+  void startInvalidDragFeedback({
+    required int row,
+    required int col,
+    required double startX,
+    required double startY,
+    required double currentX,
+    required double currentY,
+  }) => _startInvalidDragFeedbackImpl(
+    row: row,
+    col: col,
+    startX: startX,
+    startY: startY,
+    currentX: currentX,
+    currentY: currentY,
+  );
+
+  bool updateInvalidDragFeedback(double px, double py) =>
+      _updateInvalidDragFeedbackImpl(px, py);
+
+  void endInvalidDragFeedback() => _endInvalidDragFeedbackImpl();
+
+  bool get hasInvalidDragFeedback => _invalidDragGem != null;
+
+  BoardGem? get activeInvalidDragGem => _invalidDragGem;
 }

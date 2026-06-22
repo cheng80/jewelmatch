@@ -281,10 +281,12 @@ class MatchBoardRenderer extends PositionComponent
       canvas.clipRRect(innerR);
     }
 
+    final activeDragGem = logic.activeInvalidDragGem;
     for (var r = 0; r < logic.rows; r++) {
       for (var c = 0; c < logic.cols; c++) {
         final gem = logic.getGem(r, c);
         if (gem != null) {
+          if (identical(gem, activeDragGem)) continue;
           _drawGem(canvas, gem, ts);
         }
       }
@@ -303,6 +305,10 @@ class MatchBoardRenderer extends PositionComponent
         ),
         _selectionPaint,
       );
+    }
+
+    if (activeDragGem != null) {
+      _drawGem(canvas, activeDragGem, ts);
     }
 
     if (needsBoardClip) {

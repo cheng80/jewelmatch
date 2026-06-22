@@ -90,6 +90,13 @@ extension MatchBoardGeometry on MatchBoardLogic {
     return Point(row, col);
   }
 
+  bool _isPixelInsideBoardImpl(double px, double py) {
+    return px >= boardX &&
+        px <= boardX + cols * tileSize &&
+        py >= boardY &&
+        py <= boardY + rows * tileSize;
+  }
+
   BoardGem _createGemImpl(
     int row,
     int col,

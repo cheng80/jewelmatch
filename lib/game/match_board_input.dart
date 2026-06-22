@@ -262,4 +262,57 @@ extension MatchBoardInput on MatchBoardLogic {
     }
     selectCell(row, col);
   }
+
+  void _startInvalidDragFeedbackImpl({
+    required int row,
+    required int col,
+    required double startX,
+    required double startY,
+    required double currentX,
+    required double currentY,
+  }) {
+    final gem = getGem(row, col);
+    if (gem == null) return;
+    _invalidDragReturnGem = null;
+    _invalidDragReturnElapsed = 0;
+    _invalidDragGem = gem;
+    _invalidDragOffsetX = gem.targetX - startX;
+    _invalidDragOffsetY = gem.targetY - startY;
+    updateInvalidDragFeedback(currentX, currentY);
+  }
+
+  bool _updateInvalidDragFeedbackImpl(double px, double py) {
+    final gem = _invalidDragGem;
+    if (gem == null) return false;
+    if (!isPixelInsideBoard(px, py)) {
+      endInvalidDragFeedback();
+      return false;
+    }
+    gem.x = px + _invalidDragOffsetX;
+    gem.y = py + _invalidDragOffsetY;
+    return true;
+  }
+
+  void _endInvalidDragFeedbackImpl() {
+    final gem = _invalidDragGem;
+    if (gem != null) {
+      _invalidDragReturnGem = gem;
+      _invalidDragReturnStartX = gem.x;
+      _invalidDragReturnStartY = gem.y;
+      _invalidDragReturnElapsed = 0;
+    }
+    _invalidDragGem = null;
+    _invalidDragOffsetX = 0;
+    _invalidDragOffsetY = 0;
+  }
+
+  void _clearInvalidDragFeedback() {
+    _invalidDragGem = null;
+    _invalidDragOffsetX = 0;
+    _invalidDragOffsetY = 0;
+    _invalidDragReturnGem = null;
+    _invalidDragReturnStartX = 0;
+    _invalidDragReturnStartY = 0;
+    _invalidDragReturnElapsed = 0;
+  }
 }

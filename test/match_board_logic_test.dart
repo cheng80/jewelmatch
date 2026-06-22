@@ -274,22 +274,25 @@ void main() {
     expect(board.stageTimer, 12);
   });
 
-  test('swap touching unsettled or gravity-pending gem is blocked while falling', () {
-    final board = _filledBoard();
-    board.state = 'falling';
-    board.stageTimer = 12;
-    final unsettled = board.getGem(7, 0)!;
-    unsettled.y = unsettled.targetY - board.tileSize;
+  test(
+    'swap touching unsettled or gravity-pending gem is blocked while falling',
+    () {
+      final board = _filledBoard();
+      board.state = 'falling';
+      board.stageTimer = 12;
+      final unsettled = board.getGem(7, 0)!;
+      unsettled.y = unsettled.targetY - board.tileSize;
 
-    expect(board.trySwap(6, 0, 7, 0), isFalse);
+      expect(board.trySwap(6, 0, 7, 0), isFalse);
 
-    unsettled.y = unsettled.targetY;
-    board.setGem(7, 0, null);
+      unsettled.y = unsettled.targetY;
+      board.setGem(7, 0, null);
 
-    expect(board.trySwap(5, 0, 6, 0), isFalse);
-    expect(board.state, 'falling');
-    expect(board.stageTimer, 12);
-  });
+      expect(board.trySwap(5, 0, 6, 0), isFalse);
+      expect(board.state, 'falling');
+      expect(board.stageTimer, 12);
+    },
+  );
 
   test('spawned and mismatched gems are blocked while refilling', () {
     final board = _filledBoard();
@@ -325,6 +328,83 @@ void main() {
     expect(invalidSwaps, 1);
     expect(board.getGem(0, 0)?.color, 1);
     expect(board.getGem(0, 1)?.color, 2);
+  });
+
+  test('invalid drag feedback follows pointer until release then returns', () {
+    final board = _filledBoard();
+    board.setGeometry(x: 10, y: 20, tile: 16);
+    final gem = board.getGem(2, 3)!;
+    final originX = gem.targetX;
+    final originY = gem.targetY;
+    final startX = originX + 4;
+    final startY = originY + 5;
+
+    board.startInvalidDragFeedback(
+      row: 2,
+      col: 3,
+      startX: startX,
+      startY: startY,
+      currentX: startX + 12,
+      currentY: startY + 14,
+    );
+
+    expect(board.hasInvalidDragFeedback, isTrue);
+    expect(gem.x, originX + 12);
+    expect(gem.y, originY + 14);
+
+    board.update(1);
+
+    expect(gem.x, originX + 12);
+    expect(gem.y, originY + 14);
+
+    board.updateInvalidDragFeedback(startX + 20, startY + 4);
+
+    expect(gem.x, originX + 20);
+    expect(gem.y, originY + 4);
+
+    board.endInvalidDragFeedback();
+    board.update(MatchBoardLogic.invalidDragReturnDuration * 0.72);
+
+    expect(board.hasInvalidDragFeedback, isFalse);
+    expect(gem.x, lessThan(originX));
+    expect(gem.y, lessThan(originY));
+
+    board.update(MatchBoardLogic.invalidDragReturnDuration);
+
+    expect(gem.x, closeTo(originX, 0.001));
+    expect(gem.y, closeTo(originY, 0.001));
+  });
+
+  test('invalid drag feedback ends as soon as pointer leaves board bounds', () {
+    final board = _filledBoard();
+    board.setGeometry(x: 10, y: 20, tile: 16);
+    final gem = board.getGem(2, 3)!;
+    final originX = gem.targetX;
+    final originY = gem.targetY;
+    final startX = originX + 4;
+    final startY = originY + 5;
+
+    board.startInvalidDragFeedback(
+      row: 2,
+      col: 3,
+      startX: startX,
+      startY: startY,
+      currentX: startX + 20,
+      currentY: startY,
+    );
+
+    final keptDragging = board.updateInvalidDragFeedback(
+      board.boardX + board.cols * board.tileSize + 1,
+      startY,
+    );
+
+    expect(keptDragging, isFalse);
+    expect(board.hasInvalidDragFeedback, isFalse);
+
+    board.update(MatchBoardLogic.invalidDragReturnDuration);
+
+    expect(gem.x, closeTo(originX, 0.001));
+    expect(gem.y, closeTo(originY, 0.001));
   });
 
   test('stable-zone tap selection ignores unstable cells', () {

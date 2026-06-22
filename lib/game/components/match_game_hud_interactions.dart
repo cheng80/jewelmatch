@@ -100,10 +100,32 @@ extension _MatchGameHudInteractions on MatchGameHud {
   void _handleDragUpdate(DragUpdateEvent event) {
     final swipe = _drag.consumeSwipe(
       event.localDelta,
+      event.canvasEndPosition,
       MatchGameHud._swipeThreshold,
     );
-    if (swipe == null) return;
-    game.handleBoardSwipe(swipe.start.x, swipe.start.y, swipe.dr, swipe.dc);
+    if (swipe != null) {
+      game.handleBoardSwipe(
+        swipe.start.x,
+        swipe.start.y,
+        swipe.current.x,
+        swipe.current.y,
+        swipe.dr,
+        swipe.dc,
+      );
+      return;
+    }
+    final draggedPosition = _drag.updateConsumedPosition(
+      event.canvasEndPosition,
+    );
+    if (draggedPosition != null) {
+      final stillDragging = game.updateInvalidBoardDrag(
+        draggedPosition.x,
+        draggedPosition.y,
+      );
+      if (!stillDragging) {
+        _resetDrag();
+      }
+    }
   }
 
   void _handleDragEnd() {
@@ -111,6 +133,7 @@ extension _MatchGameHudInteractions on MatchGameHud {
     if (fallbackTap != null) {
       game.handleBoardTap(fallbackTap.x, fallbackTap.y);
     }
+    game.endBoardDrag();
     _resetDrag();
   }
 

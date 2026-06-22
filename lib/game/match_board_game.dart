@@ -462,24 +462,51 @@ class MatchBoardGame extends FlameGame {
   }
 
   /// 스와이프 입력: 시작 좌표(px)에서 [dr]/[dc] 방향으로 1칸 스왑 시도.
-  void handleBoardSwipe(double startX, double startY, int dr, int dc) {
+  bool handleBoardSwipe(
+    double startX,
+    double startY,
+    double currentX,
+    double currentY,
+    int dr,
+    int dc,
+  ) {
     if (!isPlaying ||
         timeUp ||
         board.inputLocked ||
         board.introFillInProgress ||
         activeTargetItem != null) {
-      return;
+      return false;
     }
     board.clearHint();
     final cell = board.pixelToCell(startX, startY);
-    if (cell == null) return;
+    if (cell == null) return false;
     final fromRow = cell.x;
     final fromCol = cell.y;
     final toRow = fromRow + dr;
     final toCol = fromCol + dc;
-    if (!board.isInside(toRow, toCol)) return;
+    if (!board.isInside(toRow, toCol)) return false;
     board.selected = null;
-    board.trySwap(fromRow, fromCol, toRow, toCol);
+    final swapped = board.trySwap(fromRow, fromCol, toRow, toCol);
+    if (!swapped && board.getGem(fromRow, fromCol) != null) {
+      board.startInvalidDragFeedback(
+        row: fromRow,
+        col: fromCol,
+        startX: startX,
+        startY: startY,
+        currentX: currentX,
+        currentY: currentY,
+      );
+    }
+    return swapped;
+  }
+
+  bool updateInvalidBoardDrag(double x, double y) {
+    if (!isPlaying || timeUp) return false;
+    return board.updateInvalidDragFeedback(x, y);
+  }
+
+  void endBoardDrag() {
+    board.endInvalidDragFeedback();
   }
 
   void requestHint() => _requestHintImpl();

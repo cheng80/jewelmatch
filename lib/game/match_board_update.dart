@@ -72,11 +72,45 @@ extension MatchBoardUpdate on MatchBoardLogic {
       for (var c = 0; c < cols; c++) {
         final gem = cells[r][c];
         if (gem != null) {
+          if (identical(gem, _invalidDragGem)) continue;
+          if (identical(gem, _invalidDragReturnGem)) {
+            _updateInvalidDragReturn(gem, dt);
+            continue;
+          }
           final s = min(1.0, dt * MatchBoardLogic.tweenSpeed);
           gem.x += (gem.targetX - gem.x) * s;
           gem.y += (gem.targetY - gem.y) * s;
         }
       }
     }
+  }
+
+  void _updateInvalidDragReturn(BoardGem gem, double dt) {
+    _invalidDragReturnElapsed += dt;
+    final t =
+        (_invalidDragReturnElapsed / MatchBoardLogic.invalidDragReturnDuration)
+            .clamp(0.0, 1.0);
+    if (t >= 1) {
+      gem.x = gem.targetX;
+      gem.y = gem.targetY;
+      _invalidDragReturnGem = null;
+      _invalidDragReturnElapsed = 0;
+      return;
+    }
+
+    final eased = _easeOutBack(t);
+    gem.x =
+        _invalidDragReturnStartX +
+        (gem.targetX - _invalidDragReturnStartX) * eased;
+    gem.y =
+        _invalidDragReturnStartY +
+        (gem.targetY - _invalidDragReturnStartY) * eased;
+  }
+
+  double _easeOutBack(double t) {
+    const c1 = MatchBoardLogic._invalidDragReturnOvershoot;
+    const c3 = c1 + 1;
+    final p = t - 1;
+    return 1 + c3 * p * p * p + c1 * p * p;
   }
 }
