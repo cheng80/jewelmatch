@@ -11,6 +11,7 @@ extension MatchBoardGameVfx on MatchBoardGame {
     if (events.isEmpty || board.tileSize <= 0) return;
 
     for (final event in events) {
+      _boardShake.queue(event.shake);
       final color =
           event.triggerColor != null &&
               event.triggerColor! >= 1 &&
@@ -27,6 +28,10 @@ extension MatchBoardGameVfx on MatchBoardGame {
         baseColor: color,
       );
     }
+  }
+
+  void _updateBoardShake(double dt) {
+    _boardShakeOffset.setFrom(_boardShake.update(dt));
   }
 
   Vector2 _cellCenter(int row, int col) {
@@ -63,6 +68,5 @@ extension MatchBoardGameVfx on MatchBoardGame {
     } else {
       SoundManager.playSfx(AssetPaths.sfxCollect);
     }
-
   }
 }

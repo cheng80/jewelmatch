@@ -64,6 +64,7 @@ flowchart TD
 3. `MatchBoardGame.onLoad`에서 `MatchGameHud`(viewport) → `MatchBoardRenderer`(world) → 파티클/특수효과 풀 → QA bridge 순으로 붙는다.
 4. 첫 유효 레이아웃(`onGameResize` → `_syncLayout`)에서 타일 크기·보드 위치가 정해지고 `generateFreshBoard`가 한 번 호출된다.
 5. 입력은 `MatchGameHud`가 받고, 스왑/상태 전이/점수는 `MatchBoardLogic`, 보석 그리기는 `MatchBoardRenderer`, 특수효과는 `SpecialEffectPool`이 담당한다.
-6. `MatchBoardGame.update(dt)`는 보드 업데이트 뒤 특수효과, 카메라 흔들림, 타임/진행 모드 상태, 베스트 저장을 순서대로 갱신한다.
+6. `MatchBoardGame.update(dt)`는 보드 업데이트 뒤 특수효과, 보드 전용 지진형 흔들림, 타임/진행 모드 상태, 베스트 저장을 순서대로 갱신한다.
+7. `bomb`/`hyper`/`supernova`의 범위형 발동 VFX는 `SpecialEffectBurst`가 `special_area_effects.json` manifest를 읽어 4×4 스프라이트 시트 프레임을 캐싱 렌더한다. `row`/`col`/`star` 라이트닝 계열은 절차형 렌더를 유지한다.
 
 더 자세한 파일 단위 설명은 [`code-flow-analysis.md`](code-flow-analysis.md)를 본다.

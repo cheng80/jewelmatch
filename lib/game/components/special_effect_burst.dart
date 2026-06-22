@@ -1,10 +1,14 @@
+import 'dart:convert';
 import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
+import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../match_board_logic.dart';
+import '../../resources/asset_paths.dart';
 
 part 'special_effect_burst_draw_helpers.dart';
 part 'special_effect_burst_explosion_helpers.dart';
@@ -13,6 +17,7 @@ part 'special_effect_burst_geometry_helpers.dart';
 part 'special_effect_burst_hypercube_helpers.dart';
 part 'special_effect_burst_light_helpers.dart';
 part 'special_effect_burst_particle_helpers.dart';
+part 'special_effect_burst_sprite_helpers.dart';
 part 'special_effect_burst_supernova_helpers.dart';
 part 'special_effect_burst_sweep_helpers.dart';
 
@@ -33,6 +38,7 @@ class SpecialEffectBurst extends PositionComponent {
     required double tileSize,
     required Color baseColor,
     int performanceTier = 0,
+    double durationScale = 1.0,
   }) {
     this.effectKind = effectKind;
     this.origin = origin;
@@ -40,7 +46,7 @@ class SpecialEffectBurst extends PositionComponent {
     this.tileSize = tileSize;
     this.baseColor = baseColor;
     this.performanceTier = performanceTier;
-    _lifetime = _lifetimeFor(effectKind);
+    _lifetime = _lifetimeFor(effectKind) * durationScale.clamp(0.1, 8.0);
     _elapsed = 0;
     _active = true;
   }
@@ -82,7 +88,90 @@ class SpecialEffectBurst extends PositionComponent {
   static const _electricBlue = Color(0xFF74F6FF);
   static const _electricViolet = Color(0xFFC88DFF);
 
+  static _SpecialAreaEffectAtlas? _areaEffectAtlas;
+  static Future<void>? _areaEffectAtlasLoadFuture;
+
   int get _tier => performanceTier.clamp(0, 2);
+
+  static Future<void> preloadAreaEffectSprites() {
+    return _ensureAreaEffectAtlasLoaded();
+  }
+
+  static Future<void> _ensureAreaEffectAtlasLoaded() {
+    return _areaEffectAtlasLoadFuture ??= _loadAreaEffectAtlas();
+  }
+
+  static Future<void> _loadAreaEffectAtlas() async {
+    try {
+      final raw =
+          jsonDecode(
+                await rootBundle.loadString(
+                  'assets/images/${AssetPaths.specialAreaEffectManifest}',
+                ),
+              )
+              as Map<String, dynamic>;
+      final grid = raw['grid'] as Map<String, dynamic>;
+      final columns = (grid['columns'] as num).toInt();
+      final rows = (grid['rows'] as num).toInt();
+      final frameCount = (grid['frameCount'] as num).toInt();
+      final configuredFrameWidth = (grid['frameWidth'] as num?)?.toDouble();
+      final configuredFrameHeight = (grid['frameHeight'] as num?)?.toDouble();
+      final rawEffects = raw['effects'] as Map<String, dynamic>;
+      final effects = <GemKind, _SpecialAreaEffectDefinition>{};
+
+      for (final entry in rawEffects.entries) {
+        final kind = _specialAreaEffectKindFromName(entry.key);
+        if (kind == null) continue;
+        final value = entry.value as Map<String, dynamic>;
+        final imagePath = value['image'] as String;
+        final image = await Flame.images.load(imagePath);
+        final frameWidth = configuredFrameWidth ?? image.width / columns;
+        final frameHeight = configuredFrameHeight ?? image.height / rows;
+        final frames = <Rect>[];
+        for (var i = 0; i < frameCount; i++) {
+          final col = i % columns;
+          final row = i ~/ columns;
+          frames.add(
+            Rect.fromLTWH(
+              col * frameWidth,
+              row * frameHeight,
+              frameWidth,
+              frameHeight,
+            ),
+          );
+        }
+        effects[kind] = _SpecialAreaEffectDefinition(
+          image: image,
+          frames: frames,
+          scale: (value['scale'] as num?)?.toDouble() ?? 4.0,
+          centerOffset: Offset(
+            (value['centerOffsetX'] as num?)?.toDouble() ?? 0,
+            (value['centerOffsetY'] as num?)?.toDouble() ?? 0,
+          ),
+          blendMode: _specialAreaEffectBlendMode(value['blend'] as String?),
+        );
+      }
+      _areaEffectAtlas = _SpecialAreaEffectAtlas(effects);
+    } catch (_) {
+      _areaEffectAtlas = const _SpecialAreaEffectAtlas({});
+    }
+  }
+
+  static GemKind? _specialAreaEffectKindFromName(String name) {
+    return switch (name) {
+      'bomb' => GemKind.bomb,
+      'hyper' => GemKind.hyper,
+      'supernova' => GemKind.supernova,
+      _ => null,
+    };
+  }
+
+  static BlendMode _specialAreaEffectBlendMode(String? name) {
+    return switch (name) {
+      'srcOver' => BlendMode.srcOver,
+      _ => BlendMode.plus,
+    };
+  }
 
   double get _alphaScale {
     switch (_tier) {
@@ -122,6 +211,12 @@ class SpecialEffectBurst extends PositionComponent {
       _ => 0.28,
     };
     return max(1, (count * scale).round());
+  }
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    await _ensureAreaEffectAtlasLoaded();
   }
 
   static double _lifetimeFor(GemKind kind) {
@@ -187,5 +282,37 @@ class SpecialEffectBurst extends PositionComponent {
       case GemKind.normal:
         break;
     }
+  }
+}
+
+class _SpecialAreaEffectAtlas {
+  const _SpecialAreaEffectAtlas(this.effects);
+
+  final Map<GemKind, _SpecialAreaEffectDefinition> effects;
+
+  _SpecialAreaEffectDefinition? definitionFor(GemKind kind) => effects[kind];
+}
+
+class _SpecialAreaEffectDefinition {
+  const _SpecialAreaEffectDefinition({
+    required this.image,
+    required this.frames,
+    required this.scale,
+    required this.centerOffset,
+    required this.blendMode,
+  });
+
+  final ui.Image image;
+  final List<Rect> frames;
+  final double scale;
+  final Offset centerOffset;
+  final BlendMode blendMode;
+
+  Rect frameFor(double t) {
+    final index = (t.clamp(0.0, 1.0) * frames.length).floor().clamp(
+      0,
+      frames.length - 1,
+    );
+    return frames[index];
   }
 }

@@ -13,15 +13,15 @@ SpecialEffectShake specialEffectShakeForKind(GemKind kind) {
   switch (kind) {
     case GemKind.row:
     case GemKind.col:
-      return const SpecialEffectShake(intensity: 2.6, duration: 0.22);
+      return const SpecialEffectShake(intensity: 3.4, duration: 0.30);
     case GemKind.bomb:
-      return const SpecialEffectShake(intensity: 4.8, duration: 0.30);
+      return const SpecialEffectShake(intensity: 6.2, duration: 0.38);
     case GemKind.star:
-      return const SpecialEffectShake(intensity: 4.2, duration: 0.26);
+      return const SpecialEffectShake(intensity: 5.5, duration: 0.34);
     case GemKind.hyper:
-      return const SpecialEffectShake(intensity: 5.4, duration: 0.36);
+      return const SpecialEffectShake(intensity: 7.0, duration: 0.46);
     case GemKind.supernova:
-      return const SpecialEffectShake(intensity: 7.2, duration: 0.46);
+      return const SpecialEffectShake(intensity: 9.4, duration: 0.58);
     case GemKind.normal:
       return const SpecialEffectShake(intensity: 0, duration: 0);
   }

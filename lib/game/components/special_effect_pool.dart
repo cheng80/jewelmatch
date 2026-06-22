@@ -58,6 +58,7 @@ class SpecialEffectPool {
     required List<Vector2> affectedCenters,
     required double tileSize,
     required Color baseColor,
+    double durationScale = 1.0,
   }) {
     final burst = _pool.isNotEmpty ? _pool.removeLast() : _createBurst();
     final isLineSweep = effectKind == GemKind.row || effectKind == GemKind.col;
@@ -66,10 +67,7 @@ class SpecialEffectPool {
         : 0;
     final concurrentTier = _concurrentTierFor(effectKind);
     final deviceTier = _deviceTierFor(effectKind);
-    final performanceTier = max(
-      max(lineSweepTier, concurrentTier),
-      deviceTier,
-    );
+    final performanceTier = max(max(lineSweepTier, concurrentTier), deviceTier);
     if (isLineSweep) {
       _activeLineSweeps++;
     }
@@ -81,6 +79,7 @@ class SpecialEffectPool {
       tileSize: tileSize,
       baseColor: baseColor,
       performanceTier: performanceTier,
+      durationScale: durationScale,
     );
     if (!burst.isMounted) {
       _parent.add(burst);

@@ -48,6 +48,20 @@ class AssetPaths {
   static const String specialActionSpriteSheet =
       'sprites/Special_Action_Arcane.png';
 
+  /// 범위형 특수 이펙트 atlas 제어 manifest.
+  static const String specialAreaEffectManifest =
+      'sprites/special_area_effects.json';
+
+  /// Bomb 범위형 특수 이펙트 4×4 시트.
+  static const String specialAreaEffectBomb = 'sprites/Special_Area_Bomb.png';
+
+  /// Hyper 범위형 특수 이펙트 4×4 시트.
+  static const String specialAreaEffectHyper = 'sprites/Special_Area_Hyper.png';
+
+  /// Supernova 범위형 특수 이펙트 4×4 시트.
+  static const String specialAreaEffectSupernova =
+      'sprites/Special_Area_Supernova.png';
+
   /// 레거시 폭탄 보석용 독립 오버레이. 현재 메인 보드 렌더에서는 사용하지 않는다.
   static const String flameOverlay = 'sprites/flame_overlay.png';
 

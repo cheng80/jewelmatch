@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "grid": {
+    "columns": 4,
+    "rows": 4,
+    "frameCount": 16,
+    "frameWidth": 313.5,
+    "frameHeight": 313.5
+  },
+  "effects": {
+    "bomb": {
+      "image": "sprites/Special_Area_Bomb.png",
+      "scale": 4.05,
+      "centerOffsetX": -2.3,
+      "centerOffsetY": -2.1,
+      "blend": "plus"
+    },
+    "hyper": {
+      "image": "sprites/Special_Area_Hyper.png",
+      "scale": 4.35,
+      "centerOffsetX": -12.3,
+      "centerOffsetY": -10.4,
+      "blend": "plus"
+    },
+    "supernova": {
+      "image": "sprites/Special_Area_Supernova.png",
+      "scale": 4.65,
+      "centerOffsetX": -9.2,
+      "centerOffsetY": -17.9,
+      "blend": "plus"
+    }
+  }
+}

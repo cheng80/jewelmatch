@@ -2,6 +2,16 @@ part of 'special_effect_burst.dart';
 
 extension _SpecialEffectBurstSupernovaDrawing on SpecialEffectBurst {
   void _renderSupernova(Canvas canvas, double t, double fade) {
+    if (_renderAreaEffectSprite(canvas, t, fade)) {
+      final left = _axisExtreme(horizontal: true, first: true);
+      final right = _axisExtreme(horizontal: true, first: false);
+      final top = _axisExtreme(horizontal: false, first: true);
+      final bottom = _axisExtreme(horizontal: false, first: false);
+      _drawLightning(canvas, left, right, t, fade * 0.72, seed: 30);
+      _drawLightning(canvas, top, bottom, t, fade * 0.72, seed: 31);
+      return;
+    }
+
     final center = origin.toOffset();
     final blast = Curves.easeOutCubic.transform(t);
     final radius = tileSize * (0.85 + blast * 4.2);

@@ -258,6 +258,7 @@ Flame 게임 셸이다.
 - `supernova`는 bomb과 구분되는 8방향 별 폭발형 전용 프레임을 사용하며, 더 이상 일반 보석 위 오버레이 합성으로 렌더하지 않는다.
 - 현재 스프라이트 기준 셀 크기는 모두 `128×128`.
 - 일반 보석에는 현재 렌더러의 `ColorFilter.matrix`가 적용되어 전체 톤을 맞춘다. 전용 특수 스프라이트에는 일반 보석 색상 필터를 적용하지 않는다.
+- 범위형 발동 이펙트(`bomb`, `hyper`, `supernova`의 중앙 폭발/마법 발동)는 `special_area_effects.json` manifest가 지정하는 4×4 정방형 스프라이트 시트를 캐싱해 그린다. 프레임별 투명도와 후반 fade는 PNG alpha에 베이크되어 있고 런타임에서는 별도 alpha 필터를 추가하지 않는다. `row`/`col`/`star`의 라이트닝 계열은 기존 절차형 렌더를 유지한다.
 
 현재 렌더 에셋 매핑은 다음과 같다.
 
@@ -270,12 +271,16 @@ Flame 게임 셸이다.
 | Star 특수 보석 `star` | `assets/images/sprites/Special_Action_Arcane.png` | 2번째 프레임 |
 | Hyper 특수 보석 `hyper` | `assets/images/sprites/Special_Action_Arcane.png` | 3번째 프레임 |
 | Supernova 특수 보석 `supernova` | `assets/images/sprites/Special_Action_Arcane.png` | 4번째 프레임 |
+| Bomb 범위 발동 VFX | `assets/images/sprites/Special_Area_Bomb.png` | `special_area_effects.json`의 `bomb` 설정, 4×4/16프레임 |
+| Hyper 범위 발동 VFX | `assets/images/sprites/Special_Area_Hyper.png` | `special_area_effects.json`의 `hyper` 설정, 4×4/16프레임 |
+| Supernova 범위 발동 VFX | `assets/images/sprites/Special_Area_Supernova.png` | `special_area_effects.json`의 `supernova` 설정, 4×4/16프레임 |
 
 참고:
 
 - `AssetPaths.jewelSpriteSheet` → `sprites/Jewel_Arcane.png`
 - `AssetPaths.specialSpriteSheet` → `sprites/Special_Arcane.png`
 - `AssetPaths.specialActionSpriteSheet` → `sprites/Special_Action_Arcane.png`
+- `AssetPaths.specialAreaEffectManifest` → `sprites/special_area_effects.json`
 - `AssetPaths.starOverlay` → 전용 액션 시트 로딩 실패 시 사용할 수 있는 독립 오버레이 PNG. `flameOverlay`와 `supernovaOverlay`는 레거시 상수로 남아 있으나 메인 보드 렌더에서는 사용하지 않는다.
 - 튜토리얼 오버레이(`HowToPlayOverlay`)와 `SpriteSheetFrame`도 같은 원본 픽셀 기준(`128×128`) 프리뷰 원칙을 사용한다.
 - 생성 우선순위, 발동 조건, 연쇄 처리, Bejeweled 참고 룰과의 차이는 [`special_gems_rules.md`](special_gems_rules.md)에 별도로 정리한다.

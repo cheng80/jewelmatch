@@ -4,6 +4,7 @@ import 'dart:js_interop_unsafe';
 import 'package:web/web.dart' as web;
 
 import 'match_board_game.dart';
+import 'match_board_logic.dart';
 import 'match_board_qa_bridge.dart';
 
 MatchBoardGame? _installedGame;
@@ -55,6 +56,31 @@ void installMatchBoardQaBridge(MatchBoardGame game) {
       currentGame.showLevelUpPopupAfterCelebration();
     }).toJS,
   );
+
+  web.window.setProperty(
+    '__jewelMatchDebugSpecialEffects'.toJS,
+    (() {
+      _installedGame?.debugTriggerSpecialEffects();
+    }).toJS,
+  );
+  web.window.setProperty(
+    '__jewelMatchDebugSpecialEffect'.toJS,
+    ((JSString kindName) {
+      final kind = _specialKindFromName(kindName.toDart);
+      if (kind == null) return false.toJS;
+      _installedGame?.debugTriggerSpecialEffect(kind);
+      return true.toJS;
+    }).toJS,
+  );
+  web.window.setProperty(
+    '__jewelMatchDebugSpecialEffectSlow'.toJS,
+    ((JSString kindName) {
+      final kind = _specialKindFromName(kindName.toDart);
+      if (kind == null) return false.toJS;
+      _installedGame?.debugTriggerSpecialEffect(kind, durationScale: 4);
+      return true.toJS;
+    }).toJS,
+  );
 }
 
 void uninstallMatchBoardQaBridge(MatchBoardGame game) {
@@ -64,6 +90,27 @@ void uninstallMatchBoardQaBridge(MatchBoardGame game) {
   web.window.setProperty('__jewelMatchGetState'.toJS, (() => null).toJS);
   web.window.setProperty('__jewelMatchContinueLevelUp'.toJS, (() {}).toJS);
   web.window.setProperty('__jewelMatchDebugShowSlot3Unlock'.toJS, (() {}).toJS);
+  web.window.setProperty('__jewelMatchDebugSpecialEffects'.toJS, (() {}).toJS);
+  web.window.setProperty(
+    '__jewelMatchDebugSpecialEffect'.toJS,
+    ((JSString _) => false.toJS).toJS,
+  );
+  web.window.setProperty(
+    '__jewelMatchDebugSpecialEffectSlow'.toJS,
+    ((JSString _) => false.toJS).toJS,
+  );
+}
+
+GemKind? _specialKindFromName(String name) {
+  return switch (name) {
+    'row' => GemKind.row,
+    'col' => GemKind.col,
+    'bomb' => GemKind.bomb,
+    'star' => GemKind.star,
+    'hyper' => GemKind.hyper,
+    'supernova' => GemKind.supernova,
+    _ => null,
+  };
 }
 
 JSObject _moveToJs(SimulationHintMove move) {
@@ -150,6 +197,10 @@ JSObject _stateToJs(SimulationGameState state) {
   object.setProperty(
     'boardGeometry'.toJS,
     _mapToJsObject(state['boardGeometry'] as Map<String, Object?>),
+  );
+  object.setProperty(
+    'boardShakeOffset'.toJS,
+    _mapToJsObject(state['boardShakeOffset'] as Map<String, Object?>),
   );
   object.setProperty(
     'alignedHudRects'.toJS,

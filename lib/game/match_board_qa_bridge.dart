@@ -94,6 +94,7 @@ extension MatchBoardSimulationState on MatchBoardGame {
         'rows': MatchBoardGame.rows,
         'cols': MatchBoardGame.cols,
       },
+      'boardShakeOffset': {'x': boardShakeOffset.x, 'y': boardShakeOffset.y},
       'alignedHudRects': {
         for (final entry in debugReadAlignedHudRects().entries)
           entry.key: {

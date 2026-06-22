@@ -2,6 +2,8 @@ part of 'special_effect_burst.dart';
 
 extension _SpecialEffectBurstHypercubeDrawing on SpecialEffectBurst {
   void _renderHypercube(Canvas canvas, double t, double fade) {
+    if (_renderAreaEffectSprite(canvas, t, fade)) return;
+
     final center = origin.toOffset();
     final radius = tileSize * (0.72 + t * 2.4);
     final visibleFade = min(

@@ -92,6 +92,8 @@ T / L / + 교차 매치
 
 효과 범위 안에 다른 non-hyper 특수 보석이 있으면 그 보석도 큐에 들어간다. 이 때문에 `bomb`, `star`, `supernova`, `row`, `col`은 연쇄적으로 발동할 수 있다. `hyper`는 범위에 들어가도 제거만 되고 연쇄 발동하지 않는다.
 
+발동 VFX는 룰과 별도 레이어에서 처리한다. `row`, `col`, `star`의 선형/십자 라이트닝은 기존 절차형 렌더를 유지하고, `bomb`, `hyper`, `supernova`의 중앙 범위 폭발/마법 발동은 `assets/images/sprites/special_area_effects.json` manifest가 지정하는 4×4 정방형 스프라이트 시트를 캐싱해 렌더한다. manifest에서 효과별 이미지, 프레임 grid, 표시 scale, blend 모드를 조절한다. 프레임별 투명도와 후반 fade는 PNG alpha에 베이크해 런타임 alpha 필터를 추가하지 않는다.
+
 ## 7. 하이퍼 발동 규칙
 
 ### 7-1. 보드의 `hyper` 직접 탭
@@ -228,6 +230,6 @@ raw <= 0이면 보상 없음
   - 특수 보석이 색 매치 토큰이 아님
   - 특수 스왑/힌트 후보 제외 규칙
 - `test/special_effect_event_test.dart`
-  - 특수 보석별 effect descriptor와 흔들림 값
+  - 특수 보석별 effect descriptor와 보드 전용 지진형 흔들림 값
 - `test/special_effect_pool_test.dart`
   - 특수 효과 풀 재사용과 line sweep 성능 tier

@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'app.dart';
+import 'game/components/special_effect_burst.dart';
 import 'resources/asset_paths.dart';
 import 'resources/sound_manager.dart';
 import 'services/game_settings.dart';
@@ -57,6 +58,7 @@ Future<void> _preloadGameVisualAssets() {
     Flame.images.load(AssetPaths.jewelSpriteSheet),
     Flame.images.load(AssetPaths.specialSpriteSheet),
     Flame.images.load(AssetPaths.specialActionSpriteSheet),
+    SpecialEffectBurst.preloadAreaEffectSprites(),
     SpriteSheetFrame.precache('assets/images/${AssetPaths.jewelSpriteSheet}'),
     SpriteSheetFrame.precache('assets/images/${AssetPaths.specialSpriteSheet}'),
     SpriteSheetFrame.precache(

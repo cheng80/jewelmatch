@@ -130,6 +130,11 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
     for (final slot in game.hudLoadoutSlots) {
       final r = _loadoutSlotRects[slot.index];
       if (r == null || r.isEmpty) continue;
+      final previewKind = _debugEffectPreviewKindForRect(r);
+      if (previewKind != null) {
+        _drawDebugEffectPreviewButton(canvas, r, previewKind);
+        continue;
+      }
       final item = slot.item;
       if (slot.locked || item == null) {
         _drawLockedItemSlot(canvas, r);
@@ -145,6 +150,16 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
             : null,
       );
     }
+  }
+
+  GemKind? _debugEffectPreviewKindForRect(Rect r) {
+    if (!_isDebugEffectPreviewEnabled) return null;
+    for (final entry in _debugEffectPreviewRects.entries) {
+      if ((entry.value.center - r.center).distance < 0.5) {
+        return entry.key;
+      }
+    }
+    return null;
   }
 
   void _drawItemDecisionScrim(Canvas canvas) {
@@ -680,6 +695,90 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
       RRect.fromRectAndRadius(body, Radius.circular(r.width * 0.07)),
       bodyPaint,
     );
+  }
+
+  void _drawDebugEffectPreviewButton(Canvas canvas, Rect r, GemKind kind) {
+    _drawIconButtonFrame(canvas, r);
+    final colors = _debugEffectPreviewColors(kind);
+    final inner = r.deflate(math.max(4.0, r.width * 0.11));
+    final radius = Radius.circular(math.min(8.0, inner.width * 0.20));
+    final rr = RRect.fromRectAndRadius(inner, radius);
+    final fill = Paint()
+      ..isAntiAlias = true
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          colors.$1.withValues(alpha: 0.92),
+          colors.$2.withValues(alpha: 0.72),
+          const Color(0xFF08090B).withValues(alpha: 0.92),
+        ],
+      ).createShader(inner);
+    canvas.drawRRect(rr, fill);
+
+    final glow = Paint()
+      ..isAntiAlias = true
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4
+      ..color = colors.$1.withValues(alpha: 0.52)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.outer, 4);
+    canvas.drawRRect(rr, glow);
+
+    final stroke = Paint()
+      ..isAntiAlias = true
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..color = colors.$1.withValues(alpha: 0.86);
+    canvas.drawRRect(rr, stroke);
+
+    final label = _debugEffectPreviewLabel(kind);
+    final painter = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: _ts(
+          size: math.min(
+            r.height * 0.34,
+            r.width / math.max(2.2, label.length),
+          ),
+          color: const Color(0xFFFFF4D6),
+          weight: FontWeight.w900,
+          shadows: _hudLegibilityShadows(),
+        ),
+      ),
+      textAlign: TextAlign.center,
+      textDirection: ui.TextDirection.ltr,
+    )..layout(maxWidth: inner.width * 0.92);
+    painter.paint(
+      canvas,
+      Offset(
+        inner.center.dx - painter.width / 2,
+        inner.center.dy - painter.height / 2,
+      ),
+    );
+  }
+
+  String _debugEffectPreviewLabel(GemKind kind) {
+    return switch (kind) {
+      GemKind.row => 'R',
+      GemKind.col => 'C',
+      GemKind.bomb => 'B',
+      GemKind.star => 'S',
+      GemKind.hyper => 'H',
+      GemKind.supernova => 'SN',
+      GemKind.normal => '',
+    };
+  }
+
+  (Color, Color) _debugEffectPreviewColors(GemKind kind) {
+    return switch (kind) {
+      GemKind.row ||
+      GemKind.col => (const Color(0xFF7CF7FF), const Color(0xFF145B65)),
+      GemKind.bomb => (const Color(0xFFFFD366), const Color(0xFF7D2A08)),
+      GemKind.star => (const Color(0xFFFFF1A8), const Color(0xFF825F12)),
+      GemKind.hyper => (const Color(0xFFC98DFF), const Color(0xFF1F5F78)),
+      GemKind.supernova => (const Color(0xFFFFF3B0), const Color(0xFF8B6A12)),
+      GemKind.normal => (const Color(0xFFE6E6E6), const Color(0xFF454545)),
+    };
   }
 
   void _drawItemQuantityBadge(Canvas canvas, Rect r, int quantity) {

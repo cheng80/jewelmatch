@@ -65,22 +65,59 @@ extension MatchBoardGameDebugVfx on MatchBoardGame {
     ];
 
     for (final effect in effects) {
-      final row = (centerRow + effect.rowOffset).clamp(
-        0,
-        MatchBoardGame.rows - 1,
-      );
-      final col = (centerCol + effect.colOffset).clamp(
-        0,
-        MatchBoardGame.cols - 1,
-      );
-      _specialEffectPool.spawn(
-        effectKind: effect.kind,
-        origin: _cellCenter(row, col),
-        affectedCenters: _debugAffectedCenters(effect.kind, row, col),
-        tileSize: board.tileSize,
-        baseColor: MatchBoardLogic.palette[effect.colorIndex],
-      );
+      _debugTriggerSpecialEffectAt(centerRow, centerCol, effect);
     }
+  }
+
+  /// Browser QA hook for previewing one special VFX path without overlap.
+  void _debugTriggerSpecialEffectImpl(
+    GemKind kind, {
+    double durationScale = 1.0,
+  }) {
+    if (board.tileSize <= 0 || kind == GemKind.normal) return;
+
+    final colorIndex = switch (kind) {
+      GemKind.bomb => 0,
+      GemKind.row || GemKind.col || GemKind.star => 1,
+      GemKind.hyper => 2,
+      GemKind.supernova => 3,
+      GemKind.normal => 0,
+    };
+    _debugTriggerSpecialEffectAt(
+      MatchBoardGame.rows ~/ 2,
+      MatchBoardGame.cols ~/ 2,
+      _DebugSpecialEffect(
+        kind: kind,
+        rowOffset: 0,
+        colOffset: 0,
+        colorIndex: colorIndex,
+        durationScale: durationScale,
+      ),
+    );
+  }
+
+  void _debugTriggerSpecialEffectAt(
+    int centerRow,
+    int centerCol,
+    _DebugSpecialEffect effect,
+  ) {
+    _boardShake.queue(specialEffectShakeForKind(effect.kind));
+    final row = (centerRow + effect.rowOffset).clamp(
+      0,
+      MatchBoardGame.rows - 1,
+    );
+    final col = (centerCol + effect.colOffset).clamp(
+      0,
+      MatchBoardGame.cols - 1,
+    );
+    _specialEffectPool.spawn(
+      effectKind: effect.kind,
+      origin: _cellCenter(row, col),
+      affectedCenters: _debugAffectedCenters(effect.kind, row, col),
+      tileSize: board.tileSize,
+      baseColor: MatchBoardLogic.palette[effect.colorIndex],
+      durationScale: effect.durationScale,
+    );
   }
 
   List<Vector2> _debugAffectedCenters(GemKind kind, int row, int col) {
@@ -148,10 +185,12 @@ class _DebugSpecialEffect {
     required this.rowOffset,
     required this.colOffset,
     required this.colorIndex,
+    this.durationScale = 1.0,
   });
 
   final GemKind kind;
   final int rowOffset;
   final int colOffset;
   final int colorIndex;
+  final double durationScale;
 }

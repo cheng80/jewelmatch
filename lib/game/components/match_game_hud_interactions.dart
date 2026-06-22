@@ -152,6 +152,8 @@ extension _MatchGameHudInteractions on MatchGameHud {
         _tutorialRect.contains(o) ||
         (game.isPrismColorPicking &&
             _prismColorRects.values.any((rect) => rect.contains(o))) ||
+        (_isDebugEffectPreviewEnabled &&
+            _debugEffectPreviewRects.values.any((rect) => rect.contains(o))) ||
         _itemRects.values.any((rect) => rect.contains(o));
   }
 
@@ -196,6 +198,14 @@ extension _MatchGameHudInteractions on MatchGameHud {
       game.dismissHint();
       onTutorialPressed();
       return true;
+    }
+    if (_isDebugEffectPreviewEnabled) {
+      for (final entry in _debugEffectPreviewRects.entries) {
+        if (entry.value.contains(o)) {
+          game.debugTriggerSpecialEffect(entry.key);
+          return true;
+        }
+      }
     }
     for (final entry in _itemRects.entries) {
       if (entry.value.contains(o)) {

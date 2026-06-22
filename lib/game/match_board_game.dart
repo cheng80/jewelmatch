@@ -18,8 +18,10 @@ import 'item_inventory.dart';
 import 'item_kind.dart';
 import 'jewel_game_mode.dart';
 import 'jewel_rank_progression.dart';
+import 'match_board_camera_shake.dart';
 import 'match_board_logic.dart';
 import 'match_board_qa_bridge.dart';
+import 'match_board_specials.dart';
 import 'stage_reward.dart';
 
 part 'match_board_game_vfx.dart';
@@ -86,6 +88,8 @@ class MatchBoardGame extends FlameGame {
   late final MatchBoardLogic board;
   late final ParticlePool _particlePool;
   late final SpecialEffectPool _specialEffectPool;
+  final MatchBoardCameraShake _boardShake = MatchBoardCameraShake();
+  final Vector2 _boardShakeOffset = Vector2.zero();
   bool _effectPoolsReady = false;
   MatchGameHud? _hud;
   final Map<String, String> _localeStrings = {};
@@ -193,6 +197,7 @@ class MatchBoardGame extends FlameGame {
   bool get usesPhase2Inventory => isProgressionMode;
   Future<void> get firstBoardFrameRendered => _firstBoardFrameCompleter.future;
   Future<void> get firstRoundReady => _firstRoundReadyCompleter.future;
+  Vector2 get boardShakeOffset => _boardShakeOffset;
   List<StageLoadoutSlot> get hudLoadoutSlots {
     if (usesPhase2Inventory) return stageLoadout.slots;
     if (gameMode != JewelGameMode.simple) return const [];
@@ -439,6 +444,7 @@ class MatchBoardGame extends FlameGame {
   void update(double dt) {
     board.update(dt);
     _spawnSpecialEffectEvents();
+    _updateBoardShake(dt);
     _updateItemFeedback(dt);
 
     _updateTimedModeClock(dt);
@@ -834,6 +840,9 @@ class MatchBoardGame extends FlameGame {
   void shuffleBoard() => _shuffleBoardImpl();
 
   void debugTriggerSpecialEffects() => _debugTriggerSpecialEffectsImpl();
+
+  void debugTriggerSpecialEffect(GemKind kind, {double durationScale = 1.0}) =>
+      _debugTriggerSpecialEffectImpl(kind, durationScale: durationScale);
 
   void debugShowNoMovesOverlay() {
     _showNoMovesOverlay();

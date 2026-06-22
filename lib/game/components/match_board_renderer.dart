@@ -273,6 +273,13 @@ class MatchBoardRenderer extends PositionComponent
   @override
   void render(Canvas canvas) {
     _ensureBoardChromePicture();
+    final shakeOffset = game.boardShakeOffset;
+    final hasShakeOffset = shakeOffset.x != 0 || shakeOffset.y != 0;
+    if (hasShakeOffset) {
+      canvas.save();
+      canvas.translate(shakeOffset.x, shakeOffset.y);
+    }
+
     final ts = logic.tileSize;
     final bw = logic.cols * ts;
     final bh = logic.rows * ts;
@@ -330,6 +337,9 @@ class MatchBoardRenderer extends PositionComponent
     }
 
     if (needsBoardClip) {
+      canvas.restore();
+    }
+    if (hasShakeOffset) {
       canvas.restore();
     }
   }

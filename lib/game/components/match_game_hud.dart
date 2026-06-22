@@ -12,6 +12,7 @@ import '../../services/game_settings.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../item_kind.dart';
 import '../match_board_game.dart';
+import '../match_board_logic.dart';
 
 part 'match_game_hud_buttons.dart';
 part 'match_game_hud_input.dart';
@@ -67,6 +68,7 @@ class MatchGameHud extends PositionComponent
   Rect _itemConfirmUseRect = Rect.zero;
   final Map<ItemKind, Rect> _itemRects = {};
   final Map<int, Rect> _loadoutSlotRects = {};
+  final Map<GemKind, Rect> _debugEffectPreviewRects = {};
   final Map<int, Rect> _prismColorRects = {};
 
   double _scoreBlockTop = 0;
@@ -130,6 +132,14 @@ class MatchGameHud extends PositionComponent
 
   static const List<int> _gemSheetColByColor1based = [0, 6, 3, 2, 4, 5];
   static const double _gemFrameSize = 128;
+  static const List<GemKind> _debugEffectPreviewKinds = [
+    GemKind.row,
+    GemKind.col,
+    GemKind.bomb,
+    GemKind.star,
+    GemKind.hyper,
+    GemKind.supernova,
+  ];
 
   TextStyle _ts({
     required double size,
@@ -280,6 +290,7 @@ class MatchGameHud extends PositionComponent
   void _layoutItemSlots() {
     _itemRects.clear();
     _loadoutSlotRects.clear();
+    _debugEffectPreviewRects.clear();
     _itemTrayRect = Rect.zero;
     final g = game;
     final left = g.safeContentLeft;
@@ -342,6 +353,24 @@ class MatchGameHud extends PositionComponent
       final item = slots[i].item;
       if (item != null) {
         _itemRects[item] = rect;
+      }
+    }
+
+    if (_isDebugEffectPreviewEnabled) {
+      var previewIndex = 0;
+      final previewSlots = slots.length >= _debugEffectPreviewKinds.length + 2
+          ? slots.skip(2)
+          : slots;
+      for (final slot in previewSlots) {
+        if (previewIndex >= _debugEffectPreviewKinds.length) {
+          continue;
+        }
+        final rect = _loadoutSlotRects[slot.index];
+        if (rect != null) {
+          _debugEffectPreviewRects[_debugEffectPreviewKinds[previewIndex]] =
+              rect;
+          previewIndex++;
+        }
       }
     }
   }
@@ -421,6 +450,9 @@ class MatchGameHud extends PositionComponent
 
   Map<ItemKind, Rect> debugReadItemSlotRects() =>
       Map<ItemKind, Rect>.unmodifiable(_itemRects);
+
+  bool get _isDebugEffectPreviewEnabled =>
+      Uri.base.queryParameters['qaPerf'] == '1';
 
   Map<int, Rect> debugReadPrismColorRects() =>
       Map<int, Rect>.unmodifiable(_prismColorRects);
