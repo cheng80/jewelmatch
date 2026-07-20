@@ -84,8 +84,9 @@ flutter_launcher_icons:
     background_color: "#FFFFFF"
     theme_color: "#FFFFFF"
   remove_alpha_ios: true
-  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_background: "#040A18"
   adaptive_icon_foreground: assets/icon.png
+  adaptive_icon_foreground_inset: 20
 
 #Flutter Native Splash 세팅 <<<<<<<<<<<<
 
@@ -97,7 +98,6 @@ flutter_native_splash:
   # web: false
 
   android_12:
-    image: assets/images/ui/stone_match_splash_logo.png
     color: "#040A18"
 
 #Flutter Native Splash 세팅 끝 >>>>>>>>>>

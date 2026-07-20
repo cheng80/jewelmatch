@@ -4,6 +4,8 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/flame.dart';
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -19,6 +21,13 @@ part 'match_game_hud_input.dart';
 part 'match_game_hud_interactions.dart';
 part 'match_game_hud_painters.dart';
 part 'match_game_hud_sections.dart';
+
+const bool _qaSpecialEffectsEnabled = bool.fromEnvironment(
+  'QA_SPECIAL_EFFECTS',
+);
+const bool _qaSpecialEffectsChainEnabled = bool.fromEnvironment(
+  'QA_SPECIAL_EFFECTS_CHAIN',
+);
 
 /// 상단: 일시정지·힌트 + 최고 기록 → 큰 점수 → 콤보(현재·최대) / 보드 아래: 타임바.
 ///
@@ -451,8 +460,14 @@ class MatchGameHud extends PositionComponent
   Map<ItemKind, Rect> debugReadItemSlotRects() =>
       Map<ItemKind, Rect>.unmodifiable(_itemRects);
 
+  bool get _isAndroidQaSpecialEffectsEnabled =>
+      !kIsWeb &&
+      defaultTargetPlatform == TargetPlatform.android &&
+      _qaSpecialEffectsEnabled;
+
   bool get _isDebugEffectPreviewEnabled =>
-      Uri.base.queryParameters['qaPerf'] == '1';
+      (kIsWeb && Uri.base.queryParameters['qaPerf'] == '1') ||
+      _isAndroidQaSpecialEffectsEnabled;
 
   Map<int, Rect> debugReadPrismColorRects() =>
       Map<int, Rect>.unmodifiable(_prismColorRects);

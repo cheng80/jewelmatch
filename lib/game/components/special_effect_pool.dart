@@ -60,6 +60,12 @@ class SpecialEffectPool {
     required Color baseColor,
     double durationScale = 1.0,
   }) {
+    final activeKindLimit = effectKind == GemKind.star ? 1 : 2;
+    if (_constrainedDevice &&
+        _active.where((burst) => burst.effectKind == effectKind).length >=
+            activeKindLimit) {
+      return;
+    }
     final burst = _pool.isNotEmpty ? _pool.removeLast() : _createBurst();
     final isLineSweep = effectKind == GemKind.row || effectKind == GemKind.col;
     final lineSweepTier = isLineSweep
@@ -98,7 +104,8 @@ class SpecialEffectPool {
     return switch (kind) {
       GemKind.bomb => 1,
       GemKind.hyper || GemKind.supernova => 2,
-      GemKind.row || GemKind.col || GemKind.star => 1,
+      GemKind.row || GemKind.col => 1,
+      GemKind.star => 2,
       GemKind.normal => 0,
     };
   }

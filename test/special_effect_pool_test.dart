@@ -121,13 +121,67 @@ void main() {
       tileSize: 64,
       baseColor: Colors.purple,
     );
+    pool.spawn(
+      effectKind: GemKind.star,
+      origin: Vector2.all(20),
+      affectedCenters: const [],
+      tileSize: 64,
+      baseColor: Colors.blue,
+    );
 
     final tiers = parent.children
         .whereType<SpecialEffectBurst>()
         .map((burst) => burst.performanceTier)
         .toList(growable: false);
 
-    expect(tiers, equals([1, 2]));
+    expect(tiers, equals([1, 2, 2]));
+  });
+
+  test('constrained devices cap star at one and other kinds at two', () {
+    final constrainedParent = Component();
+    final constrained = SpecialEffectPool(
+      constrainedParent,
+      constrainedDevice: true,
+    );
+    for (var i = 0; i < 3; i++) {
+      constrained.spawn(
+        effectKind: GemKind.star,
+        origin: Vector2.all(i.toDouble()),
+        affectedCenters: const [],
+        tileSize: 64,
+        baseColor: Colors.blue,
+      );
+    }
+    expect(constrained.activeCount, 1);
+
+    final constrainedBombParent = Component();
+    final constrainedBomb = SpecialEffectPool(
+      constrainedBombParent,
+      constrainedDevice: true,
+    );
+    for (var i = 0; i < 3; i++) {
+      constrainedBomb.spawn(
+        effectKind: GemKind.bomb,
+        origin: Vector2.all(i.toDouble()),
+        affectedCenters: const [],
+        tileSize: 64,
+        baseColor: Colors.orange,
+      );
+    }
+    expect(constrainedBomb.activeCount, 2);
+
+    final desktopParent = Component();
+    final desktop = SpecialEffectPool(desktopParent, constrainedDevice: false);
+    for (var i = 0; i < 3; i++) {
+      desktop.spawn(
+        effectKind: GemKind.star,
+        origin: Vector2.all(i.toDouble()),
+        affectedCenters: const [],
+        tileSize: 64,
+        baseColor: Colors.blue,
+      );
+    }
+    expect(desktop.activeCount, 3);
   });
 
   test('desktop high impact effects still avoid full cost when overlapping', () {
