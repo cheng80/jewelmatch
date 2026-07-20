@@ -152,7 +152,7 @@ extension _MatchGameHudInteractions on MatchGameHud {
         _tutorialRect.contains(o) ||
         (game.isPrismColorPicking &&
             _prismColorRects.values.any((rect) => rect.contains(o))) ||
-        (_isDebugEffectPreviewEnabled &&
+        (_isQaEffectPanel &&
             _debugEffectPreviewRects.values.any((rect) => rect.contains(o))) ||
         _itemRects.values.any((rect) => rect.contains(o));
   }
@@ -199,17 +199,13 @@ extension _MatchGameHudInteractions on MatchGameHud {
       onTutorialPressed();
       return true;
     }
-    if (_isDebugEffectPreviewEnabled) {
+    if (_isQaEffectPanel) {
       for (final entry in _debugEffectPreviewRects.entries) {
         if (entry.value.contains(o)) {
-          if (_isAndroidQaSpecialEffectsEnabled) {
-            game.triggerQaSpecialEffect(
-              entry.key,
-              chain: _qaSpecialEffectsChainEnabled,
-            );
-          } else {
-            game.debugTriggerSpecialEffect(entry.key);
-          }
+          game.triggerQaSpecialEffect(
+            entry.key,
+            chain: _qaSpecialEffectsChainEnabled,
+          );
           return true;
         }
       }
