@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 const double kPhoneFrameRefW = 390.0;
@@ -46,22 +47,39 @@ class PhoneFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final widthScale = constraints.maxWidth / kPhoneFrameRefW;
+        final heightScale = constraints.maxHeight / kPhoneFrameRefH;
+        final isAndroidPortrait =
+            !kIsWeb &&
+            defaultTargetPlatform == TargetPlatform.android &&
+            constraints.maxHeight > constraints.maxWidth;
+        final fillsExtraPortraitHeight =
+            isAndroidPortrait && widthScale < heightScale;
+        final fittedScale = min(widthScale, heightScale);
+        final logicalHeight = fillsExtraPortraitHeight
+            ? constraints.maxHeight / widthScale
+            : kPhoneFrameRefH;
+        final sourceMediaQuery = MediaQuery.of(context);
+        final logicalPaddingScale = fillsExtraPortraitHeight
+            ? 1 / fittedScale
+            : 1.0;
         final logicalChild = MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(size: const Size(kPhoneFrameRefW, kPhoneFrameRefH)),
+          data: sourceMediaQuery.copyWith(
+            size: Size(kPhoneFrameRefW, logicalHeight),
+            padding: sourceMediaQuery.padding * logicalPaddingScale,
+            viewPadding: sourceMediaQuery.viewPadding * logicalPaddingScale,
+            viewInsets: sourceMediaQuery.viewInsets * logicalPaddingScale,
+            systemGestureInsets:
+                sourceMediaQuery.systemGestureInsets * logicalPaddingScale,
+          ),
           child: SizedBox(
             width: kPhoneFrameRefW,
-            height: kPhoneFrameRefH,
+            height: logicalHeight,
             child: child,
           ),
         );
-        final fittedScale = min(
-          constraints.maxWidth / kPhoneFrameRefW,
-          constraints.maxHeight / kPhoneFrameRefH,
-        );
         final frameW = kPhoneFrameRefW * fittedScale;
-        final frameH = kPhoneFrameRefH * fittedScale;
+        final frameH = logicalHeight * fittedScale;
 
         return SizedBox(
           width: frameW,
