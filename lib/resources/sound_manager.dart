@@ -5,8 +5,10 @@ import 'dart:async';
 import '../services/game_settings.dart';
 import '../utils/sfx_play_log.dart';
 import 'asset_paths.dart';
+import 'native_sfx_slot_pool.dart';
 
 part 'sound_manager_combo_sfx.dart';
+part 'sound_manager_native_sfx.dart';
 part 'sound_manager_web_sfx.dart';
 
 /// 앱 전역 사운드 관리. BGM·효과음 재생, 볼륨·음소거 적용.
@@ -20,6 +22,7 @@ class SoundManager {
   static Timer? _pendingComboTimer;
   static String? _pendingComboPath;
   static final Map<String, AudioPool> _webSfxPools = {};
+  static final Map<String, _NativeSfxPool> _nativeSfxPools = {};
   static bool _webPrimeInFlight = false;
   static Timer? _webPrimeTimer;
   static DateTime? _lastWebPrimeAt;
@@ -71,6 +74,8 @@ class SoundManager {
     ]);
     if (kIsWeb) {
       await _initWebSfxPools();
+    } else if (defaultTargetPlatform == TargetPlatform.android) {
+      await _initNativeSfxPools();
     }
   }
 
@@ -154,6 +159,13 @@ class SoundManager {
       if (webPool != null) {
         unawaited(webPool.start(volume: vol));
         return;
+      }
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        final nativePool = _nativeSfxPools[path];
+        if (nativePool != null) {
+          nativePool.play(vol);
+          return;
+        }
       }
       FlameAudio.play(path, volume: vol);
     } catch (e, _) {
