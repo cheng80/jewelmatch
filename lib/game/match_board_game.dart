@@ -32,6 +32,23 @@ part 'match_board_game_mode_rules.dart';
 part 'match_board_game_progression.dart';
 part 'match_board_game_timing.dart';
 
+const bool qaSpecialEffectsEnabled = bool.fromEnvironment('QA_SPECIAL_EFFECTS');
+
+enum MatchGameHudBottomPanel { inventory, qaEffects, developmentItems, none }
+
+MatchGameHudBottomPanel matchGameHudBottomPanelFor({
+  required JewelGameMode gameMode,
+  required bool qaSpecialEffects,
+  required bool release,
+}) => switch (gameMode) {
+  JewelGameMode.progression => MatchGameHudBottomPanel.inventory,
+  JewelGameMode.timed => MatchGameHudBottomPanel.none,
+  JewelGameMode.simple when qaSpecialEffects =>
+    MatchGameHudBottomPanel.qaEffects,
+  JewelGameMode.simple when release => MatchGameHudBottomPanel.none,
+  JewelGameMode.simple => MatchGameHudBottomPanel.developmentItems,
+};
+
 /// 8×8 매치-3 Flame 게임 (스왑·연쇄·특수 보석).
 /// 보드 탭은 전체 화면 [MatchGameHud]가 받아 상단 크롬 외 좌표를 [handleBoardTap]으로 전달한다.
 class MatchBoardGame extends FlameGame {
@@ -195,16 +212,42 @@ class MatchBoardGame extends FlameGame {
   bool get hasPendingStageInventoryUnlock =>
       recentlyUnlockedLoadoutSlotIndices.isNotEmpty;
   bool get usesPhase2Inventory => isProgressionMode;
+  MatchGameHudBottomPanel get hudBottomPanel => matchGameHudBottomPanelFor(
+    gameMode: gameMode,
+    qaSpecialEffects: qaSpecialEffectsEnabled,
+    release: kReleaseMode,
+  );
+
+  static const List<GemKind> qaSpecialEffectKinds = [
+    GemKind.row,
+    GemKind.col,
+    GemKind.bomb,
+    GemKind.star,
+    GemKind.hyper,
+    GemKind.supernova,
+  ];
+
+  List<GemKind> get hudQaSpecialEffectKinds =>
+      hudBottomPanel == MatchGameHudBottomPanel.qaEffects
+      ? qaSpecialEffectKinds
+      : const [];
+
   Future<void> get firstBoardFrameRendered => _firstBoardFrameCompleter.future;
   Future<void> get firstRoundReady => _firstRoundReadyCompleter.future;
   Vector2 get boardShakeOffset => _boardShakeOffset;
   List<StageLoadoutSlot> get hudLoadoutSlots {
-    if (usesPhase2Inventory) return stageLoadout.slots;
-    if (gameMode != JewelGameMode.simple) return const [];
-    return [
-      for (final (index, item) in phaseOneTestItems.indexed)
-        StageLoadoutSlot(index: index, item: item, locked: false),
-    ];
+    switch (hudBottomPanel) {
+      case MatchGameHudBottomPanel.inventory:
+        return stageLoadout.slots;
+      case MatchGameHudBottomPanel.developmentItems:
+        return [
+          for (final (index, item) in phaseOneTestItems.indexed)
+            StageLoadoutSlot(index: index, item: item, locked: false),
+        ];
+      case MatchGameHudBottomPanel.qaEffects:
+      case MatchGameHudBottomPanel.none:
+        return const [];
+    }
   }
 
   Map<ItemKind, Rect> debugReadItemSlotRects() =>

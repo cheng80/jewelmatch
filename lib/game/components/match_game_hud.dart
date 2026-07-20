@@ -4,8 +4,6 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/flame.dart';
-import 'package:flutter/foundation.dart'
-    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -22,9 +20,6 @@ part 'match_game_hud_interactions.dart';
 part 'match_game_hud_painters.dart';
 part 'match_game_hud_sections.dart';
 
-const bool _qaSpecialEffectsEnabled = bool.fromEnvironment(
-  'QA_SPECIAL_EFFECTS',
-);
 const bool _qaSpecialEffectsChainEnabled = bool.fromEnvironment(
   'QA_SPECIAL_EFFECTS_CHAIN',
 );
@@ -141,15 +136,6 @@ class MatchGameHud extends PositionComponent
 
   static const List<int> _gemSheetColByColor1based = [0, 6, 3, 2, 4, 5];
   static const double _gemFrameSize = 128;
-  static const List<GemKind> _debugEffectPreviewKinds = [
-    GemKind.row,
-    GemKind.col,
-    GemKind.bomb,
-    GemKind.star,
-    GemKind.hyper,
-    GemKind.supernova,
-  ];
-
   TextStyle _ts({
     required double size,
     Color? color,
@@ -309,10 +295,13 @@ class MatchGameHud extends PositionComponent
     final width = boardRect.width > 0 ? boardRect.width : right - left;
     if (width <= 0) return;
 
+    final qaEffects = g.hudBottomPanel == MatchGameHudBottomPanel.qaEffects;
     final slots = g.hudLoadoutSlots;
-    if (slots.isEmpty) return;
+    final qaKinds = g.hudQaSpecialEffectKinds;
+    final slotCount = qaEffects ? qaKinds.length : slots.length;
+    if (slotCount == 0) return;
 
-    final phase2 = g.usesPhase2Inventory;
+    final phase2 = g.hudBottomPanel == MatchGameHudBottomPanel.inventory;
     final gap = phase2
         ? math.max(13.0, g.hudScale * 0.15)
         : math.max(9.0, g.hudScale * 0.105);
@@ -329,7 +318,7 @@ class MatchGameHud extends PositionComponent
         )
         .clamp(36.0, 48.0);
     final phaseOneTrayH = phaseOneSlotSide * 2 + rowGap;
-    final rowCount = phase2 ? 1 : 2;
+    final rowCount = phase2 ? 1 : (slotCount + 3) ~/ 4;
     final totalH = phase2
         ? math.max(phaseOneTrayH, slotSide)
         : slotSide * rowCount + rowGap;
@@ -349,7 +338,7 @@ class MatchGameHud extends PositionComponent
       totalH + trayPadY * 2,
     );
 
-    for (var i = 0; i < slots.length; i++) {
+    for (var i = 0; i < slotCount; i++) {
       final row = phase2 ? 0 : i ~/ 4;
       final col = i % 4;
       final rect = Rect.fromLTWH(
@@ -358,27 +347,13 @@ class MatchGameHud extends PositionComponent
         slotSide,
         slotSide,
       );
-      _loadoutSlotRects[slots[i].index] = rect;
-      final item = slots[i].item;
-      if (item != null) {
-        _itemRects[item] = rect;
-      }
-    }
-
-    if (_isDebugEffectPreviewEnabled) {
-      var previewIndex = 0;
-      final previewSlots = slots.length >= _debugEffectPreviewKinds.length + 2
-          ? slots.skip(2)
-          : slots;
-      for (final slot in previewSlots) {
-        if (previewIndex >= _debugEffectPreviewKinds.length) {
-          continue;
-        }
-        final rect = _loadoutSlotRects[slot.index];
-        if (rect != null) {
-          _debugEffectPreviewRects[_debugEffectPreviewKinds[previewIndex]] =
-              rect;
-          previewIndex++;
+      if (qaEffects) {
+        _debugEffectPreviewRects[qaKinds[i]] = rect;
+      } else {
+        _loadoutSlotRects[slots[i].index] = rect;
+        final item = slots[i].item;
+        if (item != null) {
+          _itemRects[item] = rect;
         }
       }
     }
@@ -460,14 +435,8 @@ class MatchGameHud extends PositionComponent
   Map<ItemKind, Rect> debugReadItemSlotRects() =>
       Map<ItemKind, Rect>.unmodifiable(_itemRects);
 
-  bool get _isAndroidQaSpecialEffectsEnabled =>
-      !kIsWeb &&
-      defaultTargetPlatform == TargetPlatform.android &&
-      _qaSpecialEffectsEnabled;
-
-  bool get _isDebugEffectPreviewEnabled =>
-      (kIsWeb && Uri.base.queryParameters['qaPerf'] == '1') ||
-      _isAndroidQaSpecialEffectsEnabled;
+  bool get _isQaEffectPanel =>
+      game.hudBottomPanel == MatchGameHudBottomPanel.qaEffects;
 
   Map<int, Rect> debugReadPrismColorRects() =>
       Map<int, Rect>.unmodifiable(_prismColorRects);

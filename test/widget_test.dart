@@ -100,16 +100,82 @@ void main() {
     final timed = MatchBoardGame(gameMode: JewelGameMode.timed);
     final progression = MatchBoardGame(gameMode: JewelGameMode.progression);
 
-    expect(
-      simple.hudLoadoutSlots,
-      hasLength(ItemKindMeta.phaseOneLoadout.length),
-    );
-    expect(
-      simple.hudLoadoutSlots.map((slot) => slot.item),
-      ItemKindMeta.phaseOneLoadout,
-    );
+    if (simple.hudBottomPanel == MatchGameHudBottomPanel.qaEffects) {
+      expect(simple.hudLoadoutSlots, isEmpty);
+      expect(
+        simple.hudQaSpecialEffectKinds,
+        MatchBoardGame.qaSpecialEffectKinds,
+      );
+    } else if (simple.hudBottomPanel ==
+        MatchGameHudBottomPanel.developmentItems) {
+      expect(
+        simple.hudLoadoutSlots,
+        hasLength(ItemKindMeta.phaseOneLoadout.length),
+      );
+      expect(
+        simple.hudLoadoutSlots.map((slot) => slot.item),
+        ItemKindMeta.phaseOneLoadout,
+      );
+      expect(simple.hudQaSpecialEffectKinds, isEmpty);
+    } else {
+      expect(simple.hudLoadoutSlots, isEmpty);
+      expect(simple.hudQaSpecialEffectKinds, isEmpty);
+    }
     expect(timed.hudLoadoutSlots, isEmpty);
+    expect(timed.hudQaSpecialEffectKinds, isEmpty);
     expect(progression.hudLoadoutSlots, hasLength(4));
+    expect(progression.hudQaSpecialEffectKinds, isEmpty);
+  });
+
+  test('bottom panel policy prioritizes mode, QA flag, then release', () {
+    final cases = [
+      (
+        mode: JewelGameMode.progression,
+        qa: true,
+        release: true,
+        expected: MatchGameHudBottomPanel.inventory,
+      ),
+      (
+        mode: JewelGameMode.timed,
+        qa: true,
+        release: false,
+        expected: MatchGameHudBottomPanel.none,
+      ),
+      (
+        mode: JewelGameMode.simple,
+        qa: true,
+        release: true,
+        expected: MatchGameHudBottomPanel.qaEffects,
+      ),
+      (
+        mode: JewelGameMode.simple,
+        qa: true,
+        release: false,
+        expected: MatchGameHudBottomPanel.qaEffects,
+      ),
+      (
+        mode: JewelGameMode.simple,
+        qa: false,
+        release: false,
+        expected: MatchGameHudBottomPanel.developmentItems,
+      ),
+      (
+        mode: JewelGameMode.simple,
+        qa: false,
+        release: true,
+        expected: MatchGameHudBottomPanel.none,
+      ),
+    ];
+    for (final testCase in cases) {
+      expect(
+        matchGameHudBottomPanelFor(
+          gameMode: testCase.mode,
+          qaSpecialEffects: testCase.qa,
+          release: testCase.release,
+        ),
+        testCase.expected,
+      );
+    }
   });
 
   test(

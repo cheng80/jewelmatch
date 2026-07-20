@@ -126,7 +126,15 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
   }
 
   void _drawItemSlots(Canvas canvas) {
+    final panel = game.hudBottomPanel;
+    if (panel == MatchGameHudBottomPanel.none) return;
     _drawItemTray(canvas);
+    if (panel == MatchGameHudBottomPanel.qaEffects) {
+      for (final entry in _debugEffectPreviewRects.entries) {
+        _drawDebugEffectPreviewButton(canvas, entry.value, entry.key);
+      }
+      return;
+    }
     for (final slot in game.hudLoadoutSlots) {
       final r = _loadoutSlotRects[slot.index];
       if (r == null || r.isEmpty) continue;
@@ -153,7 +161,7 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
   }
 
   GemKind? _debugEffectPreviewKindForRect(Rect r) {
-    if (!_isDebugEffectPreviewEnabled) return null;
+    if (!_isQaEffectPanel) return null;
     for (final entry in _debugEffectPreviewRects.entries) {
       if ((entry.value.center - r.center).distance < 0.5) {
         return entry.key;
