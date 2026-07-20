@@ -202,7 +202,14 @@ extension _MatchGameHudInteractions on MatchGameHud {
     if (_isDebugEffectPreviewEnabled) {
       for (final entry in _debugEffectPreviewRects.entries) {
         if (entry.value.contains(o)) {
-          game.debugTriggerSpecialEffect(entry.key);
+          if (_isAndroidQaSpecialEffectsEnabled) {
+            game.triggerQaSpecialEffect(
+              entry.key,
+              chain: _qaSpecialEffectsChainEnabled,
+            );
+          } else {
+            game.debugTriggerSpecialEffect(entry.key);
+          }
           return true;
         }
       }

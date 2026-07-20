@@ -1,6 +1,67 @@
 part of 'match_board_game.dart';
 
 extension MatchBoardGameDebugVfx on MatchBoardGame {
+  /// Android QA hook that drives the real board special-cell resolution path.
+  bool triggerQaSpecialEffect(GemKind kind, {bool chain = false}) {
+    if (kind == GemKind.normal ||
+        !isPlaying ||
+        timeUp ||
+        activeTargetItem != null ||
+        board.inputLocked ||
+        board.introFillInProgress ||
+        board.state != 'idle') {
+      return false;
+    }
+
+    final useChain = chain && kind != GemKind.hyper;
+
+    final row = MatchBoardGame.rows ~/ 2;
+    final centerCol = MatchBoardGame.cols ~/ 2;
+    final triggerCol = useChain ? centerCol - 3 : centerCol;
+    final requestedCells = useChain
+        ? <({int row, int col})>[
+            (row: row, col: centerCol - 2),
+            (row: row, col: centerCol - 1),
+            (row: row, col: centerCol),
+            (row: row, col: centerCol + 1),
+          ]
+        : <({int row, int col})>[(row: row, col: centerCol)];
+    final cells = <({int row, int col})>[
+      if (useChain) (row: row, col: triggerCol),
+      ...requestedCells,
+    ];
+    final previous = <({BoardGem gem, GemKind kind, int color})>[];
+    for (final cell in cells) {
+      final gem = board.getGem(cell.row, cell.col);
+      if (gem == null) return false;
+      previous.add((gem: gem, kind: gem.kind, color: gem.color));
+    }
+    for (var index = 0; index < previous.length; index++) {
+      final entry = previous[index];
+      final replacementKind = useChain && index == 0 ? GemKind.row : kind;
+      entry.gem
+        ..kind = replacementKind
+        ..color = _qaSpecialEffectColor(replacementKind);
+    }
+    final triggered = board.triggerSpecialCell(row, triggerCol);
+    if (!triggered) {
+      for (final entry in previous) {
+        entry.gem
+          ..kind = entry.kind
+          ..color = entry.color;
+      }
+    }
+    return triggered;
+  }
+
+  int _qaSpecialEffectColor(GemKind kind) => switch (kind) {
+    GemKind.bomb => 1,
+    GemKind.row || GemKind.col || GemKind.star => 2,
+    GemKind.hyper => 3,
+    GemKind.supernova => 4,
+    GemKind.normal => 1,
+  };
+
   /// Browser QA hook for previewing every high-impact special VFX path.
   void _debugTriggerSpecialEffectsImpl() {
     if (board.tileSize <= 0) return;
