@@ -1,23 +1,26 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app_config.dart';
 import '../../game/match_board_game.dart';
 import '../../resources/asset_paths.dart';
 import '../../resources/sound_manager.dart';
+import '../../services/ranking_service.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
+import '../../vm/ranking_notifier.dart';
 import '../../widgets/lumina_overlay_card.dart';
 import 'pause_menu_buttons.dart';
 
 /// 일시 정지 메뉴. 액션만 남기고 사운드 설정은 설정 화면으로 분리한다.
-class PauseMenuOverlay extends StatelessWidget {
+class PauseMenuOverlay extends ConsumerWidget {
   const PauseMenuOverlay({super.key, required this.game});
 
   final MatchBoardGame game;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return LuminaOverlayCard(
       maxCardWidth: 390,
       maxHeightFactor: 0.86,
@@ -81,8 +84,32 @@ class PauseMenuOverlay extends StatelessWidget {
             label: context.tr('exit'),
             icon: Icons.logout_rounded,
             panelColor: const Color(0xFF96522B),
-            onPressed: () {
+            onPressed: () async {
+              if (ref.read(rankingProvider).isSubmitting) return;
               SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+              if (game.hasTimedClock) {
+                final rankingMode = game.isProgressionMode
+                    ? RankingMode.level
+                    : RankingMode.time;
+                await ref
+                    .read(rankingProvider.notifier)
+                    .submit(
+                      mode: rankingMode,
+                      score: game.rankingScore,
+                      trRankSuccess: context.tr(
+                        rankingMode == RankingMode.level
+                            ? 'rankLevelSuccess'
+                            : 'rankSuccess',
+                      ),
+                      trRankNotInTop: context.tr('rankNotInTop'),
+                      trRankNotFound: context.tr('rankNotFound'),
+                      trRankLoadFailed: context.tr('rankLoadFailed'),
+                      trRankSaveFailed: context.tr('rankSaveFailed'),
+                      trRankSubmitFailed: context.tr('rankSubmitFailed'),
+                    );
+              }
+              if (!context.mounted) return;
+              ref.read(rankingProvider.notifier).reset();
               context.go(RoutePaths.title);
             },
           ),

@@ -66,7 +66,7 @@ class RankingNotifier extends Notifier<RankingSubmitState> {
     required String trRankSaveFailed,
     required String trRankSubmitFailed,
   }) async {
-    if (state.submitted || score <= 0) return;
+    if (state.isSubmitting || state.submitted || score <= 0) return;
 
     state = state.copyWith(isSubmitting: true);
 
