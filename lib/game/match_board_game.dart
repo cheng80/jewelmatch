@@ -166,6 +166,9 @@ class MatchBoardGame extends FlameGame {
   int _lastFlooredSecondForTimeTic = -1;
 
   int get progressionXp => JewelRankProgression.xpFromScore(board.score);
+  int get rankingScore => isProgressionMode
+      ? (board.score <= 0 ? 0 : progressionLevel)
+      : board.score;
   int get progressionTargetScore =>
       JewelRankProgression.scoreTargetForLevel(progressionLevel);
   double get progressionRatio => JewelRankProgression.stageProgressRatio(

@@ -25,6 +25,20 @@ void main() {
     expect(MatchBoardGame.cols, 8);
   });
 
+  test('ranking score skips empty progression rounds', () {
+    final progression = MatchBoardGame(gameMode: JewelGameMode.progression);
+    final timed = MatchBoardGame(gameMode: JewelGameMode.timed);
+
+    expect(progression.rankingScore, 0);
+
+    progression.progressionLevel = 3;
+    progression.board.score = 1;
+    timed.board.score = 1200;
+
+    expect(progression.rankingScore, 3);
+    expect(timed.rankingScore, 1200);
+  });
+
   test(
     'MatchBoardGame requestHint cycles through shuffled board hints',
     () async {
