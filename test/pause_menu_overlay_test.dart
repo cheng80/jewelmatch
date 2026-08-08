@@ -66,7 +66,7 @@ void main() {
     tester,
   ) async {
     final game = MatchBoardGame(gameMode: JewelGameMode.progression)
-      ..progressionLevel = 2;
+      ..progressionLevel = 4;
     final submitCompleter = Completer<void>();
     late _DelayedRankingNotifier notifier;
     final router = GoRouter(
@@ -118,7 +118,7 @@ void main() {
 
     expect(notifier.calls, 1);
     expect(notifier.mode, RankingMode.level);
-    expect(notifier.score, 2);
+    expect(notifier.score, 3);
     expect(router.routeInformationProvider.value.uri.path, '/game');
 
     submitCompleter.complete();
