@@ -75,14 +75,11 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
     final rankingMode = widget.game.isProgressionMode
         ? RankingMode.level
         : RankingMode.time;
-    final rankingScore = widget.game.isProgressionMode
-        ? widget.game.progressionLevel
-        : widget.game.board.score;
     ref
         .read(rankingProvider.notifier)
         .submit(
           mode: rankingMode,
-          score: rankingScore,
+          score: widget.game.rankingScore,
           trRankSuccess: context.tr(
             rankingMode == RankingMode.level
                 ? 'rankLevelSuccess'
