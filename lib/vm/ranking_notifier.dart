@@ -61,6 +61,9 @@ class RankingNotifier extends Notifier<RankingSubmitState> {
     required int score,
     required String trRankSuccess,
     required String trRankNotInTop,
+    required String trRankNotFound,
+    required String trRankLoadFailed,
+    required String trRankSaveFailed,
     required String trRankSubmitFailed,
   }) async {
     if (state.submitted || score <= 0) return;
@@ -75,12 +78,17 @@ class RankingNotifier extends Notifier<RankingSubmitState> {
     );
 
     String message;
-    if (result == null) {
-      message = trRankSubmitFailed;
-    } else if (result.ranked) {
+    if (!result.isSuccess) {
+      message = switch (result.failure!) {
+        RankingFailure.notFound => trRankNotFound,
+        RankingFailure.loadFailed => trRankLoadFailed,
+        RankingFailure.saveFailed => trRankSaveFailed,
+        RankingFailure.unavailable => trRankSubmitFailed,
+      };
+    } else if (result.data!.ranked) {
       message = trRankSuccess
-          .replaceAll('{rank}', '${result.rank}')
-          .replaceAll('{score}', '${result.score}');
+          .replaceAll('{rank}', '${result.data!.rank}')
+          .replaceAll('{score}', '${result.data!.score}');
     } else {
       message = trRankNotInTop;
     }

@@ -89,6 +89,9 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
                 : 'rankSuccess',
           ),
           trRankNotInTop: context.tr('rankNotInTop'),
+          trRankNotFound: context.tr('rankNotFound'),
+          trRankLoadFailed: context.tr('rankLoadFailed'),
+          trRankSaveFailed: context.tr('rankSaveFailed'),
           trRankSubmitFailed: context.tr('rankSubmitFailed'),
         );
   }
