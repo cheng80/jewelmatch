@@ -33,6 +33,7 @@
 | 문서 | 용도 |
 |------|------|
 | [`tools/web_build.md`](tools/web_build.md) | Web 릴리즈 빌드, `/match/` base-href, 배포 절차 |
+| [`tools/ranking_server.md`](tools/ranking_server.md) | 랭킹 데이터 백업, 초기화, 복원 절차 |
 | [`tools/android_gradle_migration.md`](tools/android_gradle_migration.md) | Android Gradle/Kotlin DSL 현재 설정과 변경 체크 |
 | [`tools/ios_profile_build.md`](tools/ios_profile_build.md) | iOS 프로필 빌드와 실기기 설치 |
 | [`tools/version_display_and_settings.md`](tools/version_display_and_settings.md) | 설정 화면 구조와 타이틀 하단 버전 표시 정책 |

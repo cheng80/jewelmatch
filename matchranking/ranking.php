@@ -5,6 +5,7 @@
  * GET  ?action=list&mode=time|level   → 상위 30명 반환
  * GET  ?action=top1&mode=time|level   → 1위만 반환 (HUD 표시용)
  * POST ?action=submit&mode=time|level → 점수/레벨 등록, 순위 응답
+ * POST ?action=reset                  → 관리자 전용 단일 모드 초기화
  *   body: {"name":"...", "score":12345, "mode":"time"}
  *
  * 데이터: 같은 디렉터리의 ranking_data.json / ranking_level_data.json (자동 생성).
@@ -36,6 +37,45 @@ function dataFile(string $mode): string {
 
 function lockFile(string $mode): string {
     return __DIR__ . '/ranking_' . $mode . '.lock';
+}
+
+function envValue(string $path, string $key): string {
+    if (!is_file($path)) return '';
+
+    $lines = @file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if (!is_array($lines)) return '';
+
+    $value = '';
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if ($line === '' || strpos($line, '#') === 0) continue;
+
+        $separator = strpos($line, '=');
+        if ($separator === false) continue;
+
+        if (trim(substr($line, 0, $separator)) === $key) {
+            $value = trim(trim(substr($line, $separator + 1)), "\"'");
+        }
+    }
+
+    return $value;
+}
+
+function requestHeaderValue(string $name): string {
+    $serverKey = 'HTTP_' . strtoupper(str_replace('-', '_', $name));
+    if (isset($_SERVER[$serverKey])) {
+        return trim((string)$_SERVER[$serverKey]);
+    }
+
+    if (function_exists('getallheaders')) {
+        foreach (getallheaders() as $headerName => $headerValue) {
+            if (strcasecmp($headerName, $name) === 0) {
+                return trim((string)$headerValue);
+            }
+        }
+    }
+
+    return '';
 }
 
 function loadData(string $mode, &$failed): array {
@@ -245,6 +285,115 @@ switch ($action) {
             }
             if (!@fclose($lockHandle)) {
                 error_log('ranking lock close failed');
+            }
+        }
+
+        http_response_code($status);
+        echo json_encode($response);
+        break;
+
+    case 'reset':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['ok' => false, 'error' => 'POST required']);
+            break;
+        }
+
+        $expectedToken = envValue('/share/Web/.match_deploy.env', 'MATCH_DEPLOY_TOKEN');
+        if ($expectedToken === '') {
+            http_response_code(503);
+            echo json_encode(['ok' => false, 'error' => 'ranking_reset_disabled']);
+            break;
+        }
+
+        $providedToken = requestHeaderValue('X-Ranking-Admin-Token');
+        if ($providedToken === '' || !hash_equals($expectedToken, $providedToken)) {
+            http_response_code(401);
+            echo json_encode(['ok' => false, 'error' => 'unauthorized']);
+            break;
+        }
+
+        $rawBody = file_get_contents('php://input');
+        $body = is_string($rawBody) ? json_decode($rawBody, true) : null;
+        if (!is_array($body)) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'invalid JSON']);
+            break;
+        }
+
+        $mode = $body['mode'] ?? '';
+        if ($mode !== 'time' && $mode !== 'level') {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'mode required']);
+            break;
+        }
+
+        $dryRun = ($body['dryRun'] ?? false) === true;
+        if (!$dryRun && ($body['confirm'] ?? '') !== 'RESET ' . $mode) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'confirmation required']);
+            break;
+        }
+        $expectedCount = $body['expectedCount'] ?? null;
+        if (!$dryRun && (!is_int($expectedCount) || $expectedCount < 0)) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'expectedCount required']);
+            break;
+        }
+
+        $lockHandle = @fopen(lockFile($mode), 'c');
+        if (!is_resource($lockHandle)) {
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'error' => 'ranking_save_failed']);
+            break;
+        }
+
+        if (!@flock($lockHandle, LOCK_EX)) {
+            @fclose($lockHandle);
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'error' => 'ranking_save_failed']);
+            break;
+        }
+
+        $response = null;
+        $status = 200;
+        try {
+            $loadFailed = false;
+            $data = loadData($mode, $loadFailed);
+            if ($loadFailed) {
+                $response = ['ok' => false, 'error' => 'ranking_load_failed'];
+                $status = 500;
+            } elseif ($dryRun) {
+                $response = [
+                    'ok' => true,
+                    'mode' => $mode,
+                    'dryRun' => true,
+                    'count' => count($data),
+                ];
+            } elseif ($expectedCount !== count($data)) {
+                $response = [
+                    'ok' => false,
+                    'error' => 'ranking_count_changed',
+                    'expectedCount' => $expectedCount,
+                    'actualCount' => count($data),
+                ];
+                $status = 409;
+            } elseif (!saveData($mode, [])) {
+                $response = ['ok' => false, 'error' => 'ranking_save_failed'];
+                $status = 500;
+            } else {
+                $response = [
+                    'ok' => true,
+                    'mode' => $mode,
+                    'removed' => count($data),
+                ];
+            }
+        } finally {
+            if (!@flock($lockHandle, LOCK_UN)) {
+                error_log('ranking reset lock release failed');
+            }
+            if (!@fclose($lockHandle)) {
+                error_log('ranking reset lock close failed');
             }
         }
 
