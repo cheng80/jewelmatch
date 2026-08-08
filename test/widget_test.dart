@@ -31,6 +31,9 @@ void main() {
 
     expect(progression.rankingScore, 0);
 
+    progression.progressionLevel = 2;
+    expect(progression.rankingScore, 2);
+
     progression.progressionLevel = 3;
     progression.board.score = 1;
     timed.board.score = 1200;
