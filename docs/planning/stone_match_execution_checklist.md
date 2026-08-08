@@ -5,7 +5,10 @@
 ## 제품·플레이
 
 - [x] 8×8 매치-3 코어 (`MatchBoardLogic` / `MatchBoardRenderer`)
-- [x] 심플 모드 / 타임 모드 (`JewelGameMode`, 쿼리 `mode=simple|timed`)
+- [x] 심플 / 진행 / 타임 모드 (`JewelGameMode`, 쿼리 `mode=simple|progression|timed`)
+- [x] 진행 모드 레벨 목표 점수·다음 보드 보너스·최고 레벨 기록
+- [x] 진행 모드 2차 런 인벤토리: 스테이지 보상, 다음 스테이지 로드아웃 편집, 슬롯 3/4 해금
+- [x] 하단 패널 정책: 진행=인벤토리, 타임=없음, 심플 debug/profile=개발 아이템, 심플 release=없음, 심플 QA 플래그=특수 효과 6종
 - [x] 일시정지·NoMoves·TimeUp 오버레이 흐름 (`docs/architecture/game_flow.md` 기준)
 - [x] 타임 모드: 매치 보상 초·저시간 `TimeTic`·타임 오버 `TimeUp` SFX
 - [x] 무효 스왑 `Fail` SFX
@@ -21,6 +24,9 @@
 - [x] 특수 보석 렌더: `bomb`/`star`/`hyper`/`supernova`는 `Special_Action_Arcane.png`, legacy `row`/`col`은 `Special_Arcane.png`
 - [x] 튜토리얼 스프라이트 프리뷰를 원본 픽셀 기준 프레임 크롭으로 통일 (`SpriteSheetFrame`)
 - [x] 파티클 퍼짐 반경·입자 수·수명·글로우 강도 축소로 GPU 부담 완화
+- [x] Android 제한 기기에서 특수 효과 동시 개수·디테일을 적응형으로 제한 (`SpecialEffectPool`)
+- [x] 실제 특수 효과 단발·연속 검증용 QA 경로 추가
+- [x] 타이틀 안개 렌더링 병목 제거
 - [x] MVVM 리팩터링: `flutter_riverpod` 도입, `SettingsNotifier`·`RankingNotifier`, 오버레이 파일 분리, 공통 위젯 추출
 - [x] Riverpod 구독 범위 최적화: `select`로 필요한 필드만 구독 (`SettingView` / `PauseMenuOverlay` / `TimeUpOverlay`)
 - [x] 볼륨 슬라이더 draft/commit 분리로 드래그 중 `shared_preferences`/설정 연속 쓰기 제거
@@ -38,12 +44,14 @@
 - [x] 보석 스프라이트 시트 교체: `Jewel_Arcane.png` (`128×128` 프레임 기준)
 - [x] 특수 보석 시트: `Special_Arcane.png`(legacy row/col) + `Special_Action_Arcane.png`(bomb/star/hyper/supernova) 적용
 - [x] `docs/tools/audio_aisfx_prompts.md` — AISFX / Soundverse 프롬프트 정리
+- [x] Android 반복 SFX를 고정 크기 `NativeSfxSlotPool`에서 재사용하고 포화 시 추가 재생 생략
 - [ ] 교체한 `TimeUp` 등 SFX가 의도한 톤인지 인게임에서 최종 청취
 
 ## 플랫폼·설정
 
 - [x] 설정: 볼륨·음소거·화면 켜짐·언어
 - [x] 웹: `kIsWeb`일 때 설정의「평점 남기기」비표시, 타이틀 자동 리뷰 요청 생략
+- [x] Android 앱 아이콘 안전 여백·Android 12 스플래시 표시 정리
 - [ ] iOS `AppConfig.appStoreId` 등 스토어 연동 값 출시 전 입력 (App Store Connect 등에서 설정)
 
 ## 반응형 프레임·레이아웃
@@ -52,13 +60,15 @@
 - [x] `TitleView`·`SettingView`에 `PhoneFrameScaffold` 적용 → 비율·폰트·간격 유지
 - [x] `GameView`는 Flame 자체 `LayoutBuilder` 스케일링 — `FittedBox` 미적용
 - [x] `StarryBackground` GlobalKey 싱글톤 — `App` 레벨 1개만 (Scaffold 바깥·모든 뷰 공유)
+- [x] Android 세로 화면은 기준 프레임 여백 대신 사용 가능한 전체 높이를 사용
 - [ ] 웹 브라우저 리사이즈·키보드·분할 화면에서 비율 유지 최종 확인
 
 ## Web 빌드·배포
 
 - [x] `docs/tools/web_build.md` — `--base-href`와 배포 폴더 관계 문서화
+- [x] 2026-07-20 NAS release 배포에서 핵심 파일 해시·진입점·원격 세로 화면 스모크 확인 (PR #6 기준)
 - [ ] 실제 서버 경로(예: `/match/`)에 맞춰 **빌드 시 `--base-href`를 동일하게** 맞출 것
-- [ ] 배포 후 정적 파일·라우팅·첫 로드·사운드(unlock) 스모크 테스트
+- [ ] 다음 배포에서도 정적 파일·라우팅·첫 로드·사운드(unlock)·랭킹 API 스모크 테스트
 
 ## 릴리즈·스토어 문서
 
@@ -80,10 +90,14 @@
 - [x] `PhoneFrameScaffold` 도입·파티클·SFX → `docs/architecture/code-flow-analysis.md` §9·§10 갱신
 - [x] 렌더링 최적화/에셋 구조 변경 사항을 `START_HERE.md`, `docs/architecture/code-flow-analysis.md`에 반영
 - [x] 최근 Riverpod 최적화/로딩 오버레이/오디오 정책 변경 사항을 관련 문서에 반영
+- [x] 진행 모드 2차 인벤토리·보상 계획과 구현 체크리스트를 현재 코드 기준으로 갱신
+- [x] PR #4~#6 Android/VFX/AudioPool/하단 패널 기준을 본 체크리스트와 `START_HERE.md`에 반영
 
 ## 테스트·품질
 
-- [x] `flutter test` 기본 위젯/게임 스모크
+- [x] `flutter analyze --no-pub` 문제 없음 (2026-08-09)
+- [x] `flutter test --no-pub` 전체 106개 통과 (2026-08-09)
+- [x] 하단 패널·Android SFX 풀·제한 기기 VFX·진행 인벤토리 회귀 테스트 보유
 - [ ] 필요 시 통합 테스트·골든·웹 E2E 범위 확장
 
 ## 후속 최적화 점검

@@ -2,6 +2,8 @@
 
 레벨 모드 클리어 시 `StageRewardEvaluator`가 `MatchBoardGameStats`, 목표 대비 점수 비율, 최대 콤보, 힌트 보존 여부를 함께 평가한다. 점수 단독 보상은 쓰지 않는다.
 
+현재 규칙은 `19ad065`에서 구현됐고 `lib/game/stage_reward.dart`와 `test/stage_reward_test.dart`를 기준으로 유지한다. 이전 에이전트 계획의 초안 수치는 사용하지 않고 아래 현재 코드 기준표를 단일 기준으로 삼는다.
+
 ## 아이템 레어도
 
 | 레어도 | 아이템 | 입수 난이도 |

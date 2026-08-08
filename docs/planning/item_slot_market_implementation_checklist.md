@@ -9,6 +9,12 @@
 - 단계가 바뀌면 `flutter analyze`, 관련 `flutter test`, 웹 화면 QA 결과를 남긴다.
 - 임시 QA 스크린샷은 레포 루트가 아니라 `tmp/qa/` 아래에 저장한다.
 
+## 현재 상태 (2026-08-09)
+
+- 0~2차 구현 완료, 3차 이후 미착수.
+- 구현 근거: `19ad065`, `31e4969`, `6f5b40e` 및 현재 `lib/game/`, `lib/views/overlays/`, `test/`.
+- 이전 에이전트 계획의 유효 항목은 본 체크리스트에 통합했으며, 체크 표시는 현재 코드·테스트·보존된 QA 자료가 있는 경우만 완료로 본다.
+
 ## 0차: 힌트 제한과 모드별 지급
 
 ### 목표
@@ -41,7 +47,7 @@
 - [x] `flutter analyze --no-pub` 통과.
 - [x] `flutter test --no-pub` 통과.
 - [x] `flutter build web --release --no-pub` 통과.
-- [x] Chrome QA 스크린샷 저장: `tmp/qa/hint_badge_shifted_*.png`.
+- [ ] 힌트 뱃지 Chrome QA 캡처는 현재 `tmp/qa/`에 보존되어 있지 않다. UI 변경 시 다시 확인한다.
 
 ## 1차: 아이템 효용성 테스트 HUD
 
@@ -54,8 +60,8 @@
 ### 모델·상태
 
 - [x] `ItemKind` enum을 추가한다.
-- [ ] 8개 아이템 메타데이터를 한 곳에 둔다.
-- [ ] 아이템 이름, 아이콘, 대상 선택 필요 여부, 모드 제한을 데이터로 분리한다.
+- [x] `ItemKindMeta`에 8개 아이템 순서, 이름, 대상 선택 필요 여부를 둔다.
+- [ ] 아이콘 경로와 모드 제한은 아직 HUD·게임 로직에 나뉘어 있다. 변경 필요가 생기면 메타데이터로 합친다.
 - [x] 1차에서는 아이템 수량/인벤토리/영속 저장을 만들지 않는다.
 - [x] `itemTargeting` 상태를 게임 또는 보드 입력 계층에 추가한다.
 - [x] 대상 선택 중 일반 스왑 입력을 막는다.
@@ -71,8 +77,8 @@
 - [x] 비활성 아이템은 눌러도 보드 상태가 변하지 않게 한다.
 - [x] 타임 슬립은 시간 없는 모드에서 비활성 처리한다.
 - [x] 힌트+는 무한 모드에서 비활성 처리한다.
-- [x] 2차 런 인벤토리 전환 후 무한/타임 모드의 하단 8개 테스트 슬롯을 제거한다.
-- [x] 진행 모드에서만 `StageLoadout` 4칸 HUD 슬롯을 표시한다.
+- [x] 심플 debug/profile은 개발 아이템 8개, 심플 release는 패널 없음, 명시적 QA 빌드는 특수 효과 6종 패널을 표시한다.
+- [x] 타임 모드는 패널 없음, 진행 모드는 `StageLoadout` 4칸 HUD 슬롯을 표시한다.
 
 ### 보드 효과
 
@@ -80,7 +86,7 @@
 - [x] 고대 폭탄: 선택 셀 중심 3×3 제거.
 - [x] 토르 망치: 선택 셀 기준 `GemKind.star`와 같은 십자 제거.
 - [x] 하이퍼 큐브: 선택 보석 색상과 같은 non-hyper 보석 전체 제거.
-- [x] 하이퍼 큐브가 특수 보석을 선택하면 1차에서는 `kind`가 아니라 `color`만 사용한다.
+- [x] 하이퍼 큐브는 일반 보석만 대상으로 받고 특수 보석 선택은 거부한다.
 - [x] 프리즘 변환: 선택 보석 색 변경 UI와 변경 후 매치 체크를 구현한다.
 - [x] 운명의 셔플: 특수 보석 위치를 보존하고 일반 보석만 섞는다.
 - [x] 운명의 셔플 후 최소 1개 유효 이동을 보장한다.
@@ -89,16 +95,16 @@
 
 ### 테스트·QA
 
-- [ ] 각 아이템 효과 단위 테스트를 추가한다.
+- [x] 8개 아이템 효과를 `test/item_effect_test.dart`와 `test/widget_test.dart`에서 검증한다.
 - [x] 가장자리/모서리에서 룬 망치, 고대 폭탄, 토르 망치 범위가 안전하게 잘린다.
 - [x] 하이퍼 큐브가 일반 보석 선택 시 같은 색 전체 제거를 수행한다.
-- [x] 하이퍼 큐브가 특수 보석 선택 시 색상만 참조한다.
+- [x] 하이퍼 큐브가 일반 보석 선택 시 같은 색 일반 보석만 제거하고 특수 보석은 제외한다.
 - [x] 운명의 셔플 후 특수 보석 좌표가 유지된다.
 - [x] 대상 선택 중 타임바 시간이 계속 줄어든다.
 - [x] 대상 선택 중 일반 스왑이 발생하지 않는다.
 - [x] 힌트+ 사용 시 기존 힌트 잔량은 변하지 않고 힌트가 즉시 표시된다.
-- [x] 웹 모바일 크기에서 무한/타임 모드는 하단 아이템 슬롯이 보이지 않는다.
-- [x] 웹 모바일 크기에서 진행 모드는 4칸 로드아웃 슬롯이 보인다.
+- [x] `test/widget_test.dart`에서 모드·QA 플래그·release 우선순위별 하단 패널 정책을 검증한다.
+- [ ] 현재 하단 패널 정책의 브라우저 캡처는 보존되어 있지 않다. 패널 UI 변경 시 다시 확인한다.
 
 ## 2차: 스테이지 종료 보상과 런 인벤토리
 
@@ -141,7 +147,7 @@
 ### 보상 판정
 
 - [x] `MatchBoardGameStats`, `board.score`, `targetScore`, `board.maxCombo`를 입력으로 받는 보상 판정기를 만든다.
-- [x] 조건별 보상 테이블을 코드 상수 또는 데이터 클래스로 분리한다.
+- [x] 보상 판정을 `StageRewardEvaluator`로 분리하고 조건표를 `stage_reward_system.md`에 둔다.
 - [x] 스테이지 종료 결과에서 보상 판정은 1회만 실행한다.
 - [x] 같은 결과 화면에서 중복 지급되지 않게 플래그를 둔다.
 - [x] 2차에서는 클리어 시에만 지급한다.
@@ -165,8 +171,9 @@
 ### 테스트·QA
 
 - [x] 보상 조건별 단위 테스트를 추가한다.
-- [x] 보상 개수 제한이 없고 같은 아이템 수량이 합산되는 테스트를 추가한다.
-- [x] 중복 지급 방지 테스트를 추가한다.
+- [x] 보상 개수 제한이 없고 8종 조건을 함께 충족할 수 있는 테스트를 추가한다.
+- [ ] 같은 아이템 중복 수량 합산의 직접 테스트는 없다. 현재 규칙은 아이템별 조건이 하나라 중복을 만들지 않는다.
+- [ ] claim key 중복 지급 방지의 직접 회귀 테스트는 없다.
 - [x] 인벤토리 수량 차감 테스트를 추가한다.
 - [x] 슬롯 3/4 해금과 해금 슬롯 빈칸 유지 테스트를 추가한다.
 - [x] 앱 재시작 없이 이후 스테이지에서 보상 아이템 사용 가능.
@@ -174,8 +181,8 @@
 - [x] `flutter analyze --no-pub` 통과.
 - [x] `flutter test --no-pub test/stage_reward_test.dart test/item_inventory_test.dart test/widget_test.dart` 통과.
 - [x] `flutter build web --release --no-pub` 통과.
-- [x] Chrome QA 스크린샷 저장: `tmp/qa/phase2_stage_inventory_slot3_unlock_empty_slot.png`.
-- [x] Chrome QA 스크린샷 저장: `tmp/qa/item_slots_simple_mobile.png`, `tmp/qa/item_slots_timed_mobile.png`, `tmp/qa/item_slots_progression_mobile.png`.
+- [x] 좁은 화면 인벤토리와 슬롯 해금은 `test/level_up_overlay_layout_test.dart`, `test/widget_test.dart`에서 검증한다.
+- [x] 레벨업 보상 Chrome QA 자료 보존: `tmp/qa/level_up_rewards/level_up_six_rewards_web.png`, `tmp/qa/level_up_rewards/level_up_web_mobile.png`.
 
 ## 3차: 인벤토리 UI와 영속 데이터
 

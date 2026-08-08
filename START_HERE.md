@@ -31,12 +31,16 @@
 
 ## 2. 현재 포커스
 
-- 현재 우선순위는 **최적화 후속 점검과 배포 전 정합 확인**이다.
+- 현재 우선순위는 **최근 Android/VFX/SFX 최적화 후속 계측과 배포 전 정합 확인**이다.
 - 구조·완료 이력은 [`docs/architecture/code-flow-analysis.md`](docs/architecture/code-flow-analysis.md), [`docs/architecture/game_flow.md`](docs/architecture/game_flow.md), [`docs/planning/stone_match_execution_checklist.md`](docs/planning/stone_match_execution_checklist.md)에 정리되어 있다.
+- 진행 모드의 2차 스테이지 보상·런 인벤토리·로드아웃 편집은 구현 완료 상태이며, 세부 기준은 [`docs/planning/item_slot_market_implementation_checklist.md`](docs/planning/item_slot_market_implementation_checklist.md)를 따른다.
 - Web 작업 시 핵심 쟁점은 `base-href`, 에셋 경로, 랭킹 API 경로, 오디오 unlock 정책이다.
 - 최근 코드상 주의 포인트:
-  - 보석 시트는 `Jewel.png` `128×128` 기준이며 하이퍼는 2번째 프레임이다.
-  - 특수 보석 시트는 `Special.png` `128×128` 기준이며 순서는 `col / row / bomb`다.
+  - 보석 시트는 `Jewel_Arcane.png`의 `128×128` 프레임 기준이다.
+  - 특수 보석은 `Special_Arcane.png`(legacy row/col)와 `Special_Action_Arcane.png`(bomb/star/hyper/supernova)를 나눠 쓴다.
+  - 하단 패널은 진행=인벤토리, 타임=없음, 심플 debug/profile=개발 아이템, 심플 release=없음, 심플 QA 플래그=특수 효과 6종이다.
+  - Android 반복 SFX는 고정 크기 네이티브 슬롯 풀을 사용하며, 풀 포화 시 추가 중첩 재생을 생략한다.
+  - Android 제한 기기는 특수 효과 동시 개수와 디테일을 줄이고, 타이틀 안개 효과는 렌더링 병목 때문에 제거된 상태다.
   - 설정/랭킹 UI는 Riverpod `select` 기반으로 구독 범위를 줄인 상태다.
   - 웹 오디오는 현재 `SoundManager`의 웹 SFX 풀링/prime 실험 코드가 **기준점**이며, 가장 안정적이지만 완전 해결은 아니다.
 
@@ -48,7 +52,8 @@
 
 1. **[`docs/planning/stone_match_execution_checklist.md`](docs/planning/stone_match_execution_checklist.md)** 의 미체크 항목 확인.
 2. **랭킹:** NAS `matchranking/` 경로·`ranking_data.json` 쓰기 권한·`RankingService` base URL이 실제 배포와 일치하는지.
-3. 체크리스트의 **후속 최적화 점검** 항목
+3. **진행 아이템:** [`docs/planning/item_slot_market_implementation_checklist.md`](docs/planning/item_slot_market_implementation_checklist.md)의 미체크 직접 회귀 테스트와 3차 이후 후보는 필요가 생길 때만 진행.
+4. 체크리스트의 **후속 최적화 점검** 항목
    - 전체 `ConsumerWidget` / `setState` rebuild 범위 재점검
    - DevTools 기준 rebuild hotspot / frame drop 계측
    - 계측 결과 기반 추가 분리 여부 판단
@@ -75,6 +80,8 @@
 | **반응형 프레임** | `lib/widgets/phone_frame_scaffold.dart` (`PhoneFrameScaffold` + `PhoneFrame`) |
 | Flame 게임 엔트리 | `lib/game/match_board_game.dart` |
 | 매치 로직 | `lib/game/match_board_logic.dart` |
+| 진행 인벤토리·로드아웃 | `lib/game/item_inventory.dart`, `lib/views/overlays/stage_inventory_overlay.dart` |
+| 스테이지 보상 | `lib/game/stage_reward.dart`, `lib/game/match_board_game_progression.dart` |
 | HUD | `lib/game/components/match_game_hud.dart` |
 | 렌더 | `lib/game/components/match_board_renderer.dart` |
 | 파티클 | `lib/game/components/particle_burst.dart` |
@@ -98,4 +105,4 @@
 
 ## 6. 한 줄 요약
 
-**다음 세션은 `START_HERE.md` → 체크리스트 → `docs/architecture/game_flow.md` / `docs/architecture/code-flow-analysis.md` 순으로 읽고, Web은 `base-href`·에셋 경로·랭킹 API URL·NAS 배포 분리, 네이티브는 스토어·오디오·문서 동기화를 우선 보면 된다.**
+**다음 세션은 `START_HERE.md` → 전체 체크리스트 → 관련 세부 체크리스트 순으로 읽고, Web은 배포 경로·랭킹·오디오, 네이티브는 성능 계측·스토어 설정을 우선 보면 된다.**
