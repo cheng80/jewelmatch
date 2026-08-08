@@ -20,8 +20,8 @@ class RankingListPopup extends StatefulWidget {
 }
 
 class _RankingListPopupState extends State<RankingListPopup> {
-  late final Future<List<RankingEntry>> _levelFuture;
-  late final Future<List<RankingEntry>> _timeFuture;
+  late final Future<RankingResult<List<RankingEntry>>> _levelFuture;
+  late final Future<RankingResult<List<RankingEntry>>> _timeFuture;
 
   @override
   void initState() {
@@ -146,13 +146,13 @@ class _RankingList extends StatelessWidget {
     required this.emptyText,
   });
 
-  final Future<List<RankingEntry>> future;
+  final Future<RankingResult<List<RankingEntry>>> future;
   final RankingMode mode;
   final String emptyText;
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<RankingEntry>>(
+    return FutureBuilder<RankingResult<List<RankingEntry>>>(
       future: future,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
@@ -162,7 +162,13 @@ class _RankingList extends StatelessWidget {
             ),
           );
         }
-        final list = snapshot.data ?? [];
+        final result = snapshot.data;
+        if (result == null || !result.isSuccess) {
+          return _CenterMessage(
+            context.tr(_failureTranslationKey(result?.failure)),
+          );
+        }
+        final list = result.data!;
         if (list.isEmpty) {
           return _CenterMessage(emptyText);
         }
@@ -227,6 +233,15 @@ class _RankingList extends StatelessWidget {
         );
       },
     );
+  }
+
+  String _failureTranslationKey(RankingFailure? failure) {
+    return switch (failure) {
+      RankingFailure.notFound => 'rankNotFound',
+      RankingFailure.loadFailed => 'rankLoadFailed',
+      RankingFailure.saveFailed => 'rankSaveFailed',
+      RankingFailure.unavailable || null => 'rankSubmitFailed',
+    };
   }
 
   String _formatScore(BuildContext context, int score) {

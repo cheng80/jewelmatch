@@ -348,7 +348,8 @@ class MatchBoardGame extends FlameGame {
   }
 
   Future<void> _fetchTop1() async {
-    final top = await RankingService.fetchTop1();
+    final result = await RankingService.fetchTop1();
+    final top = result.data;
     if (top != null) {
       rankingTop1Name = top.name;
       rankingTop1Score = top.score;
