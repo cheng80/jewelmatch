@@ -6,6 +6,7 @@
 
 | 문서 | 용도 |
 |------|------|
+| [`agent_work_rules.md`](agent_work_rules.md) | 에이전트 작업 시 제품 문구, 랭킹, 배포, 제출물 기준 |
 | [`../START_HERE.md`](../START_HERE.md) | 새 세션 시작 순서와 현재 우선순위 |
 | [`planning/stone_match_execution_checklist.md`](planning/stone_match_execution_checklist.md) | 진행·배포 체크리스트 |
 | [`../README.md`](../README.md) | 프로젝트 개요, 실행, 빌드 명령 |
