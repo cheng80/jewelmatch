@@ -12,7 +12,7 @@
 - Work: 관련 테스트 이후 전체 정적 분석과 테스트로 기존 종료 및 랭킹 흐름의 회귀를 확인한다.
 - Verify: `flutter analyze && flutter test`
 
-### Outcome 3: NAS 배포와 원격 일치 확인 ⬜
+### Outcome 3: NAS 배포와 원격 일치 확인 ✅
 - Work: 저장소의 `tools/deploy_match_web.sh`만 사용해 `https://cheng80.myqnapcloud.com/match/`에 배포한다. 비밀값은 출력하지 않는다.
 - Risks/open questions: 배포 스크립트는 자동 백업을 만들지 않는다. 문제가 생기면 기준 리비전 `1d33611`에서 재배포한다. 해시 불일치, 공개 진입점 비정상, 업로드 ZIP 잔존 중 하나라도 발생하면 성공으로 보고하지 않는다.
-- Verify: `nas-web-build` 스킬의 8개 해시 비교, 공개 진입점 확인, `match.zip` 404 확인
+- Verify: 병합 리비전 `d95663e`에서 지정 파일 8개 SHA-256 일치, 공개 진입점 HTTP 200, `match.zip` HTTP 404 확인
