@@ -26,6 +26,11 @@
 - Risks/open questions: FPS 패널 수치는 화면에서만 확인할 수 있다. 자동 캡처로 읽지 못하면 trace 결과를 먼저 기록하고 패널 수치는 사용자 확인 항목으로 남긴다.
 - Verify: `git status --short --branch`, `git rev-list --left-right --count main...origin/main`, AIT SHA-256, 새 딥링크 실행, `xcrun xctrace export` 결과.
 
+### Outcome 6: 측정 종료 후 일반 테스트 AIT 복귀
+- Work: 측정 결과를 반영한 깨끗한 `main`에서 `QA_PERF_AUTORUN`과 강제 FPS 표시가 없는 테스트 광고 AIT를 빌드·배포하고 연결된 iPhone에서 실행한다. 성능 측정 AIT와 기존 배포는 복구용으로 보존한다.
+- Risks/open questions: 운영 광고와 출시 상태는 변경하지 않으며, 배포 ID와 비공개 링크는 추적 문서에 남기지 않는다.
+- Verify: `git rev-list --left-right --count main...origin/main`, `shasum -a 256 stonematch.ait`, AIT 배포 성공, 연결된 iPhone 실행 성공.
+
 ## 완료한 조사와 결과
 
 | 항목 | 결과 | 다시 할 필요 |
