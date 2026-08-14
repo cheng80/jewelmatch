@@ -29,9 +29,8 @@ class SoundManager {
   static Future<void>? _preloadFuture;
 
   /// 웹: 첫 사용자 상호작용 시 호출. 대기 중인 BGM 재생.
-  /// 현재는 "첫 1회 unlock"이 아니라 포인터다운마다 재-priming을 허용한다.
-  /// 모바일 웹에서 드래그 뒤 AudioContext가 다시 suspend 되는 경우가 있어
-  /// 이후 제스처에서도 BGM/SFX 복구 시도를 해 준다.
+  /// SFX 풀 프라이밍은 첫 상호작용에서 한 번만 예약하고,
+  /// 이후 제스처에서는 중단된 BGM 복구만 시도한다.
   static void unlockForWeb() {
     if (!kIsWeb) return;
     _webUnlocked = true;
