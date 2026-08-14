@@ -21,16 +21,24 @@ class MatchBoardCameraShake {
   }
 
   Vector2 update(double dt) {
+    final offset = Vector2.zero();
+    updateInto(dt, offset);
+    return offset;
+  }
+
+  void updateInto(double dt, Vector2 offset) {
     if (_remaining <= 0 || _duration <= 0) {
       _reset();
-      return Vector2.zero();
+      offset.setValues(0, 0);
+      return;
     }
 
     _remaining = max(0, _remaining - dt);
     _elapsed += dt;
     if (_remaining <= 0) {
       _resetElapsedShake();
-      return Vector2.zero();
+      offset.setValues(0, 0);
+      return;
     }
 
     final falloff = _remaining / _duration;
@@ -39,7 +47,7 @@ class MatchBoardCameraShake {
     final primary = sin(phase * pi * 9.0);
     final secondary = sin(phase * pi * 13.0 + pi / 3);
     final vertical = sin(phase * pi * 7.0 + pi / 2);
-    return Vector2(
+    offset.setValues(
       (primary * 0.82 + secondary * 0.18) * amplitude,
       vertical * amplitude * 0.48,
     );

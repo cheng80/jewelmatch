@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flame/components.dart';
 import 'package:stonematch/game/match_board_camera_shake.dart';
 import 'package:stonematch/game/match_board_logic.dart';
 
@@ -39,5 +40,17 @@ void main() {
 
     expect(shake.isActive, isTrue);
     expect(offset.length, greaterThan(2));
+  });
+
+  test('board shake updates a reusable offset', () {
+    final shake = MatchBoardCameraShake();
+    final offset = Vector2(9, 9);
+
+    shake.updateInto(0.016, offset);
+    expect(offset, Vector2.zero());
+
+    shake.queue(const SpecialEffectShake(intensity: 6, duration: 0.4));
+    shake.updateInto(0.016, offset);
+    expect(offset.length, greaterThan(0));
   });
 }
