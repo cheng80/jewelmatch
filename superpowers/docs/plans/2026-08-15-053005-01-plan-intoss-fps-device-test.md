@@ -77,3 +77,10 @@
 - 원본: `tmp/qa/intoss_fps/gc_allocation_sound_on_20260815_0804.trace`
 - 화면: `tmp/qa/intoss_fps/gc_allocation_sound_on_20260815_0804_fps.png`
 - 다음 단일 테스트: 웹 오디오를 해제한 상태에서 BGM은 유지하고 효과음만 꺼 동일 자동 시나리오를 30초 측정
+
+### 2026-08-15 일반 테스트 AIT 복귀
+
+- 빌드: `923edff`, Wasm release, 테스트 광고, QA 자동 실행·강제 FPS 표시 없음
+- AIT SHA-256: `8b0aab213e4e0d492f207d93a34004c4d63b90b265e61faf974e2515ffac1308`
+- 결과: AIT 테스트 배포와 연결된 iPhone의 토스 앱 실행 성공
+- 복구: 성능 측정 AIT는 `tmp/qa/intoss_fps/stonematch_perf_gc_alloc_90da6407.ait`에 보존
