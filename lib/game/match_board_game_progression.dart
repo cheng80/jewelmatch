@@ -40,6 +40,7 @@ extension MatchBoardGameProgression on MatchBoardGame {
 
   void _continueAfterLevelUpImpl() {
     if (!isProgressionMode) return;
+    _stageAttemptSerial += 1;
     overlays.remove('LevelUp');
     overlays.remove('StageInventory');
     overlays.remove('NoMoves');

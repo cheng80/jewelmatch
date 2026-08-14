@@ -137,12 +137,14 @@ Web 배포는 [`../tools/web_build.md`](../tools/web_build.md)를 따른다. NAS
 
 ## Apps in Toss Web
 
-Apps in Toss는 NAS 배포와 별도다. root base href와 `intoss` 채널값으로 Web을 빌드한 뒤, Apps in Toss 설정과 `.ait` 패키징을 추가한 후에만 콘솔 QR 테스트와 업로드를 한다.
+Apps in Toss는 NAS 배포와 별도다. Node.js 24 이상 환경에서 공식 테스트 광고 ID를 포함한 Web과 `.ait`를 한 번에 만든다.
 
 ```bash
-flutter build web --release --base-href / --no-web-resources-cdn --no-source-maps \
-  --dart-define=STORE_CHANNEL=intoss
+npm install
+INTOSS_APP_NAME=<콘솔_appName> npm run build:intoss:test
 ```
+
+이 명령은 Flutter Web 빌드 뒤 앱인토스 광고 브리지를 `build/web`에만 주입하므로 NAS용 일반 Web 빌드에는 토스 SDK가 포함되지 않는다. 운영 빌드는 `INTOSS_AD_MODE=production`과 콘솔의 보상형, 배너 광고 그룹 ID를 사용해 별도로 만든다.
 
 ## 출시 전 필수 검증
 

@@ -135,6 +135,7 @@ class MatchBoardGame extends FlameGame {
 
   bool isPlaying = true;
   bool timeUp = false;
+  int _stageAttemptSerial = 0;
   int _lastSavedScore = -1;
   late int _remainingHints;
   int progressionLevel = 1;
@@ -166,6 +167,7 @@ class MatchBoardGame extends FlameGame {
   int _lastFlooredSecondForTimeTic = -1;
 
   int get progressionXp => JewelRankProgression.xpFromScore(board.score);
+  String get stageAttemptId => '$progressionLevel:$_stageAttemptSerial';
   int get rankingScore => isProgressionMode
       ? (progressionLevel > 1 ? progressionLevel - 1 : 0)
       : board.score;
@@ -455,6 +457,7 @@ class MatchBoardGame extends FlameGame {
   void pauseForRankingPopup() => _pauseForRankingPopupImpl();
 
   void closeRankingPopup() => _closeRankingPopupImpl();
+  bool continueStageAfterAd() => _continueStageAfterAdImpl();
   void continueAfterLevelUp() => _continueAfterLevelUpImpl();
   void showLevelUpPopupAfterCelebration() =>
       _showLevelUpPopupAfterCelebrationImpl();

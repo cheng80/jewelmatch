@@ -1,0 +1,19 @@
+{
+  "name": "stonematch-intoss",
+  "private": true,
+  "scripts": {
+    "build:ad-bridge": "node tools/prepare_intoss_web.mjs",
+    "dev:ads": "flutter run -d chrome --dart-define=STORE_CHANNEL=intoss --dart-define=INTOSS_AD_MODE=mock",
+    "test:ads": "flutter test test/ad_reward_policy_test.dart test/ad_service_test.dart test/app_config_test.dart",
+    "build:flutter:intoss:test": "flutter build web --release --base-href / --no-web-resources-cdn --no-source-maps --dart-define=STORE_CHANNEL=intoss --dart-define=INTOSS_AD_MODE=test && npm run build:ad-bridge",
+    "build:intoss:test": "npm run build:flutter:intoss:test && ait build",
+    "build:flutter:intoss": "test -n \"$INTOSS_REWARDED_AD_GROUP_ID\" && test -n \"$INTOSS_BANNER_AD_GROUP_ID\" && flutter build web --release --base-href / --no-web-resources-cdn --no-source-maps --dart-define=STORE_CHANNEL=intoss --dart-define=INTOSS_AD_MODE=production --dart-define=INTOSS_REWARDED_AD_GROUP_ID=$INTOSS_REWARDED_AD_GROUP_ID --dart-define=INTOSS_BANNER_AD_GROUP_ID=$INTOSS_BANNER_AD_GROUP_ID && npm run build:ad-bridge",
+    "build:intoss": "npm run build:flutter:intoss && ait build"
+  },
+  "dependencies": {
+    "@apps-in-toss/web-framework": "3.0.3"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

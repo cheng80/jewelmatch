@@ -7,7 +7,7 @@ Stone Match의 광고 정책은 광고 SDK나 미디에이션 사업자와 무�
 - 광고는 사용자가 명확히 선택한 보상 교환에만 사용한다.
 - 게임 시작, 진행, 결과 확인을 광고로 방해하지 않는다.
 - Apps in Toss, Google Play, One Store, App Store의 광고 SDK 또는 미디에이션 구현은 이 정책을 바꾸지 않는다.
-- 현재는 정책만 확정한다. 광고 SDK, 광고 단위, 광고 버튼은 아직 구현하지 않았다.
+- Apps in Toss Web 광고 SDK, 보상 버튼, 무한 모드 배너와 로컬 테스트 대역을 구현했다. 운영 광고 그룹과 서버 영속 제한은 출시 전에 연결한다.
 
 ## 허용 위치
 
@@ -68,6 +68,33 @@ Stone Match의 광고 정책은 광고 SDK나 미디에이션 사업자와 무�
 - 사용자 이름, 토스 사용자 식별자, 광고 식별자는 이벤트에 저장하지 않는다.
 - Apps in Toss는 테스트 광고 ID와 콘솔 QR 테스트를 사용한다. 샌드박스에서는 인앱 광고가 지원되지 않는다.
 - 다른 미디에이션도 운영 광고 단위 대신 테스트 광고 단위로 검증한다.
+
+### 로컬과 QR 테스트
+
+공식 SDK 3.x 설치에는 Node.js 24 이상을 권장한다.
+
+```bash
+# 브라우저 모의 광고, 광고 시청은 자동으로 보상 완료 처리
+npm install
+npm run dev:ads
+
+# 광고 정책과 서비스 테스트
+npm run test:ads
+
+# 공식 테스트 광고 ID로 Web 빌드와 .ait 생성
+INTOSS_APP_NAME=<콘솔_appName> npm run build:intoss:test
+```
+
+`INTOSS_AD_MODE=mock`은 Chrome 레이아웃과 보상 흐름 확인용이고, `test`는 토스 앱 QR 테스트용이다. 운영 빌드는 다음처럼 콘솔 값을 모두 지정해야 시작된다.
+
+```bash
+INTOSS_APP_NAME=<콘솔_appName> \
+INTOSS_REWARDED_AD_GROUP_ID=<보상형_광고그룹> \
+INTOSS_BANNER_AD_GROUP_ID=<배너_광고그룹> \
+npm run build:intoss
+```
+
+현재 아이템 일일 3회 제한은 앱 실행 세션에서 검증한다. 토스 사용자 식별과 서버 저장 정책이 확정되면 서버 기준 날짜와 지급 이력으로 교체한다. 측정 이벤트는 분석 제공자가 연결될 때 추가한다.
 
 ## Apps in Toss 준수 사항
 

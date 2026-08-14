@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app_config.dart';
+import '../../ads/ad_reward_policy.dart';
+import '../../ads/ad_service.dart';
 import '../../game/match_board_game.dart';
 import '../../resources/asset_paths.dart';
 import '../../resources/sound_manager.dart';
@@ -17,8 +21,15 @@ part 'time_up_overlay_sections.dart';
 
 /// 타임 모드 종료 시 표시. 바운스 텍스트 연출 후 점수·랭킹 패널.
 class TimeUpOverlay extends ConsumerStatefulWidget {
-  const TimeUpOverlay({super.key, required this.game});
+  const TimeUpOverlay({
+    super.key,
+    required this.game,
+    required this.adService,
+    required this.adRewardPolicy,
+  });
   final MatchBoardGame game;
+  final AdService adService;
+  final AdRewardPolicy adRewardPolicy;
 
   @override
   ConsumerState<TimeUpOverlay> createState() => _TimeUpOverlayState();
@@ -34,6 +45,8 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
   late final Animation<double> _titleOpacity;
 
   bool _showPanel = false;
+  bool _showingAd = false;
+  String? _adMessage;
 
   @override
   void initState() {
@@ -99,6 +112,38 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
     super.dispose();
   }
 
+  Future<void> _continueWithAd() async {
+    if (_showingAd ||
+        widget.adService.rewardedState != RewardedAdState.ready ||
+        !widget.adRewardPolicy.canContinueStage(widget.game.stageAttemptId)) {
+      return;
+    }
+    SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
+    setState(() {
+      _showingAd = true;
+      _adMessage = null;
+    });
+    final result = await widget.adService.showRewarded(
+      AdPlacement.continueStage,
+    );
+    if (!mounted) return;
+    final granted = widget.adRewardPolicy.grantContinue(
+      widget.game.stageAttemptId,
+      result,
+    );
+    if (granted) {
+      ref.read(rankingProvider.notifier).reset();
+      widget.game.continueStageAfterAd();
+    } else {
+      SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
+      setState(() {
+        _showingAd = false;
+        _adMessage = context.tr('adRewardNotGranted');
+      });
+    }
+    unawaited(widget.adService.preloadRewarded());
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_showPanel) {
@@ -107,6 +152,14 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
 
     return _TimeUpResultPanel(
       game: widget.game,
+      adService: widget.adService,
+      canContinueWithAd:
+          widget.game.isProgressionMode &&
+          widget.adService.rewardedState != RewardedAdState.unavailable &&
+          widget.adRewardPolicy.canContinueStage(widget.game.stageAttemptId),
+      showingAd: _showingAd,
+      adMessage: _adMessage,
+      onContinueWithAd: _continueWithAd,
       onRetry: () {
         SoundManager.playSfx(AssetPaths.sfxBtnSnd);
         ref.read(rankingProvider.notifier).reset();

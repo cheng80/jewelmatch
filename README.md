@@ -99,6 +99,19 @@ flutter run
 
 Web 배포·서브패스 설정: [`docs/tools/web_build.md`](docs/tools/web_build.md)
 
+## Apps in Toss 광고 테스트
+
+Node.js 24 이상 환경을 권장한다.
+
+```bash
+npm install
+npm run dev:ads
+npm run test:ads
+INTOSS_APP_NAME=<콘솔_appName> npm run build:intoss:test
+```
+
+Chrome에서는 모의 보상과 테스트 배너를 확인하고, 공식 테스트 광고는 생성된 `.ait`를 콘솔 QR로 토스 앱에서 확인한다. 상세 정책과 운영 광고 그룹 설정은 [`docs/release/ad_placement_policy.md`](docs/release/ad_placement_policy.md)를 따른다.
+
 ## 문서
 
 | 문서 | 내용 |

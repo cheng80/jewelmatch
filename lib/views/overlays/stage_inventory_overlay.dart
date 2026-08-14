@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
+import '../../ads/ad_reward_policy.dart';
+import '../../ads/ad_service.dart';
 import '../../game/item_inventory.dart';
 import '../../game/item_kind.dart';
 import '../../game/match_board_game.dart';
@@ -10,9 +14,16 @@ import '../../theme/jewel_candy_lumina_theme.dart';
 import '../../widgets/lumina_overlay_card.dart';
 
 class StageInventoryOverlay extends StatefulWidget {
-  const StageInventoryOverlay({super.key, required this.game});
+  const StageInventoryOverlay({
+    super.key,
+    required this.game,
+    required this.adService,
+    required this.adRewardPolicy,
+  });
 
   final MatchBoardGame game;
+  final AdService adService;
+  final AdRewardPolicy adRewardPolicy;
 
   @override
   State<StageInventoryOverlay> createState() => _StageInventoryOverlayState();
@@ -20,6 +31,9 @@ class StageInventoryOverlay extends StatefulWidget {
 
 class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
   int _selectedLoadoutSlot = 0;
+  ItemKind? _selectedRefillItem;
+  bool _showingAd = false;
+  String? _adMessage;
 
   @override
   void initState() {
@@ -28,6 +42,35 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
     if (unlocked.isNotEmpty) {
       _selectedLoadoutSlot = unlocked.first;
     }
+  }
+
+  Future<void> _refillWithAd() async {
+    final item = _selectedRefillItem;
+    if (item == null ||
+        _showingAd ||
+        widget.adService.rewardedState != RewardedAdState.ready ||
+        !widget.adRewardPolicy.canRefill(widget.game.runInventory, item)) {
+      return;
+    }
+    SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
+    setState(() {
+      _showingAd = true;
+      _adMessage = null;
+    });
+    final result = await widget.adService.showRewarded(AdPlacement.refillItem);
+    if (!mounted) return;
+    final granted = widget.adRewardPolicy.grantRefill(
+      widget.game.runInventory,
+      item,
+      result,
+    );
+    SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
+    setState(() {
+      _showingAd = false;
+      _selectedRefillItem = granted ? null : item;
+      _adMessage = context.tr(granted ? 'adItemGranted' : 'adRewardNotGranted');
+    });
+    unawaited(widget.adService.preloadRewarded());
   }
 
   @override
@@ -70,6 +113,7 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
           _StageInventoryLoadout(
             game: game,
             selectedSlotIndex: _selectedLoadoutSlot,
+            selectedRefillItem: _selectedRefillItem,
             onSelectSlot: (slotIndex) {
               setState(() => _selectedLoadoutSlot = slotIndex);
             },
@@ -78,7 +122,69 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
                 game.assignNextStageLoadoutSlot(_selectedLoadoutSlot, item);
               });
             },
+            onSelectEmptyItem: (item) {
+              if (widget.adService.rewardedState ==
+                  RewardedAdState.unavailable) {
+                return;
+              }
+              setState(() {
+                _selectedRefillItem = item;
+                _adMessage = null;
+              });
+            },
           ),
+          if (_selectedRefillItem != null) ...[
+            const SizedBox(height: 10),
+            AnimatedBuilder(
+              animation: widget.adService,
+              builder: (context, _) {
+                final ready =
+                    widget.adService.rewardedState == RewardedAdState.ready &&
+                    !_showingAd &&
+                    widget.adRewardPolicy.canRefill(
+                      game.runInventory,
+                      _selectedRefillItem!,
+                    );
+                return SizedBox(
+                  width: 220,
+                  height: 40,
+                  child: OutlinedButton(
+                    onPressed: ready ? _refillWithAd : null,
+                    child: Text(
+                      _showingAd
+                          ? context.tr('adPlaying')
+                          : ready
+                          ? context.tr('watchAdGetItem')
+                          : context.tr('adLoading'),
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 4),
+            Text(
+              context.tr(
+                'adRefillRemaining',
+                namedArgs: {
+                  'count': '${widget.adRewardPolicy.remainingRefillsToday}',
+                },
+              ),
+              style: TextStyle(
+                color: JewelCandyLuminaTheme.textMutedGold,
+                fontSize: 11,
+              ),
+            ),
+          ],
+          if (_adMessage != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              _adMessage!,
+              style: TextStyle(
+                color: JewelCandyLuminaTheme.textParchment,
+                fontSize: 12,
+              ),
+            ),
+          ],
           const SizedBox(height: 14),
           _CloseInventoryButton(
             onPressed: () {
@@ -146,14 +252,18 @@ class _StageInventoryLoadout extends StatelessWidget {
   const _StageInventoryLoadout({
     required this.game,
     required this.selectedSlotIndex,
+    required this.selectedRefillItem,
     required this.onSelectSlot,
     required this.onEquipItem,
+    required this.onSelectEmptyItem,
   });
 
   final MatchBoardGame game;
   final int selectedSlotIndex;
+  final ItemKind? selectedRefillItem;
   final ValueChanged<int> onSelectSlot;
   final ValueChanged<ItemKind> onEquipItem;
+  final ValueChanged<ItemKind> onSelectEmptyItem;
 
   @override
   Widget build(BuildContext context) {
@@ -191,7 +301,12 @@ class _StageInventoryLoadout extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-        _InventoryGrid(game: game, onEquipItem: onEquipItem),
+        _InventoryGrid(
+          game: game,
+          selectedRefillItem: selectedRefillItem,
+          onEquipItem: onEquipItem,
+          onSelectEmptyItem: onSelectEmptyItem,
+        ),
       ],
     );
   }
@@ -243,7 +358,12 @@ class _LoadoutSlotButton extends StatelessWidget {
 }
 
 class _InventoryGrid extends StatelessWidget {
-  const _InventoryGrid({required this.game, required this.onEquipItem});
+  const _InventoryGrid({
+    required this.game,
+    required this.selectedRefillItem,
+    required this.onEquipItem,
+    required this.onSelectEmptyItem,
+  });
 
   static const int _columnCount = 4;
   static const int _rowCount = 2;
@@ -252,7 +372,9 @@ class _InventoryGrid extends StatelessWidget {
   static const double _minGap = 5;
 
   final MatchBoardGame game;
+  final ItemKind? selectedRefillItem;
   final ValueChanged<ItemKind> onEquipItem;
+  final ValueChanged<ItemKind> onSelectEmptyItem;
 
   @override
   Widget build(BuildContext context) {
@@ -304,16 +426,25 @@ class _InventoryGrid extends StatelessWidget {
                                         _columnCount +
                                     col],
                               ),
-                              selected: game.nextStageLoadoutDraft.contains(
-                                ItemKindMeta.phaseOneLoadout[row *
-                                        _columnCount +
-                                    col],
-                              ),
-                              onTap: () => onEquipItem(
-                                ItemKindMeta.phaseOneLoadout[row *
-                                        _columnCount +
-                                    col],
-                              ),
+                              selected:
+                                  game.nextStageLoadoutDraft.contains(
+                                    ItemKindMeta.phaseOneLoadout[row *
+                                            _columnCount +
+                                        col],
+                                  ) ||
+                                  selectedRefillItem ==
+                                      ItemKindMeta.phaseOneLoadout[row *
+                                              _columnCount +
+                                          col],
+                              onTap: () {
+                                final item = ItemKindMeta
+                                    .phaseOneLoadout[row * _columnCount + col];
+                                if (game.runInventory.quantityOf(item) == 0) {
+                                  onSelectEmptyItem(item);
+                                } else {
+                                  onEquipItem(item);
+                                }
+                              },
                             ),
                           ),
                           if (col != _columnCount - 1) SizedBox(width: gap),
@@ -350,7 +481,7 @@ class _InventoryItemCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: enabled ? onTap : null,
+      onTap: onTap,
       child: _FramedItemCell(
         selected: selected,
         disabled: !enabled,

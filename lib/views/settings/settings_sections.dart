@@ -57,6 +57,22 @@ class KeepScreenOnTile extends ConsumerWidget {
   }
 }
 
+class ShowFpsTile extends ConsumerWidget {
+  const ShowFpsTile({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final value = ref.watch(settingsProvider.select((s) => s.showFps));
+    final notifier = ref.read(settingsProvider.notifier);
+    return _MuteSwitch(
+      label: context.tr('showFps'),
+      value: value,
+      onChanged: notifier.setShowFps,
+      icon: Icons.speed,
+    );
+  }
+}
+
 class BgmVolumeTile extends ConsumerWidget {
   const BgmVolumeTile({super.key});
 
@@ -216,17 +232,19 @@ class _MuteSwitch extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onChanged,
+    this.icon,
   });
 
   final String label;
   final bool value;
   final ValueChanged<bool> onChanged;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
     return SwitchListTile(
       secondary: Icon(
-        value ? Icons.volume_off : Icons.volume_up,
+        icon ?? (value ? Icons.volume_off : Icons.volume_up),
         color: value
             ? JewelCandyLuminaTheme.outlineBright.withValues(alpha: 0.55)
             : null,

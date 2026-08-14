@@ -51,11 +51,21 @@ class _TimeUpIntroTitle extends StatelessWidget {
 class _TimeUpResultPanel extends StatelessWidget {
   const _TimeUpResultPanel({
     required this.game,
+    required this.adService,
+    required this.canContinueWithAd,
+    required this.showingAd,
+    required this.adMessage,
+    required this.onContinueWithAd,
     required this.onRetry,
     required this.onExit,
   });
 
   final MatchBoardGame game;
+  final AdService adService;
+  final bool canContinueWithAd;
+  final bool showingAd;
+  final String? adMessage;
+  final VoidCallback onContinueWithAd;
   final VoidCallback onRetry;
   final VoidCallback onExit;
 
@@ -102,6 +112,43 @@ class _TimeUpResultPanel extends StatelessWidget {
             const _RankStatusSection(),
           ],
           const SizedBox(height: 22),
+          if (canContinueWithAd) ...[
+            AnimatedBuilder(
+              animation: adService,
+              builder: (context, _) {
+                final ready =
+                    adService.rewardedState == RewardedAdState.ready &&
+                    !showingAd;
+                return AbsorbPointer(
+                  absorbing: !ready,
+                  child: Opacity(
+                    opacity: ready ? 1 : 0.55,
+                    child: LuminaGradientButton(
+                      colors: JewelCandyLuminaTheme.buttonShuffleCyanLime,
+                      label: showingAd
+                          ? context.tr('adPlaying')
+                          : ready
+                          ? context.tr('watchAdContinue')
+                          : context.tr('adLoading'),
+                      onPressed: onContinueWithAd,
+                    ),
+                  ),
+                );
+              },
+            ),
+            if (adMessage != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                adMessage!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: JewelCandyLuminaTheme.textMutedGold,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+            const SizedBox(height: 14),
+          ],
           LuminaGradientButton(
             colors: JewelCandyLuminaTheme.buttonRetryMagOr,
             label: context.tr('retry'),

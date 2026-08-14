@@ -61,6 +61,7 @@ extension MatchBoardGameFlow on MatchBoardGame {
   }
 
   void _restartRoundImpl() {
+    _stageAttemptSerial += 1;
     overlays.remove('TimeUp');
     overlays.remove('PauseMenu');
     overlays.remove('NoMoves');
@@ -101,6 +102,19 @@ extension MatchBoardGameFlow on MatchBoardGame {
     resumeEngine();
     isPlaying = true;
     SoundManager.playBgm(AssetPaths.bgmMain);
+  }
+
+  bool _continueStageAfterAdImpl() {
+    if (!isProgressionMode || !timeUp) return false;
+    overlays.remove('TimeUp');
+    overlays.remove('GameStats');
+    timeUp = false;
+    timeRemaining = roundSecondsForMode;
+    _lastFlooredSecondForTimeTic = timeRemaining.floor();
+    resumeEngine();
+    isPlaying = true;
+    SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
+    return true;
   }
 
   void _requestHintImpl() {

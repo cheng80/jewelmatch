@@ -1,6 +1,9 @@
 /// 출시 채널. 빌드할 때 `--dart-define=STORE_CHANNEL=<채널>`로 선택한다.
 enum StoreChannel { appstore, play, onestore, intoss }
 
+/// Apps in Toss 광고 실행 환경.
+enum IntossAdMode { disabled, mock, test, production }
+
 /// 앱 전반에서 사용하는 상수 모음.
 /// private 생성자(_)로 인스턴스 생성을 막고, static 상수만 제공한다.
 class AppConfig {
@@ -14,9 +17,45 @@ class AppConfig {
   static StoreChannel get storeChannel =>
       StoreChannel.values.byName(_storeChannelName);
 
+  static const String _intossAdModeName = String.fromEnvironment(
+    'INTOSS_AD_MODE',
+    defaultValue: 'disabled',
+  );
+
+  static IntossAdMode get intossAdMode =>
+      IntossAdMode.values.byName(_intossAdModeName);
+
+  static const String _productionRewardedAdGroupId = String.fromEnvironment(
+    'INTOSS_REWARDED_AD_GROUP_ID',
+  );
+  static const String _productionBannerAdGroupId = String.fromEnvironment(
+    'INTOSS_BANNER_AD_GROUP_ID',
+  );
+
+  static String get intossRewardedAdGroupId => switch (intossAdMode) {
+    IntossAdMode.test => 'ait-ad-test-rewarded-id',
+    IntossAdMode.production => _productionRewardedAdGroupId,
+    IntossAdMode.disabled || IntossAdMode.mock => '',
+  };
+
+  static String get intossBannerAdGroupId => switch (intossAdMode) {
+    IntossAdMode.test => 'ait-ad-test-banner-id',
+    IntossAdMode.production => _productionBannerAdGroupId,
+    IntossAdMode.disabled || IntossAdMode.mock => '',
+  };
+
   /// 잘못된 STORE_CHANNEL 값은 앱 시작 전에 실패시킨다.
   static void validateStoreChannel() {
     storeChannel;
+    intossAdMode;
+    if (intossAdMode != IntossAdMode.disabled &&
+        storeChannel != StoreChannel.intoss) {
+      throw StateError('INTOSS_AD_MODE requires STORE_CHANNEL=intoss');
+    }
+    if (intossAdMode == IntossAdMode.production &&
+        (intossRewardedAdGroupId.isEmpty || intossBannerAdGroupId.isEmpty)) {
+      throw StateError('Apps in Toss production ad group IDs are required');
+    }
   }
 
   /// iOS/MacOS: App Store Connect > General > App Information > Apple ID. 출시 시 설정.
@@ -38,6 +77,7 @@ class StorageKeys {
   static const String bgmMuted = 'bgm_muted';
   static const String sfxMuted = 'sfx_muted';
   static const String keepScreenOn = 'keep_screen_on';
+  static const String showFps = 'show_fps';
   static const String bestScorePrefix = 'best_score_mode_';
 
   /// 이전 단일 키(심플 베스트 마이그레이션용).
