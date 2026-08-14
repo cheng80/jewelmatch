@@ -6,7 +6,7 @@ Stone Match는 Drawer를 쓰지 않는다. 설정 항목은 `SettingView`에 있
 
 | 영역 | 파일 | 내용 |
 |------|------|------|
-| 설정 화면 | `lib/views/setting_view.dart` | 화면 켜짐, 사운드, 평점 남기기, 언어 |
+| 설정 화면 | `lib/views/setting_view.dart` | 화면 켜짐, FPS 표시, 사운드, 평점 남기기, 언어 |
 | 설정 섹션 | `lib/views/settings/settings_sections.dart` | Riverpod 구독, 볼륨 draft/commit, RateApp |
 | 타이틀 하단 버전 표시 | `lib/views/title/title_version_footer.dart` | `Ver <version>+<buildNumber>` |
 | 버전 캐싱 | `lib/views/title_view.dart` | `PackageInfo.fromPlatform()` 결과 캐싱 |
@@ -33,6 +33,8 @@ version: 1.0.0+1
 3. UI는 `settings_sections.dart`에 섹션 단위로 배치한다.
 4. 다국어 문구는 `assets/translations/*.json`에 동시에 추가한다.
 5. 웹 미지원 기능은 `kIsWeb` 분기로 숨긴다. 현재 평점 남기기는 웹에서 숨긴다.
+
+FPS 표시는 설정에서 켜고 끌 수 있으며 기본값은 꺼짐이다. 좁은 화면에서는 하단 우측, 넓은 화면에서는 중앙 앱 프레임 바깥 하단에 표시한다. 웹 QA에서는 `?fps=1` 또는 `?qaPerf=1`로 설정과 무관하게 강제 표시할 수 있다.
 
 ## 타이틀 하단 버전 표시 변경 시 체크
 

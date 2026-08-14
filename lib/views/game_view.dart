@@ -5,6 +5,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
+import '../ads/ad_reward_policy.dart';
+import '../ads/ad_service.dart';
+import '../ads/ad_service_factory.dart';
+import '../ads/fake_ad_service.dart';
 import '../app_config.dart';
 import '../game/jewel_game_mode.dart';
 import '../game/match_board_game.dart';
@@ -32,12 +36,16 @@ class GameView extends StatefulWidget {
     this.qaVfxEnabled = false,
     this.qaLevelUpEnabled = false,
     this.qaNoMovesEnabled = false,
+    this.adService,
+    this.adRewardPolicy,
   });
 
   final JewelGameMode gameMode;
   final bool qaVfxEnabled;
   final bool qaLevelUpEnabled;
   final bool qaNoMovesEnabled;
+  final AdService? adService;
+  final AdRewardPolicy? adRewardPolicy;
 
   @override
   State<GameView> createState() => _GameViewState();
@@ -56,6 +64,11 @@ class _GameViewState extends State<GameView> {
   bool _qaVfxPreviewScheduled = false;
   bool _qaLevelUpPreviewScheduled = false;
   bool _qaNoMovesPreviewScheduled = false;
+  late final AdService _adService;
+  late final AdRewardPolicy _adRewardPolicy;
+  late final bool _ownsAdService;
+  bool _bannerSupported = false;
+  int _bannerBlockCount = 0;
 
   bool get _qaVfxEnabled => kIsWeb && widget.qaVfxEnabled;
   bool get _qaLevelUpEnabled => kIsWeb && widget.qaLevelUpEnabled;
@@ -64,6 +77,15 @@ class _GameViewState extends State<GameView> {
   @override
   void initState() {
     super.initState();
+    _ownsAdService = widget.adService == null;
+    _adService = widget.adService ?? createAdService();
+    _adRewardPolicy = widget.adRewardPolicy ?? AdRewardPolicy();
+    if (widget.gameMode == JewelGameMode.progression) {
+      unawaited(_adService.preloadRewarded());
+    }
+    if (widget.gameMode == JewelGameMode.simple) {
+      unawaited(_initializeBanner());
+    }
     if (AppConfig.debugLog && widget.gameMode == JewelGameMode.simple) {
       SfxPlayLog.enabled = true;
       SfxPlayLog.clear();
@@ -74,11 +96,42 @@ class _GameViewState extends State<GameView> {
 
   @override
   void dispose() {
+    _adService.hideBanner();
+    if (_ownsAdService) _adService.dispose();
     if (AppConfig.debugLog && widget.gameMode == JewelGameMode.simple) {
       SfxPlayLog.enabled = false;
     }
     super.dispose();
   }
+
+  Future<void> _initializeBanner() async {
+    final supported = await _adService.initializeBanner();
+    if (!mounted) return;
+    setState(() => _bannerSupported = supported);
+    _syncBanner();
+  }
+
+  void _setBannerBlocked(bool blocked) {
+    _bannerBlockCount += blocked ? 1 : -1;
+    if (_bannerBlockCount < 0) _bannerBlockCount = 0;
+    _syncBanner();
+  }
+
+  void _syncBanner() {
+    final shouldShow =
+        mounted &&
+        _bannerSupported &&
+        !_loadingVisible &&
+        _bannerBlockCount == 0;
+    if (shouldShow) {
+      _adService.showBanner();
+    } else {
+      _adService.hideBanner();
+    }
+  }
+
+  Widget _blocksBanner(Widget child) =>
+      _BannerBlocker(onChanged: _setBannerBlocked, child: child);
 
   /// 페이드 전환과 Flame 초기화가 같은 프레임에 겹치지 않도록
   /// 첫 보드 프레임까지 준비한 뒤 노출한다. 이후 보석 인트로는 화면에서 재생한다.
@@ -104,6 +157,7 @@ class _GameViewState extends State<GameView> {
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
     setState(() => _loadingVisible = false);
+    _syncBanner();
     await Future<void>.delayed(_loadingFadeDuration);
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
@@ -175,17 +229,33 @@ class _GameViewState extends State<GameView> {
             child: SizedBox.expand(),
           ),
         ),
-        'PauseMenu': (_, MatchBoardGame g) => PauseMenuOverlay(game: g),
-        'NoMoves': (_, MatchBoardGame g) => NoMovesOverlay(game: g),
+        'PauseMenu': (_, MatchBoardGame g) =>
+            _blocksBanner(PauseMenuOverlay(game: g)),
+        'NoMoves': (_, MatchBoardGame g) =>
+            _blocksBanner(NoMovesOverlay(game: g)),
         'LevelCelebration': (_, MatchBoardGame g) =>
             LevelCelebrationOverlay(game: g),
         'LevelUp': (_, MatchBoardGame g) => LevelUpOverlay(game: g),
-        'StageInventory': (_, MatchBoardGame g) =>
-            StageInventoryOverlay(game: g),
-        'TimeUp': (_, MatchBoardGame g) => TimeUpOverlay(game: g),
-        'GameStats': (_, MatchBoardGame g) => GameStatsOverlay(game: g),
-        'HowToPlay': (_, MatchBoardGame g) => HowToPlayOverlay(game: g),
-        'RankingList': (_, MatchBoardGame g) => RankingOverlay(game: g),
+        'StageInventory': (_, MatchBoardGame g) => _blocksBanner(
+          StageInventoryOverlay(
+            game: g,
+            adService: _adService,
+            adRewardPolicy: _adRewardPolicy,
+          ),
+        ),
+        'TimeUp': (_, MatchBoardGame g) => _blocksBanner(
+          TimeUpOverlay(
+            game: g,
+            adService: _adService,
+            adRewardPolicy: _adRewardPolicy,
+          ),
+        ),
+        'GameStats': (_, MatchBoardGame g) =>
+            _blocksBanner(GameStatsOverlay(game: g)),
+        'HowToPlay': (_, MatchBoardGame g) =>
+            _blocksBanner(HowToPlayOverlay(game: g)),
+        'RankingList': (_, MatchBoardGame g) =>
+            _blocksBanner(RankingOverlay(game: g)),
       },
     );
   }
@@ -235,17 +305,85 @@ class _GameViewState extends State<GameView> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Center(
-        child: PhoneFrame(
-          child: kIsWeb
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(28),
-                  clipBehavior: Clip.hardEdge,
-                  child: gameStack,
-                )
-              : gameStack,
-        ),
+      body: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: PhoneFrame(
+                child: kIsWeb
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(28),
+                        clipBehavior: Clip.hardEdge,
+                        child: gameStack,
+                      )
+                    : gameStack,
+              ),
+            ),
+          ),
+          if (_bannerSupported && !_loadingVisible)
+            _BannerSafeArea(adService: _adService),
+        ],
       ),
+    );
+  }
+}
+
+class _BannerBlocker extends StatefulWidget {
+  const _BannerBlocker({required this.onChanged, required this.child});
+
+  final ValueChanged<bool> onChanged;
+  final Widget child;
+
+  @override
+  State<_BannerBlocker> createState() => _BannerBlockerState();
+}
+
+class _BannerBlockerState extends State<_BannerBlocker> {
+  @override
+  void initState() {
+    super.initState();
+    widget.onChanged(true);
+  }
+
+  @override
+  void dispose() {
+    widget.onChanged(false);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
+class _BannerSafeArea extends StatelessWidget {
+  const _BannerSafeArea({required this.adService});
+
+  final AdService adService;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 100,
+      child: adService is! FakeAdService
+          ? const SizedBox.shrink()
+          : AnimatedBuilder(
+              animation: adService,
+              builder: (context, _) {
+                final visible = (adService as FakeAdService).bannerVisible;
+                return ColoredBox(
+                  color: visible ? const Color(0xFF151D30) : Colors.transparent,
+                  child: visible
+                      ? const Center(
+                          child: Text(
+                            'TEST AD, 무한 모드 하단 배너',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                        )
+                      : null,
+                );
+              },
+            ),
     );
   }
 }

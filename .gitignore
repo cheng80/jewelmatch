@@ -185,6 +185,7 @@ app.*.map.json
 ############################################################
 match/
 match.zip
+*.ait
 assets/generated/
 tmp/
 

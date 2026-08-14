@@ -21,7 +21,7 @@ flutter test test/app_config_test.dart --dart-define=STORE_CHANNEL=play
 
 ## 현재 빌드 명령
 
-아래 명령은 Flutter 코드의 채널값을 선택한다. 아직 Android product flavor, iOS 별도 bundle ID, Apps in Toss `.ait` 패키징은 구현 전이므로 스토어 업로드용 산출물로 사용하지 않는다.
+아래 명령은 Flutter 코드의 채널값을 선택한다. Android product flavor와 iOS 별도 bundle ID는 구현 전이다. Apps in Toss는 콘솔 `appName`과 운영 광고 그룹을 확정하기 전까지 테스트 산출물로만 사용한다.
 
 ```bash
 # Google Play
@@ -33,27 +33,26 @@ flutter build apk --release --dart-define=STORE_CHANNEL=onestore
 # Apple App Store
 flutter build ipa --release --dart-define=STORE_CHANNEL=appstore
 
-# Apps in Toss 준비용 Web 빌드
-flutter build web --release --base-href / --no-web-resources-cdn --no-source-maps \
-  --dart-define=STORE_CHANNEL=intoss
+# Apps in Toss 공식 테스트 광고 Web 빌드와 .ait 패키징
+INTOSS_APP_NAME=<콘솔_appName> npm run build:intoss:test
 ```
 
 ## 채널별 구현 상태
 
 | 항목 | 현재 | 다음 작업 |
 |---|---|---|
-| 공통 Flutter 채널값 | 적용됨 | 채널별 기능 플래그 연결 |
+| 공통 Flutter 채널값 | 적용됨 | 운영 빌드별 값 검증 |
 | Google Play | `com.cheng80.stonematch`, `stonematch_key` 사용 예정 | `play` product flavor와 실제 서명 연결 |
 | One Store | Google Play와 같은 `com.cheng80.stonematch`, `stonematch_key` 사용 | `onestore` flavor와 One Store 키 등록 |
 | App Store | 기존 `com.cheng80.stonematch` 사용 | Apple ID와 Xcode build configuration 연결 |
-| Apps in Toss | 일반 Web 빌드만 가능 | 콘솔 `appName`, `apps-in-toss.config.ts`, `.ait` 패키징 추가 |
+| Apps in Toss | SDK 3.x 설정, 광고 브리지, 테스트 Web과 `.ait` 빌드 적용 | 콘솔 `appName`, 운영 광고 그룹, QR 실기기 검증 |
 
 ## 구현 순서
 
 1. 설정 화면과 인앱 리뷰를 채널별로 분기한다.
 2. Android `play`, `onestore` product flavor와 iOS 설정을 추가한다.
-3. Apps in Toss Web 패키징을 추가하고 QR 테스트를 한다.
-4. Apps in Toss 리더보드와 [`ad_placement_policy.md`](ad_placement_policy.md)를 따르는 광고를 `intoss` 채널에만 연결한다.
+3. Apps in Toss 콘솔 값을 확정하고 QR 테스트를 한다.
+4. Apps in Toss 리더보드를 연결한다.
 
 ## 출시 전 결정할 값
 

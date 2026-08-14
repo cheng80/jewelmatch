@@ -16,7 +16,7 @@
 - [x] 보드 크롬/슬롯 배경 `ui.Picture` 캐싱 (`MatchBoardRenderer`)
 - [x] 보드 클리핑 최소화: 낙하/리필/인트로 구간에서만 `clipRRect`
 - [x] HUD `TextPainter`/`Paint` 재사용 캐싱 (`MatchGameHud`)
-- [x] 개발 모드 FPS 오버레이 추가 (`PerformanceOverlay`, debug only)
+- [x] 설정에서 켜고 끄는 FPS 계측 패널 추가 (`FrameTiming`, 웹 QA 쿼리 지원)
 - [x] 하이퍼 보석 `ColorFilter.matrix` 제거 → 전용 스프라이트 프레임 사용
 - [x] 특수 보석 렌더: `bomb`/`star`/`hyper`/`supernova`는 `Special_Action_Arcane.png`, legacy `row`/`col`은 `Special_Arcane.png`
 - [x] 튜토리얼 스프라이트 프리뷰를 원본 픽셀 기준 프레임 크롭으로 통일 (`SpriteSheetFrame`)
@@ -44,6 +44,8 @@
 
 - [x] 설정: 볼륨·음소거·화면 켜짐·언어
 - [x] 웹: `kIsWeb`일 때 설정의「평점 남기기」비표시, 타이틀 자동 리뷰 요청 생략
+- [x] Apps in Toss SDK 3.x 광고 브리지, 보상형 이어하기·아이템 보충, 무한 모드 하단 배너와 모의 테스트 환경
+- [ ] 광고 일일 제한 서버 영속화와 측정 이벤트 분석 제공자 연결
 - [ ] iOS `AppConfig.appStoreId` 등 스토어 연동 값 출시 전 입력 (App Store Connect 등에서 설정)
 
 ## 반응형 프레임·레이아웃

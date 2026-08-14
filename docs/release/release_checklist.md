@@ -73,13 +73,14 @@ Stone Match 출시 전 확인 목록이다.
 ## Apps in Toss
 
 - [ ] Apps in Toss 콘솔 워크스페이스와 게임 앱 등록
-- [ ] 콘솔 `appName` 확정, `apps-in-toss.config.ts`에 반영
+- [ ] 콘솔 `appName` 확정, 빌드 환경 변수 `INTOSS_APP_NAME`에 반영
 - [ ] 앱 로고 600×600, 투명 배경 없는 PNG와 썸네일 1932×828 PNG 준비
 - [ ] 세로 스크린샷 3장 또는 가로 스크린샷 1장 이상 준비
 - [ ] 고객센터 정보, 게임 카테고리, 검색 키워드, 상세 설명 입력
 - [ ] 동일 게임의 오픈마켓 등급분류 정보 또는 게임물 등급분류증명서 준비
 - [ ] 리더보드 사용 시 점수 단위와 정렬 기준 확정
-- [ ] root base href로 Web 빌드: `flutter build web --release --base-href / --no-web-resources-cdn --no-source-maps --dart-define=STORE_CHANNEL=intoss`
+- [x] SDK 3.x 설정과 테스트 광고 Web, `.ait` 로컬 패키징 검증
+- [ ] 콘솔 appName으로 테스트 빌드: `INTOSS_APP_NAME=<콘솔_appName> npm run build:intoss:test`
 - [ ] `.ait` 패키징, 압축 해제 기준 100MB 이하 확인, 콘솔 QR 실기기 테스트
 - [ ] 검토 요청 전 QR 테스트를 최소 1회 완료
 - [ ] 광고 적용 시 [`ad_placement_policy.md`](ad_placement_policy.md)의 위치, 사전 로드, 사운드 정지와 보상 지급 조건 확인

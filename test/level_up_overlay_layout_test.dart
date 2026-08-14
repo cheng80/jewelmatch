@@ -2,6 +2,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stonematch/ads/ad_reward_policy.dart';
+import 'package:stonematch/ads/fake_ad_service.dart';
 import 'package:stonematch/game/item_inventory.dart';
 import 'package:stonematch/game/item_kind.dart';
 import 'package:stonematch/game/jewel_game_mode.dart';
@@ -163,7 +165,13 @@ void main() {
             locale: context.locale,
             home: MediaQuery(
               data: const MediaQueryData(textScaler: TextScaler.linear(1.25)),
-              child: Scaffold(body: StageInventoryOverlay(game: game)),
+              child: Scaffold(
+                body: StageInventoryOverlay(
+                  game: game,
+                  adService: FakeAdService(),
+                  adRewardPolicy: AdRewardPolicy(),
+                ),
+              ),
             ),
           ),
         ),

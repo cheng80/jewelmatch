@@ -7,7 +7,7 @@ import '../widgets/obsidian_frame.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import 'settings/settings_sections.dart';
 
-/// 설정 화면. SettingsNotifier를 통해 볼륨·음소거·화면 꺼짐 방지를 관리한다.
+/// 설정 화면. SettingsNotifier를 통해 화면과 사운드 설정을 관리한다.
 class SettingView extends StatelessWidget {
   const SettingView({super.key});
 
@@ -50,6 +50,7 @@ class SettingView extends StatelessWidget {
                             title: context.tr('sectionScreen'),
                           ),
                           const KeepScreenOnTile(),
+                          const ShowFpsTile(),
                           const Divider(height: 1),
                           SettingsSectionTitle(
                             icon: Icons.volume_up,

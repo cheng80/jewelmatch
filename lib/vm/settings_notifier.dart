@@ -12,6 +12,7 @@ class SettingsState {
     this.bgmMuted = false,
     this.sfxMuted = false,
     this.keepScreenOn = true,
+    this.showFps = false,
   });
 
   final double bgmVolume;
@@ -19,6 +20,7 @@ class SettingsState {
   final bool bgmMuted;
   final bool sfxMuted;
   final bool keepScreenOn;
+  final bool showFps;
 
   SettingsState copyWith({
     double? bgmVolume,
@@ -26,6 +28,7 @@ class SettingsState {
     bool? bgmMuted,
     bool? sfxMuted,
     bool? keepScreenOn,
+    bool? showFps,
   }) {
     return SettingsState(
       bgmVolume: bgmVolume ?? this.bgmVolume,
@@ -33,6 +36,7 @@ class SettingsState {
       bgmMuted: bgmMuted ?? this.bgmMuted,
       sfxMuted: sfxMuted ?? this.sfxMuted,
       keepScreenOn: keepScreenOn ?? this.keepScreenOn,
+      showFps: showFps ?? this.showFps,
     );
   }
 
@@ -43,12 +47,19 @@ class SettingsState {
         other.sfxVolume == sfxVolume &&
         other.bgmMuted == bgmMuted &&
         other.sfxMuted == sfxMuted &&
-        other.keepScreenOn == keepScreenOn;
+        other.keepScreenOn == keepScreenOn &&
+        other.showFps == showFps;
   }
 
   @override
-  int get hashCode =>
-      Object.hash(bgmVolume, sfxVolume, bgmMuted, sfxMuted, keepScreenOn);
+  int get hashCode => Object.hash(
+    bgmVolume,
+    sfxVolume,
+    bgmMuted,
+    sfxMuted,
+    keepScreenOn,
+    showFps,
+  );
 }
 
 /// 설정 읽기/쓰기 + SoundManager·WakelockPlus 적용을 담당하는 Notifier.
@@ -61,6 +72,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
       bgmMuted: GameSettings.bgmMuted,
       sfxMuted: GameSettings.sfxMuted,
       keepScreenOn: GameSettings.keepScreenOn,
+      showFps: GameSettings.showFps,
     );
   }
 
@@ -115,6 +127,12 @@ class SettingsNotifier extends Notifier<SettingsState> {
     GameSettings.keepScreenOn = v;
     WakelockService.apply(v);
     state = state.copyWith(keepScreenOn: v);
+  }
+
+  void setShowFps(bool v) {
+    if (state.showFps == v) return;
+    GameSettings.showFps = v;
+    state = state.copyWith(showFps: v);
   }
 }
 

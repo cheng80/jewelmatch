@@ -10,4 +10,17 @@ void main() {
 
     expect(AppConfig.storeChannel.name, configuredChannel);
   });
+
+  test('INTOSS_AD_MODE selects configured test environment', () {
+    const configuredMode = String.fromEnvironment(
+      'INTOSS_AD_MODE',
+      defaultValue: 'disabled',
+    );
+
+    expect(AppConfig.intossAdMode.name, configuredMode);
+    if (AppConfig.intossAdMode == IntossAdMode.test) {
+      expect(AppConfig.intossRewardedAdGroupId, 'ait-ad-test-rewarded-id');
+      expect(AppConfig.intossBannerAdGroupId, 'ait-ad-test-banner-id');
+    }
+  });
 }

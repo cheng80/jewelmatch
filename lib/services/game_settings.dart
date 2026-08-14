@@ -41,6 +41,12 @@ class GameSettings {
   static set keepScreenOn(bool v) =>
       StorageHelper.write(StorageKeys.keepScreenOn, v);
 
+  /// FPS 계측 패널 표시 여부.
+  static bool get showFps =>
+      StorageHelper.readBool(StorageKeys.showFps, defaultValue: false);
+
+  static set showFps(bool v) => StorageHelper.write(StorageKeys.showFps, v);
+
   /// [gameMode]에 해당하는 베스트 스코어(초). 없으면 null.
   static double? getBestScore(int gameMode) => StorageHelper.read<double>(
     StorageKeys.bestScorePrefix + gameMode.toString(),
