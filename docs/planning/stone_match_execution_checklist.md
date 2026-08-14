@@ -93,6 +93,7 @@
 
 ## 후속 최적화 점검
 
+- [ ] Apps in Toss iPhone GC·프레임 급락 후속 테스트를 `superpowers/docs/plans/2026-08-15-053005-01-plan-intoss-fps-device-test.md` 순서대로 수행하고 결과 기록
 - [ ] 전체 화면 기준 `ConsumerWidget` / `setState` 범위를 다시 점검해 불필요한 rebuild 구간 추가 축소
 - [ ] Flutter DevTools 기준으로 초기 진입·게임 플레이 중 rebuild hotspot / frame drop 구간 계측
 - [ ] 계측 결과를 바탕으로 HUD / 오버레이 / 타이틀뷰의 추가 분리 또는 provider 세분화 여부 판단

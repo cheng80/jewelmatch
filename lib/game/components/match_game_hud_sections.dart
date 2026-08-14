@@ -40,9 +40,7 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
         image,
         Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
         Rect.fromLTWH(labelLeft, iconTop, rankIconSize, rankIconSize),
-        Paint()
-          ..isAntiAlias = true
-          ..filterQuality = FilterQuality.high,
+        _hudImagePaint,
       );
     }
     _bestLabel.paint(
@@ -80,24 +78,8 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
       _comboRect,
       Radius.circular(comboR),
     );
-    canvas.drawRRect(
-      comboBg,
-      Paint()
-        ..color = Colors.black.withValues(alpha: 0.38)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
-    );
-    canvas.drawRRect(
-      comboBg,
-      _comboGradientPaint
-        ..shader = LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: JewelCandyLuminaTheme.comboStripGradient,
-        ).createShader(_comboRect),
-    );
-    _comboStrokePaint.color = JewelCandyLuminaTheme.outlineBright.withValues(
-      alpha: 0.78,
-    );
+    canvas.drawRRect(comboBg, _comboShadowPaint);
+    canvas.drawRRect(comboBg, _comboGradientPaint);
     canvas.drawRRect(comboBg, _comboStrokePaint);
     final comboInset = math.min(4.0, _comboRect.height * 0.12);
     final comboInner = _comboRect.deflate(comboInset);
@@ -106,24 +88,12 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
         comboInner,
         Radius.circular(math.max(0, comboR - comboInset)),
       );
-      _comboInnerStrokePaint.color = JewelCandyLuminaTheme.goldStrong
-          .withValues(alpha: 0.28);
       canvas.drawRRect(innerBg, _comboInnerStrokePaint);
     }
 
     final halfW = _comboRect.width / 2;
-    final leftCol = Rect.fromLTWH(
-      _comboRect.left,
-      _comboRect.top,
-      halfW,
-      _comboRect.height,
-    );
-    final rightCol = Rect.fromLTWH(
-      _comboRect.left + halfW,
-      _comboRect.top,
-      halfW,
-      _comboRect.height,
-    );
+    final leftCenterX = _comboRect.left + halfW / 2;
+    final rightCenterX = _comboRect.left + halfW * 1.5;
 
     final gapLabelValue = math.max(5.0, layout * 0.06);
     final lh = _comboLeftLabel.height + gapLabelValue + _comboLeftValue.height;
@@ -145,24 +115,24 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
     final ry0 = _comboRect.top + padTop + (blockH - rh) / 2 + labelTopInset;
     _comboLeftLabel.paint(
       canvas,
-      Offset(leftCol.center.dx - _comboLeftLabel.width / 2, ly0),
+      Offset(leftCenterX - _comboLeftLabel.width / 2, ly0),
     );
     _comboLeftValue.paint(
       canvas,
       Offset(
-        leftCol.center.dx - _comboLeftValue.width / 2,
+        leftCenterX - _comboLeftValue.width / 2,
         ly0 + _comboLeftLabel.height + gapLabelValue,
       ),
     );
 
     _comboRightLabel.paint(
       canvas,
-      Offset(rightCol.center.dx - _comboRightLabel.width / 2, ry0),
+      Offset(rightCenterX - _comboRightLabel.width / 2, ry0),
     );
     _comboRightValue.paint(
       canvas,
       Offset(
-        rightCol.center.dx - _comboRightValue.width / 2,
+        rightCenterX - _comboRightValue.width / 2,
         ry0 + _comboRightLabel.height + gapLabelValue,
       ),
     );
@@ -181,34 +151,15 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
         shadowRect,
         Radius.circular(shadowRect.height / 2),
       ),
-      Paint()
-        ..color = Colors.black.withValues(alpha: 0.45)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+      _timeBarShadowPaint,
     );
 
     final barBg = RRect.fromRectAndRadius(
       _timeBarRect,
       Radius.circular(_timeBarRect.height / 2),
     );
-    canvas.drawRRect(
-      barBg,
-      _timeBarBgPaint
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: const [
-            Color(0xFF2A2419),
-            JewelCandyLuminaTheme.surfaceStoneDark,
-            Color(0xFF241D12),
-          ],
-        ).createShader(_timeBarRect),
-    );
-    _timeBarStrokePaint.color = JewelCandyLuminaTheme.outlineBright.withValues(
-      alpha: 0.82,
-    );
+    canvas.drawRRect(barBg, _timeBarBgPaint);
     canvas.drawRRect(barBg, _timeBarStrokePaint);
-    _timeBarInnerStrokePaint.color = JewelCandyLuminaTheme.goldStrong
-        .withValues(alpha: 0.28);
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         _timeBarRect.deflate(3),
@@ -268,9 +219,6 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
         canvas.restore();
       }
     } else {
-      _untimedFillPaint.color = JewelCandyLuminaTheme.secondaryCyan.withValues(
-        alpha: 0.14,
-      );
       canvas.drawRRect(innerR, _untimedFillPaint);
     }
 

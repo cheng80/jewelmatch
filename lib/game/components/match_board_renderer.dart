@@ -286,10 +286,6 @@ class MatchBoardRenderer extends PositionComponent
     final bx = logic.boardX;
     final by = logic.boardY;
 
-    final innerR = RRect.fromRectAndRadius(
-      Rect.fromLTWH(bx, by, bw, bh),
-      const Radius.circular(10),
-    );
     if (_boardChromePicture != null) {
       canvas.drawPicture(_boardChromePicture!);
     }
@@ -303,7 +299,12 @@ class MatchBoardRenderer extends PositionComponent
     if (needsBoardClip) {
       // 보드 밖에서 내려오는 낙하/리필 연출일 때만 클립한다.
       canvas.save();
-      canvas.clipRRect(innerR);
+      canvas.clipRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(bx, by, bw, bh),
+          const Radius.circular(10),
+        ),
+      );
     }
 
     final activeDragGem = logic.activeInvalidDragGem;
