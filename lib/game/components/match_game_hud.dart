@@ -86,27 +86,55 @@ class MatchGameHud extends PositionComponent
   int? _cachedProgressionXp;
   int? _cachedDisplayedCombo;
   int? _cachedMaxCombo;
+  int? _cachedHintBadgeCount;
   bool? _cachedTimedModeForText;
+  TextPainter? _hintBadgePainter;
+  Offset _hintBadgeCenter = Offset.zero;
+  double _hintBadgeDiameter = 0;
+  final Paint _hudImagePaint = Paint()
+    ..isAntiAlias = true
+    ..filterQuality = FilterQuality.high;
+  final Paint _hintBadgePaint = Paint()..isAntiAlias = true;
+  final Paint _hintBadgeStrokePaint = Paint()
+    ..isAntiAlias = true
+    ..style = PaintingStyle.stroke
+    ..color = const Color(0xFF2A1606);
   final Paint _comboGradientPaint = Paint();
+  final Paint _comboShadowPaint = Paint()
+    ..color = Colors.black.withValues(alpha: 0.38)
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
   final Paint _comboStrokePaint = Paint()
     ..style = PaintingStyle.stroke
-    ..strokeWidth = 1.4;
+    ..strokeWidth = 1.4
+    ..color = JewelCandyLuminaTheme.outlineBright.withValues(alpha: 0.78);
   final Paint _comboInnerStrokePaint = Paint()
     ..style = PaintingStyle.stroke
-    ..strokeWidth = 1.0;
+    ..strokeWidth = 1.0
+    ..color = JewelCandyLuminaTheme.goldStrong.withValues(alpha: 0.28);
   final Paint _timeBarBgPaint = Paint();
+  final Paint _timeBarShadowPaint = Paint()
+    ..color = Colors.black.withValues(alpha: 0.45)
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
   final Paint _timeBarStrokePaint = Paint()
     ..style = PaintingStyle.stroke
-    ..strokeWidth = 1.4;
+    ..strokeWidth = 1.4
+    ..color = JewelCandyLuminaTheme.outlineBright.withValues(alpha: 0.82);
   final Paint _timeBarInnerStrokePaint = Paint()
     ..style = PaintingStyle.stroke
-    ..strokeWidth = 1.0;
+    ..strokeWidth = 1.0
+    ..color = JewelCandyLuminaTheme.goldStrong.withValues(alpha: 0.28);
   final Paint _timeFillPaint = Paint();
-  final Paint _untimedFillPaint = Paint();
+  final Paint _untimedFillPaint = Paint()
+    ..color = JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.14);
   final Paint _itemTrayPaint = Paint()..isAntiAlias = true;
   final Paint _itemTrayStrokePaint = Paint()
     ..isAntiAlias = true
     ..style = PaintingStyle.stroke;
+  final Paint _itemTrayGroovePaint = Paint()
+    ..isAntiAlias = true
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.1
+    ..color = const Color(0xB87F5A2A);
   ui.Image? _iconButtonFrameImage;
   ui.Image? _hintBulbIconImage;
   ui.Image? _tutorialIconImage;
@@ -211,6 +239,8 @@ class MatchGameHud extends PositionComponent
     _cachedProgressionXp = null;
     _cachedDisplayedCombo = null;
     _cachedMaxCombo = null;
+    _cachedHintBadgeCount = null;
+    _hintBadgePainter = null;
     _cachedTimedModeForText = null;
 
     final top = g.safeAreaPadding.top + 10;
@@ -275,7 +305,53 @@ class MatchGameHud extends PositionComponent
       g.hudBottomTimeBarHeight,
     );
 
+    _comboGradientPaint.shader = _comboRect.isEmpty
+        ? null
+        : LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: JewelCandyLuminaTheme.comboStripGradient,
+          ).createShader(_comboRect);
+    _timeBarBgPaint.shader = _timeBarRect.isEmpty
+        ? null
+        : const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF2A2419),
+              JewelCandyLuminaTheme.surfaceStoneDark,
+              Color(0xFF241D12),
+            ],
+          ).createShader(_timeBarRect);
+
+    _hintBadgeDiameter = _hintRect.width * 0.36;
+    _hintBadgeCenter = Offset(
+      _hintRect.right - _hintBadgeDiameter * 0.18 - 5,
+      _hintRect.bottom - _hintBadgeDiameter * 0.18 - 5,
+    );
+    _hintBadgePaint.shader = _hintBadgeDiameter <= 0
+        ? null
+        : const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFFFF0A8), Color(0xFFC58A22)],
+          ).createShader(
+            Rect.fromCircle(
+              center: _hintBadgeCenter,
+              radius: _hintBadgeDiameter / 2,
+            ),
+          );
+    _hintBadgeStrokePaint.strokeWidth = math.max(1.2, _hintRect.width * 0.04);
+
     _layoutItemSlots();
+    _itemTrayPaint.shader = _itemTrayRect.isEmpty
+        ? null
+        : const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF392D20), Color(0xFF17120E), Color(0xFF08090B)],
+            stops: [0.0, 0.44, 1.0],
+          ).createShader(_itemTrayRect);
     _layoutPrismColorPicker();
     _layoutItemConfirmPopup();
 

@@ -55,34 +55,6 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
     );
   }
 
-  void _withRemovalTransform(
-    Canvas canvas,
-    BoardGem gem,
-    double ts,
-    bool enabled,
-    void Function() draw,
-  ) {
-    if (!enabled) {
-      draw();
-      return;
-    }
-    final scale = _removalVisualScale;
-    if (scale >= 0.999) {
-      draw();
-      return;
-    }
-    final cx = gem.x + ts / 2;
-    final cy = gem.y + ts / 2;
-    final rotationDirection = gem.id.isEven ? 1 : -1;
-    canvas.save();
-    canvas.translate(cx, cy);
-    canvas.rotate(_removalVisualRotation * rotationDirection);
-    canvas.scale(scale, scale);
-    canvas.translate(-cx, -cy);
-    draw();
-    canvas.restore();
-  }
-
   int _spriteColumnFor(BoardGem gem) {
     if (gem.kind == GemKind.hyper) {
       return 1;
@@ -165,8 +137,50 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
       _drawRemovalCellFlash(canvas, gem, ts);
     }
 
+    final hasRemovalTransform =
+        isRemovalVisualCell && _removalVisualScale < 0.999;
+
+    if (hasRemovalTransform) {
+      final cx = gem.x + ts / 2;
+      final cy = gem.y + ts / 2;
+      final rotationDirection = gem.id.isEven ? 1 : -1;
+      canvas.save();
+      canvas.translate(cx, cy);
+      canvas.rotate(_removalVisualRotation * rotationDirection);
+      canvas.scale(_removalVisualScale, _removalVisualScale);
+      canvas.translate(-cx, -cy);
+    }
+
     if (compositedOverlaySprite != null && specialSprite == null) {
-      _withRemovalTransform(canvas, gem, ts, isRemovalVisualCell, () {
+      final overlayW = ts * _overlaySourceRatio;
+      final overlayH = ts * _overlaySourceRatio;
+      _spriteRenderPosition.setValues(
+        x + (ts - overlayW) / 2,
+        y + (ts - overlayH) / 2,
+      );
+      _spriteRenderSize.setValues(overlayW, overlayH);
+      compositedOverlaySprite.render(
+        canvas,
+        position: _spriteRenderPosition,
+        size: _spriteRenderSize,
+        overridePaint: compositedPaint,
+      );
+      if (hasRemovalTransform) canvas.restore();
+      return;
+    }
+
+    final sprite = specialSprite ?? _sheetSprites[_spriteColumnFor(gem)];
+    if (sprite != null) {
+      final spritePaint = specialSprite == null ? normalPaint : compositedPaint;
+      _spriteRenderPosition.setValues(ox, oy);
+      _spriteRenderSize.setValues(drawW, drawH);
+      sprite.render(
+        canvas,
+        position: _spriteRenderPosition,
+        size: _spriteRenderSize,
+        overridePaint: spritePaint,
+      );
+      if (overlaySprite != null && compositedOverlaySprite == null) {
         final overlayW = ts * _overlaySourceRatio;
         final overlayH = ts * _overlaySourceRatio;
         _spriteRenderPosition.setValues(
@@ -174,57 +188,21 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
           y + (ts - overlayH) / 2,
         );
         _spriteRenderSize.setValues(overlayW, overlayH);
-        compositedOverlaySprite.render(
+        overlaySprite.render(
           canvas,
           position: _spriteRenderPosition,
           size: _spriteRenderSize,
-          overridePaint: compositedPaint,
+          overridePaint: normalPaint,
         );
-      });
-      return;
-    }
-
-    final sprite = specialSprite ?? _sheetSprites[_spriteColumnFor(gem)];
-    if (sprite != null) {
-      final spritePaint = specialSprite == null ? normalPaint : compositedPaint;
-      _withRemovalTransform(canvas, gem, ts, isRemovalVisualCell, () {
-        _spriteRenderPosition.setValues(ox, oy);
-        _spriteRenderSize.setValues(drawW, drawH);
-        sprite.render(
-          canvas,
-          position: _spriteRenderPosition,
-          size: _spriteRenderSize,
-          overridePaint: spritePaint,
-        );
-        if (overlaySprite != null && compositedOverlaySprite == null) {
-          final overlayW = ts * _overlaySourceRatio;
-          final overlayH = ts * _overlaySourceRatio;
-          _spriteRenderPosition.setValues(
-            x + (ts - overlayW) / 2,
-            y + (ts - overlayH) / 2,
-          );
-          _spriteRenderSize.setValues(overlayW, overlayH);
-          overlaySprite.render(
-            canvas,
-            position: _spriteRenderPosition,
-            size: _spriteRenderSize,
-            overridePaint: normalPaint,
-          );
-        }
-      });
+      }
     } else {
-      _withRemovalTransform(
+      _drawGemProcedural(
         canvas,
         gem,
         ts,
-        isRemovalVisualCell,
-        () => _drawGemProcedural(
-          canvas,
-          gem,
-          ts,
-          alpha: isRemovalVisualCell ? _removalVisualAlpha : 1,
-        ),
+        alpha: isRemovalVisualCell ? _removalVisualAlpha : 1,
       );
     }
+    if (hasRemovalTransform) canvas.restore();
   }
 }
