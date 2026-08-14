@@ -33,6 +33,7 @@
 
 | 문서 | 용도 |
 |------|------|
+| [`tools/test_build_deploy_commands.md`](tools/test_build_deploy_commands.md) | 주요 테스트, 로컬 실행, Web/NAS/Apps in Toss 빌드와 배포 명령 |
 | [`tools/web_build.md`](tools/web_build.md) | Web 릴리즈 빌드, `/match/` base-href, 배포 절차 |
 | [`tools/ranking_server.md`](tools/ranking_server.md) | 랭킹 데이터 백업, 초기화, 복원 절차 |
 | [`tools/android_gradle_migration.md`](tools/android_gradle_migration.md) | Android Gradle/Kotlin DSL 현재 설정과 변경 체크 |

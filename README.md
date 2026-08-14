@@ -121,6 +121,7 @@ Chrome에서는 모의 보상과 테스트 배너를 확인하고, 공식 테스
 | [`docs/planning/stone_match_execution_checklist.md`](docs/planning/stone_match_execution_checklist.md) | 진행·배포 체크리스트 |
 | [`docs/architecture/code-flow-analysis.md`](docs/architecture/code-flow-analysis.md) | 초기화·레이아웃·Flame 계층 |
 | [`docs/architecture/game_flow.md`](docs/architecture/game_flow.md) | 매치-3 플레이 흐름 요약 |
+| [`docs/tools/test_build_deploy_commands.md`](docs/tools/test_build_deploy_commands.md) | 주요 테스트, 로컬 실행, Web/NAS/Apps in Toss 빌드와 배포 명령 |
 | [`docs/tools/web_build.md`](docs/tools/web_build.md) | Web 빌드·배포 |
 | [`docs/release/release_checklist.md`](docs/release/release_checklist.md) | 스토어 출시 체크리스트 |
 | [`docs/release/release_build.md`](docs/release/release_build.md) | Android/iOS/Web 릴리즈 빌드 |
