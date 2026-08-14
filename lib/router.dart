@@ -7,9 +7,14 @@ import 'views/game_view.dart';
 import 'views/setting_view.dart';
 import 'views/title_view.dart';
 
+const bool _qaPerfAutorun = bool.fromEnvironment('QA_PERF_AUTORUN');
+
 /// 앱 전체 라우팅 설정.
 final GoRouter appRouter = GoRouter(
-  initialLocation: RoutePaths.title,
+  initialLocation: _qaPerfAutorun
+      ? '${RoutePaths.game}?mode=simple'
+      : RoutePaths.title,
+  overridePlatformDefaultLocation: _qaPerfAutorun,
   routes: [
     GoRoute(
       path: RoutePaths.title,

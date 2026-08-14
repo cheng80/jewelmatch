@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stonematch/game/match_board_game.dart';
 import 'package:stonematch/game/match_board_models.dart';
+import 'package:stonematch/game/match_board_qa_bridge.dart';
 
 void main() {
   test('QA special effect buttons use the real board path for every kind', () {
@@ -60,6 +61,13 @@ void main() {
     expect(game.triggerQaSpecialEffect(GemKind.row), isFalse);
     expect(game.board.stats.specialGemsActivated, 0);
     expect(game.board.consumeSpecialEffectEvents(), isEmpty);
+  });
+
+  test('QA 자동 플레이는 힌트 이동을 실제 게임 입력으로 실행한다', () {
+    final game = _readyGame();
+
+    expect(game.performSimulationHintMove(), isTrue);
+    expect(game.board.stats.validSwaps, 1);
   });
 }
 
