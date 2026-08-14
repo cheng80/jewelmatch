@@ -2,6 +2,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:stonematch/game/match_board_logic.dart';
 
 void main() {
+  test('empty effect queue reuses its immutable result', () {
+    final board = MatchBoardLogic(rows: 8, cols: 8);
+
+    final first = board.consumeSpecialEffectEvents();
+    final second = board.consumeSpecialEffectEvents();
+
+    expect(identical(first, second), isTrue);
+  });
+
   test('special gems emit distinct effect descriptors with shake tuning', () {
     final bomb = _activateSingleSpecial(GemKind.bomb, row: 3, col: 3).single;
     final star = _activateSingleSpecial(GemKind.star, row: 3, col: 3).single;

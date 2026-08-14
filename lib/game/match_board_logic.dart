@@ -204,9 +204,20 @@ class MatchBoardLogic {
 
   double stageTimer = 0;
 
-  String _cellKey(int row, int col) => matchBoardCellKey(row, col);
+  late final List<String> _cellKeys = List<String>.generate(
+    rows * cols,
+    (index) => '${index ~/ cols}:${index % cols}',
+    growable: false,
+  );
+
+  String _cellKey(int row, int col) => _cellKeys[row * cols + col];
+
+  bool isPendingRemovalCell(int row, int col) =>
+      isInside(row, col) &&
+      (pendingRemovalSet?.containsKey(_cellKey(row, col)) ?? false);
 
   List<SpecialEffectEvent> consumeSpecialEffectEvents() {
+    if (_specialEffectEvents.isEmpty) return const <SpecialEffectEvent>[];
     final events = List<SpecialEffectEvent>.unmodifiable(_specialEffectEvents);
     _specialEffectEvents.clear();
     return events;

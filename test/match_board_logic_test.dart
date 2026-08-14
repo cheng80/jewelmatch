@@ -191,6 +191,8 @@ void main() {
     expect(board.pendingRemovalSet, containsPair('3:3', true));
     expect(board.pendingRemovalSet, containsPair('2:2', true));
     expect(board.pendingRemovalSet, containsPair('4:4', true));
+    expect(board.isPendingRemovalCell(3, 3), isTrue);
+    expect(board.isPendingRemovalCell(0, 0), isFalse);
     expect(board.stats.specialActivatedByKind[GemKind.bomb], 1);
     expect(board.consumeSpecialEffectEvents().single.effectKind, GemKind.bomb);
   });

@@ -2,7 +2,7 @@
 
 **Goal:** Wasm 성능 개선 테스트 빌드를 앱인토스에 업로드하고 연결된 iPhone에서 실행한다.
 **Why planning is required:** 외부 테스트 배포 상태를 새로 만드는 작업이다.
-**Acceptance:** 기존 배포는 유지하고, `stonematch.ait` 1건만 테스트 배포한다. 새 deploymentId가 발급되고 기존 ID와 다름을 확인한 뒤 `CHENG_iPhone`의 토스 앱에서 새 딥링크를 연다. FPS 패널은 직전 30초 평균·최저 FPS와 최대 프레임 공백을 유지해 단일 캡처에도 이전 급락이 남아야 한다. 토큰, 워크스페이스 또는 앱 이름이 예상과 다르면 배포 전에 중단한다. 반복 비용이 큰 실기기 테스트는 아래 기록과 체크리스트를 갱신해 같은 비교를 되풀이하지 않는다.
+**Acceptance:** 검증된 변경을 `main`에 통합해 원격에 푸시하고 깨끗한 `main`에서 `stonematch.ait` 1건만 테스트 배포한다. 기존 배포는 복구 경로로 유지한다. 새 deploymentId가 발급되고 기존 ID와 다름을 확인한 뒤 `CHENG_iPhone`의 토스 앱에서 새 딥링크를 연다. `QA_PERF_AUTORUN` Simple 모드를 같은 조건으로 30초 실행해 FPS `AVG / LOW / GAP`, 프로세스별 잠재 정지와 100ms 이상 횟수를 기록한다. 토큰, 워크스페이스, 앱 이름, 기기 또는 Git 상태가 예상과 다르면 배포 전에 중단한다. 배포 ID와 기기 식별자는 추적 문서에 남기지 않는다.
 
 ### Outcome 1: 배포 대상 고정
 - Work: 앱 이름 `stonematch`, 로컬 산출물 `stonematch.ait`, SHA-256 체크섬을 배포 대상으로 사용한다. 운영 광고와 출시 상태는 변경하지 않는다.
@@ -18,8 +18,13 @@
 - Verify: 자동 이동 단위 테스트, `flutter analyze`, 전체 `flutter test`, 각 Web/AIT 빌드, 연결된 iPhone 실행 후 30초 누적 패널 비교.
 
 ### Outcome 4: 남은 GC 할당 축소와 재측정 준비
-- Work: 매 프레임 64개 보석에 생성되던 제거 효과 콜백을 없애고, HUD의 고정 `Paint`·그라데이션·힌트 수량 텍스트를 레이아웃 변경 때만 만든다. 게임 규칙과 화면 구성은 바꾸지 않는다. 현재 `ParticlePool`은 실제 제거 콜백에서 생성하지 않으므로 최적화 대상에서 제외한다.
+- Work: 매 프레임 64개 보석에 생성되던 제거 효과 콜백을 없애고, HUD의 고정 `Paint`·그라데이션·힌트 수량 텍스트를 레이아웃 변경 때만 만든다. 이어서 빈 특수효과 큐의 새 리스트, 카메라 흔들림 `Vector2`, 제거 대상 조회 문자열 키도 재사용한다. 게임 규칙과 화면 구성은 바꾸지 않는다. 현재 `ParticlePool`은 실제 제거 콜백에서 생성하지 않으므로 최적화 대상에서 제외한다.
 - Verify: `flutter analyze`, 전체 `flutter test`, Wasm Web 빌드. 화면이 같은지는 다음 실기기 A/B에서 확인한다.
+
+### Outcome 5: 검증본 게시와 자동 실기기 재측정
+- Work: 관련 문서와 성능 변경을 한국어 커밋으로 보존하고 `main`에 통합·푸시한다. 깨끗한 `main`에서 테스트 광고와 `QA_PERF_AUTORUN`을 적용한 AIT를 새로 빌드·배포한 뒤 연결된 iPhone에서 실행하고 30초 `Animation Hitches`를 수집한다. 원본 trace는 `tmp/qa/intoss_fps/`에 보존한다.
+- Risks/open questions: FPS 패널 수치는 화면에서만 확인할 수 있다. 자동 캡처로 읽지 못하면 trace 결과를 먼저 기록하고 패널 수치는 사용자 확인 항목으로 남긴다.
+- Verify: `git status --short --branch`, `git rev-list --left-right --count main...origin/main`, AIT SHA-256, 새 딥링크 실행, `xcrun xctrace export` 결과.
 
 ## 완료한 조사와 결과
 
@@ -34,12 +39,13 @@
 | 효과음 수정 전후 | 수정 전 46.6초 / 수정 후 30초에서 잠재 정지 286→37, mediaremoted 113→13, WebContent 104→14, WebKit.GPU 60→7, Toss 2→0. 시간 보정 정지율 약 79~82% 감소 | 없음 |
 | 남은 GC 의심 | Time Profiler에서 WebContent의 `JSC::LocalAllocator::allocateSlowCase`, marking, sweep와 82~123ms 정지 구간이 겹침. 일부 잔여 급락은 JSC 할당·GC와 연관됨 | 아래 항목으로 분리 측정 |
 | 지속 할당 축소 | 보석마다 생성하던 렌더 콜백 최대 64개/프레임 제거. HUD 이미지 `Paint`, 고정 그라데이션, 힌트 수량 `TextPainter` 재사용. 실제로 생성되지 않는 `ParticlePool`은 제외 | 실기기 효과 측정 필요 |
+| 게임 루프 상시 할당 축소 | 빈 특수효과 큐는 상수 리스트를 반환하고, 카메라 흔들림은 기존 `Vector2`에 기록한다. 제거 연출은 64칸 문자열 키를 매 프레임 생성하지 않고 보드별 캐시를 조회한다 | 실기기 효과 측정 필요 |
 
 ## 다음 실기기 테스트 체크리스트
 
 한 번에 한 변수만 바꾸고 각 테스트는 같은 모드·약 30초 플레이로 비교한다. 결과는 이 표 아래에 수치와 함께 추가한다.
 
-- [ ] 이번 파티클 임시 할당 축소판에서 FPS `AVG / LOW / GAP`과 WebContent 잠재 정지 횟수·100ms 이상 횟수 측정
+- [ ] 이번 게임 루프 상시 할당 축소판에서 FPS `AVG / LOW / GAP`과 WebContent 잠재 정지 횟수·100ms 이상 횟수 측정
 - [ ] 같은 빌드에서 효과음 켬 / 효과음 끔 비교
 - [ ] 같은 빌드에서 하단 배너 표시 / 미표시 비교
 - [ ] 특수 효과 표시 / 미표시 비교 후 차이가 있을 때만 해당 효과의 추가 풀링 검토

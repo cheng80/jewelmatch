@@ -31,7 +31,7 @@ extension MatchBoardGameVfx on MatchBoardGame {
   }
 
   void _updateBoardShake(double dt) {
-    _boardShakeOffset.setFrom(_boardShake.update(dt));
+    _boardShake.updateInto(dt, _boardShakeOffset);
   }
 
   Vector2 _cellCenter(int row, int col) {

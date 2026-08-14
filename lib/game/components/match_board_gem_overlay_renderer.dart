@@ -36,8 +36,7 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
 
   bool _isRemovalVisualCell(BoardGem gem) {
     if (!_showRemovalVisuals) return false;
-    return logic.pendingRemovalSet?.containsKey('${gem.row}:${gem.col}') ??
-        false;
+    return logic.isPendingRemovalCell(gem.row, gem.col);
   }
 
   void _drawRemovalCellFlash(Canvas canvas, BoardGem gem, double ts) {
