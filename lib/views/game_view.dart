@@ -12,6 +12,7 @@ import '../ads/fake_ad_service.dart';
 import '../app_config.dart';
 import '../game/jewel_game_mode.dart';
 import '../game/match_board_game.dart';
+import '../game/match_board_qa_bridge.dart';
 import '../utils/sfx_play_log.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import '../widgets/sfx_play_log_panel.dart';
@@ -27,6 +28,8 @@ import 'overlays/game_loading_overlay.dart';
 import 'overlays/game_stats_overlay.dart';
 import 'overlays/ranking_overlay.dart';
 import 'overlays/stage_inventory_overlay.dart';
+
+const bool _qaPerfAutorun = bool.fromEnvironment('QA_PERF_AUTORUN');
 
 /// 매치-3 게임 화면. [gameMode]는 타이틀에서 Simple / Timed 로 전달한다.
 class GameView extends StatefulWidget {
@@ -69,6 +72,7 @@ class _GameViewState extends State<GameView> {
   late final bool _ownsAdService;
   bool _bannerSupported = false;
   int _bannerBlockCount = 0;
+  Timer? _qaPerfTimer;
 
   bool get _qaVfxEnabled => kIsWeb && widget.qaVfxEnabled;
   bool get _qaLevelUpEnabled => kIsWeb && widget.qaLevelUpEnabled;
@@ -96,6 +100,7 @@ class _GameViewState extends State<GameView> {
 
   @override
   void dispose() {
+    _qaPerfTimer?.cancel();
     _adService.hideBanner();
     if (_ownsAdService) _adService.dispose();
     if (AppConfig.debugLog && widget.gameMode == JewelGameMode.simple) {
@@ -162,6 +167,12 @@ class _GameViewState extends State<GameView> {
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
     _game?.releaseRoundStartIntro();
+    if (_qaPerfAutorun) {
+      _qaPerfTimer = Timer.periodic(
+        const Duration(milliseconds: 700),
+        (_) => _game?.performSimulationHintMove(),
+      );
+    }
     if (_qaVfxEnabled && !_qaVfxPreviewScheduled) {
       _qaVfxPreviewScheduled = true;
       unawaited(

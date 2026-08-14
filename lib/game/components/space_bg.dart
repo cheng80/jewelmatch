@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 ///
 /// - 그라데이션 배경을 [ui.Picture]로 캐싱 → 매 프레임 drawPicture 1회.
 /// - 별 120개를 3 그룹으로 나눠 각 그룹을 [ui.Picture]로 캐싱.
-/// - 깜빡임은 그룹 단위 sin alpha로만 처리 → drawPicture 3회 + saveLayer 3회.
+/// - 별 그룹은 정적으로 drawPicture 3회 렌더링해 전체 화면 saveLayer를 피한다.
 /// - 총 draw 호출: 4회/프레임 (기존 ~240회 → 4회).
 class SpaceBg extends PositionComponent with HasGameReference {
   static const int _starCount = 120;
@@ -16,10 +16,6 @@ class SpaceBg extends PositionComponent with HasGameReference {
 
   ui.Picture? _bgPicture;
   final List<ui.Picture> _starPictures = [];
-  final List<double> _groupPhases = [];
-  final List<double> _groupSpeeds = [];
-
-  double _time = 0;
   Vector2 _lastSize = Vector2.zero();
 
   @override
@@ -65,8 +61,6 @@ class SpaceBg extends PositionComponent with HasGameReference {
 
   void _buildStarPictures() {
     _starPictures.clear();
-    _groupPhases.clear();
-    _groupSpeeds.clear();
 
     final rng = Random(42);
     final groups = List.generate(_groupCount, (_) => <_Star>[]);
@@ -84,9 +78,6 @@ class SpaceBg extends PositionComponent with HasGameReference {
     }
 
     for (var g = 0; g < _groupCount; g++) {
-      _groupPhases.add(rng.nextDouble() * 2 * pi);
-      _groupSpeeds.add(rng.nextDouble() * 0.4 + 0.3);
-
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
 
@@ -120,27 +111,13 @@ class SpaceBg extends PositionComponent with HasGameReference {
   }
 
   @override
-  void update(double dt) {
-    super.update(dt);
-    _time += dt;
-  }
-
-  @override
   void render(Canvas canvas) {
     if (_bgPicture == null) return;
 
     canvas.drawPicture(_bgPicture!);
 
-    final rect = Rect.fromLTWH(0, 0, size.x, size.y);
     for (var g = 0; g < _groupCount; g++) {
-      final alpha = (0.7 + 0.3 * sin(_time * _groupSpeeds[g] + _groupPhases[g]))
-          .clamp(0.4, 1.0);
-      canvas.saveLayer(
-        rect,
-        Paint()..color = Color.fromRGBO(255, 255, 255, alpha),
-      );
       canvas.drawPicture(_starPictures[g]);
-      canvas.restore();
     }
   }
 }

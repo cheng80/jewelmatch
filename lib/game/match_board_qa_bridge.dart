@@ -42,6 +42,17 @@ extension MatchBoardSimulationHints on MatchBoardGame {
       'state': board.state,
     };
   }
+
+  bool performSimulationHintMove() {
+    final move = readSimulationHintMove();
+    if (move == null) return false;
+    final a = move['a'] as Map<String, Object?>;
+    final b = move['b'] as Map<String, Object?>;
+    final swapsBefore = board.stats.validSwaps;
+    handleBoardTap(a['x'] as double, a['y'] as double);
+    handleBoardTap(b['x'] as double, b['y'] as double);
+    return board.stats.validSwaps > swapsBefore;
+  }
 }
 
 typedef SimulationGameState = Map<String, Object?>;
