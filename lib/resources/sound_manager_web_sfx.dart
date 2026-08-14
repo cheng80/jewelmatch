@@ -75,7 +75,8 @@ void _scheduleWebSfxPrime() {
   if (!kIsWeb ||
       SoundManager._webSfxPools.isEmpty ||
       SoundManager._webPrimeInFlight ||
-      SoundManager._webPrimeTimer != null) {
+      SoundManager._webPrimeTimer != null ||
+      SoundManager._lastWebPrimeAt != null) {
     return;
   }
   SoundManager._webPrimeTimer = Timer(const Duration(milliseconds: 650), () {
