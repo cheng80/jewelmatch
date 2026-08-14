@@ -111,6 +111,9 @@ Web 배포·서브패스 설정: [`docs/tools/web_build.md`](docs/tools/web_buil
 | [`docs/tools/web_build.md`](docs/tools/web_build.md) | Web 빌드·배포 |
 | [`docs/release/release_checklist.md`](docs/release/release_checklist.md) | 스토어 출시 체크리스트 |
 | [`docs/release/release_build.md`](docs/release/release_build.md) | Android/iOS/Web 릴리즈 빌드 |
+| [`docs/release/ad_placement_policy.md`](docs/release/ad_placement_policy.md) | 광고 위치와 보상 정책 |
+| [`docs/release/store_channel_branching.md`](docs/release/store_channel_branching.md) | 스토어 채널 분기와 빌드 상태 |
 | [`docs/release/store_metadata_play_appstore_2026.md`](docs/release/store_metadata_play_appstore_2026.md) | 스토어 등록 메타데이터 초안 |
+| [`docs/release/store_metadata_onestore_intoss_2026.md`](docs/release/store_metadata_onestore_intoss_2026.md) | One Store/Apps in Toss 등록 자료 |
 | [`docs/tools/audio_aisfx_prompts.md`](docs/tools/audio_aisfx_prompts.md) | SFX·BGM 프롬프트·파일 매핑 |
 | [`docs/tools/web_audio_flutter_flame.md`](docs/tools/web_audio_flutter_flame.md) | Flutter Web + Flame 오디오 정책 |

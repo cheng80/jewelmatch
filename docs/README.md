@@ -49,7 +49,10 @@
 |------|------|
 | [`release/release_checklist.md`](release/release_checklist.md) | Google Play / App Store / Web 출시 체크리스트 |
 | [`release/release_build.md`](release/release_build.md) | Android AAB/APK, iOS IPA, Web 릴리즈 빌드 |
+| [`release/ad_placement_policy.md`](release/ad_placement_policy.md) | 광고 위치, 보상, 미디에이션 공통 정책 |
+| [`release/store_channel_branching.md`](release/store_channel_branching.md) | App Store, Play, One Store, Apps in Toss 채널 분기와 빌드 상태 |
 | [`release/store_metadata_play_appstore_2026.md`](release/store_metadata_play_appstore_2026.md) | Play/App Store 등록 메타데이터 초안 |
+| [`release/store_metadata_onestore_intoss_2026.md`](release/store_metadata_onestore_intoss_2026.md) | One Store/Apps in Toss 등록 메타데이터와 출시 자료 |
 | [`release/screenshot_promo_copy_ko_en.md`](release/screenshot_promo_copy_ko_en.md) | 마켓 스크린샷 문구 KO/EN |
 | [`release/in_app_review.md`](release/in_app_review.md) | 인앱 리뷰 정책과 현재 구현 |
 

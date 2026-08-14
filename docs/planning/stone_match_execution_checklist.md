@@ -65,8 +65,11 @@
 - [x] `docs/release/release_build.md` — Android/iOS/Web 릴리즈 빌드 절차
 - [x] `docs/release/release_checklist.md` — Play/App Store/Web 출시 체크리스트
 - [x] `docs/release/store_metadata_play_appstore_2026.md` — 스토어 등록 문구 초안
+- [x] `docs/release/store_metadata_onestore_intoss_2026.md` — One Store/Apps in Toss 등록 자료
+- [x] `docs/release/ad_placement_policy.md` — 광고 위치와 보상 정책
 - [x] `docs/release/screenshot_promo_copy_ko_en.md` — 스크린샷 카피 초안
 - [x] `docs/release/in_app_review.md` — 인앱 리뷰 정책과 현재 구현
+- [x] `docs/release/store_channel_branching.md` — 스토어 채널 분기와 현재 빌드 상태
 - [x] `docs/tools/android_gradle_migration.md` — Android Gradle/Kotlin DSL 설정 메모
 - [x] `docs/tools/ios_profile_build.md` — iOS 프로필 빌드 절차
 - [x] `docs/tools/version_display_and_settings.md` — 설정 화면/타이틀 하단 버전 표시 문서

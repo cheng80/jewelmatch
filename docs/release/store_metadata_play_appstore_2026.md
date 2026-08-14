@@ -3,7 +3,9 @@
 기준일: 2026-06-16  
 앱: `Stone Match` (`com.cheng80.stonematch`)
 
-스토어 콘솔에 바로 붙여 넣기 전, 실제 개인정보처리방침 URL·지원 URL·랭킹 서버 운영 여부를 확정해야 한다.
+이 문서는 Google Play와 App Store 등록용 초안이다. One Store와 Apps in Toss의 패키지 식별자, 등록값, 메타데이터는 [`store_metadata_onestore_intoss_2026.md`](store_metadata_onestore_intoss_2026.md)에서 관리한다. 채널 선택과 구현 상태는 [`store_channel_branching.md`](store_channel_branching.md)를 따른다.
+
+스토어 콘솔에 바로 붙여 넣기 전, 실제 개인정보처리방침 URL, 지원 URL, 랭킹 서버 운영 여부를 확정해야 한다.
 
 ## 공통 입력값
 

@@ -1,7 +1,23 @@
+/// 출시 채널. 빌드할 때 `--dart-define=STORE_CHANNEL=<채널>`로 선택한다.
+enum StoreChannel { appstore, play, onestore, intoss }
+
 /// 앱 전반에서 사용하는 상수 모음.
 /// private 생성자(_)로 인스턴스 생성을 막고, static 상수만 제공한다.
 class AppConfig {
   AppConfig._();
+
+  static const String _storeChannelName = String.fromEnvironment(
+    'STORE_CHANNEL',
+    defaultValue: 'play',
+  );
+
+  static StoreChannel get storeChannel =>
+      StoreChannel.values.byName(_storeChannelName);
+
+  /// 잘못된 STORE_CHANNEL 값은 앱 시작 전에 실패시킨다.
+  static void validateStoreChannel() {
+    storeChannel;
+  }
 
   /// iOS/MacOS: App Store Connect > General > App Information > Apple ID. 출시 시 설정.
   static const String appStoreId = '';

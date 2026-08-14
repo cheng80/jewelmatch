@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'app.dart';
+import 'app_config.dart';
 import 'game/components/special_effect_burst.dart';
 import 'resources/asset_paths.dart';
 import 'resources/sound_manager.dart';
@@ -21,6 +22,7 @@ import 'widgets/sprite_sheet_frame.dart';
 /// main()은 초기화와 실행만 담당하고, 앱 설정(테마, 라우팅)은 App 위젯에 위임한다.
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  AppConfig.validateStoreChannel();
   if (kIsWeb) {
     usePathUrlStrategy(); // /#/game → /game (hash 제거, path 기반 URL)
   }

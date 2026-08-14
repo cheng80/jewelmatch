@@ -1,0 +1,9 @@
+# Android 릴리즈 서명용 설정 (key.properties)
+# 1. 이 파일을 key.properties 로 복사
+# 2. 실제 비밀번호로 수정
+# 3. key.properties 는 .gitignore 에 포함되어 있음 (절대 커밋 금지)
+
+storePassword=키스토어_비밀번호
+keyPassword=별칭_비밀번호
+keyAlias=stonematch_key
+storeFile=/Users/cheng80/android_keystore/stonematch_keystore.jks
