@@ -188,7 +188,7 @@ xcrun devicectl device process launch \
   --device "<기기 이름 또는 UDID>" \
   --terminate-existing \
   --payload-url '<intoss-private 링크>' \
-  com.viva.republica.toss
+  com.vivarepublica.cash
 ```
 
 딥링크에는 `&`가 들어가므로 반드시 작은따옴표로 감싼다. 토스 앱이 설치되어 있고 Mac에서 해당 iPhone을 신뢰한 상태여야 한다.
@@ -215,6 +215,8 @@ npm run build:intoss
 ## 7. iPhone FPS와 GC 재측정
 
 먼저 새 AIT 테스트 배포를 iPhone에서 열고 같은 모드, 같은 조건으로 플레이한다. 화면의 FPS 패널은 `AVG`, `LOW`, `GAP`을 기록한다.
+
+`QA_PERF_AUTORUN`도 iOS 웹 자동재생 정책을 우회하지 않는다. 자동 플레이 측정 전에 게임 화면을 한 번 탭해 BGM과 SFX를 해제하고, 소리가 실제로 재생되는지 확인한다. 터치 없이 측정한 결과는 무음 대조군으로만 사용한다.
 
 Mac에서 30초 시스템 추적을 함께 수집할 때:
 
