@@ -7,7 +7,6 @@
 | 문서 | 용도 |
 |------|------|
 | [`agent_work_rules.md`](agent_work_rules.md) | 에이전트 작업 시 제품 문구, 랭킹, 배포, 제출물 기준 |
-| [`../START_HERE.md`](../START_HERE.md) | 새 세션 시작 순서와 현재 우선순위 |
 | [`planning/stone_match_execution_checklist.md`](planning/stone_match_execution_checklist.md) | 진행·배포 체크리스트 |
 | [`../README.md`](../README.md) | 프로젝트 개요, 실행, 빌드 명령 |
 
@@ -28,6 +27,7 @@
 | [`planning/stage_reward_system.md`](planning/stage_reward_system.md) | 레벨 클리어 후 스테이지 아이템 보상 지급 규칙 |
 | [`planning/item_slot_market_implementation_checklist.md`](planning/item_slot_market_implementation_checklist.md) | 아이템 슬롯·인벤토리 플랜의 단계별 상세 구현 체크리스트 |
 | [`planning/stone_match_execution_checklist.md`](planning/stone_match_execution_checklist.md) | 진행·배포 체크리스트 |
+| [`planning/infinite_mode_bottom_panel_design.md`](planning/infinite_mode_bottom_panel_design.md) | 무한 모드 하단 패널과 QA 노출 정책 |
 
 ## 기술·운용 문서
 
@@ -64,6 +64,7 @@
 | [`../DESIGN.md`](../DESIGN.md) | 제품 UI 톤과 디자인 원칙 |
 | [`design/new_gem_design_review.md`](design/new_gem_design_review.md) | 새 보석 시각 방향 검토 |
 | [`performance/fps_drop_simulation_plan.md`](performance/fps_drop_simulation_plan.md) | FPS 드롭 계측 계획 |
+| [`performance/flutter_flame_mobile_web_optimization_handoff.md`](performance/flutter_flame_mobile_web_optimization_handoff.md) | Flutter Flame 모바일 웹 성능과 오디오 최적화 인계 |
 
 ## 참고 이미지
 
