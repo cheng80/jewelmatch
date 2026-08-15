@@ -106,7 +106,7 @@ class RankingNotifier extends Notifier<RankingSubmitState> {
 
     state = RankingSubmitState(
       isSubmitting: false,
-      submitted: true,
+      submitted: result.isSuccess,
       rankMessage: message,
     );
   }

@@ -163,6 +163,7 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
       showingAd: _showingAd,
       adMessage: _adMessage,
       onContinueWithAd: _continueWithAd,
+      onRetryRanking: _submitScore,
       onRetry: () {
         SoundManager.playSfx(AssetPaths.sfxBtnSnd);
         ref.read(rankingProvider.notifier).reset();
@@ -178,7 +179,9 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
 }
 
 class _RankStatusSection extends ConsumerWidget {
-  const _RankStatusSection();
+  const _RankStatusSection({required this.onRetry});
+
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -187,6 +190,9 @@ class _RankStatusSection extends ConsumerWidget {
     );
     final rankMessage = ref.watch(
       rankingProvider.select((state) => state.rankMessage),
+    );
+    final submitted = ref.watch(
+      rankingProvider.select((state) => state.submitted),
     );
 
     if (isSubmitting) {
@@ -204,14 +210,27 @@ class _RankStatusSection extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    return Text(
-      rankMessage,
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        color: JewelCandyLuminaTheme.tertiaryGold,
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-      ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          rankMessage,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: JewelCandyLuminaTheme.tertiaryGold,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        if (!submitted)
+          IconButton(
+            tooltip: context.tr('rankRetrySubmit'),
+            onPressed: onRetry,
+            color: JewelCandyLuminaTheme.focusTeal,
+            iconSize: 28,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+      ],
     );
   }
 }
