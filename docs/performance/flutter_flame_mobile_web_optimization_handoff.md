@@ -302,7 +302,7 @@ static void unlockForWeb() {
 1. 기존 SFX 플레이어가 실제로 고정 상한인지 패키지 코드를 확인한다.
 2. BGM과 SFX 재생 경로를 분리한다.
 3. SFX는 고정 슬롯으로 시작한다.
-4. 오디오 해제는 최초 사용자 제스처에서 한 번만 실행한다.
+4. 오디오 해제는 최초 사용자 제스처와 화면 복귀 후 첫 제스처에서만 실행한다.
 5. 자산 URL이 실제 `build/web` 구조와 일치하는지 확인한다.
 6. 서버가 잘못된 오디오 URL을 HTML로 대체하지 않는지 확인한다.
 7. 재생 오류를 삼키지 말고 최소 진단 카운터를 노출한다.
@@ -481,7 +481,7 @@ JSON.stringify(window.stoneMatchSfx?.getState?.())
 | `lib/game/components/match_game_hud.dart` | HUD Paint, shader, 텍스트 캐시 |
 | `lib/game/match_board_camera_shake.dart` | `Vector2` 재사용 |
 | `lib/game/match_board_logic.dart` | 빈 이벤트 상수 리스트, 셀 키 캐시 |
-| `lib/resources/sound_manager.dart` | BGM, SFX 분기와 최초 1회 unlock |
+| `lib/resources/sound_manager.dart` | BGM, SFX 분기와 필요 시 1회 unlock |
 | `lib/resources/sound_manager_web_sfx.dart` | 웹 SFX 고정 풀 연결 |
 | `lib/resources/web_sfx_bridge_web.dart` | Dart와 JavaScript 오디오 브리지 |
 | `web/stone_match_sfx.js` | HTML Audio 4슬롯과 진단 카운터 |

@@ -173,9 +173,9 @@ GameView.build()
 - `MaterialApp.router` 위에 깔리므로 모든 화면에서 별 배경이 비쳐 보임
 - `kDebugMode`에서는 우상단 `_DebugFpsPanel` 표시
 - 앱 제목·디버그 배너·다국어·테마·라우터 설정
-- 웹에서 첫 포인터다운 시 `SoundManager.unlockForWeb()` 호출
+- 웹에서 포인터다운 시 `SoundManager.unlockForWeb()` 호출
 - `unlockForWeb()`는 웹 오디오 잠금을 풀고, 잠금 전 요청된 BGM이 있으면 재생한다
-- 현재 웹 기준점에서는 SFX만 Web Audio를 우회하고 HTML 오디오 요소 4개를 재사용하며, 재생 실패 후 다음 포인터 입력에서 다시 해제한다
+- 현재 웹 기준점에서는 SFX만 Web Audio를 우회하고 HTML 오디오 요소 4개를 재사용하며, 화면이 숨겨졌다 복귀한 후 첫 포인터 입력에서 다시 해제한다
 
 ### 3-3. `lib/router.dart`
 

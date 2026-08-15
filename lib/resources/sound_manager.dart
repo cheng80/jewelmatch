@@ -13,7 +13,7 @@ part 'sound_manager_native_sfx.dart';
 part 'sound_manager_web_sfx.dart';
 
 /// 앱 전역 사운드 관리. BGM·효과음 재생, 볼륨·음소거 적용.
-/// 웹: 사용자 상호작용 전까지 자동재생 차단. 첫 탭 시 unlock.
+/// 웹: 사용자 상호작용 전까지 자동재생 차단. 필요한 첫 탭에서 unlock.
 class SoundManager {
   SoundManager._();
 
@@ -53,12 +53,13 @@ class SoundManager {
     ),
   };
 
-  /// 웹: 첫 사용자 상호작용 시 호출. 대기 중인 BGM 재생.
-  /// 고정 SFX 플레이어는 첫 상호작용에서 한 번만 해제한다.
+  /// 웹: 사용자 상호작용 시 호출. 대기 중인 BGM 재생.
+  /// SFX 풀은 첫 상호작용과 화면 복귀 후 첫 상호작용에서 해제한다.
   static void unlockForWeb() {
-    if (!kIsWeb || _webUnlocked) return;
-    _webUnlocked = true;
+    if (!kIsWeb) return;
     _webSfxPool?.unlock();
+    if (_webUnlocked) return;
+    _webUnlocked = true;
     if (_pendingBgm != null) {
       _pendingBgm = null;
       unawaited(playBgmIfUnmuted());
@@ -105,7 +106,10 @@ class SoundManager {
   /// BGM 재생. 음소거 시에는 _currentBgm만 갱신하고 재생하지 않음.
   /// 웹: unlock 전이면 대기 후 첫 탭 시 재생.
   static Future<void> playBgm(String path) async {
-    if (_currentBgm == path) return;
+    if (_currentBgm == path) {
+      resumeBgm(onlyIfCurrent: path);
+      return;
+    }
     await stopBgm();
     _currentBgm = path;
     if (GameSettings.bgmMuted) return;

@@ -43,7 +43,14 @@ void main() {
   });
 
   test('웹과 Android만 각자의 SFX 풀을 preload에서 초기화한다', () {
-    expect(soundManagerSource, contains('if (!kIsWeb || _webUnlocked) return;'));
+    final unlockPool = soundManagerSource.indexOf('_webSfxPool?.unlock();');
+    final skipUnlocked = soundManagerSource.indexOf(
+      'if (_webUnlocked) return;',
+    );
+
+    expect(soundManagerSource, contains('if (!kIsWeb) return;'));
+    expect(unlockPool, isNonNegative);
+    expect(skipUnlocked, greaterThan(unlockPool));
     expect(
       soundManagerSource,
       contains('_webSfxPool = await _WebSfxPool.create();'),
@@ -56,6 +63,29 @@ void main() {
       ),
     );
     expect(soundManagerSource, contains('if (kIsWeb) {'));
+  });
+
+  test('웹 포커스 복귀 후 다음 입력에서 SFX 풀을 다시 해제한다', () {
+    expect(webSfxScript, contains('let needsUnlock = true;'));
+    expect(
+      webSfxScript,
+      contains("document.addEventListener('visibilitychange'"),
+    );
+    expect(webSfxScript, contains('if (!document.hidden) return;'));
+    expect(webSfxScript, contains('if (!needsUnlock) return;'));
+    expect(webSfxScript, contains('needsUnlock = false;'));
+  });
+
+  test('같은 BGM 재생 요청은 일시정지된 곡을 재개한다', () {
+    expect(
+      soundManagerSource,
+      contains(
+        'if (_currentBgm == path) {\n'
+        '      resumeBgm(onlyIfCurrent: path);\n'
+        '      return;\n'
+        '    }',
+      ),
+    );
   });
 
   test('native SFX는 고정 lowLatency 풀을 포화 시 건너뛴다', () {
