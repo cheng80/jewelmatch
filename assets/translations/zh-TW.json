@@ -96,6 +96,7 @@
   "rankLoadFailed": "無法載入排行榜",
   "rankSaveFailed": "無法儲存排行榜紀錄",
   "rankSubmitFailed": "無法連線排行榜伺服器",
+  "rankRetrySubmit": "重新提交排行榜紀錄",
   "rankingTitle": "排行榜",
   "rankingLevelTab": "等級排行",
   "rankingTimeTab": "計時排行",

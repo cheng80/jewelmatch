@@ -56,6 +56,7 @@ class _TimeUpResultPanel extends StatelessWidget {
     required this.showingAd,
     required this.adMessage,
     required this.onContinueWithAd,
+    required this.onRetryRanking,
     required this.onRetry,
     required this.onExit,
   });
@@ -66,6 +67,7 @@ class _TimeUpResultPanel extends StatelessWidget {
   final bool showingAd;
   final String? adMessage;
   final VoidCallback onContinueWithAd;
+  final VoidCallback onRetryRanking;
   final VoidCallback onRetry;
   final VoidCallback onExit;
 
@@ -109,7 +111,7 @@ class _TimeUpResultPanel extends StatelessWidget {
           ),
           if (game.hasTimedClock) ...[
             const SizedBox(height: 12),
-            const _RankStatusSection(),
+            _RankStatusSection(onRetry: onRetryRanking),
           ],
           const SizedBox(height: 22),
           if (canContinueWithAd) ...[

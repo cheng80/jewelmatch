@@ -96,6 +96,7 @@
   "rankLoadFailed": "ランキングを読み込めませんでした",
   "rankSaveFailed": "ランキング記録を保存できませんでした",
   "rankSubmitFailed": "ランキングサーバーに接続できません",
+  "rankRetrySubmit": "ランキング記録を再送信",
   "rankingTitle": "ランキング",
   "rankingLevelTab": "レベルランキング",
   "rankingTimeTab": "タイムランキング",
