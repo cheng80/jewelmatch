@@ -116,8 +116,8 @@ Chrome에서는 모의 보상과 테스트 배너를 확인하고, 공식 테스
 
 | 문서 | 내용 |
 |------|------|
-| [`START_HERE.md`](START_HERE.md) | **세션 시작 시 먼저 읽기** — 우선 작업·문서 순서 |
 | [`docs/README.md`](docs/README.md) | 문서 맵 — 주제별 문서 위치 |
+| [`docs/agent_work_rules.md`](docs/agent_work_rules.md) | 작업 규칙과 배포 경계 |
 | [`docs/planning/stone_match_execution_checklist.md`](docs/planning/stone_match_execution_checklist.md) | 진행·배포 체크리스트 |
 | [`docs/architecture/code-flow-analysis.md`](docs/architecture/code-flow-analysis.md) | 초기화·레이아웃·Flame 계층 |
 | [`docs/architecture/game_flow.md`](docs/architecture/game_flow.md) | 매치-3 플레이 흐름 요약 |
@@ -131,3 +131,4 @@ Chrome에서는 모의 보상과 테스트 배너를 확인하고, 공식 테스
 | [`docs/release/store_metadata_onestore_intoss_2026.md`](docs/release/store_metadata_onestore_intoss_2026.md) | One Store/Apps in Toss 등록 자료 |
 | [`docs/tools/audio_aisfx_prompts.md`](docs/tools/audio_aisfx_prompts.md) | SFX·BGM 프롬프트·파일 매핑 |
 | [`docs/tools/web_audio_flutter_flame.md`](docs/tools/web_audio_flutter_flame.md) | Flutter Web + Flame 오디오 정책 |
+| [`docs/performance/flutter_flame_mobile_web_optimization_handoff.md`](docs/performance/flutter_flame_mobile_web_optimization_handoff.md) | Flutter Flame 모바일 웹 성능과 오디오 최적화 인계 |

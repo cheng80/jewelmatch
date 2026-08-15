@@ -234,7 +234,7 @@ xcrun xctrace record \
 - 기존 `.trace` 경로를 재사용하지 않는다.
 - 측정 중에는 한 변수만 바꾼다.
 - Apps in Toss WebView는 Web Inspector가 열리지 않을 수 있으므로 `WebContent`, `WebKit.GPU`, `mediaremoted`, Toss 프로세스의 잠재 정지를 비교한다.
-- 측정 순서와 이전 결과는 [`../../superpowers/docs/plans/2026-08-15-053005-01-plan-intoss-fps-device-test.md`](../../superpowers/docs/plans/2026-08-15-053005-01-plan-intoss-fps-device-test.md)에 이어서 기록한다.
+- 측정 순서와 이전 결과는 [`../performance/flutter_flame_mobile_web_optimization_handoff.md`](../performance/flutter_flame_mobile_web_optimization_handoff.md)에 이어서 기록한다.
 
 ## 8. 완료 판정과 기록
 

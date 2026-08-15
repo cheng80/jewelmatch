@@ -1,6 +1,6 @@
 # Stone Match — 실행·배포 체크리스트
 
-> `START_HERE.md` §3과 함께 쓴다. **끝낸 항목은 `[x]`**, 진행 중·보류는 `[ ]`로 갱신한다.
+> 현재 구현과 테스트를 기준으로 쓴다. **끝낸 항목은 `[x]`**, 진행 중·보류는 `[ ]`로 갱신한다.
 
 ## 제품·플레이
 
@@ -83,7 +83,7 @@
 - [x] `README.md` — 디렉터리·라우팅·문서 링크
 - [x] 우주 배경 성능 최적화 리팩터 → `docs/architecture/code-flow-analysis.md` §11 갱신
 - [x] `PhoneFrameScaffold` 도입·파티클·SFX → `docs/architecture/code-flow-analysis.md` §9·§10 갱신
-- [x] 렌더링 최적화/에셋 구조 변경 사항을 `START_HERE.md`, `docs/architecture/code-flow-analysis.md`에 반영
+- [x] 렌더링 최적화와 에셋 구조 변경 사항을 `docs/architecture/code-flow-analysis.md`에 반영
 - [x] 최근 Riverpod 최적화/로딩 오버레이/오디오 정책 변경 사항을 관련 문서에 반영
 
 ## 테스트·품질
@@ -94,7 +94,7 @@
 ## 후속 최적화 점검
 
 - [x] 게임 루프 상시 빈 특수효과 리스트와 카메라 흔들림 `Vector2`, 제거 연출 문자열 키 반복 생성 제거
-- [ ] Apps in Toss iPhone GC·프레임 급락 후속 테스트를 `superpowers/docs/plans/2026-08-15-053005-01-plan-intoss-fps-device-test.md` 순서대로 수행하고 결과 기록
+- [ ] Apps in Toss iPhone GC와 프레임 급락 후속 테스트를 `docs/performance/flutter_flame_mobile_web_optimization_handoff.md`의 체크리스트에 따라 수행하고 결과 기록
 - [ ] 전체 화면 기준 `ConsumerWidget` / `setState` 범위를 다시 점검해 불필요한 rebuild 구간 추가 축소
 - [ ] Flutter DevTools 기준으로 초기 진입·게임 플레이 중 rebuild hotspot / frame drop 구간 계측
 - [ ] 계측 결과를 바탕으로 HUD / 오버레이 / 타이틀뷰의 추가 분리 또는 provider 세분화 여부 판단

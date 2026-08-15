@@ -117,6 +117,51 @@ Alias /match /path/to/build/web
 </Directory>
 ```
 
+### NAS 자동 배포와 검증
+
+저장소 루트에서 다음 스크립트를 실행한다.
+
+```bash
+tools/deploy_match_web.sh
+```
+
+스크립트가 실패하면 그 단계에서 중단한다. `.env`, 배포 토큰, 비밀번호 같은 비밀값은 출력하거나 기록하지 않는다.
+
+성공 후 공개 주소가 HTTP 200인지 확인하고, 아래 파일의 로컬 `build/web`과 원격 SHA-256이 모두 같은지 비교한다.
+
+```text
+index.html
+flutter_bootstrap.js
+flutter.js
+main.dart.js
+manifest.json
+version.json
+assets/AssetManifest.bin.json
+assets/FontManifest.json
+```
+
+```bash
+base='https://cheng80.myqnapcloud.com/match'
+files=(index.html flutter_bootstrap.js flutter.js main.dart.js manifest.json version.json assets/AssetManifest.bin.json assets/FontManifest.json)
+for file in "${files[@]}"; do
+  local_path="build/web/$file"
+  remote_path="/tmp/stone_match_${file//\//_}"
+  test -f "$local_path" || { printf 'MISS %s\n' "$file"; continue; }
+  curl -L -sS -o "$remote_path" "$base/$file"
+  test "$(shasum -a 256 "$local_path" | awk '{print $1}')" = "$(shasum -a 256 "$remote_path" | awk '{print $1}')" \
+    && printf 'OK %s\n' "$file" || printf 'DIFF %s\n' "$file"
+done
+
+curl -L -sS -o /tmp/stone_match_index_check.html \
+  -w 'status=%{http_code} size=%{size_download} final_url=%{url_effective}\n' \
+  "$base/"
+curl -L -sS -o /tmp/stone_match_zip_check \
+  -w 'zip_status=%{http_code} zip_size=%{size_download}\n' \
+  'https://cheng80.myqnapcloud.com/match.zip'
+```
+
+`match.zip`은 업로드 뒤 공개 서버에서 제거되어 `404`가 나와야 한다. 최종 보고에는 배포 성공 여부, 공개 주소 상태, 해시 불일치 파일, ZIP 제거 결과만 남긴다.
+
 ### 로컬 확인
 
 빌드 후 로컬에서 `/match/` 서브패스 동작을 확인하려면, **방법 A**처럼 `match` 폴더를 만든 뒤 그 **부모 디렉터리**에서 정적 서버를 띄웁니다.
