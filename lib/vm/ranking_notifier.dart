@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../app_config.dart';
 import '../services/game_settings.dart';
+import '../services/intoss_leaderboard_service.dart';
 import '../services/ranking_service.dart';
 
 /// 랭킹 제출 상태.
@@ -65,17 +67,23 @@ class RankingNotifier extends Notifier<RankingSubmitState> {
     required String trRankLoadFailed,
     required String trRankSaveFailed,
     required String trRankSubmitFailed,
+    required String trIntossLevelRankSubmitFailed,
   }) async {
     if (state.isSubmitting || state.submitted || score <= 0) return;
 
     state = state.copyWith(isSubmitting: true);
 
     final name = GameSettings.playerName;
+    final intossSubmission =
+        IntossLeaderboardService.shouldSubmit(AppConfig.storeChannel, mode)
+        ? IntossLeaderboardService.submitLevelScore(score)
+        : null;
     final result = await RankingService.submit(
       mode: mode,
       name: name,
       score: score,
     );
+    final intossSubmitted = await intossSubmission;
 
     String message;
     if (!result.isSuccess) {
@@ -91,6 +99,9 @@ class RankingNotifier extends Notifier<RankingSubmitState> {
           .replaceAll('{score}', '${result.data!.score}');
     } else {
       message = trRankNotInTop;
+    }
+    if (intossSubmitted == false) {
+      message = '$message\n$trIntossLevelRankSubmitFailed';
     }
 
     state = RankingSubmitState(

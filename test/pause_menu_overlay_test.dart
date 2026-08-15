@@ -147,6 +147,7 @@ class _TestAssetLoader extends AssetLoader {
     'rankLoadFailed': '조회 실패',
     'rankSaveFailed': '저장 실패',
     'rankSubmitFailed': '제출 실패',
+    'intossLevelRankSubmitFailed': '앱인토스 제출 실패',
   };
 }
 
@@ -168,6 +169,7 @@ class _DelayedRankingNotifier extends RankingNotifier {
     required String trRankLoadFailed,
     required String trRankSaveFailed,
     required String trRankSubmitFailed,
+    required String trIntossLevelRankSubmitFailed,
   }) async {
     calls++;
     this.mode = mode;

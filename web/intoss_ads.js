@@ -1,4 +1,5 @@
 import {
+  Game,
   TossAds,
   loadFullScreenAd,
   showFullScreenAd,
@@ -114,5 +115,27 @@ window.stoneMatchAds = {
   dispose() {
     cleanupFullScreen();
     this.hideBanner();
+  },
+};
+
+window.stoneMatchLeaderboard = {
+  async submitLevelScore(score) {
+    if (!Game.setLeaderboardScore.isSupported()) return 'UNSUPPORTED';
+    try {
+      const result = await Game.setLeaderboardScore({ score: String(score) });
+      return result?.statusCode ?? 'UNSUPPORTED';
+    } catch (_) {
+      return 'FAILED';
+    }
+  },
+
+  async openLevelLeaderboard() {
+    if (!Game.openLeaderboard.isSupported()) return false;
+    try {
+      await Game.openLeaderboard();
+      return true;
+    } catch (_) {
+      return false;
+    }
   },
 };

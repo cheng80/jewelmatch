@@ -1,6 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
+import '../app_config.dart';
+import '../services/intoss_leaderboard_service.dart';
 import '../services/ranking_service.dart';
 import '../theme/jewel_candy_lumina_theme.dart';
 import 'lumina_buttons.dart';
@@ -11,9 +13,16 @@ import 'lumina_overlay_card.dart';
 /// [GameView] 오버레이와 [TitleView] 등에서 동일 위젯을 재사용한다.
 /// 닫기 동작(게임 재개, `Navigator.pop` 등)은 [onClose]에 맡긴다.
 class RankingListPopup extends StatefulWidget {
-  const RankingListPopup({super.key, required this.onClose});
+  const RankingListPopup({
+    super.key,
+    required this.onClose,
+    this.levelFuture,
+    this.timeFuture,
+  });
 
   final VoidCallback onClose;
+  final Future<RankingResult<List<RankingEntry>>>? levelFuture;
+  final Future<RankingResult<List<RankingEntry>>>? timeFuture;
 
   @override
   State<RankingListPopup> createState() => _RankingListPopupState();
@@ -22,24 +31,45 @@ class RankingListPopup extends StatefulWidget {
 class _RankingListPopupState extends State<RankingListPopup> {
   late final Future<RankingResult<List<RankingEntry>>> _levelFuture;
   late final Future<RankingResult<List<RankingEntry>>> _timeFuture;
+  bool _openingIntossLeaderboard = false;
 
   @override
   void initState() {
     super.initState();
-    _levelFuture = RankingService.fetchList(mode: RankingMode.level);
-    _timeFuture = RankingService.fetchList(mode: RankingMode.time);
+    _levelFuture =
+        widget.levelFuture ?? RankingService.fetchList(mode: RankingMode.level);
+    _timeFuture =
+        widget.timeFuture ?? RankingService.fetchList(mode: RankingMode.time);
+  }
+
+  Future<void> _openIntossLeaderboard() async {
+    if (_openingIntossLeaderboard) return;
+    setState(() => _openingIntossLeaderboard = true);
+    final opened = await IntossLeaderboardService.openLevelLeaderboard();
+    if (!mounted) return;
+    setState(() => _openingIntossLeaderboard = false);
+    if (!opened) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(
+          content: Text(context.tr('intossLevelLeaderboardUnavailable')),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final listMaxH = MediaQuery.sizeOf(context).height * 0.285;
+    final usesIntossLeaderboard = AppConfig.storeChannel == StoreChannel.intoss;
+    final listMaxH =
+        MediaQuery.sizeOf(context).height *
+        (usesIntossLeaderboard ? 0.23 : 0.285);
 
     return DefaultTabController(
       length: 2,
       child: LuminaOverlayCard(
         borderColor: JewelCandyLuminaTheme.borderTimeUp,
-        maxHeightFactor: 0.78,
-        verticalMargin: 48,
+        maxHeightFactor: usesIntossLeaderboard ? 0.88 : 0.78,
+        verticalMargin: usesIntossLeaderboard ? 30 : 48,
         alignment: const Alignment(0, -0.08),
         horizontalPadding: 26,
         verticalPadding: 24,
@@ -123,6 +153,35 @@ class _RankingListPopupState extends State<RankingListPopup> {
                 ],
               ),
             ),
+            if (usesIntossLeaderboard) ...[
+              const SizedBox(height: 18),
+              Text(
+                context.tr('intossLevelLeaderboardNotice'),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: JewelCandyLuminaTheme.textParchment,
+                  fontSize: 13,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Center(
+                child: AbsorbPointer(
+                  absorbing: _openingIntossLeaderboard,
+                  child: Opacity(
+                    opacity: _openingIntossLeaderboard ? 0.55 : 1,
+                    child: LuminaGradientButton(
+                      colors: JewelCandyLuminaTheme.buttonShuffleCyanLime,
+                      width: 240,
+                      height: 48,
+                      fontSize: 15,
+                      label: context.tr('intossLevelLeaderboardOpen'),
+                      onPressed: _openIntossLeaderboard,
+                    ),
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 22),
             Center(
               child: LuminaOutlinedButton(

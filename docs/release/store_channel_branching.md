@@ -45,14 +45,14 @@ INTOSS_APP_NAME=<콘솔_appName> npm run build:intoss:test
 | Google Play | `com.cheng80.stonematch`, `stonematch_key` 사용 예정 | `play` product flavor와 실제 서명 연결 |
 | One Store | Google Play와 같은 `com.cheng80.stonematch`, `stonematch_key` 사용 | `onestore` flavor와 One Store 키 등록 |
 | App Store | 기존 `com.cheng80.stonematch` 사용 | Apple ID와 Xcode build configuration 연결 |
-| Apps in Toss | SDK 3.x 설정, 광고 브리지, 테스트 Web과 `.ait` 빌드 적용 | 콘솔 `appName`, 운영 광고 그룹, QR 실기기 검증 |
+| Apps in Toss | SDK 3.x 설정, 광고·레벨 리더보드 브리지, 테스트 Web과 `.ait` 빌드 적용 | 콘솔 `appName`, 운영 광고 그룹, 리더보드 QR 실기기 검증 |
 
 ## 구현 순서
 
 1. 설정 화면과 인앱 리뷰를 채널별로 분기한다.
 2. Android `play`, `onestore` product flavor와 iOS 설정을 추가한다.
 3. Apps in Toss 콘솔 값을 확정하고 QR 테스트를 한다.
-4. Apps in Toss 리더보드를 연결한다.
+4. Apps in Toss 레벨 리더보드 연결을 QR 실기기에서 검증한다.
 
 ## 출시 전 결정할 값
 

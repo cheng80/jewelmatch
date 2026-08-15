@@ -144,7 +144,7 @@ npm install
 INTOSS_APP_NAME=<콘솔_appName> npm run build:intoss:test
 ```
 
-이 명령은 Flutter Web 빌드 뒤 앱인토스 광고 브리지를 `build/web`에만 주입하므로 NAS용 일반 Web 빌드에는 토스 SDK가 포함되지 않는다. 운영 빌드는 `INTOSS_AD_MODE=production`과 콘솔의 보상형, 배너 광고 그룹 ID를 사용해 별도로 만든다.
+이 명령은 Flutter Web 빌드 뒤 앱인토스 광고와 레벨 리더보드 브리지를 `build/web`에만 주입하므로 NAS용 일반 Web 빌드에는 토스 SDK가 포함되지 않는다. 운영 빌드는 `INTOSS_AD_MODE=production`과 콘솔의 보상형, 배너 광고 그룹 ID를 사용해 별도로 만든다.
 
 ## 출시 전 필수 검증
 

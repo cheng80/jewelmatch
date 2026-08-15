@@ -106,6 +106,9 @@ class PauseMenuOverlay extends ConsumerWidget {
                       trRankLoadFailed: context.tr('rankLoadFailed'),
                       trRankSaveFailed: context.tr('rankSaveFailed'),
                       trRankSubmitFailed: context.tr('rankSubmitFailed'),
+                      trIntossLevelRankSubmitFailed: context.tr(
+                        'intossLevelRankSubmitFailed',
+                      ),
                     );
               }
               if (!context.mounted) return;
