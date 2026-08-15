@@ -56,7 +56,7 @@ class SoundManager {
   /// 웹: 첫 사용자 상호작용 시 호출. 대기 중인 BGM 재생.
   /// 고정 SFX 플레이어는 첫 상호작용과 재생 실패 후 다음 상호작용에서만 해제한다.
   static void unlockForWeb() {
-    if (!kIsWeb) return;
+    if (!kIsWeb || _webUnlocked) return;
     _webUnlocked = true;
     _webSfxPool?.unlock();
     if (_pendingBgm != null) {

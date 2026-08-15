@@ -43,6 +43,7 @@ void main() {
   });
 
   test('웹과 Android만 각자의 SFX 풀을 preload에서 초기화한다', () {
+    expect(soundManagerSource, contains('if (!kIsWeb || _webUnlocked) return;'));
     expect(
       soundManagerSource,
       contains('_webSfxPool = await _WebSfxPool.create();'),
