@@ -31,13 +31,13 @@
 
 - 앱 루트 `Listener`의 `onPointerDown` 에서 `SoundManager.unlockForWeb()` 호출
 - `unlockForWeb()`는 `_webUnlocked = true`로 전환하고, 잠금 전 요청된 BGM이 있으면 재생한다
-- `preload()`에서 웹 전용 `AudioPlayer` 4개만 생성하고 모든 SFX가 이 슬롯을 공유한다
+- `web/stone_match_sfx.js`에서 Web Audio를 사용하지 않는 HTML 오디오 요소 4개를 생성하고 모든 SFX가 이 슬롯을 공유한다
 - 4개가 모두 재생 중이면 새 플레이어를 생성하지 않고 해당 SFX를 건너뛴다
-- 브라우저 재생이 실패하면 해당 플레이어를 폐기하고 교체한 뒤, 다음 `pointerdown`에서만 다시 해제한다
+- 브라우저 재생이 실패하면 슬롯을 반환하고, 다음 `pointerdown`에서 기존 HTML 오디오 요소를 다시 해제한다
 - 첫 `pointerdown`에서 4개 플레이어를 한 번만 0볼륨으로 해제하며, 모든 입력마다 전체 SFX를 재생하는 반복 프라이밍은 하지 않는다
 - 콤보음(`ComboHit`)은 현재도 웹에서 별도 즉시 재생 분기 없이 기존 지연 재생(`playComboSfxDelayed`)을 유지한다
 
-즉, 현재 저장소의 기준점은 “**고정 4슬롯 + 포화 시 누락 허용 + 실패 슬롯만 복구**”이다. iOS Safari에서 오디오 컨텍스트가 무한히 늘어나는 것보다 순간 SFX 하나를 누락하는 쪽을 선택한다.
+즉, 현재 저장소의 기준점은 “**Web Audio 우회 + HTML 오디오 고정 4슬롯 + 포화 시 누락 허용**”이다. iOS Safari에서 효과음별 Web Audio 컨텍스트가 정지하는 경로를 사용하지 않는다.
 
 ### 3.1 현재 코드에서 확인할 파일
 
@@ -54,8 +54,8 @@
 
 - 장점:
   - 드래그 이후에도 탭 없이 사운드가 계속 살아 있을 가능성이 높다.
-  - SFX 플레이어와 Web Audio 컨텍스트 개수가 4개를 넘지 않는다.
-  - 비동기 재생 실패를 기록하고 해당 슬롯만 교체한다.
+  - SFX는 Web Audio 컨텍스트를 생성하지 않고 HTML 오디오 요소 4개만 재사용한다.
+  - 재생 횟수, 포화 누락, 오류, 활성 슬롯을 `stoneMatchSfx.getState()`로 확인할 수 있다.
 - 단점:
   - 최소 unlock 정책보다 구조가 복잡하다.
   - 효과음이 4개를 넘게 완전히 겹치면 초과 SFX는 누락된다.
@@ -87,6 +87,8 @@
 | 파일 | 역할 |
 |------|------|
 | `lib/resources/sound_manager.dart` | 웹 SFX 고정 슬롯, `playSfx`, pending BGM |
+| `lib/resources/web_sfx_bridge_web.dart` | Dart에서 HTML 오디오 브리지 호출 |
+| `web/stone_match_sfx.js` | HTML 오디오 4슬롯 재생과 진단 상태 |
 | `lib/app.dart` | 웹 `Listener` → `unlockForWeb` |
 | `tools/reencode_mp3_web.py` | MP3 일괄 재인코딩 (선택) |
 
@@ -99,4 +101,4 @@
 
 ---
 
-*최종 정리: 현재 저장소의 웹 오디오 기준점은 “**첫 포인터다운 unlock + 고정 4슬롯 + 실패 슬롯 선별 복구**”이다.*
+*최종 정리: 현재 저장소의 웹 오디오 기준점은 “**첫 포인터다운 unlock + Web Audio 우회 + HTML 오디오 고정 4슬롯**”이다.*

@@ -6,6 +6,7 @@ import '../services/game_settings.dart';
 import '../utils/sfx_play_log.dart';
 import 'asset_paths.dart';
 import 'native_sfx_slot_pool.dart';
+import 'web_sfx_bridge.dart';
 
 part 'sound_manager_combo_sfx.dart';
 part 'sound_manager_native_sfx.dart';

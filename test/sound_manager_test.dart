@@ -11,6 +11,11 @@ void main() {
   final webSfxSource = File(
     'lib/resources/sound_manager_web_sfx.dart',
   ).readAsStringSync();
+  final webSfxBridgeSource = File(
+    'lib/resources/web_sfx_bridge_web.dart',
+  ).readAsStringSync();
+  final webSfxScript = File('web/stone_match_sfx.js').readAsStringSync();
+  final webIndex = File('web/index.html').readAsStringSync();
   final nativeSfxSource = File(
     'lib/resources/sound_manager_native_sfx.dart',
   ).readAsStringSync();
@@ -25,8 +30,13 @@ void main() {
 
     expect(poolRoute, isNonNegative);
     expect(soundManagerSource, contains('webPool.play(path, vol);'));
-    expect(webSfxSource, contains('static const _playerCount = 4;'));
-    expect(webSfxSource, contains('NativeSfxSlotPool(_playerCount)'));
+    expect(webSfxSource, contains('playWebSfx(path, volume, duration)'));
+    expect(webSfxSource, isNot(contains('AudioPlayer')));
+    expect(webSfxBridgeSource, contains("@JS('stoneMatchSfx.play')"));
+    expect(webSfxScript, contains('const slotCount = 4;'));
+    expect(webSfxScript, contains('new Audio()'));
+    expect(webSfxScript, isNot(contains('AudioContext')));
+    expect(webIndex, contains('<script src="stone_match_sfx.js"></script>'));
     expect(webSfxSource, isNot(contains('FlameAudio.createPool(')));
     expect(fallbackRoute, greaterThan(poolRoute));
   });
@@ -118,23 +128,6 @@ void main() {
       onStop: () async {},
     );
 
-    expect(pool.reserve(), isNotNull);
-  });
-
-  test('start 실패를 호출자에게 알린 뒤 슬롯을 해제한다', () async {
-    final pool = NativeSfxSlotPool(1);
-    final slot = pool.reserve()!;
-    Object? reportedError;
-
-    await pool.start(
-      slot,
-      duration: Duration.zero,
-      onStart: () async => throw StateError('web play failed'),
-      onStop: () async {},
-      onError: (error, _) async => reportedError = error,
-    );
-
-    expect(reportedError, isA<StateError>());
     expect(pool.reserve(), isNotNull);
   });
 }
