@@ -35,6 +35,7 @@ void main() {
     expect(webSfxBridgeSource, contains("@JS('stoneMatchSfx.play')"));
     expect(webSfxScript, contains('const slotCount = 4;'));
     expect(webSfxScript, contains('new Audio()'));
+    expect(webSfxScript, contains('assets/assets/audio/'));
     expect(webSfxScript, isNot(contains('AudioContext')));
     expect(webIndex, contains('<script src="stone_match_sfx.js"></script>'));
     expect(webSfxSource, isNot(contains('FlameAudio.createPool(')));

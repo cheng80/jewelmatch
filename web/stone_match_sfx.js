@@ -8,7 +8,8 @@
   }));
   const stats = { plays: 0, drops: 0, errors: 0, unlocks: 0, lastError: '' };
 
-  const resolveAsset = (path) => new URL(`assets/${path}`, document.baseURI).href;
+  const resolveAsset = (path) =>
+    new URL(`assets/assets/audio/${path}`, document.baseURI).href;
 
   const recordError = (error) => {
     stats.errors += 1;
