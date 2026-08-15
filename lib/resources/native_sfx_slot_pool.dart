@@ -30,6 +30,7 @@ class NativeSfxSlotPool {
     required Duration duration,
     required Future<void> Function() onStart,
     required Future<void> Function() onStop,
+    FutureOr<void> Function(Object error, StackTrace stackTrace)? onError,
   }) async {
     try {
       await onStart();
@@ -40,8 +41,12 @@ class NativeSfxSlotPool {
         unawaited(_stop(slot, releaseTimer!, onStop));
       });
       _state(slot)!.timer = releaseTimer;
-    } catch (_) {
-      release(slot);
+    } catch (error, stackTrace) {
+      try {
+        await onError?.call(error, stackTrace);
+      } finally {
+        release(slot);
+      }
     }
   }
 

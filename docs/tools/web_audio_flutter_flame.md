@@ -27,24 +27,23 @@
 
 ## 3. 현재 프로젝트 정책
 
-현재 프로젝트는 웹 오디오 대응에서 **SFX 풀링 + pointerdown re-prime** 을 현재 기준 실험 상태로 사용한다.
+현재 프로젝트는 웹 오디오 대응에서 **고정 4슬롯 SFX 풀 + 실패 시 선별 복구**를 사용한다.
 
 - 앱 루트 `Listener`의 `onPointerDown` 에서 `SoundManager.unlockForWeb()` 호출
 - `unlockForWeb()`는 `_webUnlocked = true`로 전환하고, 잠금 전 요청된 BGM이 있으면 재생한다
-- 웹에서는 `unlockForWeb()`가 `_primeWebSfxPools()`도 함께 호출해 SFX용 `AudioPool`들을 0볼륨 start/stop으로 재-prime한다
-- `preload()` 시점에 웹 전용 `AudioPool`을 미리 생성해 `BtnSnd`, `Collect`, `Fail`, `ComboHit`, `BigMatch`, `SpecialGem`, `TimeTic`, `TimeUp`, `Start`를 재사용 플레이어로 돌린다
-  - 현재 풀 크기 기준: `Collect=3`, `ComboHit=3`, `BtnSnd=2`, 나머지 주요 SFX는 `1`
-- 웹에서 `playSfx()`는 가능하면 `webPool.start(volume: vol)` 경로를 사용하고, 풀에 없는 경우만 `FlameAudio.play(...)`로 폴백한다
+- `preload()`에서 웹 전용 `AudioPlayer` 4개만 생성하고 모든 SFX가 이 슬롯을 공유한다
+- 4개가 모두 재생 중이면 새 플레이어를 생성하지 않고 해당 SFX를 건너뛴다
+- 브라우저 재생이 실패하면 해당 플레이어를 폐기하고 교체한 뒤, 다음 `pointerdown`에서만 다시 해제한다
+- 첫 `pointerdown`에서 4개 플레이어를 한 번만 0볼륨으로 해제하며, 모든 입력마다 전체 SFX를 재생하는 반복 프라이밍은 하지 않는다
 - 콤보음(`ComboHit`)은 현재도 웹에서 별도 즉시 재생 분기 없이 기존 지연 재생(`playComboSfxDelayed`)을 유지한다
 
-즉, 현재 저장소의 기준점은 “최소 unlock 정책”이 아니라 “**첫 pointerdown unlock + 웹 SFX 풀 초기화/재-prime**”이다.
-다만 이 상태도 완전 안정은 아니며, 장시간 플레이 뒤 `Collect` 복구 실패나 `ComboHit` 누락이 간헐적으로 남을 수 있다.
+즉, 현재 저장소의 기준점은 “**고정 4슬롯 + 포화 시 누락 허용 + 실패 슬롯만 복구**”이다. iOS Safari에서 오디오 컨텍스트가 무한히 늘어나는 것보다 순간 SFX 하나를 누락하는 쪽을 선택한다.
 
 ### 3.1 현재 코드에서 확인할 파일
 
 - `lib/resources/sound_manager.dart`
   - `_webUnlocked`, `_pendingBgm`
-  - `_webSfxPools`, `_primeWebSfxPools()`
+  - `_webSfxPool`, `_WebSfxPool`
   - `unlockForWeb()`
   - `playBgm()` / `playBgmIfUnmuted()` / `playSfx()`
 - `lib/app.dart`
@@ -55,11 +54,11 @@
 
 - 장점:
   - 드래그 이후에도 탭 없이 사운드가 계속 살아 있을 가능성이 높다.
-  - 자주 쓰는 SFX를 새 플레이어 생성 없이 재사용하므로 모바일 웹에서 안정성이 좋아진다.
-  - 현재 프로젝트에서는 지금까지 시도한 조합 중 가장 안정적으로 재생되는 기준점이다.
+  - SFX 플레이어와 Web Audio 컨텍스트 개수가 4개를 넘지 않는다.
+  - 비동기 재생 실패를 기록하고 해당 슬롯만 교체한다.
 - 단점:
   - 최소 unlock 정책보다 구조가 복잡하다.
-  - 웹 전용 풀 구성과 re-prime 로직을 계속 문서와 함께 관리해야 한다.
+  - 효과음이 4개를 넘게 완전히 겹치면 초과 SFX는 누락된다.
   - 브라우저별로 안정성이 달라질 수 있어 회귀 테스트가 필요하다.
   - 완전한 해결 상태는 아니며, 드물게 장시간 플레이 후 일부 SFX가 다시 잠길 수 있다.
 
@@ -87,7 +86,7 @@
 
 | 파일 | 역할 |
 |------|------|
-| `lib/resources/sound_manager.dart` | 웹 SFX 풀링/prime·`playSfx`·pending BGM |
+| `lib/resources/sound_manager.dart` | 웹 SFX 고정 슬롯, `playSfx`, pending BGM |
 | `lib/app.dart` | 웹 `Listener` → `unlockForWeb` |
 | `tools/reencode_mp3_web.py` | MP3 일괄 재인코딩 (선택) |
 
@@ -100,4 +99,4 @@
 
 ---
 
-*최종 정리: 현재 저장소의 웹 오디오 기준점은 “**첫 포인터다운 unlock + 웹 SFX AudioPool 초기화/재-prime**”이다. 모바일 웹에서 지금까지 시도한 조합 중 가장 안정적이지만, 완전 안정 상태는 아닌 기준 실험 버전으로 기록한다.*
+*최종 정리: 현재 저장소의 웹 오디오 기준점은 “**첫 포인터다운 unlock + 고정 4슬롯 + 실패 슬롯 선별 복구**”이다.*

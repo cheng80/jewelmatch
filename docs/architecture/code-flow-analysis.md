@@ -175,7 +175,7 @@ GameView.build()
 - 앱 제목·디버그 배너·다국어·테마·라우터 설정
 - 웹에서 첫 포인터다운 시 `SoundManager.unlockForWeb()` 호출
 - `unlockForWeb()`는 웹 오디오 잠금을 풀고, 잠금 전 요청된 BGM이 있으면 재생한다
-- 현재 웹 기준점에서는 `SoundManager`가 웹 SFX `AudioPool`을 유지하고, `unlockForWeb()`에서 re-prime을 수행한다
+- 현재 웹 기준점에서는 `SoundManager`가 SFX 플레이어 4개만 유지하고, 재생 실패 슬롯만 교체한 뒤 다음 포인터 입력에서 복구한다
 
 ### 3-3. `lib/router.dart`
 

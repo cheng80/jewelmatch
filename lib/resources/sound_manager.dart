@@ -21,20 +21,43 @@ class SoundManager {
   static String? _pendingBgm;
   static Timer? _pendingComboTimer;
   static String? _pendingComboPath;
-  static final Map<String, AudioPool> _webSfxPools = {};
+  static _WebSfxPool? _webSfxPool;
   static final Map<String, _NativeSfxPool> _nativeSfxPools = {};
-  static bool _webPrimeInFlight = false;
-  static Timer? _webPrimeTimer;
-  static DateTime? _lastWebPrimeAt;
   static Future<void>? _preloadFuture;
 
+  static const Map<String, ({int players, Duration duration})> _sfxSpecs = {
+    AssetPaths.sfxBtnSnd: (players: 2, duration: Duration(milliseconds: 250)),
+    AssetPaths.sfxCollect: (players: 3, duration: Duration(milliseconds: 1100)),
+    AssetPaths.sfxFail: (players: 1, duration: Duration(milliseconds: 1500)),
+    AssetPaths.sfxComboHit: (
+      players: 3,
+      duration: Duration(milliseconds: 1100),
+    ),
+    AssetPaths.sfxBigMatch: (
+      players: 1,
+      duration: Duration(milliseconds: 1900),
+    ),
+    AssetPaths.sfxSpecialGem: (
+      players: 1,
+      duration: Duration(milliseconds: 1100),
+    ),
+    AssetPaths.sfxTimeTic: (players: 1, duration: Duration(milliseconds: 600)),
+    AssetPaths.sfxTimeUp: (players: 1, duration: Duration(milliseconds: 1700)),
+    AssetPaths.sfxStart: (players: 1, duration: Duration(milliseconds: 1100)),
+    AssetPaths.sfxClear: (players: 1, duration: Duration(milliseconds: 1000)),
+    AssetPaths.sfxLevelUp: (players: 1, duration: Duration(milliseconds: 1300)),
+    AssetPaths.sfxConfetti: (
+      players: 1,
+      duration: Duration(milliseconds: 4400),
+    ),
+  };
+
   /// 웹: 첫 사용자 상호작용 시 호출. 대기 중인 BGM 재생.
-  /// SFX 풀 프라이밍은 첫 상호작용에서 한 번만 예약하고,
-  /// 이후 제스처에서는 중단된 BGM 복구만 시도한다.
+  /// 고정 SFX 플레이어는 첫 상호작용과 재생 실패 후 다음 상호작용에서만 해제한다.
   static void unlockForWeb() {
     if (!kIsWeb) return;
     _webUnlocked = true;
-    _scheduleWebSfxPrime();
+    _webSfxPool?.unlock();
     if (_pendingBgm != null) {
       _pendingBgm = null;
       unawaited(playBgmIfUnmuted());
@@ -72,7 +95,7 @@ class SoundManager {
       FlameAudio.audioCache.load(AssetPaths.sfxTimeUp),
     ]);
     if (kIsWeb) {
-      await _initWebSfxPools();
+      _webSfxPool = await _WebSfxPool.create();
     } else if (defaultTargetPlatform == TargetPlatform.android) {
       await _initNativeSfxPools();
     }
@@ -154,9 +177,9 @@ class SoundManager {
       'playSfx ${kIsWeb ? 'web' : 'native'} → path=$path vol=${vol.toStringAsFixed(2)}',
     );
     try {
-      final webPool = kIsWeb ? _webSfxPools[path] : null;
+      final webPool = kIsWeb ? _webSfxPool : null;
       if (webPool != null) {
-        unawaited(webPool.start(volume: vol));
+        webPool.play(path, vol);
         return;
       }
       if (defaultTargetPlatform == TargetPlatform.android) {

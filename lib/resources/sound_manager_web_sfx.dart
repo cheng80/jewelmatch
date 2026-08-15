@@ -1,114 +1,98 @@
 part of 'sound_manager.dart';
 
-Future<void> _initWebSfxPools() async {
-  if (SoundManager._webSfxPools.isNotEmpty) return;
-  SoundManager._webSfxPools[AssetPaths.sfxBtnSnd] = await FlameAudio.createPool(
-    AssetPaths.sfxBtnSnd,
-    minPlayers: 1,
-    maxPlayers: 2,
-  );
-  SoundManager._webSfxPools[AssetPaths.sfxCollect] =
-      await FlameAudio.createPool(
-        AssetPaths.sfxCollect,
-        minPlayers: 1,
-        maxPlayers: 3,
-      );
-  SoundManager._webSfxPools[AssetPaths.sfxFail] = await FlameAudio.createPool(
-    AssetPaths.sfxFail,
-    minPlayers: 1,
-    maxPlayers: 1,
-  );
-  SoundManager._webSfxPools[AssetPaths.sfxComboHit] =
-      await FlameAudio.createPool(
-        AssetPaths.sfxComboHit,
-        minPlayers: 1,
-        maxPlayers: 3,
-      );
-  SoundManager._webSfxPools[AssetPaths.sfxBigMatch] =
-      await FlameAudio.createPool(
-        AssetPaths.sfxBigMatch,
-        minPlayers: 1,
-        maxPlayers: 1,
-      );
-  SoundManager._webSfxPools[AssetPaths.sfxSpecialGem] =
-      await FlameAudio.createPool(
-        AssetPaths.sfxSpecialGem,
-        minPlayers: 1,
-        maxPlayers: 1,
-      );
-  SoundManager._webSfxPools[AssetPaths.sfxTimeTic] =
-      await FlameAudio.createPool(
-        AssetPaths.sfxTimeTic,
-        minPlayers: 1,
-        maxPlayers: 1,
-      );
-  SoundManager._webSfxPools[AssetPaths.sfxTimeUp] = await FlameAudio.createPool(
-    AssetPaths.sfxTimeUp,
-    minPlayers: 1,
-    maxPlayers: 1,
-  );
-  SoundManager._webSfxPools[AssetPaths.sfxStart] = await FlameAudio.createPool(
-    AssetPaths.sfxStart,
-    minPlayers: 1,
-    maxPlayers: 1,
-  );
-  SoundManager._webSfxPools[AssetPaths.sfxClear] = await FlameAudio.createPool(
-    AssetPaths.sfxClear,
-    minPlayers: 1,
-    maxPlayers: 1,
-  );
-  SoundManager._webSfxPools[AssetPaths.sfxLevelUp] =
-      await FlameAudio.createPool(
-        AssetPaths.sfxLevelUp,
-        minPlayers: 1,
-        maxPlayers: 1,
-      );
-  SoundManager._webSfxPools[AssetPaths.sfxConfetti] =
-      await FlameAudio.createPool(
-        AssetPaths.sfxConfetti,
-        minPlayers: 1,
-        maxPlayers: 1,
-      );
-}
+class _WebSfxPool {
+  _WebSfxPool._() : _slots = NativeSfxSlotPool(_playerCount);
 
-void _scheduleWebSfxPrime() {
-  if (!kIsWeb ||
-      SoundManager._webSfxPools.isEmpty ||
-      SoundManager._webPrimeInFlight ||
-      SoundManager._webPrimeTimer != null ||
-      SoundManager._lastWebPrimeAt != null) {
-    return;
-  }
-  SoundManager._webPrimeTimer = Timer(const Duration(milliseconds: 650), () {
-    SoundManager._webPrimeTimer = null;
-    unawaited(_primeWebSfxPools());
-  });
-}
+  static const _playerCount = 4;
+  static const _fallbackDuration = Duration(seconds: 5);
 
-Future<void> _primeWebSfxPools() async {
-  if (!kIsWeb ||
-      SoundManager._webSfxPools.isEmpty ||
-      SoundManager._webPrimeInFlight) {
-    return;
-  }
-  final now = DateTime.now();
-  if (SoundManager._lastWebPrimeAt != null &&
-      now.difference(SoundManager._lastWebPrimeAt!) <
-          const Duration(milliseconds: 300)) {
-    return;
-  }
-  SoundManager._webPrimeInFlight = true;
-  SoundManager._lastWebPrimeAt = now;
-  try {
-    for (final entry in SoundManager._webSfxPools.entries) {
-      try {
-        final stop = await entry.value.start(volume: 0);
-        await stop();
-      } catch (e, _) {
-        SfxPlayLog.append('primeWebSfxPool ERROR path=${entry.key} err=$e');
-      }
+  final NativeSfxSlotPool _slots;
+  final List<AudioPlayer> _players = [];
+  bool _needsUnlock = true;
+  bool _unlockInFlight = false;
+
+  static Future<_WebSfxPool> create() async {
+    final pool = _WebSfxPool._();
+    for (var i = 0; i < _playerCount; i++) {
+      pool._players.add(await _createPlayer());
     }
-  } finally {
-    SoundManager._webPrimeInFlight = false;
+    return pool;
+  }
+
+  static Future<AudioPlayer> _createPlayer() async {
+    final player = AudioPlayer()..audioCache = FlameAudio.audioCache;
+    await player.setPlayerMode(PlayerMode.mediaPlayer);
+    await player.setSource(AssetSource(AssetPaths.sfxCollect));
+    await player.setReleaseMode(ReleaseMode.stop);
+    await player.setVolume(0);
+    return player;
+  }
+
+  void unlock() {
+    if (!_needsUnlock || _unlockInFlight) return;
+    _unlockInFlight = true;
+    unawaited(_unlock());
+  }
+
+  Future<void> _unlock() async {
+    var unlocked = true;
+    try {
+      await Future.wait(
+        List.generate(_players.length, (index) async {
+          try {
+            await _players[index].resume();
+            await _players[index].stop();
+          } catch (error, stackTrace) {
+            unlocked = false;
+            await _replacePlayer(index, error, stackTrace);
+          }
+        }),
+      );
+    } finally {
+      _needsUnlock = !unlocked;
+      _unlockInFlight = false;
+    }
+  }
+
+  void play(String path, double volume) {
+    final slot = _slots.reserve();
+    if (slot == null) {
+      SfxPlayLog.append('playSfx web SKIP poolBusy path=$path');
+      return;
+    }
+    final duration =
+        SoundManager._sfxSpecs[path]?.duration ?? _fallbackDuration;
+    final player = _players[slot.index];
+    unawaited(
+      _slots.start(
+        slot,
+        duration: duration,
+        onStart: () async {
+          await player.setVolume(volume);
+          await player.setSource(AssetSource(path));
+          await player.resume();
+        },
+        onStop: player.stop,
+        onError: (error, stackTrace) =>
+            _replacePlayer(slot.index, error, stackTrace),
+      ),
+    );
+  }
+
+  Future<void> _replacePlayer(
+    int index,
+    Object error,
+    StackTrace stackTrace,
+  ) async {
+    SfxPlayLog.append('playSfx web ERROR slot=$index err=$error');
+    _needsUnlock = true;
+    try {
+      await _players[index].dispose();
+      _players[index] = await _createPlayer();
+    } catch (replacementError, _) {
+      SfxPlayLog.append(
+        'playSfx web REPLACE ERROR slot=$index err=$replacementError',
+      );
+    }
   }
 }

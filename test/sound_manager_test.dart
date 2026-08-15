@@ -15,24 +15,27 @@ void main() {
     'lib/resources/sound_manager_native_sfx.dart',
   ).readAsStringSync();
 
-  test('반복 SFX는 단발 재생 대신 공통 AudioPool을 우선 사용한다', () {
+  test('웹 SFX는 새 AudioPool을 만들지 않고 고정 플레이어 풀을 사용한다', () {
     final poolRoute = soundManagerSource.indexOf(
-      'final webPool = kIsWeb ? _webSfxPools[path] : null;',
+      'final webPool = kIsWeb ? _webSfxPool : null;',
     );
     final fallbackRoute = soundManagerSource.indexOf(
       'FlameAudio.play(path, volume: vol);',
     );
 
     expect(poolRoute, isNonNegative);
-    expect(
-      soundManagerSource,
-      contains('unawaited(webPool.start(volume: vol));'),
-    );
+    expect(soundManagerSource, contains('webPool.play(path, vol);'));
+    expect(webSfxSource, contains('static const _playerCount = 4;'));
+    expect(webSfxSource, contains('NativeSfxSlotPool(_playerCount)'));
+    expect(webSfxSource, isNot(contains('FlameAudio.createPool(')));
     expect(fallbackRoute, greaterThan(poolRoute));
   });
 
   test('웹과 Android만 각자의 SFX 풀을 preload에서 초기화한다', () {
-    expect(soundManagerSource, contains('await _initWebSfxPools();'));
+    expect(
+      soundManagerSource,
+      contains('_webSfxPool = await _WebSfxPool.create();'),
+    );
     expect(
       soundManagerSource,
       contains(
@@ -40,7 +43,7 @@ void main() {
         '      await _initNativeSfxPools();',
       ),
     );
-    expect(webSfxSource, contains('if (!kIsWeb ||'));
+    expect(soundManagerSource, contains('if (kIsWeb) {'));
   });
 
   test('native SFX는 고정 lowLatency 풀을 포화 시 건너뛴다', () {
@@ -115,6 +118,23 @@ void main() {
       onStop: () async {},
     );
 
+    expect(pool.reserve(), isNotNull);
+  });
+
+  test('start 실패를 호출자에게 알린 뒤 슬롯을 해제한다', () async {
+    final pool = NativeSfxSlotPool(1);
+    final slot = pool.reserve()!;
+    Object? reportedError;
+
+    await pool.start(
+      slot,
+      duration: Duration.zero,
+      onStart: () async => throw StateError('web play failed'),
+      onStop: () async {},
+      onError: (error, _) async => reportedError = error,
+    );
+
+    expect(reportedError, isA<StateError>());
     expect(pool.reserve(), isNotNull);
   });
 }
