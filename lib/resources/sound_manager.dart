@@ -107,7 +107,11 @@ class SoundManager {
   /// 웹: unlock 전이면 대기 후 첫 탭 시 재생.
   static Future<void> playBgm(String path) async {
     if (_currentBgm == path) {
-      resumeBgm(onlyIfCurrent: path);
+      if (kIsWeb) {
+        await playBgmIfUnmuted();
+      } else {
+        resumeBgm(onlyIfCurrent: path);
+      }
       return;
     }
     await stopBgm();
@@ -148,7 +152,7 @@ class SoundManager {
     } catch (_) {}
   }
 
-  /// 음소거 해제 시 BGM 재생. pause 상태면 resume, stop 상태면 play.
+  /// 음소거 해제나 웹 플레이어 중단 후 BGM을 다시 재생.
   static Future<void> playBgmIfUnmuted() async {
     if (GameSettings.bgmMuted) return;
     if (_currentBgm == null) return;

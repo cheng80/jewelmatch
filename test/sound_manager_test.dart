@@ -76,12 +76,16 @@ void main() {
     expect(webSfxScript, contains('needsUnlock = false;'));
   });
 
-  test('같은 BGM 재생 요청은 일시정지된 곡을 재개한다', () {
+  test('같은 BGM 재생 요청은 중단된 웹 플레이어를 다시 시작한다', () {
     expect(
       soundManagerSource,
       contains(
         'if (_currentBgm == path) {\n'
-        '      resumeBgm(onlyIfCurrent: path);\n'
+        '      if (kIsWeb) {\n'
+        '        await playBgmIfUnmuted();\n'
+        '      } else {\n'
+        '        resumeBgm(onlyIfCurrent: path);\n'
+        '      }\n'
         '      return;\n'
         '    }',
       ),
