@@ -71,13 +71,30 @@ void main() {
     }
   });
 
+  test('눈에 보이는 레이어의 최대 배율이 3×3 커버리지 기준에 고정돼 있다', () {
+    // 기준 크기 4.5칸 × 티어 × 아래 배율이 화면에 보이는 크기를 정한다(E1 수정 1차).
+    var burst = 0.0;
+    var swirl = 0.0;
+    for (var i = 0; i <= 400; i++) {
+      evaluateBombLayers(i / 400, values);
+      burst = burst > _scale(values, BombLayer.burst)
+          ? burst
+          : _scale(values, BombLayer.burst);
+      swirl = swirl > _scale(values, BombLayer.swirl)
+          ? swirl
+          : _scale(values, BombLayer.swirl);
+    }
+    expect(burst, closeTo(1.20, 0.01));
+    expect(swirl, closeTo(1.16, 0.01));
+  });
+
   test('알파는 0~1을 벗어나지 않는다', () {
     for (var i = 0; i <= 200; i++) {
       final t = i / 200;
       evaluateBombLayers(t, values);
       for (final layer in BombLayer.values) {
         expect(_alpha(values, layer), inInclusiveRange(0.0, 1.0));
-        expect(_scale(values, layer), inInclusiveRange(0.0, 1.6));
+        expect(_scale(values, layer), inInclusiveRange(0.0, 1.35));
       }
     }
   });
@@ -181,6 +198,8 @@ void main() {
       ),
       isTrue,
     );
+    // 기준 크기. bomb이 지우는 3×3 칸을 폭발이 덮어야 한다(E1 수정 1차).
+    expect(bomb['scale'], 4.5);
     // 공용 grid는 hyper와 supernova가 계속 쓴다.
     expect((manifest['grid'] as Map<String, dynamic>)['frameWidth'], 313.5);
   });

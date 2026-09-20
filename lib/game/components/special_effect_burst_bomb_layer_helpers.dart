@@ -26,7 +26,8 @@ class _BombLayerRenderer {
 
     final glowAlpha = _values[1] * fade * glowScale;
     if (glowAlpha > 0) {
-      final radius = baseSize * 0.62 * _values[0];
+      // 기준 크기가 커져도 글로우의 절대 크기는 거의 그대로 둔다.
+      final radius = baseSize * 0.52 * _values[0];
       glow.radial(
         canvas,
         GlowRadial.bomb,

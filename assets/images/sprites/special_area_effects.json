@@ -12,7 +12,7 @@
       "image": "sprites/bomb_layers.png",
       "layerCellSize": 256,
       "layerCount": 5,
-      "scale": 3.4,
+      "scale": 4.5,
       "blend": "plus"
     },
     "hyper": {
