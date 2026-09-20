@@ -2,7 +2,7 @@
 
 > 다음 작업자가 즉시 시작할 정보만 둔다. 프로젝트 전체 상태는 PROJECT_STATUS.md에 둔다.
 
-Updated: 2026-09-20 21:10 KST
+Updated: 2026-09-20 21:20 KST
 
 ## Current State
 최신 추가 변경: 중력을 제거한 매칭 파편의 초기 속도를 1.4배, 수명을 65%로 조정했다. 보석 위 유휴 반짝임 밝기는 2/3, 대각선 광택 스윕 속도는 80%다(한 칸 0.9초, 반복 10초). 최종 튜닝은 main에 반영하며 같은 제품 코드에서 analyze, 전체279tests, Web release build가 모두 통과했다. 개발 서버는 사용자 요청으로 정상 종료했고 8080 포트 리스너가 없음을 확인했다. 추가 실행 중인 구현/검증 프로세스는 없다.
@@ -37,7 +37,7 @@ Updated: 2026-09-20 21:10 KST
 3. `?fps=1`로 모바일 실기기 FPS 전후 비교와 장시간 WebView 확인
 4. PLAN-001 실기기 장시간 측정 (원문부터 INCOMPLETE. 별도 승인 작업)
 5. 이전 문서는 archive/docs/에 있음. 삭제 여부는 별도 결정
-6. STALE NAS/AIT 재검증과 PLAN-001 실측은 이관 밖 별도 작업
+6. STALE AIT 재검증과 PLAN-001 실측은 이관 밖 별도 작업
 
 ## Blocked
 - PLAN-002, TASK-004: 외부 값/정책
@@ -77,10 +77,10 @@ Updated: 2026-09-20 21:10 KST
 | Bomb E1 layer analyze / test / web build | PASS | HISTORICAL | 2026-09-20 | bomb 레이어 적용 리비전 | STALE | 해당 리비전에서 analyze 0, 274 tests PASS, Web build 0. 이후 E2 hyper/supernova 후속 통합 전 결과 |
 | F1 input regression review | PASS | RECHECKED | 2026-09-20 | 동일 | CURRENT | T2의 3개 회귀 테스트와 pointer flow 통과 |
 | PLAN-004 desktop screen / widget / pixel checks | PASS | RECHECKED | 2026-09-20 | 동일 | CURRENT | T1~T5의 ego/headless, 위젯, 픽셀 근거. T4b ego 문자 중복은 headless 재현 없음, 원인 미확정 |
-| PLAN-004 mobile device UI / FPS | NOT_RUN | NONE | - | 동일 | UNKNOWN | 실기기 FPS 전후 비교와 장시간 WebView 미실행 |
+| PLAN-004 mobile device UI / FPS | PARTIAL | RECHECKED | 2026-09-20 21:20 KST | `99622e9` | INCOMPLETE | Android Chrome35초 rAF 평균63.94FPS, p95 33.57ms, GAP55.94ms. 첫 멈춤 원인 미확정, iPhone/광고A/B/장시간 미완. `tmp/android-fps-20260920/RESULT.md` |
 | T6 level celebration | PASS | RECHECKED | 2026-09-20 | 동일 | CURRENT | 일반 3000ms / reduced motion 즉시, 점수/시간/보상 불변 테스트와 합본 화면 확인 |
 | Independent review fixes | PASS | RECHECKED | 2026-09-20 | 동일 | CURRENT | F1 입력 3건, 게임 이탈 자원 해제와 release snapshot P2 수정 및 재검증. 합본 HUD 추가 진단은 기존 confetti 겹침으로 마감 |
-| NAS Web smoke | PASS | HISTORICAL | 2026-08-15 | a821b19 | STALE | git 문서: NAS 웹 재배포 성공. 이후 0cd1d00 오디오 수정. 현재 리비전 미재검증 |
+| NAS Web smoke | PASS | RECHECKED | 2026-09-20 21:20 KST | 제품 main `99622e9` | CURRENT | `tmp/nas-deploy-20260920/`: Wasm 배포 HTTP200, index/bootstrap/wasm/MP3 원격 해시 일치, deep route200, 격리 헤더, 두 모드 랭킹 조회 통과. Android 게임 로드 확인 |
 | Apps in Toss 재배포 | PASS | HISTORICAL | 2026-08-15 | d777cf0 | STALE | git 문서: 일반 AIT 재배포. 이후 오디오 수정. 현재 리비전 미재검증 |
 | Web 장시간 오디오/FPS | INCOMPLETE | HISTORICAL | 2026-08-23 이전 | PLAN-001 / ADR-004 원문 | UNKNOWN | 짧은 수동 확인만 통과. 장시간 카운터 없음. 원문부터 미완 |
 | Android/iOS store device | NOT_RUN | NONE | UNKNOWN | UNKNOWN | UNKNOWN | 출시 체크리스트 미완 |
@@ -122,6 +122,11 @@ Updated: 2026-09-20 21:10 KST
 - 정본 docs/와 archive/docs/를 서로 링크로 묶지 말 것
 - 현재 작업 폴더는 `/Users/cheng80/Desktop/Anther_Works/Flutter_Project/FlutterFrame_work/jewelmatch`의 main이다. 정리된 `fx-g2-sprites`나 이전 통합 Worktree를 사용하지 말 것
 - 삭제 전 자료 148파일의 SHA256을 확인했고 `/Users/cheng80/orca/workspaces/jewelmatch/_fx_orchestration/backups_pre_cleanup/fx-g2-sprites-20260920-e2`에 보존했다. 보고서와 보드 PNG는 `/Users/cheng80/orca/workspaces/jewelmatch/_fx_orchestration`에도 유지한다.
-- main 병합은 로컬 기준이다. 원격 반영과 실기기 검증을 완료로 오인하지 말 것
+- 제품 main `99622e9`는 origin/main 푸시 및 NAS 배포 완료. Android 짧은 계측만 수행했으며 전체 실기기 검증 완료로 오인하지 말 것
 
 - 합본 HUD 최종 진단(16:08 KST): 무손실 PNG의 추가 밝은 glyph 픽셀 0, 변한 픽셀은 confetti 색 합성으로 설명됐다. pause 150프레임 동안 game render/update 증가 0. 제품 소스 변경 없이 가설 기각. 근거: `_fx_orchestration/reports/T6_integrated_visual_fix.md`.
+
+## 최신 NAS 배포와 Android 계측 (2026-09-20 21:20 KST)
+- main `99622e9` 푸시, 로컬 웹 산출물 정리, NAS Wasm 배포 완료. 로컬 개발 서버와 scrcpy 미러링은 종료했다.
+- 사용자 첫 이펙트 멈춤 제보를 개발자 도구로 조사 중. 35초/유효 입력34회 측정에서 큰 멈춤은 재현되지 않았으나 90Hz 기기 평균63.94FPS/p95 33.57ms로 성능 검증은 미완. GPU/워커 추적을 포함한 원인 확정이 다음 우선 작업이다.
+- 원시자료와 제한은 `tmp/android-fps-20260920/RESULT.md`와 `profile.json`. 초기 화면 GAP280ms와 재측정 GAP55.94ms는 조건이 달라 개선 수치로 비교하지 않는다.
