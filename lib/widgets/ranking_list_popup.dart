@@ -1,6 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
+import 'overlay_motion.dart';
+
 import '../app_config.dart';
 import '../services/intoss_leaderboard_service.dart';
 import '../services/ranking_service.dart';
@@ -187,7 +189,7 @@ class _RankingListPopupState extends State<RankingListPopup> {
               child: LuminaOutlinedButton(
                 width: 240,
                 label: context.tr('close'),
-                onPressed: widget.onClose,
+                onPressed: () => runOverlayExit(context, widget.onClose),
               ),
             ),
             const SizedBox(height: 26),
@@ -215,10 +217,26 @@ class _RankingList extends StatelessWidget {
       future: future,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(
-            child: CircularProgressIndicator(
-              color: JewelCandyLuminaTheme.focusTeal,
-            ),
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              for (var i = 0; i < 3; i++)
+                StaggerReveal(
+                  index: i,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 16,
+                    ),
+                    child: LinearProgressIndicator(
+                      value: 1 - i * 0.2,
+                      color: JewelCandyLuminaTheme.focusTeal.withValues(
+                        alpha: 0.3,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           );
         }
         final result = snapshot.data;

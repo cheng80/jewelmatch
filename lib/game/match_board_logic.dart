@@ -65,6 +65,12 @@ class MatchBoardLogic {
   )?
   onGemsRemoved;
 
+  /// 제거 시작의 렌더 전용 알림. 점수 계산과 분리한다.
+  void Function(Map<String, bool> cells)? onRemovalStarted;
+
+  MatchJuicePattern removalJuicePattern = MatchJuicePattern.normal;
+  void Function(List<SpecialSpawn> spawns)? onSpecialsBorn;
+
   double boardX = 0;
   double boardY = 0;
   double tileSize = 56;
@@ -91,6 +97,13 @@ class MatchBoardLogic {
   /// 힌트로 표시할 두 칸 (행·열). 없으면 null. 렌더러에서 이 두 칸에만 흰색 펄스.
   Point<int>? get hintCellA => _hintA;
   Point<int>? get hintCellB => _hintB;
+
+  /// 렌더 보조 상태. 모드 정책은 게임이 전달하고 힌트 수량은 건드리지 않는다.
+  bool idleHintsEnabled = false;
+  double idleHintElapsed = 0;
+  bool _automaticHintVisible = false;
+  Point<int>? swapPreviewCell;
+  void Function()? onGemSelected;
 
   int _nextGemId = 1;
   bool inputLocked = false;
@@ -178,6 +191,9 @@ class MatchBoardLogic {
   /// 인트로가 끝나 모든 보석이 제자리에 안착했을 때 한 번 호출 (종류에 따라 SFX 분기).
   void Function(BoardFillIntroKind kind)? onIntroFillComplete;
 
+  /// 유효 스왑 뒤 제거를 시작하기 전 두 보석이 자리에 앉는 시간.
+  /// 이 동안 상태는 `swapSettle`이고 점수·콤보·시간 보상 계산은 건드리지 않는다.
+  static const double swapSettleDelay = 0.12;
   static const double removeDelay = 0.18;
   static const double fallingDelay = 0.11;
   static const double refillDelay = 0.11;
@@ -455,6 +471,10 @@ class MatchBoardLogic {
 
   bool triggerSpecialCell(int row, int col) =>
       _triggerSpecialCellImpl(row, col);
+
+  /// 입력과 드래그 피드백이 공유하는 기존 상태/안정구역 허용 판정.
+  bool canTrySwapNow(int ar, int ac, int br, int bc) =>
+      _canTrySwapNow(ar, ac, br, bc);
 
   bool trySwap(int ar, int ac, int br, int bc) => _trySwapImpl(ar, ac, br, bc);
 

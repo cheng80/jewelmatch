@@ -12,6 +12,7 @@ import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import '../services/game_settings.dart';
 import '../widgets/phone_frame_scaffold.dart';
+import '../widgets/overlay_motion.dart';
 import '../widgets/ranking_list_popup.dart';
 import '../services/in_app_review_service.dart';
 import 'overlays/game_loading_overlay.dart';
@@ -154,7 +155,7 @@ class _TitleContent extends StatelessWidget {
   final PackageInfo? packageInfo;
 
   void _showHowToPlayDialog(BuildContext context) {
-    showDialog<void>(
+    showMotionDialog<void>(
       context: context,
       barrierDismissible: true,
       builder: (ctx) => Material(
@@ -175,11 +176,14 @@ class _TitleContent extends StatelessWidget {
     return Column(
       children: [
         const Spacer(flex: 2),
-        Image.asset(
-          AssetPaths.stoneMatchTitle,
-          width: 338,
-          fit: BoxFit.contain,
-          filterQuality: FilterQuality.high,
+        StaggerReveal(
+          index: 0,
+          child: Image.asset(
+            AssetPaths.stoneMatchTitle,
+            width: 338,
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.high,
+          ),
         ),
         const SizedBox(height: 8),
         SizedBox(
@@ -211,58 +215,70 @@ class _TitleContent extends StatelessWidget {
           ),
         ),
         const Spacer(flex: 1),
-        TitleRoundButton(
-          label: context.tr('modeSimple'),
-          panelColor: TitleButtonPalette.teal,
-          iconAssetPath: AssetPaths.modeIconSimple,
-          onPressed: () {
-            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-            context.go(_gameRoute('simple'));
-          },
+        StaggerReveal(
+          index: 1,
+          child: TitleRoundButton(
+            label: context.tr('modeSimple'),
+            panelColor: TitleButtonPalette.teal,
+            iconAssetPath: AssetPaths.modeIconSimple,
+            onPressed: () {
+              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+              context.go(_gameRoute('simple'));
+            },
+          ),
         ),
         const SizedBox(height: 6),
-        TitleRoundButton(
-          label: context.tr('modeProgression'),
-          panelColor: TitleButtonPalette.purple,
-          iconAssetPath: AssetPaths.modeIconProgression,
-          onPressed: () {
-            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-            onShowNameDialog('progression');
-          },
+        StaggerReveal(
+          index: 2,
+          child: TitleRoundButton(
+            label: context.tr('modeProgression'),
+            panelColor: TitleButtonPalette.purple,
+            iconAssetPath: AssetPaths.modeIconProgression,
+            onPressed: () {
+              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+              onShowNameDialog('progression');
+            },
+          ),
         ),
         const SizedBox(height: 6),
-        TitleRoundButton(
-          label: context.tr('modeTimed'),
-          panelColor: TitleButtonPalette.brown,
-          iconAssetPath: AssetPaths.modeIconTimed,
-          onPressed: () {
-            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-            onShowNameDialog('timed');
-          },
+        StaggerReveal(
+          index: 3,
+          child: TitleRoundButton(
+            label: context.tr('modeTimed'),
+            panelColor: TitleButtonPalette.brown,
+            iconAssetPath: AssetPaths.modeIconTimed,
+            onPressed: () {
+              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+              onShowNameDialog('timed');
+            },
+          ),
         ),
         const SizedBox(height: 6),
-        TitleRoundButton(
-          label: context.tr('rankingTitle'),
-          panelColor: TitleButtonPalette.charcoal,
-          iconAssetPath: AssetPaths.modeIconRanking,
-          onPressed: () {
-            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-            showDialog<void>(
-              context: context,
-              barrierDismissible: true,
-              builder: (ctx) => Material(
-                color: Colors.transparent,
-                child: PhoneFrame(
-                  child: RankingListPopup(
-                    onClose: () {
-                      SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                      Navigator.of(ctx).pop();
-                    },
+        StaggerReveal(
+          index: 4,
+          child: TitleRoundButton(
+            label: context.tr('rankingTitle'),
+            panelColor: TitleButtonPalette.charcoal,
+            iconAssetPath: AssetPaths.modeIconRanking,
+            onPressed: () {
+              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+              showMotionDialog<void>(
+                context: context,
+                barrierDismissible: true,
+                builder: (ctx) => Material(
+                  color: Colors.transparent,
+                  child: PhoneFrame(
+                    child: RankingListPopup(
+                      onClose: () {
+                        SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                        Navigator.of(ctx).pop();
+                      },
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
         const Spacer(flex: 1),
         TitleVersionFooter(packageInfo: packageInfo),

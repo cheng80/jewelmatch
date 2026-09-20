@@ -68,11 +68,23 @@
         audio.pause();
         audio.currentTime = 0;
         audio.volume = previousVolume;
-      }).catch(recordError);
+      }).catch((error) => {
+        // 첫 효과음이나 화면 숨김이 unlock 재생을 대체하면 정상 취소다.
+        if (slot.token === token && !slot.busy) recordError(error);
+      });
     }
   };
 
-  const play = (path, volume, durationMs) => {
+  // 반음 상승은 playbackRate로 낸다. preservesPitch 기본값(true)이면 속도만 바뀌고
+  // 피치가 유지되므로 재생마다 false로 다시 쓴다(ADR-004의 HTML Audio 4슬롯 그대로).
+  const applyRate = (audio, rate) => {
+    const safe = Number.isFinite(rate) && rate > 0 ? Math.min(2, Math.max(0.5, rate)) : 1;
+    audio.preservesPitch = false;
+    audio.playbackRate = safe;
+    return safe;
+  };
+
+  const play = (path, volume, durationMs, rate) => {
     const slot = slots.find((candidate) => !candidate.busy);
     if (!slot) {
       stats.drops += 1;
@@ -90,6 +102,7 @@
       audio.load();
     }
     audio.volume = Math.max(0, Math.min(1, volume));
+    const appliedRate = applyRate(audio, rate);
     audio.currentTime = 0;
     audio.onended = () => release(slot, token);
     audio.onerror = () => release(slot, token, audio.error);
@@ -98,7 +111,7 @@
       audio.pause();
       audio.currentTime = 0;
       release(slot, token);
-    }, Math.max(250, durationMs + 250));
+    }, Math.max(250, durationMs / appliedRate + 250));
 
     stats.plays += 1;
     audio.play()?.catch((error) => release(slot, token, error));

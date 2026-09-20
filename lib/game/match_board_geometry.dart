@@ -6,6 +6,8 @@ extension MatchBoardGeometry on MatchBoardLogic {
     required double y,
     required double tile,
   }) {
+    final changed = boardX != x || boardY != y || tileSize != tile;
+    if (changed) _clearInvalidDragFeedback();
     boardX = x;
     boardY = y;
     tileSize = tile;
@@ -16,6 +18,11 @@ extension MatchBoardGeometry on MatchBoardLogic {
       for (var c = 0; c < cols; c++) {
         final g = cells[r][c];
         if (g != null) {
+          if (changed) {
+            g.bumpT = -1;
+            g.bumpX = 0;
+            g.bumpY = 0;
+          }
           _updateGemTarget(g);
           if (state == 'idle' && !introFillInProgress) {
             g.x = g.targetX;

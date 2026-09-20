@@ -14,6 +14,7 @@ import '../game/jewel_game_mode.dart';
 import '../game/match_board_game.dart';
 import '../game/match_board_qa_bridge.dart';
 import '../utils/sfx_play_log.dart';
+import '../services/game_settings.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import '../widgets/sfx_play_log_panel.dart';
 import '../resources/asset_paths.dart';
@@ -62,6 +63,14 @@ class _GameViewState extends State<GameView> {
   /// build()에서 매번 생성하면 rebuild마다 엔진이 재초기화된다.
   Widget? _gameWidget;
   MatchBoardGame? _game;
+  int? _previousBestScore;
+  int? _previousBestLevel;
+
+  void _captureBest() {
+    _previousBestScore = GameSettings.getBestMatchScore(widget.gameMode) ?? 0;
+    _previousBestLevel = GameSettings.getBestMatchProgressionLevel() ?? 0;
+  }
+
   bool _gameMounted = false;
   bool _loadingVisible = true;
   bool _qaVfxPreviewScheduled = false;
@@ -230,6 +239,7 @@ class _GameViewState extends State<GameView> {
           'xpLabel': context.tr('xpLabel'),
           'maxComboLabel': context.tr('maxComboLabel'),
         });
+        _captureBest();
         _game = g;
         return g;
       },
@@ -240,8 +250,9 @@ class _GameViewState extends State<GameView> {
             child: SizedBox.expand(),
           ),
         ),
-        'PauseMenu': (_, MatchBoardGame g) =>
-            _blocksBanner(PauseMenuOverlay(game: g)),
+        'PauseMenu': (_, MatchBoardGame g) => _blocksBanner(
+          PauseMenuOverlay(game: g, onRoundRestart: _captureBest),
+        ),
         'NoMoves': (_, MatchBoardGame g) =>
             _blocksBanner(NoMovesOverlay(game: g)),
         'LevelCelebration': (_, MatchBoardGame g) =>
@@ -257,6 +268,9 @@ class _GameViewState extends State<GameView> {
         'TimeUp': (_, MatchBoardGame g) => _blocksBanner(
           TimeUpOverlay(
             game: g,
+            previousBestScore: _previousBestScore,
+            previousBestLevel: _previousBestLevel,
+            onRoundRestart: _captureBest,
             adService: _adService,
             adRewardPolicy: _adRewardPolicy,
           ),
@@ -284,7 +298,9 @@ class _GameViewState extends State<GameView> {
       children: [
         content,
         AnimatedSwitcher(
-          duration: _loadingFadeDuration,
+          duration: MediaQuery.disableAnimationsOf(context)
+              ? Duration.zero
+              : _loadingFadeDuration,
           switchInCurve: Curves.easeOutCubic,
           switchOutCurve: Curves.easeInCubic,
           child: _loadingVisible

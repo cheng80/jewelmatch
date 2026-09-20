@@ -93,7 +93,7 @@ extension _SpecialEffectBurstExplosionDrawing on SpecialEffectBurst {
     canvas.drawCircle(center, radius * (0.16 + bloom * 0.16), _fillPaint);
 
     _paint
-      ..maskFilter = _glowScale > 0 ? SpecialEffectBurst._glow : null
+      ..maskFilter = null
       ..strokeCap = StrokeCap.round
       ..strokeWidth = tileSize * (0.14 + 0.06 * (1 - t))
       ..color = SpecialEffectBurst._hotYellow.withValues(
@@ -104,7 +104,18 @@ extension _SpecialEffectBurstExplosionDrawing on SpecialEffectBurst {
       width: radius * (1.62 + bloom * 0.46),
       height: radius * (0.62 + bloom * 0.18),
     );
-    canvas.drawArc(arcRect, pi * 0.04, pi * 0.92, false, _paint);
+    if (_glowScale > 0) {
+      _bakedGlow.draw(
+        canvas,
+        GlowShape.explosionArc,
+        arcRect.center,
+        arcRect.width / 128,
+        arcRect.height / 128,
+        _paint.color,
+      );
+    } else {
+      canvas.drawArc(arcRect, pi * 0.04, pi * 0.92, false, _paint);
+    }
 
     _paint
       ..maskFilter = null

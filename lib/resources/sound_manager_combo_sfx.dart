@@ -14,6 +14,7 @@ void _cancelPendingComboIfNeeded(String path) {
     SoundManager._pendingComboTimer?.cancel();
     SoundManager._pendingComboTimer = null;
     SoundManager._pendingComboPath = null;
+    SoundManager._pendingComboPitch = 0;
     SfxPlayLog.append(
       'combo delayed SFX canceled by higher priority path=$path',
     );

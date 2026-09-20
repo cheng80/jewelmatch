@@ -8,7 +8,6 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
     _removalVisualAlpha = 1;
     _removalVisualScale = 1;
     _removalVisualRotation = 0;
-    _removalFlashAlpha = 0;
 
     final removalSet = logic.pendingRemovalSet;
     if (logic.state != 'removing' || removalSet == null || removalSet.isEmpty) {
@@ -33,15 +32,14 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
           popScale - (popScale - MatchBoardRenderer._removalMinScale) * q * q;
     }
     _removalVisualRotation = MatchBoardRenderer._removalMaxRotation * eased;
-    _removalFlashAlpha = MatchBoardRenderer._removalMaxFlashAlpha * (1 - eased);
 
-    _removingNormalSpriteColorMatrix[18] = _removalVisualAlpha;
-    _removingNormalSpritePaint.colorFilter = ColorFilter.matrix(
-      _removingNormalSpriteColorMatrix,
-    );
-    _removingCompositedSpritePaint.colorFilter = ColorFilter.mode(
-      Colors.white.withValues(alpha: _removalVisualAlpha),
-      BlendMode.modulate,
+    _removingNormalSpritePaint
+      ..colorFilter = const ColorFilter.matrix(
+        MatchBoardRenderer._normalSpriteColorMatrix,
+      )
+      ..color = Colors.white.withValues(alpha: _removalVisualAlpha);
+    _removingCompositedSpritePaint.color = Colors.white.withValues(
+      alpha: _removalVisualAlpha,
     );
     _showRemovalVisuals = true;
   }
@@ -49,21 +47,6 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
   bool _isRemovalVisualCell(BoardGem gem) {
     if (!_showRemovalVisuals) return false;
     return logic.isPendingRemovalCell(gem.row, gem.col);
-  }
-
-  void _drawRemovalCellFlash(Canvas canvas, BoardGem gem, double ts) {
-    if (_removalFlashAlpha <= 0) return;
-    final radius = Radius.circular(ts * MatchBoardRenderer._cellCornerRatio);
-    _removalFlashPaint.color = const Color(
-      0xFFFFE2A0,
-    ).withValues(alpha: _removalFlashAlpha);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(gem.x + 4, gem.y + 4, ts - 8, ts - 8),
-        radius,
-      ),
-      _removalFlashPaint,
-    );
   }
 
   /// 타임 틱과 같은 박자로 보드 테두리가 붉게 맥동한다.
@@ -157,47 +140,36 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
       JewelCandyLuminaTheme.primaryPink,
       0.35,
     )!.withValues(alpha: alpha);
-    final radius = Radius.circular(ts * MatchBoardRenderer._cellCornerRatio);
+    _drawHintCell(canvas, ha.x, ha.y, bx, by, ts);
+    _drawHintCell(canvas, hb.x, hb.y, bx, by, ts);
+  }
+
+  void _drawHintCell(
+    Canvas canvas,
+    int r,
+    int c,
+    double bx,
+    double by,
+    double ts,
+  ) {
     const pad = 3.0;
-
-    void pulseCell(int r, int c) {
-      final x = bx + c * ts;
-      final y = by + r * ts;
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(x + pad, y + pad, ts - pad * 2, ts - pad * 2),
-          radius,
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          bx + c * ts + pad,
+          by + r * ts + pad,
+          ts - pad * 2,
+          ts - pad * 2,
         ),
-        _hintPulsePaint,
-      );
-    }
-
-    pulseCell(ha.x, ha.y);
-    pulseCell(hb.x, hb.y);
+        Radius.circular(ts * MatchBoardRenderer._cellCornerRatio),
+      ),
+      _hintPulsePaint,
+    );
   }
 
   void _drawGem(Canvas canvas, BoardGem gem, double ts) {
-    final x = gem.x;
     final y = gem.y;
-    final drawW = ts * 0.82;
-    final drawH = ts * 0.82;
-    final ox = x + (ts - drawW) / 2;
-    final oy = y + (ts - drawH) / 2;
-    final specialSprite = _specialSpriteFor(gem.kind);
-    final compositedOverlaySprite = _compositedOverlaySpriteFor(gem);
-    final overlaySprite = _overlaySpriteFor(gem.kind);
     final isRemovalVisualCell = _isRemovalVisualCell(gem);
-    final normalPaint = isRemovalVisualCell
-        ? _removingNormalSpritePaint
-        : _normalSpritePaint;
-    final compositedPaint = isRemovalVisualCell
-        ? _removingCompositedSpritePaint
-        : _compositedSpritePaint;
-
-    if (isRemovalVisualCell) {
-      _drawRemovalCellFlash(canvas, gem, ts);
-    }
-
     var sx = 1.0;
     var sy = 1.0;
     var rotation = 0.0;
@@ -206,6 +178,20 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
     var anchorY = y + ts / 2;
     if (isRemovalVisualCell) {
       sx = sy = _removalVisualScale;
+      if (gem.kind != GemKind.normal) {
+        // 기존 제거 0.18초 안에서 첫 0.07초만 수축한다. 판정/발동은 지연하지 않는다.
+        final elapsed = MatchBoardLogic.removeDelay - logic.stageTimer;
+        if (elapsed < 0.07) {
+          sx = sy =
+              1 -
+              0.22 * math.sin((elapsed / 0.07).clamp(0.0, 1.0) * math.pi / 2);
+        } else {
+          final p = ((elapsed - 0.07) / 0.11).clamp(0.0, 1.0);
+          sx = sy = p < 0.25
+              ? 0.78 + 0.46 * p / 0.25
+              : 1.24 - 0.94 * math.pow((p - 0.25) / 0.75, 2);
+        }
+      }
       rotation = _removalVisualRotation * (gem.id.isEven ? 1 : -1);
     } else {
       if (gem.landT >= 0) {
@@ -217,6 +203,7 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
         anchorY = y + ts * 0.91;
       }
       if (gem.popT >= 0) {
+        _gemBatch.flush(canvas);
         _drawSpawnPopRing(canvas, gem, ts);
         final p = 1 - gem.popT / MatchBoardLogic.spawnPopDuration;
         final s = 1 + 0.5 * p * p;
@@ -227,6 +214,17 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
         final s = 1 + 0.04 * math.sin(_animTime * 3.2 + gem.id);
         sx *= s;
         sy *= s;
+      }
+      if (logic.introFillInProgress && logic.lastActionText == 'shuffled') {
+        final travel = ((gem.targetY - gem.y) / ts).clamp(0.0, 1.0);
+        sx *= 1 - 0.18 * travel;
+        sy *= 1 - 0.18 * travel;
+        rotation = (gem.col.isEven ? 1 : -1) * 0.16 * travel;
+      } else if (_shuffleVisualTime > 0 && gem.kind == GemKind.normal) {
+        final pulse = math.sin(_shuffleVisualTime / 0.45 * math.pi);
+        sx *= 1 + 0.12 * pulse;
+        sy *= 1 + 0.12 * pulse;
+        rotation = (gem.col.isEven ? 1 : -1) * 0.08 * pulse;
       }
       if (logic.state == 'idle') {
         final sel = logic.selected;
@@ -248,9 +246,24 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
       }
     }
 
+    final atlas = _gemBatch.image;
+    final slot = _atlasSlot(gem);
+    final alpha = isRemovalVisualCell ? _removalVisualAlpha : 1.0;
+    if (useGemBatching && atlas != null && (sx - sy).abs() < 0.000001) {
+      _gemBatch.add(
+        slot: slot,
+        x: gem.x + ts / 2 + shiftX,
+        y: y + ts / 2 + shiftY,
+        size: ts,
+        scale: sx,
+        rotation: rotation,
+        alpha: alpha,
+      );
+      return;
+    }
+    _gemBatch.flush(canvas);
     final hasGemTransform =
         sx != 1 || sy != 1 || rotation != 0 || shiftX != 0 || shiftY != 0;
-
     if (hasGemTransform) {
       final cx = gem.x + ts / 2;
       canvas.save();
@@ -259,6 +272,43 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
       canvas.scale(sx, sy);
       canvas.translate(-cx, -anchorY);
     }
+    if (atlas != null && useGemBatching) {
+      _atlasIndividualPaint.color = Colors.white.withValues(alpha: alpha);
+      canvas.drawImageRect(
+        atlas,
+        _gemBatch.rects[slot],
+        Rect.fromLTWH(gem.x, gem.y, ts, ts),
+        _atlasIndividualPaint,
+      );
+    } else {
+      _drawGemAppearance(canvas, gem, ts, removing: isRemovalVisualCell);
+    }
+    individualGemDrawCalls++;
+    if (hasGemTransform) canvas.restore();
+  }
+
+  void _drawGemAppearance(
+    Canvas canvas,
+    BoardGem gem,
+    double ts, {
+    required bool removing,
+  }) {
+    final x = gem.x;
+    final y = gem.y;
+    final drawW = ts * 0.82;
+    final drawH = ts * 0.82;
+    final ox = x + (ts - drawW) / 2;
+    final oy = y + (ts - drawH) / 2;
+    final specialSprite = _specialSpriteFor(gem.kind);
+    final compositedOverlaySprite = _compositedOverlaySpriteFor(gem);
+    final overlaySprite = _overlaySpriteFor(gem.kind);
+    final isRemovalVisualCell = removing;
+    final normalPaint = isRemovalVisualCell
+        ? _removingNormalSpritePaint
+        : _normalSpritePaint;
+    final compositedPaint = isRemovalVisualCell
+        ? _removingCompositedSpritePaint
+        : _compositedSpritePaint;
 
     if (compositedOverlaySprite != null && specialSprite == null) {
       final overlayW = ts * _overlaySourceRatio;
@@ -274,7 +324,6 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
         size: _spriteRenderSize,
         overridePaint: compositedPaint,
       );
-      if (hasGemTransform) canvas.restore();
       return;
     }
 
@@ -312,6 +361,5 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
         alpha: isRemovalVisualCell ? _removalVisualAlpha : 1,
       );
     }
-    if (hasGemTransform) canvas.restore();
   }
 }

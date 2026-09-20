@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../match_board_logic.dart';
+import 'baked_glow_atlas.dart';
 import '../../resources/asset_paths.dart';
 
 part 'special_effect_burst_draw_helpers.dart';
@@ -82,7 +83,25 @@ class SpecialEffectBurst extends PositionComponent {
   double _elapsed = 0;
   bool _active = false;
 
-  static const _glow = MaskFilter.blur(BlurStyle.normal, 6);
+  final BakedGlowAtlas _bakedGlow = BakedGlowAtlas();
+  final Path _lightningPath = Path();
+  final Path _starPath = Path();
+
+  @visibleForTesting
+  bool get debugGlowReady => _bakedGlow.isReady;
+
+  @override
+  void onMount() {
+    super.onMount();
+    _bakedGlow.mount();
+  }
+
+  @override
+  void onRemove() {
+    _bakedGlow.dispose();
+    super.onRemove();
+  }
+
   static const _hotYellow = Color(0xFFFFF3A4);
   static const _hotOrange = Color(0xFFFF8C36);
   static const _electricBlue = Color(0xFF74F6FF);

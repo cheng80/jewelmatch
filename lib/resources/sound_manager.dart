@@ -6,7 +6,10 @@ import '../services/game_settings.dart';
 import '../utils/sfx_play_log.dart';
 import 'asset_paths.dart';
 import 'native_sfx_slot_pool.dart';
+import 'sound_manager_pitch.dart';
 import 'web_sfx_bridge.dart';
+
+export 'sound_manager_pitch.dart';
 
 part 'sound_manager_combo_sfx.dart';
 part 'sound_manager_native_sfx.dart';
@@ -22,6 +25,7 @@ class SoundManager {
   static String? _pendingBgm;
   static Timer? _pendingComboTimer;
   static String? _pendingComboPath;
+  static int _pendingComboPitch = 0;
   static _WebSfxPool? _webSfxPool;
   static final Map<String, _NativeSfxPool> _nativeSfxPools = {};
   static Future<void>? _preloadFuture;
@@ -169,9 +173,16 @@ class SoundManager {
     FlameAudio.bgm.audioPlayer.setVolume(GameSettings.bgmVolume);
   }
 
+  /// 반음 → 재생 속도. 네이티브는 피치까지 바뀌는지 확인 전까지 1.0으로 고정한다
+  /// (속도만 빨라지면 어색하다). 켜는 스위치는 `SfxPitch.nativePitchEnabled` 한 곳.
+  static double _playbackRate(int pitchSemitones) {
+    return SfxPitch.playbackRate(pitchSemitones, isWeb: kIsWeb);
+  }
+
   /// 효과음 재생. 음소거 시 무시, 볼륨은 GameSettings.sfxVolume 적용.
   /// 웹: unlock 전이면 무시 (카운트다운 등 자동 재생 방지).
-  static void playSfx(String path) {
+  /// [pitchSemitones]는 반음 단위 피치 상승. 의미 → 반음 변환은 `SfxPitch`에 있다.
+  static void playSfx(String path, {int pitchSemitones = 0}) {
     if (GameSettings.sfxMuted) {
       SfxPlayLog.append('playSfx SKIP sfxMuted path=$path');
       return;
@@ -182,19 +193,20 @@ class SoundManager {
     }
     _cancelPendingComboIfNeeded(path);
     final vol = GameSettings.sfxVolume;
+    final rate = _playbackRate(pitchSemitones);
     SfxPlayLog.append(
-      'playSfx ${kIsWeb ? 'web' : 'native'} → path=$path vol=${vol.toStringAsFixed(2)}',
+      'playSfx ${kIsWeb ? 'web' : 'native'} → path=$path vol=${vol.toStringAsFixed(2)} rate=${rate.toStringAsFixed(3)}',
     );
     try {
       final webPool = kIsWeb ? _webSfxPool : null;
       if (webPool != null) {
-        webPool.play(path, vol);
+        webPool.play(path, vol, rate);
         return;
       }
       if (defaultTargetPlatform == TargetPlatform.android) {
         final nativePool = _nativeSfxPools[path];
         if (nativePool != null) {
-          nativePool.play(vol);
+          nativePool.play(vol, rate);
           return;
         }
       }
@@ -208,7 +220,7 @@ class SoundManager {
 
   /// 콤보 강조음은 모바일 웹에서 앞선 SFX와 너무 붙으면 누락될 수 있어
   /// 아주 짧게 지연 후 재생하고, 그 사이 상위 우선순위 SFX가 오면 취소한다.
-  static void playComboSfxDelayed(String path) {
+  static void playComboSfxDelayed(String path, {int pitchSemitones = 0}) {
     if (GameSettings.sfxMuted) {
       SfxPlayLog.append('playComboSfxDelayed SKIP sfxMuted path=$path');
       return;
@@ -219,6 +231,7 @@ class SoundManager {
     }
     _pendingComboTimer?.cancel();
     _pendingComboPath = path;
+    _pendingComboPitch = pitchSemitones;
     final delay = kIsWeb
         ? const Duration(milliseconds: 70)
         : const Duration(milliseconds: 40);
@@ -227,10 +240,12 @@ class SoundManager {
     );
     _pendingComboTimer = Timer(delay, () {
       final pending = _pendingComboPath;
+      final pitch = _pendingComboPitch;
       _pendingComboTimer = null;
       _pendingComboPath = null;
+      _pendingComboPitch = 0;
       if (pending == null) return;
-      playSfx(pending);
+      playSfx(pending, pitchSemitones: pitch);
     });
   }
 }

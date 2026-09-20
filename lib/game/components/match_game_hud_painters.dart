@@ -139,7 +139,7 @@ extension _MatchGameHudPainterCache on MatchGameHud {
     final t = game.hudTextScale;
     final cur = _displayCurrentCombo();
     final mx = game.board.maxCombo;
-    if (cur > (_cachedDisplayedCombo ?? cur)) _comboPunch = 1;
+    if (cur > (_cachedDisplayedCombo ?? cur)) _comboPunch.trigger();
     _cachedDisplayedCombo = cur;
     _cachedMaxCombo = mx;
     final sh = _hudLegibilityShadows();

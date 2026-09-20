@@ -12,9 +12,14 @@ void unlockWebSfx() {
   } catch (_) {}
 }
 
-bool playWebSfx(String path, double volume, Duration duration) {
+bool playWebSfx(String path, double volume, Duration duration, double rate) {
   try {
-    return _play(path.toJS, volume.toJS, duration.inMilliseconds.toJS).toDart;
+    return _play(
+      path.toJS,
+      volume.toJS,
+      duration.inMilliseconds.toJS,
+      rate.toJS,
+    ).toDart;
   } catch (_) {
     return false;
   }
@@ -27,4 +32,9 @@ external void _initialize(JSString defaultPath);
 external void _unlock();
 
 @JS('stoneMatchSfx.play')
-external JSBoolean _play(JSString path, JSNumber volume, JSNumber durationMs);
+external JSBoolean _play(
+  JSString path,
+  JSNumber volume,
+  JSNumber durationMs,
+  JSNumber rate,
+);

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../resources/asset_paths.dart';
+import '../../widgets/overlay_motion.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 
 /// 타이틀 전용 bitmap 레이어 버튼.
-class TitleRoundButton extends StatelessWidget {
+class TitleRoundButton extends StatefulWidget {
   const TitleRoundButton({
     required this.label,
     required this.panelColor,
@@ -13,6 +14,17 @@ class TitleRoundButton extends StatelessWidget {
     super.key,
   });
 
+  final String label;
+  final Color panelColor;
+  final String iconAssetPath;
+  final VoidCallback onPressed;
+
+  @override
+  State<TitleRoundButton> createState() => _TitleRoundButtonState();
+}
+
+class _TitleRoundButtonState extends State<TitleRoundButton> {
+  bool _pressed = false;
   static const double _width = 282;
   static const double _height = 77;
   static const double _fontSize = 25;
@@ -21,84 +33,83 @@ class TitleRoundButton extends StatelessWidget {
   static const double _letterSpacing = 1.2;
   static const double _panelOpacity = 0.74;
 
-  final String label;
-  final Color panelColor;
-  final String iconAssetPath;
-  final VoidCallback onPressed;
-
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: _width,
-      height: _height,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          customBorder: const StadiumBorder(),
-          onTap: onPressed,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              ColorFiltered(
-                colorFilter: ColorFilter.mode(
-                  panelColor.withValues(alpha: _panelOpacity),
-                  BlendMode.modulate,
+    return PressScale(
+      pressed: _pressed,
+      child: SizedBox(
+        width: _width,
+        height: _height,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            customBorder: const StadiumBorder(),
+            onTap: widget.onPressed,
+            onHighlightChanged: (value) => setState(() => _pressed = value),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                ColorFiltered(
+                  colorFilter: ColorFilter.mode(
+                    widget.panelColor.withValues(alpha: _panelOpacity),
+                    BlendMode.modulate,
+                  ),
+                  child: Image.asset(
+                    AssetPaths.modeButtonPanelBase,
+                    width: _width,
+                    height: _height,
+                    fit: BoxFit.fill,
+                    filterQuality: FilterQuality.high,
+                  ),
                 ),
-                child: Image.asset(
-                  AssetPaths.modeButtonPanelBase,
+                Image.asset(
+                  AssetPaths.modeButtonFrameFront,
                   width: _width,
                   height: _height,
                   fit: BoxFit.fill,
                   filterQuality: FilterQuality.high,
                 ),
-              ),
-              Image.asset(
-                AssetPaths.modeButtonFrameFront,
-                width: _width,
-                height: _height,
-                fit: BoxFit.fill,
-                filterQuality: FilterQuality.high,
-              ),
-              Positioned(
-                left: _iconLeft,
-                top: (_height - _iconSize) / 2,
-                child: Image.asset(
-                  iconAssetPath,
-                  width: _iconSize,
-                  height: _iconSize,
-                  fit: BoxFit.contain,
-                  filterQuality: FilterQuality.high,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 78, right: 19),
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: _fontSize,
-                    fontWeight: FontWeight.w900,
-                    color: JewelCandyLuminaTheme.tertiaryGold,
-                    letterSpacing: _letterSpacing,
-                    shadows: [
-                      Shadow(
-                        color: Colors.black.withValues(alpha: 0.95),
-                        offset: const Offset(0, 2),
-                        blurRadius: 4,
-                      ),
-                      Shadow(
-                        color: JewelCandyLuminaTheme.goldStrong.withValues(
-                          alpha: 0.45,
-                        ),
-                        blurRadius: 8,
-                      ),
-                    ],
+                Positioned(
+                  left: _iconLeft,
+                  top: (_height - _iconSize) / 2,
+                  child: Image.asset(
+                    widget.iconAssetPath,
+                    width: _iconSize,
+                    height: _iconSize,
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.high,
                   ),
                 ),
-              ),
-            ],
+                Padding(
+                  padding: const EdgeInsets.only(left: 78, right: 19),
+                  child: Text(
+                    widget.label,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: _fontSize,
+                      fontWeight: FontWeight.w900,
+                      color: JewelCandyLuminaTheme.tertiaryGold,
+                      letterSpacing: _letterSpacing,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.95),
+                          offset: const Offset(0, 2),
+                          blurRadius: 4,
+                        ),
+                        Shadow(
+                          color: JewelCandyLuminaTheme.goldStrong.withValues(
+                            alpha: 0.45,
+                          ),
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

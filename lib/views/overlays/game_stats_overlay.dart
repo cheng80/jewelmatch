@@ -1,6 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
+import '../../widgets/overlay_motion.dart';
+
 import '../../game/match_board_game.dart';
 import '../../game/match_board_logic.dart';
 import '../../resources/asset_paths.dart';
@@ -58,7 +60,7 @@ class GameStatsOverlay extends StatelessWidget {
                   ),
                   onPressed: () {
                     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                    game.closeGameStats();
+                    runOverlayExit(context, () => game.closeGameStats());
                   },
                 ),
               ),
@@ -113,7 +115,7 @@ class GameStatsOverlay extends StatelessWidget {
             label: context.tr('close'),
             onPressed: () {
               SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-              game.closeGameStats();
+              runOverlayExit(context, () => game.closeGameStats());
             },
           ),
         ],

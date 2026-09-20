@@ -12,6 +12,9 @@ enum BoardFillIntroKind {
 /// 보석 종류. `row`/`col`은 예전 저장 상태 호환용으로 유지한다.
 enum GemKind { normal, row, col, bomb, star, hyper, supernova }
 
+/// 제거 수가 아닌 원래 매치 모양. 특수 생성으로 한 칸을 남겨도 유지한다.
+enum MatchJuicePattern { normal, four, five, sixPlus, cross }
+
 /// 단일 보석 인스턴스 (논리 격자 + 화면 보간 좌표).
 /// 오브젝트 풀링을 위해 [reset]으로 필드를 재설정할 수 있다.
 class BoardGem {
@@ -42,6 +45,12 @@ class BoardGem {
   double landT = -1;
   double popT = -1;
   bool airborne = false;
+  // BoardJuiceLayer가 관측하는 렌더 전용 상태. 풀 재사용 때 초기화한다.
+  bool juiceFalling = false;
+  bool juiceRefillPending = false;
+  double bumpT = -1;
+  double bumpX = 0;
+  double bumpY = 0;
 
   /// 풀에서 꺼낸 인스턴스를 새 보석처럼 재설정한다.
   void reset({
@@ -67,6 +76,11 @@ class BoardGem {
     landT = -1;
     popT = -1;
     airborne = false;
+    juiceFalling = false;
+    juiceRefillPending = false;
+    bumpT = -1;
+    bumpX = 0;
+    bumpY = 0;
   }
 }
 

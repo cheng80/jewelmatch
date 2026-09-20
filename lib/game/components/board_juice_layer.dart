@@ -9,20 +9,23 @@ import '../../resources/asset_paths.dart';
 import '../match_board_game.dart';
 import '../match_board_logic.dart';
 
+part 'board_juice_glyphs.dart';
+part 'board_juice_events.dart';
+
 /// 매치 파티클(충격파 링, 섬광, 파편, 별), 유휴 반짝임, 점수 팝업, 콤보 콜아웃을
 /// 한 컴포넌트에서 그린다.
 ///
 /// 모바일 웹 예산(PLAN-001) 때문에 파티클은 고정 크기 typed 버퍼를 돌려 쓰고
 /// 종류가 달라도 아틀라스 한 장에서 프레임당 `drawRawAtlas` 1회로 끝낸다.
 /// 광륜은 아틀라스에 미리 구워 두어 런타임 blur, saveLayer, 프레임당 객체 생성이 없다.
-/// 텍스트는 이벤트당 [TextPainter] 1개만 만들고 알파 대신 스케일로 사라진다.
+/// 숫자는 글리프 아틀라스, 콜아웃만 이벤트당 [TextPainter] 1개를 사용한다.
 class BoardJuiceLayer extends PositionComponent
     with HasGameReference<MatchBoardGame> {
   BoardJuiceLayer() : super(priority: 130);
 
   static const int maxSparks = 192;
   static const int _sparkBudgetPerBurst = 150;
-  static const int _textSlots = 6;
+  static const int _textSlots = 1;
   static const double _atlasSize = 64;
   static const double _gravity = 620;
 
@@ -46,10 +49,22 @@ class BoardJuiceLayer extends PositionComponent
   ui.Image? _atlas;
   final Paint _atlasPaint = Paint()..blendMode = BlendMode.plus;
 
-  // drawRawAtlas 입력 버퍼. 비활성 슬롯은 스케일 0으로 남겨 길이를 고정한다.
+  // 살아 있는 슬롯만 압축한다. 길이별 뷰는 생성 시 한 번 캐시한다.
   final Float32List _rst = Float32List(maxSparks * 4);
   final Float32List _src = Float32List(maxSparks * 4);
   final Int32List _argb = Int32List(maxSparks);
+  late final List<Float32List> _rstViews = List.generate(
+    maxSparks + 1,
+    (n) => Float32List.sublistView(_rst, 0, n * 4),
+  );
+  late final List<Float32List> _srcViews = List.generate(
+    maxSparks + 1,
+    (n) => Float32List.sublistView(_src, 0, n * 4),
+  );
+  late final List<Int32List> _argbViews = List.generate(
+    maxSparks + 1,
+    (n) => Int32List.sublistView(_argb, 0, n),
+  );
 
   final Float32List _x = Float32List(maxSparks);
   final Float32List _y = Float32List(maxSparks);
@@ -70,7 +85,8 @@ class BoardJuiceLayer extends PositionComponent
     _textSlots,
     (_) => _FloatText(),
   );
-  int _nextScoreSlot = 1;
+  final _glyphs = _JuiceGlyphs();
+  double _calloutHold = 0;
 
   /// 레벨업 대기 판정용. 유휴 반짝임은 포함하지 않는다.
   double _busyTime = 0;
@@ -78,14 +94,29 @@ class BoardJuiceLayer extends PositionComponent
   int get liveSparkCount => _liveSparks;
 
   @override
-  Future<void> onLoad() async {
-    _atlas = _buildSparkAtlas();
+  void onMount() {
+    super.onMount();
+    _atlas ??= _buildSparkAtlas();
+    _glyphs.mount();
+    // lazy 필드를 여기서 초기화해 첫 render에도 할당하지 않는다.
+    _rstViews;
+    _srcViews;
+    _argbViews;
   }
 
   @override
   void onRemove() {
     _atlas?.dispose();
     _atlas = null;
+    _glyphs.dispose();
+    _calloutHold = 0;
+    for (final text in _texts) {
+      text.painter?.dispose();
+      text.painter = null;
+    }
+    _life.fillRange(0, maxSparks, 0);
+    _liveSparks = 0;
+    _busyTime = 0;
     super.onRemove();
   }
 
@@ -130,7 +161,7 @@ class BoardJuiceLayer extends PositionComponent
           const Offset(flashX, half),
           half,
           const [white, Color(0x88FFFFFF), clear],
-          const [0, 0.38, 1],
+          const [0, 0.12, 1],
         ),
     );
 
@@ -144,7 +175,7 @@ class BoardJuiceLayer extends PositionComponent
           const Offset(ringX, half),
           half,
           const [clear, clear, Color(0xF2FFFFFF), Color(0x40FFFFFF), clear],
-          const [0, 0.6, 0.8, 0.92, 1],
+          const [0, 0.76, 0.82, 0.87, 1],
         ),
     );
 
@@ -167,6 +198,25 @@ class BoardJuiceLayer extends PositionComponent
     return image;
   }
 
+  /// 제거 진입 때 한 번만 빛을 낸다. 사각형 셀 오버레이를 대체한다.
+  void onRemovalStarted(Map<String, bool> cells) {
+    final board = game.board;
+    final ts = board.tileSize;
+    for (final key in cells.keys) {
+      final split = key.indexOf(':');
+      final row = int.parse(key.substring(0, split));
+      final col = int.parse(key.substring(split + 1));
+      _emit(
+        _flash,
+        board.boardX + (col + 0.5) * ts,
+        board.boardY + (row + 0.5) * ts,
+        life: 0.12,
+        scale: ts / _atlasSize * 0.65,
+        rgb: 0xFFF3D0,
+      );
+    }
+  }
+
   /// 제거된 칸마다 보석 색 파편을 터뜨리고, 점수 팝업과 콤보 콜아웃을 띄운다.
   void onGemsRemoved(
     List<({int row, int col, int color})> cells, {
@@ -174,6 +224,7 @@ class BoardJuiceLayer extends PositionComponent
     required bool hasSpecial,
     required int combo,
     required int gained,
+    MatchJuicePattern pattern = MatchJuicePattern.normal,
   }) {
     if (cells.isEmpty) return;
     final board = game.board;
@@ -182,10 +233,10 @@ class BoardJuiceLayer extends PositionComponent
 
     // 칸마다 링 + 섬광은 항상, 파편과 별은 예산 안에서 단계별로.
     final wanted = hasSpecial || combo >= 3
-        ? 10
-        : (bigMatch || combo >= 2 ? 8 : 6);
+        ? 14
+        : (bigMatch || combo >= 2 ? 12 : 10);
     final extras = (_sparkBudgetPerBurst ~/ cells.length - 2).clamp(0, wanted);
-    final power = 1 + math.min(combo, 6) * 0.07;
+    final power = 1 + math.min(combo, 6) * 0.07 + pattern.index * 0.08;
     final unit = ts / _atlasSize;
     var sumX = 0.0;
     var sumY = 0.0;
@@ -195,10 +246,16 @@ class BoardJuiceLayer extends PositionComponent
       sumX += cx;
       sumY += cy;
       final rgb = _sparkRgb(cell.color);
-      _emit(_ring, cx, cy, life: 0.4, scale: unit * 1.7 * power, rgb: rgb);
-      _emit(_flash, cx, cy, life: 0.2, scale: unit * 1.35, rgb: 0xFFF3D0);
+      _emit(_ring, cx, cy, life: 0.32, scale: unit * 1.25 * power, rgb: rgb);
+      _emit(_flash, cx, cy, life: 0.12, scale: unit * 0.75, rgb: 0xFFF3D0);
       for (var i = 0; i < extras; i++) {
-        final angle = _rng.nextDouble() * 2 * math.pi;
+        final angle = switch (pattern) {
+          MatchJuicePattern.four => i * math.pi / 2 + math.pi / 4,
+          MatchJuicePattern.five => i * 2 * math.pi / 5,
+          MatchJuicePattern.sixPlus => i * 2 * math.pi / math.max(1, extras),
+          MatchJuicePattern.cross => i * math.pi / 2,
+          MatchJuicePattern.normal => _rng.nextDouble() * 2 * math.pi,
+        };
         final speed = ts * (1.8 + _rng.nextDouble() * 3.6) * power;
         final isStar = i % 3 == 2;
         _emit(
@@ -207,41 +264,77 @@ class BoardJuiceLayer extends PositionComponent
           cy,
           vx: math.cos(angle) * speed,
           vy: math.sin(angle) * speed - ts * 1.4,
-          life: 0.45 + _rng.nextDouble() * 0.32,
-          scale: unit * (0.34 + _rng.nextDouble() * 0.3) * power,
-          rgb: isStar ? 0xFFFFFF : rgb,
+          life: 0.55 + _rng.nextDouble() * 0.25,
+          scale: unit * (0.46 + _rng.nextDouble() * 0.32) * power,
+          rgb: pattern == MatchJuicePattern.five
+              ? _sparkRgb(i % 6 + 1)
+              : isStar
+              ? 0xFFFFFF
+              : rgb,
         );
       }
     }
-    _busyTime = math.max(_busyTime, 0.5);
+    _busyTime = math.max(_busyTime, 0.8);
 
     final centerX = sumX / cells.length;
     final centerY = sumY / cells.length;
+    if (combo >= 2) {
+      _emit(
+        _ring,
+        centerX,
+        centerY,
+        life: 0.36,
+        scale: unit * (combo == 2 ? 1.6 : 2.0),
+        rgb: 0xFFD052,
+      );
+      final accents = combo == 2 ? 4 : 8;
+      for (var i = 0; i < accents; i++) {
+        final angle = i * 2 * math.pi / accents;
+        _emit(
+          _star,
+          centerX,
+          centerY,
+          vx: math.cos(angle) * ts * 2,
+          vy: math.sin(angle) * ts * 2,
+          life: 0.5,
+          scale: unit * 0.55,
+          rgb: 0xFFD052,
+        );
+      }
+    }
     if (gained > 0) {
       final first = cells.first.color;
-      _showText(
-        slot: _nextScoreSlot,
-        text: '+$gained',
-        x: centerX,
-        y: centerY,
-        fontSize: ts * (0.40 + math.min(combo, 6) * 0.035),
-        color: Color.lerp(_paletteColor(first), Colors.white, 0.6)!,
-        duration: 0.85,
-        rise: ts * 1.1,
+      final scoreY = math.max(
+        math.min(
+          centerY - math.min(combo - 1, 4) * ts * 0.32,
+          board.boardY + (board.rows - 1.6) * ts,
+        ),
+        board.boardY + ts * 2,
       );
-      _nextScoreSlot = _nextScoreSlot % (_textSlots - 1) + 1;
+      _glyphs.show(
+        '+$gained',
+        x: centerX,
+        y: scoreY,
+        size: ts * (0.40 + math.min(combo, 6) * 0.035),
+        rgb:
+            Color.lerp(_paletteColor(first), Colors.white, 0.6)!.toARGB32() &
+            0xFFFFFF,
+        left: board.boardX,
+        right: board.boardX + board.cols * ts,
+        rise: math.min(ts * 1.5, scoreY - board.boardY - ts * 1.15),
+      );
     }
-    if (combo >= 2) {
+    if (combo >= 2 && _calloutHold <= 0) {
       final word = _praise[math.min(combo - 2, _praise.length - 1)];
       _showText(
         slot: 0,
         text: '$word ×$combo',
         x: board.boardX + board.cols * ts / 2,
-        y: board.boardY + board.rows * ts * 0.36,
-        fontSize: ts * (0.62 + math.min(combo, 6) * 0.05),
+        y: board.boardY + ts * 0.55,
+        fontSize: ts * (combo <= 3 ? 0.48 : 0.68),
         color: _gold,
-        duration: 1.0,
-        rise: ts * 0.5,
+        duration: combo <= 3 ? 0.6 : 0.8,
+        rise: ts * 0.22,
       );
     }
   }
@@ -280,13 +373,6 @@ class BoardJuiceLayer extends PositionComponent
     _rot[i] = _rng.nextDouble() * math.pi;
     _spin[i] = (_rng.nextDouble() - 0.5) * (kind == _star ? 14 : 2);
     _rgb[i] = rgb;
-    // drawRawAtlas의 원본 사각형은 LTRB다.
-    final cell = kind == _twinkleKind ? _star : kind;
-    final o = i * 4;
-    _src[o] = cell * _atlasSize;
-    _src[o + 1] = 0;
-    _src[o + 2] = (cell + 1) * _atlasSize;
-    _src[o + 3] = _atlasSize;
   }
 
   void _showText({
@@ -327,12 +413,15 @@ class BoardJuiceLayer extends PositionComponent
       ..age = 0
       ..duration = duration
       ..rise = rise;
-    _busyTime = math.max(_busyTime, duration * 0.6);
+    _busyTime = math.max(_busyTime, duration);
   }
 
   @override
   void update(double dt) {
     if (_busyTime > 0) _busyTime -= dt;
+    _calloutHold = math.max(0, _calloutHold - dt);
+    _observeGemMotion();
+    _glyphs.update(dt);
     _updateTwinkle(dt);
     _updateSparks(dt);
     for (final text in _texts) {
@@ -353,7 +442,7 @@ class BoardJuiceLayer extends PositionComponent
     }
     _twinkleTimer -= dt;
     if (_twinkleTimer > 0) return;
-    _twinkleTimer = 0.18 + _rng.nextDouble() * 0.35;
+    _twinkleTimer = 0.22 + _rng.nextDouble() * 0.1;
     final gem = board.getGem(
       _rng.nextInt(board.rows),
       _rng.nextInt(board.cols),
@@ -365,7 +454,7 @@ class BoardJuiceLayer extends PositionComponent
       gem.targetX + ts * (0.30 + _rng.nextDouble() * 0.12),
       gem.targetY + ts * (0.28 + _rng.nextDouble() * 0.12),
       life: 0.5 + _rng.nextDouble() * 0.25,
-      scale: ts / _atlasSize * (0.42 + _rng.nextDouble() * 0.22),
+      scale: ts / _atlasSize * (0.6 + _rng.nextDouble() * 0.2),
       rgb: 0xFFFFFF,
     );
   }
@@ -379,15 +468,16 @@ class BoardJuiceLayer extends PositionComponent
       final life = _life[i];
       if (life <= 0) continue;
       final age = _age[i] + dt;
-      final o = i * 4;
+      final o = live * 4;
       if (age >= life) {
         _life[i] = 0;
-        _rst[o] = 0;
-        _rst[o + 1] = 0;
-        _argb[i] = 0;
         continue;
       }
-      live++;
+      final cell = _kind[i] == _twinkleKind ? _star : _kind[i];
+      _src[o] = cell * _atlasSize;
+      _src[o + 1] = 0;
+      _src[o + 2] = (cell + 1) * _atlasSize;
+      _src[o + 3] = _atlasSize;
       _age[i] = age;
       final p = age / life;
       final kind = _kind[i];
@@ -424,7 +514,8 @@ class BoardJuiceLayer extends PositionComponent
       _rst[o + 1] = ssin;
       _rst[o + 2] = _x[i] - scos * half + ssin * half;
       _rst[o + 3] = _y[i] - ssin * half - scos * half;
-      _argb[i] = ((alpha * 255).round() << 24) | _rgb[i];
+      _argb[live] = ((alpha * 255).round() << 24) | _rgb[i];
+      live++;
     }
     _liveSparks = live;
   }
@@ -441,14 +532,15 @@ class BoardJuiceLayer extends PositionComponent
     if (atlas != null && _liveSparks > 0) {
       canvas.drawRawAtlas(
         atlas,
-        _rst,
-        _src,
-        _argb,
+        _rstViews[_liveSparks],
+        _srcViews[_liveSparks],
+        _argbViews[_liveSparks],
         BlendMode.modulate,
         null,
         _atlasPaint,
       );
     }
+    _glyphs.render(canvas);
     for (final text in _texts) {
       final painter = text.painter;
       if (painter == null) continue;

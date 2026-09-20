@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
@@ -11,6 +12,7 @@ import '../match_board_game.dart';
 import '../match_board_logic.dart';
 
 part 'match_board_chrome_renderer.dart';
+part 'match_board_gem_atlas.dart';
 part 'match_board_gem_overlay_renderer.dart';
 part 'match_board_procedural_renderer.dart';
 
@@ -25,6 +27,22 @@ class MatchBoardRenderer extends PositionComponent
   MatchBoardRenderer({required this.logic});
 
   final MatchBoardLogic logic;
+  late final _GemAtlasBatch _gemBatch = _GemAtlasBatch(logic.rows * logic.cols);
+  final Paint _atlasIndividualPaint = Paint()
+    ..filterQuality = FilterQuality.medium;
+  final Paint _shufflePaint = Paint()..style = PaintingStyle.stroke;
+  double _shuffleVisualTime = 0;
+  String _lastVisualAction = '';
+
+  /// 실제 Canvas 제출 횟수. 진단과 회귀 검증용이며 규칙에서 읽지 않는다.
+  int get gemAtlasDrawCalls => _gemBatch.drawCalls;
+  int get batchedGemCount => _gemBatch.submittedGems;
+  int individualGemDrawCalls = 0;
+  @visibleForTesting
+  bool useGemBatching = true;
+  @visibleForTesting
+  bool get hasGemAtlas => _gemBatch.image != null;
+  ui.Image? _jewelImage;
 
   static const double _cellCornerRatio = 0.04;
   static const double _removalMinAlpha = 0.08;
@@ -32,7 +50,6 @@ class MatchBoardRenderer extends PositionComponent
   static const double _removalPopScale = 1.2;
   static const double _removalPopPhase = 0.3;
   static const double _removalMaxRotation = math.pi;
-  static const double _removalMaxFlashAlpha = 0.30;
   static const List<double> _normalSpriteColorMatrix = <double>[
     0.90556,
     0.06296,
@@ -112,7 +129,6 @@ class MatchBoardRenderer extends PositionComponent
     ..filterQuality = FilterQuality.medium;
   final Paint _compositedSpritePaint = Paint()
     ..filterQuality = FilterQuality.medium;
-  final Paint _removalFlashPaint = Paint();
   final Paint _popRingPaint = Paint()..style = PaintingStyle.stroke;
   final Paint _lowTimePulsePaint = Paint()..style = PaintingStyle.stroke;
   final Paint _proceduralShadowPaint = Paint();
@@ -123,22 +139,17 @@ class MatchBoardRenderer extends PositionComponent
   final Paint _proceduralHighlightPaint = Paint();
   final Vector2 _spriteRenderPosition = Vector2.zero();
   final Vector2 _spriteRenderSize = Vector2.zero();
-  final List<double> _removingNormalSpriteColorMatrix = List<double>.of(
-    _normalSpriteColorMatrix,
-  );
   bool _showRemovalVisuals = false;
   double _removalVisualAlpha = 1;
   double _removalVisualScale = 1;
   double _removalVisualRotation = 0;
-  double _removalFlashAlpha = 0;
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    ui.Image? jewelImage;
     try {
       final img = await Flame.images.load(AssetPaths.jewelSpriteSheet);
-      jewelImage = img;
+      _jewelImage = img;
       for (var i = 0; i < 7; i++) {
         _sheetSprites[i] = Sprite(
           img,
@@ -187,22 +198,34 @@ class MatchBoardRenderer extends PositionComponent
           srcPosition: Vector2.zero(),
           srcSize: Vector2(_frameW, _frameH),
         );
-        if (jewelImage != null) {
-          _compositedOverlaySprites[entry.key] = _buildCompositedOverlaySprites(
-            jewelImage,
-            img,
-          );
-        }
       } catch (_) {
         _overlaySprites[entry.key] = null;
       }
     }
+  }
+
+  @override
+  void onMount() {
+    super.onMount();
+    if (_jewelImage != null) {
+      for (final entry in _overlaySprites.entries) {
+        if (entry.value != null) {
+          _compositedOverlaySprites[entry.key] = _buildCompositedOverlaySprites(
+            _jewelImage!,
+            entry.value!.image,
+          );
+        }
+      }
+    }
+    _buildGemAtlas();
     _rebuildBoardChromePicture();
   }
 
   @override
   void onRemove() {
     _boardChromePicture?.dispose();
+    _boardChromePicture = null;
+    _gemBatch.dispose();
     for (final sprites in _compositedOverlaySprites.values) {
       for (final sprite in sprites) {
         sprite?.image.dispose();
@@ -217,7 +240,7 @@ class MatchBoardRenderer extends PositionComponent
     ui.Image overlayImage,
   ) {
     return [
-      for (var i = 0; i < MatchBoardLogic.palette.length; i++)
+      for (var i = 0; i < _sheetColByColor1based.length; i++)
         _buildCompositedOverlaySprite(
           jewelImage,
           overlayImage,
@@ -256,6 +279,13 @@ class MatchBoardRenderer extends PositionComponent
   void update(double dt) {
     super.update(dt);
     _animTime += dt;
+    if (_lastVisualAction != logic.lastActionText) {
+      _lastVisualAction = logic.lastActionText;
+      if (_lastVisualAction == 'fate shuffle') _shuffleVisualTime = 0.45;
+    }
+    if (_shuffleVisualTime > 0) {
+      _shuffleVisualTime = math.max(0, _shuffleVisualTime - dt);
+    }
     final ha = logic.hintCellA;
     final hb = logic.hintCellB;
     if (ha != null &&
@@ -284,6 +314,8 @@ class MatchBoardRenderer extends PositionComponent
   @override
   void render(Canvas canvas) {
     _ensureBoardChromePicture();
+    _gemBatch.beginFrame();
+    individualGemDrawCalls = 0;
     final shakeOffset = game.boardShakeOffset;
     final hasShakeOffset = shakeOffset.x != 0 || shakeOffset.y != 0;
     if (hasShakeOffset) {
@@ -301,6 +333,7 @@ class MatchBoardRenderer extends PositionComponent
       canvas.drawPicture(_boardChromePicture!);
     }
     _drawLowTimePulse(canvas, bx, by, bw, bh);
+    _drawShuffleFeedback(canvas, bx, by, bw, bh);
 
     _updateRemovalVisualState();
     _updateHintNudge(ts);
@@ -320,6 +353,7 @@ class MatchBoardRenderer extends PositionComponent
       );
     }
 
+    _drawInteractionGlows(canvas, ts);
     final activeDragGem = logic.activeInvalidDragGem;
     for (var r = 0; r < logic.rows; r++) {
       for (var c = 0; c < logic.cols; c++) {
@@ -331,6 +365,7 @@ class MatchBoardRenderer extends PositionComponent
       }
     }
 
+    _gemBatch.flush(canvas);
     _drawHintWhitePulse(canvas, bx, by, ts);
 
     final sel = logic.selected;
@@ -348,6 +383,7 @@ class MatchBoardRenderer extends PositionComponent
 
     if (activeDragGem != null) {
       _drawGem(canvas, activeDragGem, ts);
+      _gemBatch.flush(canvas);
     }
 
     if (needsBoardClip) {

@@ -484,7 +484,8 @@ Flame 게임 셸이다.
 - 특수 보석 탄생: `_convergeOnSpawns`가 특수 보석을 만든 매치 그룹의 제거 예정 보석 `targetX/Y`를 생성 칸으로 바꿔 빨려 들게 하고, 생성된 보석의 `popT`를 시작한다(`spawnPopDuration` 0.34초, 1.5배에서 복귀 + 확장 링). 제거 집합에 없는 보석의 목표는 건드리지 않는다.
 - 무효 스왑 범프: `_trySwapImpl` 무효 분기에서 두 보석을 서로 쪽으로 30% 밀어 두고 기존 트윈으로 복귀시킨다. 목표 좌표는 바꾸지 않는다.
 - 상시 연출: 선택 보석 맥동, 힌트 쌍이 서로 쪽으로 끌림, 특수 보석 호흡(id 위상차), 저시간(10초 이하) 보드 테두리 붉은 맥동(타임 틱과 같은 박자).
-- `BoardJuiceLayer`(world, priority 130): 파티클 192슬롯 링 버퍼를 `Float32List`/`Int32List`로 들고, 종류가 달라도 프레임당 `drawRawAtlas` 1회(`BlendMode.plus`)로 그린다. 아틀라스는 로드 때 64px 칸 4개(별, 섬광, 충격파 링, 파편)를 `toImageSync`로 한 번 굽고 광륜도 여기에 구워 런타임 blur가 없다. `drawRawAtlas` 원본 사각형은 LTRB다. 제거 칸마다 링 1 + 섬광 1은 항상, 파편(속도 방향 정렬, 중력)과 별(회전)은 단계별 6/8/10개를 버스트당 150개 예산 안에서 낸다. 유휴 상태에서는 0.18~0.53초마다 보석 하이라이트 위치에 반짝임 1개.
+- `BoardJuiceLayer`(world, priority 130): 파티클 192슬롯 링 버퍼를 `Float32List`/`Int32List`로 들고, 종류가 달라도 프레임당 `drawRawAtlas` 1회(`BlendMode.plus`)로 그린다. 아틀라스는 마운트 때 64px 칸 4개(별, 섬광, 충격파 링, 파편)를 `toImageSync`로 한 번 굽고 광륜도 여기에 구워 런타임 blur가 없다. `drawRawAtlas` 원본 사각형은 LTRB다. 제거 칸마다 링 1 + 섬광 1은 항상, 파편(속도 방향 정렬, 중력)과 별(회전)은 단계별 10/12/14개를 버스트당 150개 예산 안에서 낸다. 유휴 상태에서는 0.22~0.32초마다 보석 하이라이트 위치에 반짝임 1개.
+- T2 보석 배치: `MatchBoardRenderer`는 64px 셀 8열의 512×640 gem atlas를 마운트 시 준비한다. 기본/특수/legacy 보석과 baked sheen, 선택 광륜을 typed buffer로 일괄 `drawRawAtlas`한다. 비균등 착지 squash는 atlas `drawImageRect` fallback으로 flush하므로 여러 행에서 동시에 발생하면 draw call이 9회를 넘을 수 있다. atlas와 색 보정 이미지는 onRemove에서 해제하고 remount에서 재생성한다.
 - CustomPainter는 쓰지 않는다. Flame `Component.render(Canvas)`가 받는 것이 CustomPainter와 같은 `dart:ui` Canvas라 표현력과 비용이 같고, 별도 위젯 레이어만 늘어난다.
 - 점수 팝업과 콤보 콜아웃: 이벤트당 `TextPainter` 1개, 슬롯 6개(0번은 콜아웃 전용). 알파 페이드 대신 스케일로 사라진다. 점수는 `MatchBoardLogic.lastRemovalScore`를 쓴다. 콜아웃 문구는 콤보 2부터 GOOD, GREAT, AWESOME, AMAZING, UNBELIEVABLE 순이며 번역하지 않는다.
 - 콤보 셰이크: 특수 발동이 없는 4개 이상 매치 또는 콤보 3 이상에서 `min(1.6 + combo * 0.7, 5.0)` 세기, 0.2초. 특수 발동은 기존 셰이크만 쓴다.
@@ -1760,3 +1761,25 @@ flutter build web --release
 - 파일명을 바꾸는 경우: `AssetPaths` 상수만 새 경로로 변경한다.
 
 Supertonic은 음성 콜아웃용으로만 사용하고, 보석 폭발/버튼/징글 같은 비언어 효과음은 별도 SFX 소스에서 보충한다.
+
+
+### 2026-09-20 F1 상태 전이와 렌더 보완
+유효 스왑은 swapSettle(0.12초) → 기존 매치 판정 → removing(0.18초) 순서다. 프리즘 변환 및 특수 탭은 기존 직접 제거 경로를 유지한다. 무효 스왑의 보석별 bumpT는 렌더 전용 0.18초이며 inputLock은 기존 0.04초다. 제거 시작 알림 onRemovalStarted는 BoardJuiceLayer의 0.12초 섬광만 방출한다.
+
+BoardJuiceLayer는 onMount에서 아틀라스를 확보하고 onRemove에서 해제하며, 살아 있는 파티클을 typed 버퍼 앞쪽에 압축한다. 0~192 길이 뷰는 마운트 때 캐시하여 render에서 생성하지 않는다. busy는 마지막 버스트와 텍스트 수명 전체를 기다리되 유휴 반짝임은 제외한다. 점수 팝업은 상단 콜아웃 영역 아래에서 떠오른다.
+
+### 2026-09-20 T1, T2, T3, T4a, T4b, T5 통합 계약
+
+- T1의 보드 이벤트는 원래 매치 패턴, 특수 보석 생성 및 실제 발동, 콤보 단계, 착지와 리필 경계를 `BoardJuiceLayer`에 전달한다. 점수 글리프는 마운트당 한 번 만든 숫자 아틀라스를 사용하며 숫자 이벤트가 있을 때 파티클 아틀라스 draw에 추가 draw 1회를 사용한다. 시간 보너스는 적용된 값이 0.1초 단위 이상일 때만 `+Ns`로 표시한다.
+- T2의 보석 아틀라스는 64px 셀 8열, 512×640 이미지로 기본 및 특수 보석, 6프레임 baked sheen, 선택 광륜을 공유한다. 색 보정과 typed buffer는 마운트 시 준비하고 onRemove에서 해제한다. 균등한 보석은 일괄 `drawRawAtlas`로 제출하지만 비균등 착지 squash는 같은 아틀라스의 `drawImageRect` fallback을 사용한다. 따라서 squash가 여러 행에 흩어진 프레임에서는 draw call이 9회를 넘을 수 있으며 모든 프레임을 1~9회로 보장하지 않는다.
+- 특수 보석 제거는 첫 0.07초에 1에서 0.78로 수축한 뒤 기존 제거 팝을 따른다. `removeDelay` 0.18초와 `swapSettle` 0.12초, 발동과 점수 시점은 변하지 않는다. 무한 모드의 5초 유휴 자동 힌트는 `showHint()`를 재사용하고 `hasActiveVisualEffects`에는 포함하지 않는다.
+- F1 독립 검수에서 발견된 세 입력 회귀는 T2가 수정했다. 안착 또는 제거 중 드래그 시작과 갱신을 차단하고, 무효 드래그 범프를 시작 시 취소하며, geometry 변경 시 이전 타일 크기의 범프와 드래그 상태를 취소한다. 새 유효 스왑은 같은 보석의 잔여 무효 드래그 복귀를 취소한다. `test/t2_f1_input_regression_test.dart`, `test/t2_pointer_flow_test.dart`, `test/t2_gem_feedback_test.dart`가 이를 고정한다.
+- T3는 콤보 및 매치 등급, T/L, 저시간 틱을 기존 에셋의 웹 피치로 매핑한다. 웹은 HTML Audio 고정 4슬롯과 unlock 정책을 유지하고, 네이티브 피치는 실기기 확인 전까지 고정 폴백이다.
+- T4a HUD는 목표, 콤보, 타임바, 시간 보너스, 저시간, 버튼, 힌트 배지 및 아이템 소모 피드백을 HUD 상태로만 관리한다. T4b 화면 계층은 공통 카드 240ms, exit 잔상 160ms, 다이얼로그 200ms, 타이틀 70ms 간격, 인벤토리 12% 상승, 타임업 점수 800ms 롤업을 사용한다. `MediaQuery.disableAnimations`에서는 시각 모션을 끝내지만 타임업 제출 및 입력 가능 시점은 1900ms를 유지한다. 레벨 축하는 일반 3000ms, reduced motion 즉시 완료다.
+- T5는 특수 burst와 HUD의 직접 런타임 `MaskFilter.blur`를 baked atlas로 바꾼다. 특수 atlas는 1536×768 RGBA 공유 이미지 약 4.5MiB이며 lease를 유지해 풀에서 재사용하고 마지막 소유자 제거 후 해제한다. HUD glow atlas는 실제 레이아웃 크기에서 생성하며 같은 크기에서는 재생성하지 않고 크기 변경과 remount에서 갱신한다. T4a의 HUD interactions와 painters 구조는 유지한다.
+- 현재 합본의 근거는 `/Users/cheng80/orca/workspaces/jewelmatch/_fx_orchestration/reports/verify_integrated_final.txt`다. 2026-09-20 15:53 KST 기준 `analyze exit=0`, 전체 `262 tests` 통과, Web build exit=0이다. 소스는 main 미반영 및 미커밋이며 실기기 FPS, 장시간 모바일 WebView, 실제 광고 SDK, 실제 기기 오디오 청취는 이 결과에 포함하지 않는다. T4b ego 캡처의 일부 문자 중복은 headless에서 재현되지 않아 원인을 확정하지 않았다.
+
+### 최종 종료와 레벨 클리어 수명
+- GameWidget 최종 이탈은 `removeAll(children)`와 `processLifecycleEvents()`로 atlas/ticker 종료를 완료한다. 공유 이미지 캐시는 유지한다. 다음 GameView는 새 게임을 만든다.
+- 퇴장 snapshot의 `debugNeedsPaint`는 assert 내부에서만 읽고, 캡처 실패도 즉시 action을 막지 않는다.
+- T6는 별도 BoardJuiceLayer를 overlay ticker로 구동한다. 120ms부터 대각선 90ms 간격 charge, 70ms 뒤 burst이며 실제 보드를 제거하거나 점수/보상을 갱신하지 않는다. stage attempt와 active overlay로 오래된 완료를 차단한다.

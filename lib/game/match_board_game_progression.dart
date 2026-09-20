@@ -1,6 +1,16 @@
 part of 'match_board_game.dart';
 
 extension MatchBoardGameProgression on MatchBoardGame {
+  /// Overlay 콜백이 재시작/다음 스테이지의 축하를 끝내지 않도록 런을 구분한다.
+  int get levelCelebrationAttempt => _stageAttemptSerial;
+
+  bool isCurrentLevelCelebration(int attempt) =>
+      attempt == _stageAttemptSerial &&
+      isProgressionMode &&
+      !isPlaying &&
+      !timeUp &&
+      overlays.isActive('LevelCelebration');
+
   void _updateProgressionMode() {
     if (!isProgressionMode ||
         !isPlaying ||
@@ -67,7 +77,7 @@ extension MatchBoardGameProgression on MatchBoardGame {
   }
 
   void _showLevelUpPopupAfterCelebrationImpl() {
-    if (!isProgressionMode) return;
+    if (!isCurrentLevelCelebration(_stageAttemptSerial)) return;
     overlays.remove('LevelCelebration');
     if (!overlays.isActive('LevelUp')) {
       overlays.add('LevelUp');

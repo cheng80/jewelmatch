@@ -8,142 +8,96 @@ import '../../resources/sound_manager.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../../widgets/lumina_buttons.dart';
 import '../../widgets/lumina_overlay_card.dart';
+import '../../widgets/overlay_motion.dart';
 import 'pause_menu_buttons.dart';
 
-class LevelUpOverlay extends StatefulWidget {
+class LevelUpOverlay extends StatelessWidget {
   const LevelUpOverlay({super.key, required this.game});
-
   final MatchBoardGame game;
 
   @override
-  State<LevelUpOverlay> createState() => _LevelUpOverlayState();
-}
-
-class _LevelUpOverlayState extends State<LevelUpOverlay>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _scale;
-  late final Animation<double> _opacity;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 620),
-    );
-    _scale = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween(
-          begin: 0.8,
-          end: 1.06,
-        ).chain(CurveTween(curve: Curves.easeOutBack)),
-        weight: 70,
-      ),
-      TweenSequenceItem(tween: Tween(begin: 1.06, end: 1.0), weight: 30),
-    ]).animate(_controller);
-    _opacity = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
-    _controller.forward();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final game = widget.game;
-    return FadeTransition(
-      opacity: _opacity,
-      child: ScaleTransition(
-        scale: _scale,
-        child: LuminaOverlayCard(
-          borderColor: JewelCandyLuminaTheme.goldStrong,
-          shadowColor: JewelCandyLuminaTheme.tertiaryGold,
-          maxCardWidth: 410,
-          maxHeightFactor: 0.98,
-          verticalMargin: 10,
-          alignment: Alignment.topCenter,
-          horizontalPadding: 20,
-          verticalPadding: 16,
-          innerPadding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                context.tr('levelUpTitle'),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: JewelCandyLuminaTheme.goldStrong,
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                ),
+    return LuminaOverlayCard(
+      borderColor: JewelCandyLuminaTheme.goldStrong,
+      shadowColor: JewelCandyLuminaTheme.tertiaryGold,
+      maxCardWidth: 410,
+      maxHeightFactor: 0.98,
+      verticalMargin: 10,
+      alignment: Alignment.topCenter,
+      horizontalPadding: 20,
+      verticalPadding: 16,
+      innerPadding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            context.tr('levelUpTitle'),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: JewelCandyLuminaTheme.goldStrong,
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _LevelBadge(game: game),
+          if (game.progressionNextBoardBonusCount > 0) ...[
+            const SizedBox(height: 6),
+            Text(
+              context.tr(
+                'nextBoardBonus',
+                namedArgs: {'count': '${game.progressionNextBoardBonusCount}'},
               ),
-              const SizedBox(height: 8),
-              _LevelBadge(game: game),
-              if (game.progressionNextBoardBonusCount > 0) ...[
-                const SizedBox(height: 6),
-                Text(
-                  context.tr(
-                    'nextBoardBonus',
-                    namedArgs: {
-                      'count': '${game.progressionNextBoardBonusCount}',
-                    },
-                  ),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: JewelCandyLuminaTheme.tertiaryGold,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 10),
-              _StageRewardSummary(game: game),
-              const SizedBox(height: 10),
-              _InventoryOpenButton(onPressed: game.showStageInventory),
-              const SizedBox(height: 12),
-              const _SectionDivider(),
-              const SizedBox(height: 10),
-              Text(
-                context.tr('levelUpDesc'),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: JewelCandyLuminaTheme.textParchment,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: JewelCandyLuminaTheme.tertiaryGold,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
               ),
-              const SizedBox(height: 8),
-              LuminaGradientButton(
-                width: 220,
-                height: 42,
-                fontSize: 16,
-                colors: JewelCandyLuminaTheme.buttonShuffleCyanLime,
-                label: context.tr('nextLevel'),
+            ),
+          ],
+          const SizedBox(height: 10),
+          _StageRewardSummary(game: game),
+          const SizedBox(height: 10),
+          _InventoryOpenButton(onPressed: game.showStageInventory),
+          const SizedBox(height: 12),
+          const _SectionDivider(),
+          const SizedBox(height: 10),
+          Text(
+            context.tr('levelUpDesc'),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: JewelCandyLuminaTheme.textParchment,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          LuminaGradientButton(
+            width: 220,
+            height: 42,
+            fontSize: 16,
+            colors: JewelCandyLuminaTheme.buttonShuffleCyanLime,
+            label: context.tr('nextLevel'),
+            onPressed: () {
+              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+              game.continueAfterLevelUp();
+            },
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            width: 48,
+            height: 48,
+            child: FittedBox(
+              child: PauseMenuStatsButton(
                 onPressed: () {
                   SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                  game.continueAfterLevelUp();
+                  game.showGameStats();
                 },
               ),
-              const SizedBox(height: 6),
-              SizedBox(
-                width: 48,
-                height: 48,
-                child: FittedBox(
-                  child: PauseMenuStatsButton(
-                    onPressed: () {
-                      SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                      game.showGameStats();
-                    },
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -208,12 +162,15 @@ class _StageRewardSummary extends StatelessWidget {
                       spacing: _chipSpacing,
                       runSpacing: _chipSpacing,
                       children: [
-                        for (final reward in rewards)
+                        for (var i = 0; i < rewards.length; i++)
                           SizedBox(
                             width: chipWidth,
-                            child: _RewardChip(
-                              item: reward.item,
-                              quantity: reward.quantity,
+                            child: StaggerReveal(
+                              index: i,
+                              child: _RewardChip(
+                                item: rewards[i].item,
+                                quantity: rewards[i].quantity,
+                              ),
                             ),
                           ),
                       ],

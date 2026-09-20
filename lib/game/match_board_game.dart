@@ -68,11 +68,18 @@ class MatchBoardGame extends FlameGame {
       onTimedModeTimeBonus: hasTimedClock ? _applyTimedModeTimeBonus : null,
       onInvalidSwap: _playInvalidSwapSfx,
     );
+    board.idleHintsEnabled = gameMode == JewelGameMode.simple;
     board.onIntroFillComplete = (BoardFillIntroKind kind) {
       overlays.remove('IntroBlock');
       _markRoundStartIntroComplete(kind);
     };
     board.onGemsRemoved = _spawnParticles;
+    board.onSpecialsBorn = (spawns) {
+      if (_effectPoolsReady) _juiceLayer.onSpecialsBorn(spawns);
+    };
+    board.onRemovalStarted = (cells) {
+      if (_effectPoolsReady) _juiceLayer.onRemovalStarted(cells);
+    };
     if (hasTimedClock) {
       timeRemaining = roundSecondsForMode;
       _lastFlooredSecondForTimeTic = timeRemaining.floor();
@@ -307,6 +314,7 @@ class MatchBoardGame extends FlameGame {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+    board.onGemSelected = () => SoundManager.playSfx(AssetPaths.sfxBtnSnd);
     camera.viewfinder
       ..anchor = Anchor.topLeft
       ..position = Vector2.zero();
@@ -345,6 +353,10 @@ class MatchBoardGame extends FlameGame {
       _specialEffectPool.clear();
       _effectPoolsReady = false;
     }
+    // GameView는 이탈 후 새 게임을 만든다. 정지된 엔진의 다음 tick을 기다리지
+    // 않고 자식의 atlas/ticker를 해제한다. 공유 이미지 캐시는 유지한다.
+    removeAll(children);
+    processLifecycleEvents();
     super.onRemove();
   }
 
@@ -445,7 +457,10 @@ class MatchBoardGame extends FlameGame {
     _markFirstBoardFrameRenderedIfReady();
   }
 
-  void pauseGame() => _pauseGameImpl();
+  void pauseGame() {
+    board.clearHint();
+    _pauseGameImpl();
+  }
 
   void resumeGame() => _resumeGameImpl();
 
@@ -471,6 +486,7 @@ class MatchBoardGame extends FlameGame {
         return;
       case AppLifecycleState.paused:
       case AppLifecycleState.hidden:
+        board.clearHint();
         super.lifecycleStateChange(state);
         SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
         if (isPlaying && !timeUp) {
@@ -488,6 +504,12 @@ class MatchBoardGame extends FlameGame {
 
   @override
   void update(double dt) {
+    board.idleHintsEnabled =
+        gameMode == JewelGameMode.simple &&
+        isPlaying &&
+        !timeUp &&
+        activeTargetItem == null &&
+        pendingImmediateItemConfirm == null;
     board.update(dt);
     _spawnSpecialEffectEvents();
     _updateBoardShake(dt);
@@ -536,7 +558,10 @@ class MatchBoardGame extends FlameGame {
     final fromCol = cell.y;
     final toRow = fromRow + dr;
     final toCol = fromCol + dc;
-    if (!board.isInside(toRow, toCol)) return false;
+    if (!board.isInside(toRow, toCol) ||
+        !board.canTrySwapNow(fromRow, fromCol, toRow, toCol)) {
+      return false;
+    }
     board.selected = null;
     final swapped = board.trySwap(fromRow, fromCol, toRow, toCol);
     if (!swapped && board.getGem(fromRow, fromCol) != null) {
@@ -875,7 +900,10 @@ class MatchBoardGame extends FlameGame {
   /// 힌트 디밍만 해제 (보드 탭 외 UI 탭 등).
   void dismissHint() => _dismissHintImpl();
 
-  void showHowToPlay() => _showHowToPlayImpl();
+  void showHowToPlay() {
+    board.clearHint();
+    _showHowToPlayImpl();
+  }
 
   void closeHowToPlay() => _closeHowToPlayImpl();
 

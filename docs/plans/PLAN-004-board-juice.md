@@ -19,7 +19,7 @@
 - 콤보 셰이크, 저시간 보드 테두리 맥동, HUD 점수 롤업과 펀치
 
 ### 제외
-- 규칙, 점수식, 상태 머신 타이밍(`removeDelay` 등) 변경
+- 규칙, 점수식, 기존 단계 타이밍(`removeDelay` 등) 변경. 단, 사용자 승인으로 유효 스왑 뒤 `swapSettle` 0.12초만 추가
 - 콜아웃 문구 번역, 새 에셋, 새 dependency
 - 프래그먼트 셰이더(모바일 WebView 호환 위험), 히트스톱
 
@@ -38,32 +38,72 @@
 - [x] `BoardJuiceLayer` 4칸 아틀라스 + 192슬롯, 점수 팝업, 콤보 콜아웃, 콤보 셰이크
 - [x] HUD 점수 롤업, 점수/콤보 펀치
 
+### Step 2 보강 트랙 통합 상태
+- [x] T1 보드 이벤트, 패턴별 파티클, 특수 발동, 리필 및 시간 보너스 표시
+- [x] T2 보석 512×640 아틀라스, baked sheen, 선택 및 스왑 후보 광륜, 무한 모드 5초 자동 힌트
+- [x] T3 콤보 및 매치 등급, 저시간 틱의 웹 피치 계층과 HTML Audio 4슬롯 회귀 보강
+- [x] T4a HUD 목표, 콤보, 타임바, 버튼, 힌트, 아이템 소모 피드백
+- [x] T4b 오버레이, 타이틀, 로딩, 인벤토리, 타임업, 광고 결과 화면 모션과 reduced motion 계약
+- [x] T5 특수 burst 및 HUD의 직접 런타임 blur를 baked glow atlas로 교체
+
 ### Step 3 확인과 튜닝
-- [ ] 실제 화면에서 눈으로 확인(파티클 크기, 밝기, 수명, 콜아웃 위치)
+- [x] 데스크톱 실제 화면과 픽셀 렌더 확인(파티클 크기, 밝기, 수명, 콜아웃 위치). 합본 HUD 잔상은 별도 확인 중
 - [ ] 모바일 웹 실기기 FPS 패널(`?fps=1`)로 전후 비교
-- [ ] 02_UI_UX SCREEN-003에 연출 설명 추가
+- [x] 02_UI_UX SCREEN-003과 화면 전환 및 접근성 연출 설명 추가
+- [x] T6 순차 시각 연출 및 reduced motion 즉시 완료
+- [x] 통합 독립 리뷰와 확인된 P2 수정 완료
 
 ## 5. 예상 변경 범위
 - 파일/모듈: `lib/game/components/board_juice_layer.dart`(신규), `match_board_renderer.dart`, `match_board_gem_overlay_renderer.dart`, `match_game_hud*.dart`, `match_board_{models,update,resolution,input,logic}.dart`, `match_board_game{,_vfx}.dart`, `particle_burst.dart`(삭제)
 - DB/API 영향: 없음
-- UI 영향: 보드와 HUD 연출만
+- UI 영향: 보드, HUD, 타이틀 및 오버레이 전환, 레벨 클리어 시각 연출
 - 배포/마이그레이션 영향: 없음
 
 ## 6. 검증 계획
 - [x] Unit test: `test/board_juice_test.dart`(착지 스쿼시, 수렴과 탄생 팝, 무효 범프)
-- [x] `flutter test --no-pub` 135 passed, `flutter analyze --no-pub` No issues
+- [x] F1, T1, T2, T3, T4a, T4b, T5, T6 전용 및 회귀 테스트
+- [x] 통합 최신 검증: `analyze exit=0`, 전체 `262 tests` PASS, Web build exit=0 (`reports/verify_integrated_final.txt`, 2026-09-20 15:53 KST)
 - [x] `flutter build web --release --no-pub` 통과(4칸 아틀라스 확장 전 리비전)
-- [ ] UI 수동 검증: 미실행. 자동화 브라우저 창이 가려져 프레임이 초당 1회로 묶여 스크린샷 실패
+- [x] 데스크톱 ego/headless 화면 검증 및 픽셀/위젯 검증. T4b ego 문자 중복은 headless에서 재현되지 않아 원인 미확정
+- [ ] 모바일 실기기 UI와 FPS 전후 비교
+- [ ] 실제 광고 SDK 및 모바일 WebView 장시간 검증
 
 ## 7. 위험 / 미해결 사항
-- 파티클과 텍스트가 화면에 어떻게 보이는지 아직 아무도 보지 않았다. 수치는 전부 1차 추정값.
+- 자동화 브라우저와 픽셀 회귀에서 파티클, 텍스트, HUD 및 화면 전환을 확인했다. 자동화 캡처 rAF는 실기기 성능 근거가 아니다.
 - `BlendMode.plus`는 밝은 배경에서 하얗게 포화된다. 현재 보드는 어두워서 문제없을 것으로 예상.
-- 점수 롤업은 굴러가는 동안 약 0.045초마다 `TextPainter`를 다시 만든다. 실기기에서 부담되면 간격을 늘린다.
+- T2의 균등 보석 batch는 일반 프레임 draw 1회이지만 착지 squash fallback이 여러 행에 흩어지면 draw call이 9회를 넘을 수 있다. T5의 번개 glow는 blur 대신 선분별 stamp로 transient draw call이 늘어나는 절충이 있다.
+- T4b ego 캡처의 일부 타임업 문자 중복은 headless에서 재현되지 않았고 원인을 확정하지 않았다.
+- T6 일반 축하는 3000ms 뒤 완료하며 reduced motion은 첫 post-frame에 즉시 완료한다. 점수와 보상은 변경하지 않는다.
 
 ## 8. 완료 조건
 - [x] 계획한 구현 완료
-- [ ] 필요한 테스트/검증 완료
-- [ ] 기준 문서 변경사항 반영
+- [ ] 필요한 테스트/검증 완료: 모바일 실기기 FPS 미완, 합본 HUD 잔상 가설은 픽셀 진단으로 기각, 기존 confetti 겹침
+- [x] 기준 문서 변경사항 반영
 - [x] PROJECT_STATUS 갱신
 - [x] 다음 작업자가 필요하면 HANDOFF 갱신
 - [ ] 장기적으로 남길 중요한 결정은 ADR로 분리(현재 해당 없음)
+
+
+## 9. Codex 인수 F1 (2026-09-20)
+
+- Claude 작업 중단 상태를 보존하고 기반 튜닝을 수행했다. 커밋은 아직 하지 않았다.
+- 유효 스왑만 swapSettle 0.12초 뒤 기존 판정으로 넘어간다. 제거/낙하/리필 간격, 점수식, 프리즘 및 특수 탭 직접 발동은 그대로다. 안착 중 중복 입력은 거절한다.
+- 무효 스왑은 보석별 0.18초 sin 범프로 처리하며 기존 입력 잠금 0.04초는 늘리지 않는다. 새 유효 스왑은 잔여 범프를 취소한다.
+- 제거 시작 섬광을 아틀라스로 한 번 방출하고 셀 사각형 플래시를 없앴다.
+- 기본 파편 6→10, 중간 8→12, 강한 단계 10→14. 전체 192슬롯과 버스트 예산 150 유지.
+- 섬광 0.2→0.12초, 크기 1.35→0.75타일. 링 0.4→0.32초, 크기 1.7→1.25타일, 아틀라스 링 띠 폭 축소.
+- 콤보 2~3은 0.6초, 상위는 0.8초이며 보드 위쪽 가장자리로 이동. 점수 팝업은 0.65초, 연쇄별 사다리 배치와 상단 콜아웃 영역 회피.
+- 유휴 반짝임 간격 0.22~0.32초, 크기 0.60~0.80타일. 진행 완료 대기에는 포함하지 않는다.
+- 아틀라스는 onMount에서 재생성, onRemove에서 해제. 활성 슬롯만 압축하며 길이별 typed-data 뷰를 미리 캐시한다.
+- 최초 검증: analyze 및 전체 136 tests, web release build 성공. 이후 재마운트와 busy 판정 회귀 테스트 추가, 최종 재검증 결과는 F1_report.md 및 통합 인계 참조.
+- ego-browser 프레임에서 파편, 반짝임과 사각형 제거를 확인했다. rAF 31/s 캡처 환경이므로 실기기 성능 통과 근거로 삼지 않는다.
+
+## 10. F1~T6 통합 인수 (2026-09-20 15:53 KST)
+
+- 통합 WT에 F1~T6가 적용됐고 독립 리뷰 및 두 P2 수정이 완료됐다. 합본 HUD 잔상은 별도 확인 중이다.
+- T2가 F1 독립 검수의 세 회귀를 수정했다. 안착 또는 제거 중 드래그를 거절하고, 무효 범프를 드래그 시작 및 geometry 변경에서 취소하며, 새 유효 스왑에서 잔여 복귀를 취소한다.
+- T2의 gem atlas는 512×640, 64px 셀이다. 정상 보석 제출은 batch draw를 사용하고 비균등 squash는 `drawImageRect` 예외 경로를 사용하므로 프레임별 draw call 상한 9를 계약으로 두지 않는다. T5 special glow는 약 4.5MiB 공유 이미지이며 T4a HUD interactions와 painters 구조를 유지한다.
+- T4b는 타임업의 1900ms 제출 및 입력 시점, reduced motion의 즉시 표시를 함께 검증했다. 레벨 축하는 일반 3000ms, reduced motion 즉시 완료이며 시각 연출만 구동한다.
+- 최신 합본 근거는 `/Users/cheng80/orca/workspaces/jewelmatch/_fx_orchestration/reports/verify_integrated_final.txt`다. `analyze 0`, `262 tests PASS`, Web build 0이다. 2026-09-20 16:24 KST 다른 세션에서 같은 작업트리를 재검증했고(`verify_claude_recheck.txt`, 같은 결과) 그 뒤 main에 병합했다. 실기기 성능은 미검증이다.
+
+- 합본 HUD 최종 진단(16:08 KST): 무손실 PNG의 추가 밝은 glyph 픽셀 0, 변한 픽셀은 confetti 색 합성으로 설명됐다. pause 150프레임 동안 game render/update 증가 0. 제품 소스 변경 없이 가설 기각. 근거: `_fx_orchestration/reports/T6_integrated_visual_fix.md`.

@@ -24,7 +24,11 @@ final GoRouter appRouter = GoRouter(
           child: const TitleView(),
           transitionDuration: const Duration(milliseconds: 400),
           transitionsBuilder: (context, animation, _, child) =>
-              FadeTransition(opacity: animation, child: child),
+              MediaQuery.disableAnimationsOf(context)
+              ? child
+              : RepaintBoundary(
+                  child: FadeTransition(opacity: animation, child: child),
+                ),
         );
       },
     ),
@@ -42,7 +46,11 @@ final GoRouter appRouter = GoRouter(
           ),
           transitionDuration: const Duration(milliseconds: 500),
           transitionsBuilder: (context, animation, _, child) =>
-              FadeTransition(opacity: animation, child: child),
+              MediaQuery.disableAnimationsOf(context)
+              ? child
+              : RepaintBoundary(
+                  child: FadeTransition(opacity: animation, child: child),
+                ),
         );
       },
     ),
@@ -54,7 +62,11 @@ final GoRouter appRouter = GoRouter(
           child: const SettingView(),
           transitionDuration: const Duration(milliseconds: 350),
           transitionsBuilder: (context, animation, _, child) =>
-              FadeTransition(opacity: animation, child: child),
+              MediaQuery.disableAnimationsOf(context)
+              ? child
+              : RepaintBoundary(
+                  child: FadeTransition(opacity: animation, child: child),
+                ),
         );
       },
     ),

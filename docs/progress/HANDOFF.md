@@ -2,28 +2,34 @@
 
 > 다음 작업자가 즉시 시작할 정보만 둔다. 프로젝트 전체 상태는 PROJECT_STATUS.md에 둔다.
 
-Updated: 2026-09-20
+Updated: 2026-09-20 16:50 KST
 
 ## Current State
-문서 팩은 대체 가능(REPLACEABLE). 정본은 docs/. 이전 문서는 archive/docs/. 검증 공백은 표에 남아 있다. 게임 다음 작업은 PLAN-001.
+문서 팩은 대체 가능(REPLACEABLE). 정본은 docs/. 이전 문서는 archive/docs/. F1~T6가 통합됐고 독립 리뷰의 입력 3건, 자원 해제와 릴리즈 퇴장 문제 2건을 수정했다. 검증 공백은 표에 남아 있다. 최종 합본 HUD 글자 중복 가설은 PNG 픽셀과 실제 렌더 진단에서 기각됐으며 기존 confetti 겹침으로 확인했다. 실기기 성능은 미검증이다.
 
 ## Last Completed
 - 마이그레이션 가이드 기준으로 운영 칸을 이 팩에 맞춤
 - 기존 주제 본문과 문서 전용 PNG 31장 이관
 - 코드와 어긋나던 점수 산식, HUD 랭킹, 시계, 제출 시점을 문서에 반영
 - 2026-08-23 대체 가능성 점검 12항을 표준 팩만으로 통과. 이후 정본 경로를 docs/로 옮기고 이전 문서는 archive/docs/로 둠
+- 2026-09-20 F1, T1, T2, T3, T4a, T4b, T5, T6 통합 완료. T2가 F1 독립 검수의 입력 회귀 3건을 수정하고 회귀 테스트를 추가했으며 T5가 특수/HUD glow를 baked atlas로 전환
+- 최신 합본 검증 `verify_integrated_final.txt`: analyze 0, 262 tests PASS, Web build 0
 
 ## In Progress
-- Plan: `PLAN-004` 보드 연출 보강. Step 1, 2 구현 끝, 전부 미커밋 작업트리 상태
-- Task: TASK-004b. `flutter run -d chrome`으로 직접 보고 `board_juice_layer.dart`의 파티클 크기, 수명, 개수와 콜아웃 위치를 튜닝. 그 뒤 `?fps=1`로 모바일 웹 전후 비교, 02_UI_UX SCREEN-003 반영
-- 주의: 파티클과 텍스트는 아직 화면에서 확인한 적 없음. 테스트는 로직(착지, 수렴, 범프)만 본다
+- Plan: `PLAN-004` 보드 연출 보강. F1, T1, T2, T3, T4a, T4b, T5, T6 구현과 통합 완료. 2026-09-20 통합 브랜치를 커밋해 main에 fast-forward 병합했다(로컬). push 여부는 `git status`로 확인한다
+- Task: 실기기 검증 인계. 합본 HUD 진단은 glyph 중복 근거 없음으로 마감했다.
+- 주의: T2의 균등 gem atlas 제출은 batch지만 여러 행의 착지 squash는 `drawImageRect` fallback으로 draw call이 9회를 넘을 수 있다. T5 special glow는 약 4.5MiB 공유 이미지이며 T4a HUD interactions와 painters 구조를 유지한다
+- 주의: T4b 타임업은 reduced motion에서도 결과를 즉시 읽히게 하되 1900ms 제출과 버튼 활성 시점을 유지한다. ego 캡처 문자 중복은 headless에서 재현되지 않아 원인 미확정
+- 주의: 모바일 실기기 FPS, 장시간 WebView, 실제 광고 SDK, 실제 기기 오디오 청취는 아직 검증하지 않았다
 - Plan: `PLAN-001`
 - Task: TASK-001c 실기기 30초 이상 카운터 보존
 
 ## Next Task
-1. PLAN-001 실기기 장시간 측정 (원문부터 INCOMPLETE. 별도 승인 작업)
-2. 이전 문서는 archive/docs/에 있음. 삭제 여부는 별도 결정
-3. STALE NAS/AIT 재검증과 PLAN-001 실측은 이관 밖 별도 작업
+1. 실기기 FPS, 가독성, 오디오와 광고 흐름 확인
+2. `?fps=1`로 모바일 실기기 FPS 전후 비교와 장시간 WebView 확인
+3. PLAN-001 실기기 장시간 측정 (원문부터 INCOMPLETE. 별도 승인 작업)
+4. 이전 문서는 archive/docs/에 있음. 삭제 여부는 별도 결정
+5. STALE NAS/AIT 재검증과 PLAN-001 실측은 이관 밖 별도 작업
 
 ## Blocked
 - PLAN-002, TASK-004: 외부 값/정책
@@ -35,7 +41,9 @@ Updated: 2026-09-20
 - ISSUE-005: 빈 App Store ID
 
 ## Changed Contracts
-- PLAN-004: `ParticleBurst`/`ParticlePool` 삭제, `BoardJuiceLayer`로 대체. `hasActiveVisualEffects`는 유휴 반짝임을 포함하지 않음. HUD 점수는 롤업 표시값이고 저장/랭킹은 `board.score` 그대로
+- PLAN-004: `ParticleBurst`/`ParticlePool` 삭제, `BoardJuiceLayer`로 대체. `hasActiveVisualEffects`는 유휴 반짝임을 포함하지 않음. HUD 점수는 롤업 표시값이고 저장/랭킹은 `board.score` 그대로. F1~T6 통합과 T2 입력 회귀 및 독립 리뷰 P2 수정 완료
+- PLAN-004 시각 계약: gem atlas 512×640, 64px 셀, baked sheen, squash fallback, special glow 약 4.5MiB 공유 이미지, T4a HUD 구조 유지
+- PLAN-004 화면 계약: T4b 공통 카드/exit/reduced motion, TimeUp 1900ms 제출 및 입력 시점, 레벨 축하 일반 3000ms, reduced motion 즉시 완료
 - BR-040: 레벨 1~5는 level*7500, 6부터 37500+(level-5)*5000. ADR-006
 - BR-092: HUD 랭킹/top1은 타임 전용
 - BR-073: 시계는 인트로, 즉시형 확인, 프리즘 색 선택 중 정지
@@ -57,14 +65,17 @@ Updated: 2026-09-20
 
 | 항목 | Result | Evidence | Date | Revision | Validity | Source / Gap |
 |---|---|---|---|---|---|---|
-| Unit / Widget | PASS | RECHECKED | 2026-09-20 | 현재 작업트리 (HEAD 1ab48e2 + PLAN-004 미커밋) | CURRENT | flutter test --no-pub 135 passed |
-| Analyze | PASS | RECHECKED | 2026-09-20 | 동일 | CURRENT | flutter analyze --no-pub No issues found |
-| PLAN-004 화면 확인 | NOT_RUN | NONE | - | 동일 | UNKNOWN | 자동화 브라우저 창 가려짐으로 스크린샷 실패. 사람 눈 확인 필요 |
+| Integrated F1-T6 analyze / test / web build | PASS | RECHECKED | 2026-09-20 15:53 KST | F1~T6 통합 커밋과 같은 내용의 작업트리 (병합 직전) | CURRENT | `verify_integrated_final.txt`: analyze exit=0 (1.8s), 262 tests passed, web build exit=0 |
+| F1 input regression review | PASS | RECHECKED | 2026-09-20 | 동일 | CURRENT | T2의 3개 회귀 테스트와 pointer flow 통과 |
+| PLAN-004 desktop screen / widget / pixel checks | PASS | RECHECKED | 2026-09-20 | 동일 | CURRENT | T1~T5의 ego/headless, 위젯, 픽셀 근거. T4b ego 문자 중복은 headless 재현 없음, 원인 미확정 |
+| PLAN-004 mobile device UI / FPS | NOT_RUN | NONE | - | 동일 | UNKNOWN | 실기기 FPS 전후 비교와 장시간 WebView 미실행 |
+| T6 level celebration | PASS | RECHECKED | 2026-09-20 | 동일 | CURRENT | 일반 3000ms / reduced motion 즉시, 점수/시간/보상 불변 테스트와 합본 화면 확인 |
+| Independent review fixes | PASS | RECHECKED | 2026-09-20 | 동일 | CURRENT | F1 입력 3건, 게임 이탈 자원 해제와 release snapshot P2 수정 및 재검증. 합본 HUD 추가 진단은 기존 confetti 겹침으로 마감 |
 | NAS Web smoke | PASS | HISTORICAL | 2026-08-15 | a821b19 | STALE | git 문서: NAS 웹 재배포 성공. 이후 0cd1d00 오디오 수정. 현재 리비전 미재검증 |
 | Apps in Toss 재배포 | PASS | HISTORICAL | 2026-08-15 | d777cf0 | STALE | git 문서: 일반 AIT 재배포. 이후 오디오 수정. 현재 리비전 미재검증 |
 | Web 장시간 오디오/FPS | INCOMPLETE | HISTORICAL | 2026-08-23 이전 | PLAN-001 / ADR-004 원문 | UNKNOWN | 짧은 수동 확인만 통과. 장시간 카운터 없음. 원문부터 미완 |
 | Android/iOS store device | NOT_RUN | NONE | UNKNOWN | UNKNOWN | UNKNOWN | 출시 체크리스트 미완 |
-| Release build this revision | NOT_RUN | NONE | - | 현재 | UNKNOWN | 대체 가능성 점검을 채우려고 새로 돌리지 않음 |
+| Release build this revision | PASS | RECHECKED | 2026-09-20 15:53 KST | F1~T6 통합 커밋과 같은 내용의 작업트리 (병합 직전) | CURRENT | integrated_final Web build exit=0. 모바일/스토어 실기기 스모크는 별도 미실행 |
 
 ## Files to Read First
 1. progress/PROJECT_STATUS.md
@@ -84,6 +95,7 @@ Updated: 2026-09-20
 
 ## Open Questions
 - STALE 배포 증거를 현재 리비전에서 재검증할지는 이관 밖 결정
+- 16:20 KST 기존 Claude 인계 예정. 검증 완료 합본과 남은 실기기 검증을 분리해 인계한다.
 - PLAN-002 식별 저장 정책
 
 ## Constraints / Do Not Change
@@ -96,3 +108,6 @@ Updated: 2026-09-20
 - ADR-004: Web Audio로 되돌리지 말 것
 - STALE/INCOMPLETE를 숨기지 말 것. 이전 문서는 archive/docs/
 - 정본 docs/와 archive/docs/를 서로 링크로 묶지 말 것
+- main 병합은 로컬 기준이다. 원격 반영과 실기기 검증을 완료로 오인하지 말 것
+
+- 합본 HUD 최종 진단(16:08 KST): 무손실 PNG의 추가 밝은 glyph 픽셀 0, 변한 픽셀은 confetti 색 합성으로 설명됐다. pause 150프레임 동안 game render/update 증가 0. 제품 소스 변경 없이 가설 기각. 근거: `_fx_orchestration/reports/T6_integrated_visual_fix.md`.

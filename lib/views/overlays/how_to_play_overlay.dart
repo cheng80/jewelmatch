@@ -1,6 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
+import '../../widgets/overlay_motion.dart';
+
 import '../../game/match_board_game.dart';
 import '../../resources/asset_paths.dart';
 import '../../resources/sound_manager.dart';
@@ -105,7 +107,7 @@ class HowToPlayOverlay extends StatelessWidget {
               label: context.tr('continueGame'),
               onPressed: () {
                 SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-                _close();
+                runOverlayExit(context, () => _close());
               },
             ),
           ),

@@ -5,14 +5,17 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:intl/intl.dart';
 
 import '../../resources/asset_paths.dart';
+import '../../resources/sound_manager.dart';
 import '../../services/game_settings.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../item_kind.dart';
 import '../match_board_game.dart';
 import '../match_board_logic.dart';
+import 'baked_hud_glow_atlas.dart';
 
 part 'match_game_hud_buttons.dart';
 part 'match_game_hud_input.dart';
@@ -23,6 +26,29 @@ part 'match_game_hud_sections.dart';
 const bool _qaSpecialEffectsChainEnabled = bool.fromEnvironment(
   'QA_SPECIAL_EFFECTS_CHAIN',
 );
+
+/// 값이 바뀌는 순간 1로 튀었다가 [decayPerSecond] 속도로 0까지 돌아오는 연출 값.
+///
+/// 매 프레임 객체를 만들지 않고 기존 값을 감쇠한다.
+class HudPunch {
+  HudPunch(this.decayPerSecond);
+
+  final double decayPerSecond;
+  double value = 0;
+
+  void trigger() => value = 1;
+
+  void tick(double dt) {
+    if (value > 0) {
+      value = math.max(0, value - dt * decayPerSecond);
+    }
+  }
+
+  /// 시작이 세고 끝이 부드러운 감쇠 곡선.
+  double get eased => value * value;
+
+  bool get isActive => value > 0;
+}
 
 /// 상단: 일시정지·힌트 + 최고 기록 → 큰 점수 → 콤보(현재·최대) / 보드 아래: 타임바.
 ///
@@ -64,6 +90,11 @@ class MatchGameHud extends PositionComponent
   late Rect _rankingRect;
   late Rect _tutorialRect;
   late Rect _timeBarRect;
+
+  /// 타임바 채움 영역과 그 위에 고정으로 쓰는 그라데이션. 레이아웃 때만 만든다.
+  Rect _timeBarInner = Rect.zero;
+  ui.Shader? _timeFillShader;
+  ui.Shader? _timeFillCriticalShader;
   late Rect _comboRect;
   Rect _itemTrayRect = Rect.zero;
   Rect _prismColorPickerRect = Rect.zero;
@@ -88,8 +119,48 @@ class MatchGameHud extends PositionComponent
   double _scoreRollTimer = 0;
 
   /// 점수와 콤보 값이 오를 때 1에서 0으로 감쇠하는 확대 펀치.
-  double _scorePunch = 0;
-  double _comboPunch = 0;
+  final HudPunch _scorePunch = HudPunch(3.6);
+  final HudPunch _comboPunch = HudPunch(3.2);
+
+  /// 레벨 모드 목표 점수 달성 순간의 한 번 강조.
+  final HudPunch _goalPunch = HudPunch(1.7);
+
+  /// 힌트 배지 숫자가 바뀐 순간의 튐.
+  final HudPunch _hintBadgePunch = HudPunch(3.0);
+
+  /// 버튼과 아이템 슬롯 누름. 한 번에 하나만 눌린다.
+  final HudPunch _pressPunch = HudPunch(6.5);
+  Rect? _pressedRect;
+  Ticker? _pressTicker;
+
+  // 타겟 선택 때와 실제 인벤토리 소모 때의 반응을 분리한다.
+  final HudPunch _itemUsePunch = HudPunch(3.5);
+  ItemKind? _usedItem;
+  final List<int> _itemQuantities = List<int>.filled(
+    ItemKind.values.length,
+    -1,
+  );
+  Object? _feedbackBoard;
+  int? _feedbackLevel;
+  int? _lastHintCount;
+  double? _lastTimeRatio;
+
+  /// 시간 보너스로 늘어난 구간의 반짝임.
+  final HudPunch _timeBonusPunch = HudPunch(1.6);
+  double _timeBonusFrom = 0;
+  double _timeBonusTo = 0;
+
+  /// 목표 점수 근접(80% 이상) 맥동에 쓰는 누적 시간.
+  double _hudClock = 0;
+  bool _goalNear = false;
+  bool _goalReached = false;
+
+  /// 화면에 그리는 타임바 채움 비율. 실제 비율을 짧게 따라간다.
+  double? _timeFillRatio;
+
+  /// 콤보 3 이상에서 콤보 줄이 달아오르는 정도(0~1).
+  double _comboHeat = 0;
+  Color _comboHeatColor = const Color(0xFFFFC14D);
   int? _cachedTimedSeconds;
   int? _cachedProgressionXp;
   int? _cachedDisplayedCombo;
@@ -103,14 +174,17 @@ class MatchGameHud extends PositionComponent
     ..isAntiAlias = true
     ..filterQuality = FilterQuality.high;
   final Paint _hintBadgePaint = Paint()..isAntiAlias = true;
+
+  /// 남은 힌트가 0일 때의 가라앉은 배지 색.
+  final Paint _hintBadgeZeroPaint = Paint()
+    ..isAntiAlias = true
+    ..color = const Color(0xFF6E6357);
   final Paint _hintBadgeStrokePaint = Paint()
     ..isAntiAlias = true
     ..style = PaintingStyle.stroke
     ..color = const Color(0xFF2A1606);
   final Paint _comboGradientPaint = Paint();
-  final Paint _comboShadowPaint = Paint()
-    ..color = Colors.black.withValues(alpha: 0.38)
-    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+  final BakedHudGlowAtlas _hudGlows = BakedHudGlowAtlas();
   final Paint _comboStrokePaint = Paint()
     ..style = PaintingStyle.stroke
     ..strokeWidth = 1.4
@@ -120,9 +194,7 @@ class MatchGameHud extends PositionComponent
     ..strokeWidth = 1.0
     ..color = JewelCandyLuminaTheme.goldStrong.withValues(alpha: 0.28);
   final Paint _timeBarBgPaint = Paint();
-  final Paint _timeBarShadowPaint = Paint()
-    ..color = Colors.black.withValues(alpha: 0.45)
-    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+
   final Paint _timeBarStrokePaint = Paint()
     ..style = PaintingStyle.stroke
     ..strokeWidth = 1.4
@@ -132,6 +204,19 @@ class MatchGameHud extends PositionComponent
     ..strokeWidth = 1.0
     ..color = JewelCandyLuminaTheme.goldStrong.withValues(alpha: 0.28);
   final Paint _timeFillPaint = Paint();
+
+  /// 저시간 틱 박자로 타임바 테두리가 붉게 맥동한다.
+  final Paint _timeBarPulsePaint = Paint()
+    ..isAntiAlias = true
+    ..style = PaintingStyle.stroke;
+
+  /// 시간 보너스로 늘어난 구간의 밝은 띠.
+  final Paint _timeBonusFlashPaint = Paint()..isAntiAlias = true;
+
+  /// 콤보 단계에 따라 덧그리는 뜨거운 테두리.
+  final Paint _comboHeatPaint = Paint()
+    ..isAntiAlias = true
+    ..style = PaintingStyle.stroke;
   final Paint _untimedFillPaint = Paint()
     ..color = JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.14);
   final Paint _itemTrayPaint = Paint()..isAntiAlias = true;
@@ -143,6 +228,42 @@ class MatchGameHud extends PositionComponent
     ..style = PaintingStyle.stroke
     ..strokeWidth = 1.1
     ..color = const Color(0xB87F5A2A);
+  final Paint _itemUsePaint = Paint()
+    ..isAntiAlias = true
+    ..style = PaintingStyle.stroke;
+  final Paint _lockShacklePaint = Paint()
+    ..isAntiAlias = true
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..color = const Color(0xC77F5A2A);
+  final Map<Rect, Paint> _lockBodyPaints = {};
+  final Paint _lockedItemPaint = Paint()
+    ..isAntiAlias = true
+    ..color = const Color(0x8F0B0908);
+  final Map<ItemKind, TextPainter> _itemLabelPainters = {};
+  final Map<ItemKind, int> _itemLabelStates = {};
+  final Paint _itemIconPaint = Paint()
+    ..isAntiAlias = true
+    ..filterQuality = FilterQuality.high;
+  final Paint _itemIconDimPaint = Paint()
+    ..isAntiAlias = true
+    ..filterQuality = FilterQuality.high
+    ..colorFilter = ColorFilter.mode(
+      Colors.white.withValues(alpha: 0.30),
+      BlendMode.modulate,
+    );
+  final Paint _qtyBadgeStrokePaint = Paint()
+    ..isAntiAlias = true
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.2
+    ..color = const Color(0xFF2A1606);
+  final Paint _qtyBadgeZeroPaint = Paint()
+    ..isAntiAlias = true
+    ..color = const Color(0xFF6E6357);
+
+  /// 수량 배지는 슬롯마다 매 프레임 그려진다. 레이아웃이 바뀔 때만 다시 만든다.
+  final Map<ItemKind, Paint> _qtyBadgeFillPaints = {};
+  final Map<int, TextPainter> _qtyBadgePainters = {};
   ui.Image? _iconButtonFrameImage;
   ui.Image? _hintBulbIconImage;
   ui.Image? _tutorialIconImage;
@@ -226,6 +347,13 @@ class MatchGameHud extends PositionComponent
       _itemIconImages[entry.key] = await Flame.images.load(entry.value);
     }
     _layout();
+    _hudGlows.mount();
+  }
+
+  @override
+  void onMount() {
+    super.onMount();
+    _hudGlows.mount();
   }
 
   @override
@@ -320,6 +448,7 @@ class MatchGameHud extends PositionComponent
             end: Alignment.centerRight,
             colors: JewelCandyLuminaTheme.comboStripGradient,
           ).createShader(_comboRect);
+    _layoutTimeBarFill();
     _timeBarBgPaint.shader = _timeBarRect.isEmpty
         ? null
         : const LinearGradient(
@@ -362,11 +491,92 @@ class MatchGameHud extends PositionComponent
           ).createShader(_itemTrayRect);
     _layoutPrismColorPicker();
     _layoutItemConfirmPopup();
+    _layoutGlowMasks();
 
     _rebuildStaticPainters();
   }
 
+  void _layoutGlowMasks() {
+    final item = _itemRects.values.firstOrNull ?? Rect.zero;
+    final prism = _prismColorRects.values.firstOrNull ?? Rect.zero;
+    final preview = _debugEffectPreviewRects.values.firstOrNull ?? Rect.zero;
+    final previewInset = math.max(4.0, preview.width * 0.11);
+    final previewInner = preview.deflate(previewInset);
+    RRect shape(double width, double height, double radius) =>
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(0, 0, math.max(0, width), math.max(0, height)),
+          Radius.circular(math.max(0, radius)),
+        );
+    _hudGlows.configure([
+      HudGlowMask(
+        shape(
+          _comboRect.width,
+          _comboRect.height,
+          math.min(14, _comboRect.height / 2),
+        ),
+        8,
+      ),
+      HudGlowMask(
+        shape(_timeBarRect.width, _timeBarRect.height, _timeBarRect.height / 2),
+        8,
+      ),
+      HudGlowMask(shape(item.width - 3.6, item.height - 3.6, 9), 5, 2.2),
+      HudGlowMask(
+        shape(
+          prism.width - 2.4,
+          prism.height - 2.4,
+          math.min(7, prism.height * 0.18) - 1.2,
+        ),
+        5,
+        2,
+      ),
+      HudGlowMask(
+        shape(
+          previewInner.width,
+          previewInner.height,
+          math.min(8, previewInner.width * 0.20),
+        ),
+        4,
+        1.4,
+      ),
+    ]);
+  }
+
+  @visibleForTesting
+  bool get debugGlowReady => _hudGlows.isReady;
+
+  @visibleForTesting
+  int get debugGlowGeneration => _hudGlows.generation;
+
+  /// 타임바 채움 사각형과 그라데이션을 미리 만든다(매 프레임 `createShader` 금지).
+  void _layoutTimeBarFill() {
+    // 고정 inset(3)은 타임바가 낮을 때 inner 높이가 음수가 되어 셰이더/RRect 가 실패할 수 있음
+    final inset = math.min(5.0, _timeBarRect.height / 3);
+    _timeBarInner = Rect.fromLTWH(
+      _timeBarRect.left + inset,
+      _timeBarRect.top + inset,
+      _timeBarRect.width - inset * 2,
+      _timeBarRect.height - inset * 2,
+    );
+    if (_timeBarInner.width <= 0 || _timeBarInner.height <= 0) {
+      _timeFillShader = null;
+      _timeFillCriticalShader = null;
+      return;
+    }
+    _timeFillShader = const LinearGradient(
+      colors: JewelCandyLuminaTheme.timeBarFillVibrant,
+    ).createShader(_timeBarInner);
+    _timeFillCriticalShader = const LinearGradient(
+      colors: JewelCandyLuminaTheme.timeBarFillCritical,
+    ).createShader(_timeBarInner);
+  }
+
   void _layoutItemSlots() {
+    _lockBodyPaints.clear();
+    _itemLabelPainters.clear();
+    _itemLabelStates.clear();
+    _qtyBadgeFillPaints.clear();
+    _qtyBadgePainters.clear();
     _itemRects.clear();
     _loadoutSlotRects.clear();
     _debugEffectPreviewRects.clear();
@@ -531,10 +741,51 @@ class MatchGameHud extends PositionComponent
     'itemTray': _itemTrayRect,
   };
 
+  /// 테스트에서 실제 HUD 입력 경로와 렌더 상태를 읽는다. 게임 규칙은 변경하지 않는다.
+  @visibleForTesting
+  bool debugTapButton(Offset point) =>
+      _handleUiButtonTap(Vector2(point.dx, point.dy));
+
+  @visibleForTesting
+  Map<String, Rect> debugReadButtonRects() => {
+    'pause': _pauseRect,
+    'hint': _hintRect,
+    'ranking': _rankingRect,
+    'tutorial': _tutorialRect,
+  };
+
+  @visibleForTesting
+  Map<String, Object?> debugReadFeedback() => {
+    'score': _cachedScore,
+    'scorePunch': _scorePunch.value,
+    'goalNear': _goalNear,
+    'goalReached': _goalReached,
+    'goalPunch': _goalPunch.value,
+    'hintPunch': _hintBadgePunch.value,
+    'pressPunch': _pressPunch.value,
+    'pressedRect': _pressedRect,
+    'timeFill': _timeFillRatio,
+    'timeBonus': _timeBonusPunch.value,
+    'timeBonusFrom': _timeBonusFrom,
+    'timeBonusTo': _timeBonusTo,
+    'comboHeat': _comboHeat,
+    'timeShader': _timeFillShader,
+    'itemUsePunch': _itemUsePunch.value,
+    'usedItem': _usedItem,
+  };
+
   @override
   void update(double dt) {
     super.update(dt);
     _updateHudState(dt);
+  }
+
+  @override
+  void onRemove() {
+    _pressTicker?.dispose();
+    _pressTicker = null;
+    _hudGlows.dispose();
+    super.onRemove();
   }
 
   @override

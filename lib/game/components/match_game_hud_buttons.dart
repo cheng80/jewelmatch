@@ -13,15 +13,31 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
     );
   }
 
+  /// 누른 버튼만 자기 중심으로 살짝 눌러 그린다. 히트 영역은 그대로다.
+  ///
+  /// `true`를 돌려주면 부른 쪽이 `canvas.restore()`를 해야 한다.
+  bool _pushPressScale(Canvas canvas, Rect r) {
+    if (_pressedRect != r || !_pressPunch.isActive) return false;
+    final s = 1 - 0.09 * _pressPunch.value;
+    canvas.save();
+    canvas.translate(r.center.dx, r.center.dy);
+    canvas.scale(s);
+    canvas.translate(-r.center.dx, -r.center.dy);
+    return true;
+  }
+
   void _drawTutorialButton(Canvas canvas) {
     final r = _tutorialRect;
+    final pressed = _pushPressScale(canvas, r);
     _drawIconButtonFrame(canvas, r);
     _drawButtonIcon(canvas, r, _tutorialIconImage, sizeFactor: 0.58);
+    if (pressed) canvas.restore();
   }
 
   /// 힌트 — 전구 형태 (튜토리얼용 ? 버튼과 구분).
   void _drawHintButton(Canvas canvas) {
     final r = _hintRect;
+    final pressed = _pushPressScale(canvas, r);
     _drawIconButtonFrame(canvas, r);
     _drawButtonIcon(
       canvas,
@@ -31,16 +47,25 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
       offsetYFactor: 0.02,
     );
     _drawHintBadge(canvas, r);
+    if (pressed) canvas.restore();
   }
 
   void _drawHintBadge(Canvas canvas, Rect buttonRect) {
     final count = game.hintBadgeCount;
     if (count == null) return;
 
+    // 숫자가 바뀌면 배지가 한 번 튀고, 0이 되면 색이 가라앉는다.
+    final punched = _hintBadgePunch.isActive;
+    if (punched) {
+      canvas.save();
+      canvas.translate(_hintBadgeCenter.dx, _hintBadgeCenter.dy);
+      canvas.scale(1 + 0.38 * _hintBadgePunch.eased);
+      canvas.translate(-_hintBadgeCenter.dx, -_hintBadgeCenter.dy);
+    }
     canvas.drawCircle(
       _hintBadgeCenter,
       _hintBadgeDiameter / 2,
-      _hintBadgePaint,
+      count == 0 ? _hintBadgeZeroPaint : _hintBadgePaint,
     );
     canvas.drawCircle(
       _hintBadgeCenter,
@@ -56,7 +81,9 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
           text: label,
           style: _ts(
             size: buttonRect.width * (label.length > 2 ? 0.18 : 0.22),
-            color: const Color(0xFF211204),
+            color: count == 0
+                ? const Color(0xFFFFF1CF)
+                : const Color(0xFF211204),
             weight: FontWeight.w900,
             shadows: [
               Shadow(
@@ -76,6 +103,7 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
       canvas,
       _hintBadgeCenter - Offset(painter.width / 2, painter.height / 2),
     );
+    if (punched) canvas.restore();
   }
 
   void _drawButtonIcon(
@@ -104,14 +132,18 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
   void _drawRankingButton(Canvas canvas) {
     final r = _rankingRect;
     if (r.isEmpty) return;
+    final pressed = _pushPressScale(canvas, r);
     _drawIconButtonFrame(canvas, r);
     _drawButtonIcon(canvas, r, _rankingCrownIconImage, sizeFactor: 0.6);
+    if (pressed) canvas.restore();
   }
 
   void _drawPause(Canvas canvas) {
     final r = _pauseRect;
+    final pressed = _pushPressScale(canvas, r);
     _drawIconButtonFrame(canvas, r);
     _drawButtonIcon(canvas, r, _pauseIconImage, sizeFactor: 0.70);
+    if (pressed) canvas.restore();
   }
 
   void _drawItemSlots(Canvas canvas) {
@@ -495,13 +527,12 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
     );
 
     if (selected) {
-      final glow = Paint()
-        ..isAntiAlias = true
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.0
-        ..color = const Color(0xFF6FF7E8).withValues(alpha: 0.55)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.outer, 5);
-      canvas.drawRRect(outer.deflate(1.2), glow);
+      _hudGlows.draw(
+        canvas,
+        HudGlowKind.prismSelection,
+        r.deflate(1.2).topLeft,
+        const Color(0xFF6FF7E8).withValues(alpha: 0.55),
+      );
     }
   }
 
@@ -570,21 +601,29 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
   }) {
     final enabled = enabledOverride ?? game.isItemEnabled(item);
     final active = game.activeTargetItem == item;
+    final pressed = _pushPressScale(canvas, r);
     _drawIconButtonFrame(canvas, r);
 
     if (active) {
-      final glow = Paint()
-        ..isAntiAlias = true
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.2
-        ..color = const Color(0xFF6FF7E8).withValues(alpha: 0.48)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.outer, 5);
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(r.deflate(1.8), Radius.circular(9)),
-        glow,
+      _hudGlows.draw(
+        canvas,
+        HudGlowKind.itemTarget,
+        r.deflate(1.8).topLeft,
+        const Color(0x7A6FF7E8),
       );
     }
 
+    if (_usedItem == item && _itemUsePunch.isActive) {
+      _itemUsePaint
+        ..strokeWidth = 1.5 + 2 * _itemUsePunch.eased
+        ..color = const Color(
+          0xFFFFF0A8,
+        ).withValues(alpha: _itemUsePunch.value);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(r.deflate(1), const Radius.circular(9)),
+        _itemUsePaint,
+      );
+    }
     final icon = _itemIconImages[item];
     if (icon != null) {
       final iconBounds = r.deflate(math.max(7.0, r.height * 0.18));
@@ -594,84 +633,79 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
         width: side,
         height: side,
       );
-      final imagePaint = Paint()
-        ..isAntiAlias = true
-        ..filterQuality = FilterQuality.high;
-      if (!enabled) {
-        imagePaint.colorFilter = ColorFilter.mode(
-          Colors.white.withValues(alpha: 0.30),
-          BlendMode.modulate,
-        );
-      }
       canvas.drawImageRect(
         icon,
         Rect.fromLTWH(0, 0, icon.width.toDouble(), icon.height.toDouble()),
         dst,
-        imagePaint,
+        enabled ? _itemIconPaint : _itemIconDimPaint,
       );
       if (quantity != null) {
-        _drawItemQuantityBadge(canvas, r, quantity);
+        _drawItemQuantityBadge(canvas, r, item, quantity);
       }
+      if (pressed) canvas.restore();
       return;
     }
 
-    final label = item.shortLabel;
-    final painter = TextPainter(
-      text: TextSpan(
-        text: label,
-        style: _ts(
-          size: math.min(
-            r.height * 0.36,
-            r.width / math.max(4.5, label.length),
+    final labelState = enabled ? (active ? 2 : 1) : 0;
+    var painter = _itemLabelPainters[item];
+    if (painter == null || _itemLabelStates[item] != labelState) {
+      final label = item.shortLabel;
+      painter = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: _ts(
+            size: math.min(
+              r.height * 0.36,
+              r.width / math.max(4.5, label.length),
+            ),
+            color: enabled
+                ? (active ? const Color(0xFF241504) : const Color(0xFFFFF1CF))
+                : const Color(0xFFC7C7C7),
+            weight: FontWeight.w900,
+            shadows: enabled && !active ? _hudLegibilityShadows() : null,
           ),
-          color: enabled
-              ? (active ? const Color(0xFF241504) : const Color(0xFFFFF1CF))
-              : const Color(0xFFC7C7C7),
-          weight: FontWeight.w900,
-          shadows: enabled && !active ? _hudLegibilityShadows() : null,
         ),
-      ),
-      textAlign: TextAlign.center,
-      textDirection: ui.TextDirection.ltr,
-    )..layout(maxWidth: r.width * 0.9);
+        textAlign: TextAlign.center,
+        textDirection: ui.TextDirection.ltr,
+      )..layout(maxWidth: r.width * 0.9);
+      _itemLabelPainters[item] = painter;
+      _itemLabelStates[item] = labelState;
+    }
     painter.paint(
       canvas,
       Offset(r.center.dx - painter.width / 2, r.center.dy - painter.height / 2),
     );
     if (quantity != null) {
-      _drawItemQuantityBadge(canvas, r, quantity);
+      _drawItemQuantityBadge(canvas, r, item, quantity);
     }
+    if (pressed) canvas.restore();
   }
 
   void _drawLockedItemSlot(Canvas canvas, Rect r) {
     _drawIconButtonFrame(canvas, r);
-    final lockPaint = Paint()
-      ..isAntiAlias = true
-      ..color = const Color(0xFF0B0908).withValues(alpha: 0.56);
     canvas.drawRRect(
       RRect.fromRectAndRadius(r.deflate(4), Radius.circular(r.width * 0.18)),
-      lockPaint,
+      _lockedItemPaint,
     );
 
-    final shacklePaint = Paint()
-      ..isAntiAlias = true
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = math.max(2.0, r.width * 0.07)
-      ..strokeCap = StrokeCap.round
-      ..color = const Color(0xFF7F5A2A).withValues(alpha: 0.78);
-    final bodyPaint = Paint()
-      ..isAntiAlias = true
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: const [Color(0xFF9E7A44), Color(0xFF3E2A13)],
-      ).createShader(r);
+    _lockShacklePaint.strokeWidth = math.max(2.0, r.width * 0.07);
+    var bodyPaint = _lockBodyPaints[r];
+    if (bodyPaint == null) {
+      bodyPaint = Paint()
+        ..isAntiAlias = true
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF9E7A44), Color(0xFF3E2A13)],
+        ).createShader(r);
+      _lockBodyPaints[r] = bodyPaint;
+    }
     final shackle = Rect.fromCenter(
       center: r.center.translate(0, -r.height * 0.08),
       width: r.width * 0.34,
       height: r.height * 0.34,
     );
-    canvas.drawArc(shackle, math.pi, math.pi, false, shacklePaint);
+    canvas.drawArc(shackle, math.pi, math.pi, false, _lockShacklePaint);
     final body = Rect.fromCenter(
       center: r.center.translate(0, r.height * 0.10),
       width: r.width * 0.46,
@@ -702,13 +736,12 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
       ).createShader(inner);
     canvas.drawRRect(rr, fill);
 
-    final glow = Paint()
-      ..isAntiAlias = true
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.4
-      ..color = colors.$1.withValues(alpha: 0.52)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.outer, 4);
-    canvas.drawRRect(rr, glow);
+    _hudGlows.draw(
+      canvas,
+      HudGlowKind.preview,
+      inner.topLeft,
+      colors.$1.withValues(alpha: 0.52),
+    );
 
     final stroke = Paint()
       ..isAntiAlias = true
@@ -767,37 +800,50 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
     };
   }
 
-  void _drawItemQuantityBadge(Canvas canvas, Rect r, int quantity) {
+  /// 수량 배지. 슬롯마다 매 프레임 그려지므로 페인트와 글자는 캐시해 둔다.
+  /// 수량 0은 색을 가라앉혀 쓸 수 없는 슬롯임을 한눈에 구분한다.
+  void _drawItemQuantityBadge(
+    Canvas canvas,
+    Rect r,
+    ItemKind item,
+    int quantity,
+  ) {
     final badge = Rect.fromCircle(
       center: Offset(r.right - r.width * 0.13, r.bottom - r.height * 0.13),
       radius: r.width * 0.16,
     );
-    final fill = Paint()
-      ..isAntiAlias = true
-      ..shader = const LinearGradient(
-        colors: [Color(0xFFFFF0A8), Color(0xFFC58A22)],
-      ).createShader(badge);
-    final stroke = Paint()
-      ..isAntiAlias = true
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
-      ..color = const Color(0xFF2A1606);
-    canvas.drawOval(badge, fill);
-    canvas.drawOval(badge, stroke);
+    var fill = _qtyBadgeFillPaints[item];
+    if (fill == null) {
+      fill = Paint()
+        ..isAntiAlias = true
+        ..shader = const LinearGradient(
+          colors: [Color(0xFFFFF0A8), Color(0xFFC58A22)],
+        ).createShader(badge);
+      _qtyBadgeFillPaints[item] = fill;
+    }
+    canvas.drawOval(badge, quantity == 0 ? _qtyBadgeZeroPaint : fill);
+    canvas.drawOval(badge, _qtyBadgeStrokePaint);
 
-    final text = quantity > 99 ? '99+' : '$quantity';
-    final painter = TextPainter(
-      text: TextSpan(
-        text: text,
-        style: _ts(
-          size: r.width * (text.length > 2 ? 0.16 : 0.20),
-          color: const Color(0xFF211204),
-          weight: FontWeight.w900,
+    final quantityKey = quantity.clamp(0, 100);
+    var painter = _qtyBadgePainters[quantityKey];
+    if (painter == null) {
+      final text = quantity > 99 ? '99+' : '$quantity';
+      painter = TextPainter(
+        text: TextSpan(
+          text: text,
+          style: _ts(
+            size: r.width * (text.length > 2 ? 0.16 : 0.20),
+            color: quantity == 0
+                ? const Color(0xFFFFF1CF)
+                : const Color(0xFF211204),
+            weight: FontWeight.w900,
+          ),
         ),
-      ),
-      textAlign: TextAlign.center,
-      textDirection: ui.TextDirection.ltr,
-    )..layout(maxWidth: badge.width);
+        textAlign: TextAlign.center,
+        textDirection: ui.TextDirection.ltr,
+      )..layout(maxWidth: badge.width);
+      _qtyBadgePainters[quantityKey] = painter;
+    }
     painter.paint(
       canvas,
       Offset(

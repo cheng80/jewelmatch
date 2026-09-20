@@ -12,10 +12,10 @@ class _WebSfxPool {
 
   void unlock() => unlockWebSfx();
 
-  void play(String path, double volume) {
+  void play(String path, double volume, double rate) {
     final duration =
         SoundManager._sfxSpecs[path]?.duration ?? _fallbackDuration;
-    if (!playWebSfx(path, volume, duration)) {
+    if (!playWebSfx(path, volume, duration, rate)) {
       SfxPlayLog.append('playSfx web SKIP poolBusy path=$path');
     }
   }

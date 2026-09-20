@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stonematch/resources/native_sfx_slot_pool.dart';
+import 'package:stonematch/resources/sound_manager_pitch.dart';
 
 void main() {
   final soundManagerSource = File(
@@ -19,6 +20,138 @@ void main() {
   final nativeSfxSource = File(
     'lib/resources/sound_manager_native_sfx.dart',
   ).readAsStringSync();
+  final vfxSource = File(
+    'lib/game/match_board_game_vfx.dart',
+  ).readAsStringSync();
+  final timingSource = File(
+    'lib/game/match_board_game_timing.dart',
+  ).readAsStringSync();
+
+  test('보드가 바뀌면 같은 누적 생성 수라도 첫 탄생을 구분한다', () {
+    final first = Object();
+    final second = Object();
+    expect(
+      matchSfxTierTracker.read(owner: first, star: 1),
+      MatchSfxTier.matchTL,
+    );
+    expect(
+      matchSfxTierTracker.read(owner: second, star: 1),
+      MatchSfxTier.matchTL,
+    );
+    expect(
+      matchSfxTierTracker.read(owner: first, star: 1),
+      MatchSfxTier.match4,
+    );
+  });
+
+  test('콤보 단계마다 반음씩 올라가고 상한에서 멈춘다', () {
+    expect(SfxPitch.forCombo(0), 0);
+    expect(SfxPitch.forCombo(1), 0);
+    expect(SfxPitch.forCombo(2), 1);
+    expect(SfxPitch.forCombo(9), SfxPitch.maxComboSemitones);
+    expect(SfxPitch.forCombo(40), SfxPitch.maxComboSemitones);
+
+    // 반음 = 2^(1/12). 12반음은 정확히 한 옥타브.
+    expect(SfxPitch.rateForSemitones(0), 1.0);
+    expect(SfxPitch.rateForSemitones(1), closeTo(1.05946, 0.00001));
+    expect(SfxPitch.rateForSemitones(12), closeTo(2.0, 0.0001));
+    // 상한을 넘겨도 한 옥타브에서 멈춘다.
+    expect(SfxPitch.rateForSemitones(99), closeTo(2.0, 0.0001));
+  });
+
+  test('매치 크기 등급이 콤보 위에 더해지고 전체 상한을 넘지 않는다', () {
+    expect(SfxPitch.forMatch(MatchSfxTier.match4, 1), 0);
+    expect(SfxPitch.forMatch(MatchSfxTier.matchTL, 1), 2);
+    expect(SfxPitch.forMatch(MatchSfxTier.match5, 1), 3);
+    expect(SfxPitch.forMatch(MatchSfxTier.match6plus, 1), 5);
+    // 4개 < T/L < 5개 < 6개 이상 순으로 높아진다.
+    expect(
+      MatchSfxTier.match4.semitones,
+      lessThan(MatchSfxTier.matchTL.semitones),
+    );
+    expect(
+      MatchSfxTier.matchTL.semitones,
+      lessThan(MatchSfxTier.match5.semitones),
+    );
+    expect(
+      MatchSfxTier.match5.semitones,
+      lessThan(MatchSfxTier.match6plus.semitones),
+    );
+
+    expect(SfxPitch.forMatch(MatchSfxTier.match6plus, 3), 7);
+    expect(
+      SfxPitch.forMatch(MatchSfxTier.match6plus, 30),
+      SfxPitch.maxSemitones,
+    );
+  });
+
+  test('저시간 틱은 10초에서 1초로 갈수록 반음씩 오른다', () {
+    expect(SfxPitch.forLowTimeTick(10, fromSeconds: 10), 0);
+    expect(SfxPitch.forLowTimeTick(9, fromSeconds: 10), 1);
+    expect(SfxPitch.forLowTimeTick(1, fromSeconds: 10), 9);
+    // 범위 밖 값은 상한과 하한에서 잘린다.
+    expect(SfxPitch.forLowTimeTick(30, fromSeconds: 10), 0);
+    expect(SfxPitch.forLowTimeTick(-5, fromSeconds: 10), SfxPitch.maxSemitones);
+  });
+
+  test('새로 태어난 특수 보석으로 매치 크기 등급을 읽는다', () {
+    final tracker = MatchSfxTierTracker();
+
+    expect(tracker.read(), MatchSfxTier.match4);
+    expect(tracker.read(star: 1), MatchSfxTier.matchTL);
+    expect(tracker.read(star: 1), MatchSfxTier.match4);
+    expect(tracker.read(star: 1, hyper: 1), MatchSfxTier.match5);
+    expect(
+      tracker.read(star: 1, hyper: 1, supernova: 1),
+      MatchSfxTier.match6plus,
+    );
+    // 여러 종류가 한 번에 늘면 큰 쪽을 쓴다.
+    expect(
+      tracker.read(star: 2, hyper: 2, supernova: 2),
+      MatchSfxTier.match6plus,
+    );
+    // 새 판에서 카운터가 0으로 돌아가도 잘못 올라가지 않는다.
+    expect(tracker.read(), MatchSfxTier.match4);
+    expect(tracker.read(star: 1), MatchSfxTier.matchTL);
+  });
+
+  test('네이티브는 확인 전까지 피치를 무시하는 폴백이고 스위치는 한 곳이다', () {
+    expect(SfxPitch.nativePitchEnabled, isFalse);
+    expect(SfxPitch.playbackRate(8, isWeb: false), 1.0);
+    expect(SfxPitch.playbackRate(8, isWeb: true), greaterThan(1));
+    expect(SfxPitch.playbackRate(0, isWeb: true), 1.0);
+    expect(nativeSfxSource, contains('SfxPitch.nativePitchEnabled'));
+    // 켜면 슬롯 재사용 때 이전 속도가 남지 않도록 매 재생마다 다시 쓴다.
+    expect(nativeSfxSource, contains('setPlaybackRate(rate)'));
+  });
+
+  test('웹 슬롯은 재생마다 preservesPitch와 playbackRate를 다시 쓴다', () {
+    expect(webSfxScript, contains('audio.preservesPitch = false;'));
+    expect(webSfxScript, contains('audio.playbackRate = safe;'));
+    expect(
+      webSfxScript,
+      contains('const appliedRate = applyRate(audio, rate);'),
+    );
+    // 느리게 재생하면 더 오래 걸리므로 슬롯 반납 타이머도 속도로 나눈다.
+    expect(
+      webSfxScript,
+      contains('Math.max(250, durationMs / appliedRate + 250)'),
+    );
+    // ADR-004: Web Audio로 돌아가지 않는다.
+    expect(webSfxScript, contains('const slotCount = 4;'));
+    expect(webSfxScript, isNot(contains('AudioContext')));
+  });
+
+  test('의미 → 피치 변환은 SfxPitch 한 곳에서만 한다', () {
+    expect(vfxSource, contains('SfxPitch.forMatch(tier, combo)'));
+    expect(vfxSource, contains('SfxPitch.forCombo(combo)'));
+    expect(vfxSource, contains('matchSfxTierTracker.read('));
+    expect(vfxSource, contains('bigMatch || tier != MatchSfxTier.match4'));
+    expect(timingSource, contains('SfxPitch.forLowTimeTick('));
+    // 호출부는 재생 속도를 직접 계산하지 않는다.
+    expect(vfxSource, isNot(contains('playbackRate')));
+    expect(timingSource, isNot(contains('playbackRate')));
+  });
 
   test('웹 SFX는 새 AudioPool을 만들지 않고 고정 플레이어 풀을 사용한다', () {
     final poolRoute = soundManagerSource.indexOf(
@@ -29,8 +162,8 @@ void main() {
     );
 
     expect(poolRoute, isNonNegative);
-    expect(soundManagerSource, contains('webPool.play(path, vol);'));
-    expect(webSfxSource, contains('playWebSfx(path, volume, duration)'));
+    expect(soundManagerSource, contains('webPool.play(path, vol, rate);'));
+    expect(webSfxSource, contains('playWebSfx(path, volume, duration, rate)'));
     expect(webSfxSource, isNot(contains('AudioPlayer')));
     expect(webSfxBridgeSource, contains("@JS('stoneMatchSfx.play')"));
     expect(webSfxScript, contains('const slotCount = 4;'));

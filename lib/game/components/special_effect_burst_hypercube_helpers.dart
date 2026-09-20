@@ -20,16 +20,13 @@ extension _SpecialEffectBurstHypercubeDrawing on SpecialEffectBurst {
         canvas,
         center,
         radius * 1.25,
-        [
-          Colors.white.withValues(alpha: 0.42 * visibleFade),
-          SpecialEffectBurst._hotYellow.withValues(alpha: 0.30 * visibleFade),
-          SpecialEffectBurst._electricViolet.withValues(
-            alpha: 0.26 * visibleFade,
-          ),
-          baseColor.withValues(alpha: 0.16 * visibleFade),
-          Colors.transparent,
-        ],
-        const [0.0, 0.22, 0.50, 0.72, 1.0],
+        GlowRadial.hyper,
+        Colors.white.withValues(alpha: 0.42 * visibleFade),
+        SpecialEffectBurst._hotYellow.withValues(alpha: 0.30 * visibleFade),
+        SpecialEffectBurst._electricViolet.withValues(
+          alpha: 0.26 * visibleFade,
+        ),
+        baseColor.withValues(alpha: 0.16 * visibleFade),
       );
     } else {
       _drawFlatHypercubeGlow(canvas, center, radius * 1.08, visibleFade);
@@ -39,31 +36,38 @@ extension _SpecialEffectBurstHypercubeDrawing on SpecialEffectBurst {
     for (var i = 0; i < arcCount; i++) {
       final phase = i * pi / 2 + t * pi * 2.2;
       _paint
-        ..maskFilter = i == 0 && _glowScale > 0
-            ? SpecialEffectBurst._glow
-            : null
+        ..maskFilter = null
         ..strokeWidth = tileSize * (0.045 + i * 0.006)
         ..color = Color.lerp(
           SpecialEffectBurst._electricViolet,
           baseColor,
           i / max(1, arcCount - 1),
         )!.withValues(alpha: (0.58 - i * 0.07) * visibleFade);
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius * (0.46 + i * 0.18)),
-        phase,
-        pi * 1.22,
-        false,
-        _paint,
-      );
+      final arcRadius = radius * (0.46 + i * 0.18);
       if (i == 0 && _glowScale > 0) {
-        _paint
-          ..maskFilter = SpecialEffectBurst._glow
-          ..strokeWidth = tileSize * 0.095
-          ..color = SpecialEffectBurst._hotYellow.withValues(
+        _bakedGlow.draw(
+          canvas,
+          GlowShape.hyperArc,
+          center,
+          arcRadius / 64,
+          arcRadius / 64,
+          _paint.color,
+          angle: phase,
+        );
+        _bakedGlow.draw(
+          canvas,
+          GlowShape.hyperArc,
+          center,
+          arcRadius / 64,
+          arcRadius / 64,
+          SpecialEffectBurst._hotYellow.withValues(
             alpha: 0.26 * visibleFade * _glowScale,
-          );
+          ),
+          angle: phase,
+        );
+      } else {
         canvas.drawArc(
-          Rect.fromCircle(center: center, radius: radius * 0.46),
+          Rect.fromCircle(center: center, radius: arcRadius),
           phase,
           pi * 1.22,
           false,
@@ -107,22 +111,14 @@ extension _SpecialEffectBurstHypercubeDrawing on SpecialEffectBurst {
     double radius,
     double fade,
   ) {
-    _fillPaint
-      ..maskFilter = null
-      ..shader = ui.Gradient.radial(
-        center,
-        radius,
-        [
-          Colors.white.withValues(alpha: 0.30 * fade),
-          SpecialEffectBurst._electricViolet.withValues(alpha: 0.22 * fade),
-          baseColor.withValues(alpha: 0.12 * fade),
-          Colors.transparent,
-        ],
-        const [0.0, 0.38, 0.68, 1.0],
-      );
-    canvas.drawCircle(center, radius, _fillPaint);
-    _fillPaint
-      ..shader = null
-      ..maskFilter = null;
+    _bakedGlow.radial(
+      canvas,
+      GlowRadial.flatHyper,
+      center,
+      radius,
+      Colors.white.withValues(alpha: 0.30 * fade),
+      SpecialEffectBurst._electricViolet.withValues(alpha: 0.22 * fade),
+      baseColor.withValues(alpha: 0.12 * fade),
+    );
   }
 }

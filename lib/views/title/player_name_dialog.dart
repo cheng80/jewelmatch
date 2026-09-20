@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 import '../../services/game_settings.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../../widgets/obsidian_frame.dart';
+import '../../widgets/overlay_motion.dart';
 
 Future<String?> showPlayerNameDialog(BuildContext context) async {
-  final result = await showDialog<String>(
+  final result = await showMotionDialog<String>(
     context: context,
     builder: (_) => const _PlayerNameDialog(),
   );
@@ -48,94 +49,99 @@ class _PlayerNameDialogState extends State<_PlayerNameDialog> {
       child: Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 52),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: 620,
-            maxHeight: mediaQuery.size.height - 104,
-          ),
-          child: ObsidianFrame(
-            minFrameSize: 280,
-            padding: const EdgeInsets.fromLTRB(58, 50, 58, 44),
-            backgroundColor: JewelCandyLuminaTheme.surfaceContainer.withValues(
-              alpha: 0.97,
+        child: OverlayEnterTransition(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 620,
+              maxHeight: mediaQuery.size.height - 104,
             ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    context.tr('enterName'),
-                    style: TextStyle(
-                      color: JewelCandyLuminaTheme.textTitleGold,
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  TextField(
-                    controller: _controller,
-                    maxLength: 20,
-                    autofocus: true,
-                    style: const TextStyle(
-                      color: JewelCandyLuminaTheme.textHero,
-                      fontSize: 20,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'GUEST',
-                      hintStyle: TextStyle(color: Colors.white38),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                          color: JewelCandyLuminaTheme.tertiaryGold,
-                        ),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                          color: JewelCandyLuminaTheme.focusTeal,
-                          width: 2,
-                        ),
+            child: ObsidianFrame(
+              minFrameSize: 280,
+              padding: const EdgeInsets.fromLTRB(58, 50, 58, 44),
+              backgroundColor: JewelCandyLuminaTheme.surfaceContainer
+                  .withValues(alpha: 0.97),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      context.tr('enterName'),
+                      style: TextStyle(
+                        color: JewelCandyLuminaTheme.textTitleGold,
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    onSubmitted: (value) => _submit(context, value),
-                  ),
-                  const SizedBox(height: 28),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: ObsidianButtonFrame(
-                            height: 50,
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: Text(
-                              context.tr('cancel'),
-                              style: TextStyle(
-                                color: JewelCandyLuminaTheme.textMutedGold,
-                                fontWeight: FontWeight.bold,
+                    const SizedBox(height: 28),
+                    TextField(
+                      controller: _controller,
+                      maxLength: 20,
+                      autofocus: true,
+                      style: const TextStyle(
+                        color: JewelCandyLuminaTheme.textHero,
+                        fontSize: 20,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'GUEST',
+                        hintStyle: TextStyle(color: Colors.white38),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: JewelCandyLuminaTheme.tertiaryGold,
+                          ),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: JewelCandyLuminaTheme.focusTeal,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      onSubmitted: (value) => _submit(context, value),
+                    ),
+                    const SizedBox(height: 28),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: ObsidianButtonFrame(
+                              height: 50,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                              ),
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: Text(
+                                context.tr('cancel'),
+                                style: TextStyle(
+                                  color: JewelCandyLuminaTheme.textMutedGold,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 28),
-                        Expanded(
-                          child: ObsidianButtonFrame(
-                            height: 50,
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                            onPressed: () => _submit(context),
-                            child: Text(
-                              context.tr('startGame'),
-                              style: TextStyle(
-                                color: JewelCandyLuminaTheme.tertiaryGold,
-                                fontWeight: FontWeight.bold,
+                          const SizedBox(width: 28),
+                          Expanded(
+                            child: ObsidianButtonFrame(
+                              height: 50,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                              ),
+                              onPressed: () => _submit(context),
+                              child: Text(
+                                context.tr('startGame'),
+                                style: TextStyle(
+                                  color: JewelCandyLuminaTheme.tertiaryGold,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

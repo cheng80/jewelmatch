@@ -61,12 +61,17 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
     final cx = game.safeContentCenterX;
     final scoreY = _scoreBlockTop + 4;
     _scoreLabel.paint(canvas, Offset(cx - _scoreLabel.width / 2, scoreY));
+    var scale = 1 + 0.14 * _scorePunch.eased + 0.08 * _goalPunch.eased;
+    if (_goalNear) {
+      // 목표 80% 이상: 읽는 데 방해되지 않을 만큼만 숨 쉬듯 커졌다 작아진다.
+      scale += 0.018 * (1 + math.sin(_hudClock * 5.0));
+    }
     _paintPunched(
       canvas,
       _scoreValue,
       cx,
       scoreY + _scoreLabel.height + 4,
-      1 + 0.14 * _scorePunch * _scorePunch,
+      scale,
     );
   }
 
@@ -100,9 +105,21 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
       _comboRect,
       Radius.circular(comboR),
     );
-    canvas.drawRRect(comboBg, _comboShadowPaint);
+    _hudGlows.draw(
+      canvas,
+      HudGlowKind.comboShadow,
+      _comboRect.topLeft,
+      Colors.black.withValues(alpha: 0.38),
+    );
     canvas.drawRRect(comboBg, _comboGradientPaint);
     canvas.drawRRect(comboBg, _comboStrokePaint);
+    if (_comboHeat > 0) {
+      // 콤보 단계가 오를수록 줄 테두리가 뜨거워진다.
+      _comboHeatPaint
+        ..strokeWidth = 1.4 + 2.2 * _comboHeat
+        ..color = _comboHeatColor.withValues(alpha: 0.85 * _comboHeat);
+      canvas.drawRRect(comboBg, _comboHeatPaint);
+    }
     final comboInset = math.min(4.0, _comboRect.height * 0.12);
     final comboInner = _comboRect.deflate(comboInset);
     if (comboInner.width > 0 && comboInner.height > 0) {
@@ -144,7 +161,7 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
       _comboLeftValue,
       leftCenterX,
       ly0 + _comboLeftLabel.height + gapLabelValue,
-      1 + 0.4 * _comboPunch * _comboPunch,
+      1 + 0.4 * _comboPunch.eased,
     );
 
     _comboRightLabel.paint(
@@ -168,12 +185,11 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
     final shadowRect = _timeBarRect.shift(
       Offset(0, _timeBarRect.height * 0.08),
     );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        shadowRect,
-        Radius.circular(shadowRect.height / 2),
-      ),
-      _timeBarShadowPaint,
+    _hudGlows.draw(
+      canvas,
+      HudGlowKind.timeShadow,
+      shadowRect.topLeft,
+      Colors.black.withValues(alpha: 0.45),
     );
 
     final barBg = RRect.fromRectAndRadius(
@@ -190,15 +206,7 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
       _timeBarInnerStrokePaint,
     );
 
-    // 고정 inset(3)은 타임바가 낮을 때 inner 높이가 음수가 되어 셰이더/ RRect 가 실패할 수 있음
-    final inset = math.min(5.0, _timeBarRect.height / 3);
-    final inner = Rect.fromLTWH(
-      _timeBarRect.left + inset,
-      _timeBarRect.top + inset,
-      _timeBarRect.width - inset * 2,
-      _timeBarRect.height - inset * 2,
-    );
-
+    final inner = _timeBarInner;
     if (inner.width <= 0 || inner.height <= 0) {
       return;
     }
@@ -209,7 +217,7 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
     );
 
     if (game.hasTimedClock) {
-      final r = _timeRatio();
+      final r = _timeFillRatio ?? _timeRatio();
       final fillW = inner.width * r;
       if (fillW > 0.5) {
         final rad = inner.height / 2;
@@ -228,21 +236,21 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
           topRight: Radius.circular(fillW >= inner.width - 1 ? rad : 0),
           bottomRight: Radius.circular(fillW >= inner.width - 1 ? rad : 0),
         );
-        final low = game.isTimedMode && r < 0.2;
+        final low =
+            game.timeRemaining <= MatchBoardGame.timedLowTimeTickMaxSeconds;
         canvas.drawRRect(
           fillR,
           _timeFillPaint
-            ..shader = LinearGradient(
-              colors: low
-                  ? JewelCandyLuminaTheme.timeBarFillCritical
-                  : JewelCandyLuminaTheme.timeBarFillVibrant,
-            ).createShader(fillRect),
+            ..shader = low ? _timeFillCriticalShader : _timeFillShader,
         );
+        _drawTimeBonusFlash(canvas, inner);
         canvas.restore();
       }
     } else {
       canvas.drawRRect(innerR, _untimedFillPaint);
     }
+
+    _drawLowTimeBarPulse(canvas, barBg);
 
     if (_timeInBar != null) {
       final tp = _timeInBar!;
@@ -251,6 +259,36 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
         Offset(inner.center.dx - tp.width / 2, inner.center.dy - tp.height / 2),
       );
     }
+  }
+
+  /// 시간 보너스로 늘어난 구간이 밝게 반짝였다 가라앉는다. 클립 안에서 부른다.
+  void _drawTimeBonusFlash(Canvas canvas, Rect inner) {
+    if (!_timeBonusPunch.isActive || _timeBonusTo <= _timeBonusFrom) return;
+    final left = inner.left + inner.width * _timeBonusFrom;
+    final right =
+        inner.left +
+        inner.width * math.min(_timeBonusTo, _timeFillRatio ?? _timeBonusTo);
+    if (right <= left) return;
+    _timeBonusFlashPaint.color = const Color(
+      0xFFFFFDE7,
+    ).withValues(alpha: 0.75 * _timeBonusPunch.eased);
+    canvas.drawRect(
+      Rect.fromLTRB(left, inner.top, right, inner.bottom),
+      _timeBonusFlashPaint,
+    );
+  }
+
+  /// 저시간에는 보드 테두리와 같은 틱 박자로 바 자체도 맥동한다.
+  void _drawLowTimeBarPulse(Canvas canvas, RRect barBg) {
+    final g = game;
+    if (!g.hasTimedClock || !g.isPlaying) return;
+    final t = g.timeRemaining;
+    if (t <= 0 || t > MatchBoardGame.timedLowTimeTickMaxSeconds) return;
+    final beat = t - t.floorToDouble();
+    _timeBarPulsePaint
+      ..strokeWidth = _timeBarRect.height * (0.08 + 0.14 * beat)
+      ..color = const Color(0xFFFF4D4D).withValues(alpha: 0.72 * beat * beat);
+    canvas.drawRRect(barBg, _timeBarPulsePaint);
   }
 
   double _timeRatio() {

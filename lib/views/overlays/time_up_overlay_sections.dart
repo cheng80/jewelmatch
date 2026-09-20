@@ -48,9 +48,74 @@ class _TimeUpIntroTitle extends StatelessWidget {
   }
 }
 
+/// 결과 점수가 0에서 최종 점수까지 세어 올라간다 (TP-056).
+class _CountUpScore extends StatelessWidget {
+  const _CountUpScore({required this.score, required this.highlight});
+
+  static const Duration _duration = Duration(milliseconds: 800);
+
+  final int score;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<int>(
+      tween: IntTween(begin: 0, end: score),
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : _duration,
+      curve: Curves.easeOutCubic,
+      builder: (context, value, _) => Text(
+        '$value',
+        style: TextStyle(
+          color: highlight
+              ? JewelCandyLuminaTheme.textTitleGold
+              : JewelCandyLuminaTheme.goldStrong,
+          fontSize: highlight ? 38 : 32,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+/// 최고 기록 갱신 표시. 점수 아래에 별과 라벨로 한 번 등장한다.
+class _NewRecordBadge extends StatelessWidget {
+  const _NewRecordBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return OverlayEnterTransition(
+      beginScale: 0.7,
+      duration: const Duration(milliseconds: 320),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.star_rounded,
+            color: JewelCandyLuminaTheme.textTitleGold,
+            size: 18,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            context.tr('bestScore'),
+            style: TextStyle(
+              color: JewelCandyLuminaTheme.textTitleGold,
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _TimeUpResultPanel extends StatelessWidget {
   const _TimeUpResultPanel({
     required this.game,
+    required this.isNewRecord,
     required this.adService,
     required this.canContinueWithAd,
     required this.showingAd,
@@ -62,6 +127,7 @@ class _TimeUpResultPanel extends StatelessWidget {
   });
 
   final MatchBoardGame game;
+  final bool isNewRecord;
   final AdService adService;
   final bool canContinueWithAd;
   final bool showingAd;
@@ -76,8 +142,9 @@ class _TimeUpResultPanel extends StatelessWidget {
     return LuminaOverlayCard(
       borderColor: JewelCandyLuminaTheme.borderTimeUp,
       shadowColor: JewelCandyLuminaTheme.primaryPink,
-      maxHeightFactor: 0.72,
-      verticalMargin: 86,
+      maxHeightFactor: 0.9,
+      scrollable: true,
+      verticalMargin: 28,
       alignment: Alignment.topCenter,
       horizontalPadding: 28,
       verticalPadding: 24,
@@ -101,14 +168,8 @@ class _TimeUpResultPanel extends StatelessWidget {
               fontSize: 22,
             ),
           ),
-          Text(
-            '${game.board.score}',
-            style: TextStyle(
-              color: JewelCandyLuminaTheme.goldStrong,
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          _CountUpScore(score: game.board.score, highlight: isNewRecord),
+          if (isNewRecord) const _NewRecordBadge(),
           if (game.hasTimedClock) ...[
             const SizedBox(height: 12),
             _RankStatusSection(onRetry: onRetryRanking),
@@ -140,13 +201,10 @@ class _TimeUpResultPanel extends StatelessWidget {
             ),
             if (adMessage != null) ...[
               const SizedBox(height: 8),
-              Text(
-                adMessage!,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: JewelCandyLuminaTheme.textMutedGold,
-                  fontSize: 12,
-                ),
+              AdResultBanner(
+                key: ValueKey(adMessage),
+                success: false,
+                message: adMessage!,
               ),
             ],
             const SizedBox(height: 14),

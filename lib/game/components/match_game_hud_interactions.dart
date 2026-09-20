@@ -8,9 +8,45 @@ extension _MatchGameHudInteractions on MatchGameHud {
       return;
     }
 
-    if (_scorePunch > 0) _scorePunch = math.max(0, _scorePunch - dt * 3.6);
-    if (_comboPunch > 0) _comboPunch = math.max(0, _comboPunch - dt * 3.2);
+    // 새 라운드와 다음 레벨은 이전 연출을 이어받지 않는다.
+    if (!identical(_feedbackBoard, game.board.stats) ||
+        _feedbackLevel != game.progressionLevel) {
+      _feedbackBoard = game.board.stats;
+      _feedbackLevel = game.progressionLevel;
+      _goalNear = false;
+      _goalReached = false;
+      _goalPunch.value = 0;
+      _timeBonusPunch.value = 0;
+      _itemUsePunch.value = 0;
+      _hintBadgePunch.value = 0;
+      _timeFillRatio = null;
+      _lastTimeRatio = null;
+      _lastHintCount = game.hintBadgeCount;
+      _itemQuantities.fillRange(0, _itemQuantities.length, -1);
+      _rebuildScoreValue();
+    }
+    _hudClock += dt;
+    if (_hudClock > 1000) _hudClock -= 1000;
+    _scorePunch.tick(dt);
+    _comboPunch.tick(dt);
+    _goalPunch.tick(dt);
+    _hintBadgePunch.tick(dt);
+    _timeBonusPunch.tick(dt);
+    if (!(_pressTicker?.isActive ?? false)) _pressPunch.tick(dt);
+    _itemUsePunch.tick(dt);
+    if (!_pressPunch.isActive) _pressedRect = null;
     _rollScoreTowardTarget(dt);
+    _updateGoalHighlight();
+    _updateTimeFill(dt);
+    _updateComboHeat(dt);
+    final hintCount = game.hintBadgeCount;
+    if (_lastHintCount != null &&
+        hintCount != null &&
+        _lastHintCount != hintCount) {
+      _hintBadgePunch.trigger();
+    }
+    _lastHintCount = hintCount;
+    _updateItemUseFeedback();
 
     final latestBest = GameSettings.getBestMatchScore(game.gameMode);
     final latestBestProgressionLevel =
@@ -62,7 +98,7 @@ extension _MatchGameHudInteractions on MatchGameHud {
     }
     if (_scoreRollTarget != target) {
       _scoreRollTarget = target;
-      _scorePunch = 1;
+      _scorePunch.trigger();
     }
     _scoreRollTimer -= dt;
     if (_scoreRollTimer > 0) return;
@@ -70,6 +106,86 @@ extension _MatchGameHudInteractions on MatchGameHud {
     final remaining = target - shown;
     final step = math.min(remaining, math.max(7, (remaining * 0.28).ceil()));
     _rebuildScoreValue(shown + step);
+  }
+
+  /// 레벨 모드: 목표의 80% 이상이면 은근히 맥동하고, 넘어서는 순간 한 번 강조한다.
+  void _updateGoalHighlight() {
+    if (!game.isProgressionMode) {
+      _goalNear = false;
+      _goalReached = false;
+      return;
+    }
+    final target = game.progressionTargetScore;
+    if (target <= 0) return;
+    final ratio = game.board.score / target;
+    if (ratio >= 1) {
+      if (!_goalReached) {
+        _goalReached = true;
+        _goalPunch.trigger();
+      }
+    } else {
+      _goalReached = false;
+    }
+    _goalNear = !_goalReached && ratio >= 0.8;
+  }
+
+  /// 타임바 채움은 값이 튀지 않게 따라가고, 늘어난 순간에는 그 구간을 반짝인다.
+  void _updateTimeFill(double dt) {
+    if (!game.hasTimedClock) {
+      _timeFillRatio = null;
+      return;
+    }
+    final target = _timeRatio();
+    final shown = _timeFillRatio;
+    final previous = _lastTimeRatio;
+    _lastTimeRatio = target;
+    if (shown == null || previous == null) {
+      _timeFillRatio = target;
+      return;
+    }
+    // 보간값이 아닌 실제 값의 증가를 비교해 보너스당 한 번만 반짝인다.
+    if (target > previous + 0.00001) {
+      _timeBonusFrom = math.min(shown, previous);
+      _timeBonusTo = target;
+      _timeBonusPunch.trigger();
+    }
+    _timeFillRatio = shown + (target - shown) * math.min(1, dt * 9);
+  }
+
+  void _updateItemUseFeedback() {
+    if (!game.usesPhase2Inventory) return;
+    for (final item in ItemKind.values) {
+      final quantity = game.runInventory.quantityOf(item);
+      final previous = _itemQuantities[item.index];
+      if (previous >= 0 && quantity < previous) {
+        _usedItem = item;
+        _itemUsePunch.trigger();
+      }
+      _itemQuantities[item.index] = quantity;
+    }
+  }
+
+  /// 콤보가 도는 동안에만 달아오르고, 끝나면 가라앉는다.
+  void _updateComboHeat(double dt) {
+    final state = game.board.state;
+    final running = state != 'idle' && state != 'gameover';
+    final combo = running ? game.board.combo : 0;
+    final target = combo >= 7
+        ? 1.0
+        : combo >= 5
+        ? 0.7
+        : combo >= 3
+        ? 0.45
+        : 0.0;
+    if (target > 0) {
+      _comboHeatColor = combo >= 7
+          ? const Color(0xFFFF4D4D)
+          : combo >= 5
+          ? const Color(0xFFFF8A3D)
+          : const Color(0xFFFFC14D);
+    }
+    _comboHeat += (target - _comboHeat) * math.min(1, dt * 6);
+    if (_comboHeat < 0.01) _comboHeat = 0;
   }
 
   void _renderHud(Canvas canvas) {
@@ -201,22 +317,27 @@ extension _MatchGameHudInteractions on MatchGameHud {
       }
     }
     if (_pauseRect.contains(o)) {
+      _pressButton(_pauseRect, withSound: true);
       game.dismissHint();
       onPausePressed();
       return true;
     }
     if (_hintRect.contains(o)) {
+      // 힌트는 성공했을 때 게임 쪽에서 버튼음을 낸다.
+      _pressButton(_hintRect);
       onHintPressed();
       return true;
     }
     if (onRankingPressed != null &&
         _rankingRect.width > 0 &&
         _rankingRect.contains(o)) {
+      _pressButton(_rankingRect, withSound: true);
       game.dismissHint();
       onRankingPressed!();
       return true;
     }
     if (_tutorialRect.contains(o)) {
+      _pressButton(_tutorialRect, withSound: true);
       game.dismissHint();
       onTutorialPressed();
       return true;
@@ -234,10 +355,35 @@ extension _MatchGameHudInteractions on MatchGameHud {
     }
     for (final entry in _itemRects.entries) {
       if (entry.value.contains(o)) {
+        // 아이템 경로는 게임 쪽에서 성공·실패에 맞는 소리를 낸다.
+        _pressButton(entry.value);
         game.usePhaseOneItem(entry.key);
         return true;
       }
     }
     return false;
+  }
+
+  void _tickPausedButtonPress(Duration elapsed) {
+    _pressPunch.value = math.max(0, 1 - elapsed.inMicroseconds / 1000000 * 6.5);
+    if (!_pressPunch.isActive) {
+      _pressedRect = null;
+      _pressTicker?.stop();
+    }
+    if (game.isAttached) game.renderBox.markNeedsPaint();
+  }
+
+  /// 누른 버튼이 짧게 눌렸다 돌아온다. 소리가 없는 버튼에만 버튼음을 붙인다.
+  void _pressButton(Rect rect, {bool withSound = false}) {
+    _pressedRect = rect;
+    _pressPunch.trigger();
+    // 메뉴가 게임 루프를 즉시 멈춰도 눌림만 끝까지 그린다. 게임 update는 호출하지 않는다.
+    if (game.isAttached) {
+      _pressTicker?.stop();
+      (_pressTicker ??= Ticker(_tickPausedButtonPress)).start();
+    }
+    if (withSound) {
+      SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    }
   }
 }

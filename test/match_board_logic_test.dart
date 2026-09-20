@@ -284,6 +284,7 @@ void main() {
       board.setGem(3, 4, board.createGem(3, 4, 6, GemKind.normal));
 
       final swapped = board.trySwap(2, 0, 3, 0);
+      board.update(MatchBoardLogic.swapSettleDelay);
       final removalSet = board.pendingRemovalSet!;
 
       expect(swapped, isTrue);
@@ -302,6 +303,32 @@ void main() {
     },
   );
 
+  test('a valid swap settles before the removal phase starts', () {
+    final board = _stableZoneMatchBoard();
+
+    expect(board.trySwap(6, 0, 7, 0), isTrue);
+    expect(board.state, 'swapSettle');
+    expect(board.stageTimer, 0.12);
+    expect(board.score, 0);
+    expect(board.pendingRemovalSet, isNull);
+    expect(board.trySwap(6, 1, 6, 2), isFalse);
+    expect(board.removeSingleCellForItem(0, 0), isFalse);
+
+    board.update(0.12 + 0.001);
+
+    expect(board.state, 'removing');
+    expect(board.stageTimer, MatchBoardLogic.removeDelay);
+    expect(board.stats.validSwaps, 1);
+    expect(board.pendingRemovalSet, containsPair('7:0', true));
+    expect(board.pendingRemovalSet, containsPair('7:1', true));
+    expect(board.pendingRemovalSet, containsPair('7:2', true));
+
+    board.update(MatchBoardLogic.removeDelay + 0.001);
+
+    expect(board.score, 100);
+    expect(board.state, 'falling');
+  });
+
   test('settled gems can swap while board is resolving', () {
     for (final state in const ['falling', 'refilling', 'checking']) {
       final board = _stableZoneMatchBoard();
@@ -311,6 +338,8 @@ void main() {
       final swapped = board.trySwap(6, 0, 7, 0);
 
       expect(swapped, isTrue, reason: state);
+      expect(board.state, 'swapSettle', reason: state);
+      board.update(MatchBoardLogic.swapSettleDelay);
       expect(board.state, 'removing', reason: state);
       expect(board.stageTimer, MatchBoardLogic.removeDelay, reason: state);
       expect(board.stats.validSwaps, 1, reason: state);

@@ -14,13 +14,10 @@ extension _SpecialEffectBurstFlameDrawing on SpecialEffectBurst {
         canvas,
         center,
         radius * 0.92,
-        [
-          Colors.white.withValues(alpha: 0.34 * fade),
-          SpecialEffectBurst._hotYellow.withValues(alpha: 0.48 * fade),
-          SpecialEffectBurst._hotOrange.withValues(alpha: 0.23 * fade),
-          Colors.transparent,
-        ],
-        const [0.0, 0.14, 0.54, 1.0],
+        GlowRadial.bomb,
+        Colors.white.withValues(alpha: 0.34 * fade),
+        SpecialEffectBurst._hotYellow.withValues(alpha: 0.48 * fade),
+        SpecialEffectBurst._hotOrange.withValues(alpha: 0.23 * fade),
       );
     }
 

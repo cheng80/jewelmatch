@@ -2,6 +2,7 @@ part of 'match_board_logic.dart';
 
 extension MatchBoardUpdate on MatchBoardLogic {
   void _updateImpl(double dt) {
+    _updateIdleHint(dt);
     if (inputLocked && !introFillInProgress) {
       lockTimer -= dt;
       if (lockTimer <= 0) {
@@ -23,6 +24,33 @@ extension MatchBoardUpdate on MatchBoardLogic {
       }
     } else {
       _updateGemTweens(dt);
+    }
+  }
+
+  void _updateIdleHint(double dt) {
+    if (!idleHintsEnabled ||
+        state != 'idle' ||
+        inputLocked ||
+        introFillInProgress ||
+        _invalidDragGem != null ||
+        _invalidDragReturnGem != null) {
+      idleHintElapsed = 0;
+      if (_automaticHintVisible) clearHint();
+      return;
+    }
+    if (_hintA != null) return;
+    for (final row in cells) {
+      for (final gem in row) {
+        if (gem != null && (!_isGemVisuallySettled(gem) || gem.bumpT >= 0)) {
+          idleHintElapsed = 0;
+          return;
+        }
+      }
+    }
+    final previous = idleHintElapsed;
+    idleHintElapsed += dt;
+    if (previous < 5 && idleHintElapsed >= 5) {
+      _automaticHintVisible = showHint();
     }
   }
 
@@ -76,6 +104,20 @@ extension MatchBoardUpdate on MatchBoardLogic {
           if (identical(gem, _invalidDragGem)) continue;
           if (identical(gem, _invalidDragReturnGem)) {
             _updateInvalidDragReturn(gem, dt);
+            continue;
+          }
+          if (gem.bumpT >= 0) {
+            gem.bumpT += dt;
+            final p = (gem.bumpT / 0.18).clamp(0.0, 1.0);
+            final offset = sin(p * pi) * (1 - p * 0.35);
+            gem.x = gem.targetX + gem.bumpX * offset;
+            gem.y = gem.targetY + gem.bumpY * offset;
+            if (p >= 1) {
+              gem.bumpT = -1;
+              gem.x = gem.targetX;
+              gem.y = gem.targetY;
+            }
+            _tickGemJuice(gem, dt);
             continue;
           }
           final s = min(1.0, dt * MatchBoardLogic.tweenSpeed);

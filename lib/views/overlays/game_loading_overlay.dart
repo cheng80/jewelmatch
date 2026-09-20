@@ -24,7 +24,18 @@ class _GameLoadingOverlayState extends State<GameLoadingOverlay>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
-    )..repeat();
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller.stop();
+      _controller.value = 1;
+    } else if (!_controller.isAnimating) {
+      _controller.forward();
+    }
   }
 
   @override
@@ -84,7 +95,7 @@ class _GameLoadingOverlayState extends State<GameLoadingOverlay>
                 const SizedBox(
                   width: 34,
                   height: 34,
-                  child: CircularProgressIndicator(strokeWidth: 3.2),
+                  child: Icon(Icons.hourglass_top_rounded),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -116,7 +127,7 @@ class _GameLoadingOverlayState extends State<GameLoadingOverlay>
           boxShadow: [
             BoxShadow(
               color: Colors.white.withValues(alpha: 0.12 * pulse),
-              blurRadius: 10 + pulse * 10,
+              blurRadius: 14,
             ),
           ],
         ),

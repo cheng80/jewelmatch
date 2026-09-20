@@ -5,23 +5,23 @@ extension _SpecialEffectBurstLightDrawing on SpecialEffectBurst {
     Canvas canvas,
     Offset center,
     double radius,
-    List<Color> colors,
-    List<double> stops,
-  ) {
+    GlowRadial profile,
+    Color c0,
+    Color c1,
+    Color c2, [
+    Color c3 = Colors.transparent,
+  ]) {
     if (_glowScale <= 0) return;
-    final glowColors = _glowScale >= 1
-        ? colors
-        : [
-            for (final color in colors)
-              color.withValues(alpha: color.a * _glowScale),
-          ];
-    _fillPaint
-      ..maskFilter = null
-      ..shader = ui.Gradient.radial(center, radius, glowColors, stops);
-    canvas.drawCircle(center, radius, _fillPaint);
-    _fillPaint
-      ..shader = null
-      ..maskFilter = null;
+    _bakedGlow.radial(
+      canvas,
+      profile,
+      center,
+      radius,
+      c0.withValues(alpha: c0.a * _glowScale),
+      c1.withValues(alpha: c1.a * _glowScale),
+      c2.withValues(alpha: c2.a * _glowScale),
+      c3.withValues(alpha: c3.a * _glowScale),
+    );
   }
 
   void _drawLightning(
@@ -35,33 +35,39 @@ extension _SpecialEffectBurstLightDrawing on SpecialEffectBurst {
     int segments = 9,
   }) {
     if ((start - end).distance < 1) return;
-    final path = Path()..moveTo(start.dx, start.dy);
+    final path = _lightningPath
+      ..reset()
+      ..moveTo(start.dx, start.dy);
     final delta = end - start;
     final normal = Offset(-delta.dy, delta.dx) / delta.distance;
-    for (var i = 1; i < segments; i++) {
+    var previous = start;
+    for (var i = 1; i <= segments; i++) {
       final f = i / segments;
       final jitter =
           sin(seed * 12.989 + i * 4.21 + t * pi * 5) * tileSize * 0.12;
-      final p = start + delta * f + normal * jitter;
+      final p = i == segments ? end : start + delta * f + normal * jitter;
       path.lineTo(p.dx, p.dy);
-    }
-    path.lineTo(end.dx, end.dy);
-
-    if (glow && _glowScale > 0) {
-      _paint
-        ..maskFilter = SpecialEffectBurst._glow
-        ..strokeWidth = tileSize * 0.20
-        ..color = SpecialEffectBurst._hotYellow.withValues(
-          alpha: 0.26 * fade * _glowScale,
+      if (glow && _glowScale > 0) {
+        _bakedGlow.line(
+          canvas,
+          previous,
+          p,
+          tileSize * 0.20,
+          SpecialEffectBurst._hotYellow.withValues(
+            alpha: 0.26 * fade * _glowScale,
+          ),
         );
-      canvas.drawPath(path, _paint);
-      _paint
-        ..maskFilter = SpecialEffectBurst._glow
-        ..strokeWidth = tileSize * 0.14
-        ..color = SpecialEffectBurst._electricBlue.withValues(
-          alpha: 0.30 * fade * _glowScale,
+        _bakedGlow.line(
+          canvas,
+          previous,
+          p,
+          tileSize * 0.14,
+          SpecialEffectBurst._electricBlue.withValues(
+            alpha: 0.30 * fade * _glowScale,
+          ),
         );
-      canvas.drawPath(path, _paint);
+      }
+      previous = p;
     }
     _paint
       ..maskFilter = null
@@ -75,7 +81,7 @@ extension _SpecialEffectBurstLightDrawing on SpecialEffectBurst {
   }
 
   void _drawStarCore(Canvas canvas, Offset center, double radius, double fade) {
-    final path = Path();
+    final path = _starPath..reset();
     for (var i = 0; i < 16; i++) {
       final r = i.isEven ? radius * 1.45 : radius * 0.48;
       final angle = -pi / 2 + i * pi / 8;
@@ -88,18 +94,26 @@ extension _SpecialEffectBurstLightDrawing on SpecialEffectBurst {
     }
     path.close();
     if (_glowScale > 0) {
-      _fillPaint
-        ..maskFilter = SpecialEffectBurst._glow
-        ..color = SpecialEffectBurst._hotYellow.withValues(
+      _bakedGlow.draw(
+        canvas,
+        GlowShape.star,
+        center,
+        radius / 32,
+        radius / 32,
+        SpecialEffectBurst._hotYellow.withValues(
           alpha: 0.42 * fade * _glowScale,
-        );
-      canvas.drawPath(path, _fillPaint);
-      _fillPaint
-        ..maskFilter = SpecialEffectBurst._glow
-        ..color = SpecialEffectBurst._electricBlue.withValues(
+        ),
+      );
+      _bakedGlow.draw(
+        canvas,
+        GlowShape.star,
+        center,
+        radius / 32,
+        radius / 32,
+        SpecialEffectBurst._electricBlue.withValues(
           alpha: 0.62 * fade * _glowScale,
-        );
-      canvas.drawPath(path, _fillPaint);
+        ),
+      );
     }
     _fillPaint
       ..maskFilter = null
@@ -124,13 +138,10 @@ extension _SpecialEffectBurstLightDrawing on SpecialEffectBurst {
         canvas,
         center,
         radius,
-        [
-          Colors.white.withValues(alpha: 0.22 * fade),
-          SpecialEffectBurst._hotYellow.withValues(alpha: 0.20 * fade),
-          color.withValues(alpha: 0.18 * fade),
-          Colors.transparent,
-        ],
-        const [0.0, 0.34, 0.62, 1.0],
+        GlowRadial.cell,
+        Colors.white.withValues(alpha: 0.22 * fade),
+        SpecialEffectBurst._hotYellow.withValues(alpha: 0.20 * fade),
+        color.withValues(alpha: 0.18 * fade),
       );
     }
   }

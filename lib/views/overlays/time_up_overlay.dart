@@ -16,6 +16,7 @@ import '../../theme/jewel_candy_lumina_theme.dart';
 import '../../vm/ranking_notifier.dart';
 import '../../widgets/lumina_buttons.dart';
 import '../../widgets/lumina_overlay_card.dart';
+import '../../widgets/overlay_motion.dart';
 
 part 'time_up_overlay_sections.dart';
 
@@ -26,8 +27,14 @@ class TimeUpOverlay extends ConsumerStatefulWidget {
     required this.game,
     required this.adService,
     required this.adRewardPolicy,
+    this.previousBestScore,
+    this.previousBestLevel,
+    this.onRoundRestart,
   });
   final MatchBoardGame game;
+  final int? previousBestScore;
+  final int? previousBestLevel;
+  final VoidCallback? onRoundRestart;
   final AdService adService;
   final AdRewardPolicy adRewardPolicy;
 
@@ -47,6 +54,7 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
   bool _showPanel = false;
   bool _showingAd = false;
   String? _adMessage;
+  bool _isNewRecord = false;
 
   @override
   void initState() {
@@ -78,9 +86,30 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
 
     Future.delayed(_panelDelay, () {
       if (!mounted) return;
-      setState(() => _showPanel = true);
+      setState(() {
+        _isNewRecord = _readIsNewRecord();
+        _showPanel = true;
+      });
       _submitScore();
     });
+  }
+
+  bool _readIsNewRecord() {
+    if (widget.previousBestScore == null) return false;
+    if (widget.game.isProgressionMode) {
+      final previousLevel = widget.previousBestLevel;
+      if (previousLevel == null) return false;
+      if (widget.game.progressionLevel != previousLevel) {
+        return widget.game.progressionLevel > previousLevel;
+      }
+    }
+    return widget.game.board.score > widget.previousBestScore!;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) _titleCtrl.value = 1;
   }
 
   void _submitScore() {
@@ -136,6 +165,7 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
     );
     if (granted) {
       ref.read(rankingProvider.notifier).reset();
+      showAdSuccessFeedback(context, context.tr('continueGame'));
       widget.game.continueStageAfterAd();
     } else {
       SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
@@ -149,31 +179,43 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
 
   @override
   Widget build(BuildContext context) {
-    if (!_showPanel) {
+    if (!_showPanel && !MediaQuery.disableAnimationsOf(context)) {
       return _TimeUpIntroTitle(opacity: _titleOpacity, scale: _titleScale);
     }
 
-    return _TimeUpResultPanel(
-      game: widget.game,
-      adService: widget.adService,
-      canContinueWithAd:
-          widget.game.isProgressionMode &&
-          widget.adService.rewardedState != RewardedAdState.unavailable &&
-          widget.adRewardPolicy.canContinueStage(widget.game.stageAttemptId),
-      showingAd: _showingAd,
-      adMessage: _adMessage,
-      onContinueWithAd: _continueWithAd,
-      onRetryRanking: _submitScore,
-      onRetry: () {
-        SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-        ref.read(rankingProvider.notifier).reset();
-        widget.game.restartRound();
-      },
-      onExit: () {
-        SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-        ref.read(rankingProvider.notifier).reset();
-        context.go(RoutePaths.title);
-      },
+    // Reduced motion reveals the final visuals immediately. Actions retain the
+    // existing 1900ms availability, so an early retry cannot bypass submission.
+    return ExcludeFocus(
+      excluding: !_showPanel,
+      child: IgnorePointer(
+        ignoring: !_showPanel,
+        child: _TimeUpResultPanel(
+          game: widget.game,
+          isNewRecord: _showPanel ? _isNewRecord : _readIsNewRecord(),
+          adService: widget.adService,
+          canContinueWithAd:
+              widget.game.isProgressionMode &&
+              widget.adService.rewardedState != RewardedAdState.unavailable &&
+              widget.adRewardPolicy.canContinueStage(
+                widget.game.stageAttemptId,
+              ),
+          showingAd: _showingAd,
+          adMessage: _adMessage,
+          onContinueWithAd: _continueWithAd,
+          onRetryRanking: _submitScore,
+          onRetry: () {
+            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+            ref.read(rankingProvider.notifier).reset();
+            widget.onRoundRestart?.call();
+            widget.game.restartRound();
+          },
+          onExit: () {
+            SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+            ref.read(rankingProvider.notifier).reset();
+            context.go(RoutePaths.title);
+          },
+        ),
+      ),
     );
   }
 }

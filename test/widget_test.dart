@@ -335,6 +335,8 @@ void main() {
       0,
     );
 
+    expect(game.board.state, 'swapSettle');
+    game.board.update(MatchBoardLogic.swapSettleDelay);
     expect(game.board.state, 'removing');
     expect(game.board.stageTimer, MatchBoardLogic.removeDelay);
     expect(game.board.pendingRemovalSet, containsPair('7:0', true));

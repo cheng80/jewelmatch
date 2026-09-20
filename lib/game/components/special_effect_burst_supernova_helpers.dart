@@ -20,13 +20,10 @@ extension _SpecialEffectBurstSupernovaDrawing on SpecialEffectBurst {
       canvas,
       center,
       radius * 0.86,
-      [
-        Colors.white.withValues(alpha: 0.34 * fade),
-        SpecialEffectBurst._hotYellow.withValues(alpha: 0.34 * fade),
-        baseColor.withValues(alpha: 0.10 * fade),
-        Colors.transparent,
-      ],
-      const [0.0, 0.20, 0.56, 1.0],
+      GlowRadial.supernova,
+      Colors.white.withValues(alpha: 0.34 * fade),
+      SpecialEffectBurst._hotYellow.withValues(alpha: 0.34 * fade),
+      baseColor.withValues(alpha: 0.10 * fade),
     );
     _drawExplosionCloud(canvas, center, radius * 0.58, t, fade);
     _drawPlasmaArcs(canvas, center, radius, t, fade);

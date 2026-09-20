@@ -18,7 +18,14 @@ extension MatchBoardGameTiming on MatchBoardGame {
         floored <= MatchBoardGame.timedLowTimeTickMaxSeconds) {
       if (_lastFlooredSecondForTimeTic >= 0 &&
           floored < _lastFlooredSecondForTimeTic) {
-        SoundManager.playSfx(AssetPaths.sfxTimeTic);
+        // 10초에서 1초로 갈수록 반음씩 올려 시간 압박을 준다.
+        SoundManager.playSfx(
+          AssetPaths.sfxTimeTic,
+          pitchSemitones: SfxPitch.forLowTimeTick(
+            floored,
+            fromSeconds: MatchBoardGame.timedLowTimeTickMaxSeconds,
+          ),
+        );
       }
     }
     _lastFlooredSecondForTimeTic = floored;
@@ -57,6 +64,7 @@ extension MatchBoardGameTiming on MatchBoardGame {
     }
     final applied = min(seconds.toDouble(), room);
     timeRemaining += applied;
+    if (_effectPoolsReady) _juiceLayer.onTimeBonus(applied);
   }
 
   int _scoreForBestSave() {

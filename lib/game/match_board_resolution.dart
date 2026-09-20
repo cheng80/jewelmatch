@@ -98,6 +98,7 @@ extension MatchBoardResolution on MatchBoardLogic {
             GemKind.normal,
             spawnOffsetRows: missing,
           );
+          gem.juiceRefillPending = true;
           setGem(row, col, gem);
           spawned++;
           missing--;
@@ -118,6 +119,7 @@ extension MatchBoardResolution on MatchBoardLogic {
     pendingRemovalSet = removalSet;
     state = 'removing';
     stageTimer = MatchBoardLogic.removeDelay;
+    onRemovalStarted?.call(removalSet);
   }
 
   bool _beginNextResolutionCycleImpl() {
@@ -138,6 +140,19 @@ extension MatchBoardResolution on MatchBoardLogic {
 
     final mi = pendingMoveInfo;
     final spawns = classifyMatchGroups(matchData, mi?.movedA, mi?.movedB);
+    var longest = 3;
+    for (final group in matchData.groups) {
+      longest = max(longest, group.length);
+    }
+    removalJuicePattern = spawns.any((s) => s.kind == GemKind.star)
+        ? MatchJuicePattern.cross
+        : longest >= 6
+        ? MatchJuicePattern.sixPlus
+        : longest == 5
+        ? MatchJuicePattern.five
+        : longest == 4
+        ? MatchJuicePattern.four
+        : MatchJuicePattern.normal;
     var removalSet = buildRemovalSet(matchData, spawns);
     final queue = buildSpecialQueue(removalSet);
 
@@ -146,6 +161,7 @@ extension MatchBoardResolution on MatchBoardLogic {
     }
     applySpawnInfo(spawns);
     _convergeOnSpawns(matchData, spawns, removalSet);
+    if (spawns.isNotEmpty) onSpecialsBorn?.call(spawns);
     activateSpecials(removalSet, queue);
     pendingMoveInfo = null;
     _startRemovalPhaseImpl(removalSet);
@@ -205,6 +221,7 @@ extension MatchBoardResolution on MatchBoardLogic {
     List<MatchChainItem> queue,
     String label,
   ) {
+    removalJuicePattern = MatchJuicePattern.normal;
     combo = 1;
     lastCombo = 1;
     if (maxCombo < 1) {
@@ -218,6 +235,7 @@ extension MatchBoardResolution on MatchBoardLogic {
   bool _removeSingleCellForItemImpl(int row, int col) {
     if (inputLocked || state != 'idle' || !isInside(row, col)) return false;
     if (getGem(row, col) == null) return false;
+    removalJuicePattern = MatchJuicePattern.normal;
     combo = 1;
     lastCombo = 1;
     if (maxCombo < 1) {
@@ -324,6 +342,19 @@ extension MatchBoardResolution on MatchBoardLogic {
   }
 
   void _advanceResolutionStepImpl() {
+    if (state == 'swapSettle') {
+      final move = pendingMoveInfo;
+      if (move == null) return;
+      for (final cell in [move.movedA, move.movedB]) {
+        final gem = getGem(cell.x, cell.y);
+        if (gem != null) {
+          gem.x = gem.targetX;
+          gem.y = gem.targetY;
+        }
+      }
+      resolveMatchCascade(move);
+      return;
+    }
     if (state == 'removing') {
       _removeMarkedGemsImpl(pendingRemovalSet ?? {});
       state = 'falling';

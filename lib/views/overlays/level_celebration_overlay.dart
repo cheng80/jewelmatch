@@ -6,6 +6,7 @@ import '../../game/match_board_game.dart';
 import '../../resources/asset_paths.dart';
 import '../../resources/sound_manager.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
+import 'level_clear_wave.dart';
 
 class LevelCelebrationOverlay extends StatefulWidget {
   const LevelCelebrationOverlay({super.key, required this.game});
@@ -21,28 +22,83 @@ class _LevelCelebrationOverlayState extends State<LevelCelebrationOverlay>
     with SingleTickerProviderStateMixin {
   late final AnimationController _confetti;
   late final List<_CelebrationParticle> _particles;
+  LevelClearWave? _clearWave;
+  late int _attempt;
+  bool _completed = false;
+
+  void _finish() {
+    if (!mounted || _completed) return;
+    _completed = true;
+    _confetti.stop();
+    if (widget.game.isCurrentLevelCelebration(_attempt)) {
+      widget.game.showLevelUpPopupAfterCelebration();
+    }
+  }
+
+  void _tick() {
+    if (!widget.game.isCurrentLevelCelebration(_attempt)) {
+      _confetti.stop();
+      return;
+    }
+    _clearWave?.advance(_confetti.value * 3);
+    if (_confetti.value == 1) _finish();
+  }
+
+  void _start() {
+    if (!mounted || _completed || _clearWave != null) return;
+    if (!widget.game.isCurrentLevelCelebration(_attempt)) return;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _finish();
+      return;
+    }
+    setState(() => _clearWave = LevelClearWave(widget.game));
+    SoundManager.playSfx(AssetPaths.sfxConfetti);
+    _confetti.forward(from: 0);
+  }
 
   @override
   void initState() {
     super.initState();
     _confetti = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2800),
+      duration: const Duration(milliseconds: 3000),
     );
+    _confetti.addListener(_tick);
     _particles = _buildParticles();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _confetti.forward(from: 0);
-      SoundManager.playSfx(AssetPaths.sfxConfetti);
-      Future<void>.delayed(const Duration(milliseconds: 3000), () {
-        if (mounted) widget.game.showLevelUpPopupAfterCelebration();
+    _attempt = widget.game.levelCelebrationAttempt;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _start());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _confetti.stop();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && MediaQuery.disableAnimationsOf(context)) _finish();
       });
-    });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant LevelCelebrationOverlay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.game == widget.game &&
+        _attempt == widget.game.levelCelebrationAttempt) {
+      return;
+    }
+    _confetti.stop();
+    _clearWave?.dispose();
+    _clearWave = null;
+    _completed = false;
+    _attempt = widget.game.levelCelebrationAttempt;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _start());
   }
 
   @override
   void dispose() {
     _confetti.dispose();
+    _clearWave?.dispose();
     super.dispose();
   }
 
@@ -55,23 +111,31 @@ class _LevelCelebrationOverlayState extends State<LevelCelebrationOverlay>
           fit: StackFit.expand,
           clipBehavior: Clip.none,
           children: [
-            Positioned.fill(
-              child: AnimatedBuilder(
-                animation: _confetti,
-                builder: (context, _) {
-                  return CustomPaint(
-                    painter: _UpwardConfettiPainter(
-                      progress: _confetti.value,
-                      particles: _particles,
-                    ),
-                  );
-                },
+            if (_clearWave != null && !MediaQuery.disableAnimationsOf(context))
+              Positioned.fill(child: LevelClearWaveView(wave: _clearWave!)),
+            if (!MediaQuery.disableAnimationsOf(context))
+              Positioned.fill(
+                child: AnimatedBuilder(
+                  animation: _confetti,
+                  builder: (context, _) {
+                    return CustomPaint(
+                      painter: _UpwardConfettiPainter(
+                        progress: (_confetti.value * 3000 / 2800).clamp(
+                          0.0,
+                          1.0,
+                        ),
+                        particles: _particles,
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
             Center(
               child: TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0.84, end: 1),
-                duration: const Duration(milliseconds: 420),
+                duration: MediaQuery.disableAnimationsOf(context)
+                    ? Duration.zero
+                    : const Duration(milliseconds: 420),
                 curve: Curves.elasticOut,
                 builder: (context, scale, child) =>
                     Transform.scale(scale: scale, child: child),

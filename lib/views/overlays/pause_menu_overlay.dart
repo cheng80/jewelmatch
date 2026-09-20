@@ -1,5 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+
+import '../../widgets/overlay_motion.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -15,9 +17,10 @@ import 'pause_menu_buttons.dart';
 
 /// 일시 정지 메뉴. 액션만 남기고 사운드 설정은 설정 화면으로 분리한다.
 class PauseMenuOverlay extends ConsumerWidget {
-  const PauseMenuOverlay({super.key, required this.game});
+  const PauseMenuOverlay({super.key, required this.game, this.onRoundRestart});
 
   final MatchBoardGame game;
+  final VoidCallback? onRoundRestart;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -66,7 +69,7 @@ class PauseMenuOverlay extends ConsumerWidget {
             panelColor: const Color(0xFF1F8274),
             onPressed: () {
               SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-              game.resumeGame();
+              runOverlayExit(context, () => game.resumeGame());
             },
           ),
           const SizedBox(height: 16),
@@ -76,7 +79,8 @@ class PauseMenuOverlay extends ConsumerWidget {
             panelColor: const Color(0xFF68468C),
             onPressed: () {
               SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-              game.restartRound();
+              onRoundRestart?.call();
+              runOverlayExit(context, () => game.restartRound());
             },
           ),
           const SizedBox(height: 16),

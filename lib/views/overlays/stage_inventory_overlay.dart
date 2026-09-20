@@ -12,6 +12,7 @@ import '../../resources/asset_paths.dart';
 import '../../resources/sound_manager.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../../widgets/lumina_overlay_card.dart';
+import '../../widgets/overlay_motion.dart';
 
 class StageInventoryOverlay extends StatefulWidget {
   const StageInventoryOverlay({
@@ -34,6 +35,7 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
   ItemKind? _selectedRefillItem;
   bool _showingAd = false;
   String? _adMessage;
+  bool _adGranted = false;
 
   @override
   void initState() {
@@ -68,6 +70,7 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
     setState(() {
       _showingAd = false;
       _selectedRefillItem = granted ? null : item;
+      _adGranted = granted;
       _adMessage = context.tr(granted ? 'adItemGranted' : 'adRewardNotGranted');
     });
     unawaited(widget.adService.preloadRewarded());
@@ -83,6 +86,7 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
       maxHeightFactor: 0.92,
       verticalMargin: 28,
       alignment: Alignment.center,
+      enterSlide: const Offset(0, 0.12),
       horizontalPadding: 24,
       verticalPadding: 24,
       innerPadding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
@@ -177,19 +181,17 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
           ],
           if (_adMessage != null) ...[
             const SizedBox(height: 6),
-            Text(
-              _adMessage!,
-              style: TextStyle(
-                color: JewelCandyLuminaTheme.textParchment,
-                fontSize: 12,
-              ),
+            AdResultBanner(
+              key: ValueKey(_adMessage),
+              success: _adGranted,
+              message: _adMessage!,
             ),
           ],
           const SizedBox(height: 14),
           _CloseInventoryButton(
             onPressed: () {
               SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-              game.closeStageInventory();
+              runOverlayExit(context, () => game.closeStageInventory());
             },
           ),
         ],
@@ -312,7 +314,10 @@ class _StageInventoryLoadout extends StatelessWidget {
   }
 }
 
-class _LoadoutSlotButton extends StatelessWidget {
+/// 장착 순간 슬롯이 튀고 아이콘이 자리 잡는다 (TP-063).
+///
+/// 처음 그릴 때는 튀지 않는다. 아이템이 바뀌어 들어올 때만 다시 돈다.
+class _LoadoutSlotButton extends StatefulWidget {
   const _LoadoutSlotButton({
     required this.slot,
     required this.selected,
@@ -326,32 +331,82 @@ class _LoadoutSlotButton extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
+  State<_LoadoutSlotButton> createState() => _LoadoutSlotButtonState();
+}
+
+class _LoadoutSlotButtonState extends State<_LoadoutSlotButton>
+    with SingleTickerProviderStateMixin {
+  static const Duration _popDuration = Duration(milliseconds: 420);
+
+  late final AnimationController _pop = AnimationController(
+    vsync: this,
+    duration: _popDuration,
+    value: 1,
+  );
+  late final Animation<double> _popScale = Tween<double>(
+    begin: 1.22,
+    end: 1,
+  ).animate(CurvedAnimation(parent: _pop, curve: Curves.elasticOut));
+
+  @override
+  void didUpdateWidget(_LoadoutSlotButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final item = widget.slot.item;
+    if (item == null || item == oldWidget.slot.item) return;
+    if (MediaQuery.disableAnimationsOf(context)) return;
+    _pop.forward(from: 0);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) _pop.value = 1;
+  }
+
+  @override
+  void dispose() {
+    _pop.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final slot = widget.slot;
     final item = slot.item;
-    return GestureDetector(
-      onTap: onTap,
-      child: _FramedItemCell(
-        selected: selected,
-        disabled: slot.locked,
-        newlyUnlocked: newlyUnlocked,
-        child: slot.locked
-            ? Icon(
-                Icons.lock_rounded,
-                color: JewelCandyLuminaTheme.outlineBright.withValues(
-                  alpha: 0.78,
-                ),
-                size: 24,
-              )
-            : item == null
-            ? Text(
-                context.tr('emptySlotShort'),
-                style: TextStyle(
-                  color: JewelCandyLuminaTheme.textMutedGold,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                ),
-              )
-            : _ItemIcon(item: item),
+    return RepaintBoundary(
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: ScaleTransition(
+          scale: _popScale,
+          child: _FramedItemCell(
+            selected: widget.selected,
+            disabled: slot.locked,
+            newlyUnlocked: widget.newlyUnlocked,
+            child: slot.locked
+                ? Icon(
+                    Icons.lock_rounded,
+                    color: JewelCandyLuminaTheme.outlineBright.withValues(
+                      alpha: 0.78,
+                    ),
+                    size: 24,
+                  )
+                : item == null
+                ? Text(
+                    context.tr('emptySlotShort'),
+                    style: TextStyle(
+                      color: JewelCandyLuminaTheme.textMutedGold,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  )
+                : OverlayEnterTransition(
+                    key: ValueKey(item),
+                    beginScale: 0.6,
+                    duration: const Duration(milliseconds: 220),
+                    child: _ItemIcon(item: item),
+                  ),
+          ),
+        ),
       ),
     );
   }
@@ -605,7 +660,9 @@ class _FramedItemCell extends StatelessWidget {
     final cell = AspectRatio(
       aspectRatio: 1,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 180),
         decoration: BoxDecoration(
           color:
               (disabled
@@ -636,7 +693,7 @@ class _FramedItemCell extends StatelessWidget {
         child: Padding(padding: const EdgeInsets.all(5), child: child),
       ),
     );
-    if (!newlyUnlocked) return cell;
+    if (!newlyUnlocked || MediaQuery.disableAnimationsOf(context)) return cell;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.9, end: 1),
       duration: const Duration(milliseconds: 720),

@@ -40,14 +40,22 @@ class _NativeSfxPool {
     return pool;
   }
 
-  void play(double volume) {
+  void play(double volume, double rate) {
     final slot = _slots.reserve();
     if (slot == null) return;
+    // 피치를 끈 동안에는 rate가 항상 1.0이라 setPlaybackRate를 건드리지 않는다.
+    final pitched = SfxPitch.nativePitchEnabled;
     unawaited(
       _slots.start(
         slot,
-        duration: _duration,
+        duration: pitched
+            ? Duration(microseconds: (_duration.inMicroseconds / rate).round())
+            : _duration,
         onStart: () async {
+          // 슬롯 재사용 시 이전 재생의 속도가 남지 않도록 매번 다시 쓴다.
+          if (pitched) {
+            await _players[slot.index].setPlaybackRate(rate);
+          }
           await _players[slot.index].setVolume(volume);
           await _players[slot.index].resume();
         },

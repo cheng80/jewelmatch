@@ -10,6 +10,7 @@ extension MatchBoardGameVfx on MatchBoardGame {
     final events = board.consumeSpecialEffectEvents();
     if (events.isEmpty || board.tileSize <= 0) return;
 
+    _juiceLayer.onSpecialsActivated(events);
     for (final event in events) {
       _boardShake.queue(event.shake);
       final color =
@@ -59,14 +60,35 @@ extension MatchBoardGameVfx on MatchBoardGame {
     int combo,
   ) {
     // SFX: 특수 보석 > 4+매치 > 콤보 > 일반 매치 순으로 1개만 재생.
+    // 피치는 콤보 단계마다 반음씩 오르고, 4+매치는 매치 크기 등급만큼 더 오른다.
+    // 등급은 이번 단계에서 태어난 특수 보석으로 읽는다(= 특수 보석 탄생음 차등).
+    final created = board.stats.specialCreatedByKind;
+    final tier = matchSfxTierTracker.read(
+      owner: board.stats,
+      star: created[GemKind.star] ?? 0,
+      hyper: created[GemKind.hyper] ?? 0,
+      supernova: created[GemKind.supernova] ?? 0,
+    );
     if (hasSpecial) {
-      SoundManager.playSfx(AssetPaths.sfxSpecialGem);
-    } else if (bigMatch) {
-      SoundManager.playSfx(AssetPaths.sfxBigMatch);
+      SoundManager.playSfx(
+        AssetPaths.sfxSpecialGem,
+        pitchSemitones: SfxPitch.forCombo(combo),
+      );
+    } else if (bigMatch || tier != MatchSfxTier.match4) {
+      SoundManager.playSfx(
+        AssetPaths.sfxBigMatch,
+        pitchSemitones: SfxPitch.forMatch(tier, combo),
+      );
     } else if (combo >= 2) {
-      SoundManager.playComboSfxDelayed(AssetPaths.sfxComboHit);
+      SoundManager.playComboSfxDelayed(
+        AssetPaths.sfxComboHit,
+        pitchSemitones: SfxPitch.forCombo(combo),
+      );
     } else {
-      SoundManager.playSfx(AssetPaths.sfxCollect);
+      SoundManager.playSfx(
+        AssetPaths.sfxCollect,
+        pitchSemitones: SfxPitch.forCombo(combo),
+      );
     }
 
     if (!_effectPoolsReady) return;
@@ -76,6 +98,7 @@ extension MatchBoardGameVfx on MatchBoardGame {
       hasSpecial: hasSpecial,
       combo: combo,
       gained: board.lastRemovalScore,
+      pattern: board.removalJuicePattern,
     );
     // 특수 발동은 자체 셰이크가 있다. 일반 매치는 큰 매치와 연쇄에서만 살짝 흔든다.
     if (!hasSpecial && (bigMatch || combo >= 3)) {

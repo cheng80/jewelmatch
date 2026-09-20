@@ -75,6 +75,26 @@ void installMatchBoardQaBridge(MatchBoardGame game) {
     }).toJS,
   );
 
+  // qaPerf 전용: T2 화면 검증도 실제 보드/인트로 경로를 통과한다.
+  web.window.setProperty(
+    '__jewelMatchDebugBoardFeedback'.toJS,
+    ((JSString action) {
+      final game = _installedGame;
+      if (game == null) return false.toJS;
+      switch (action.toDart) {
+        case 'noMoves':
+          game.debugShowNoMovesOverlay();
+        case 'shuffle':
+          game.shuffleBoard();
+        case 'specialBomb':
+          return game.triggerQaSpecialEffect(GemKind.bomb).toJS;
+        default:
+          return false.toJS;
+      }
+      return true.toJS;
+    }).toJS,
+  );
+
   web.window.setProperty(
     '__jewelMatchDebugSpecialEffects'.toJS,
     (() {
@@ -109,6 +129,10 @@ void uninstallMatchBoardQaBridge(MatchBoardGame game) {
   web.window.setProperty('__jewelMatchContinueLevelUp'.toJS, (() {}).toJS);
   web.window.setProperty('__jewelMatchDebugShowSlot3Unlock'.toJS, (() {}).toJS);
   web.window.setProperty('__jewelMatchDebugSpecialEffects'.toJS, (() {}).toJS);
+  web.window.setProperty(
+    '__jewelMatchDebugBoardFeedback'.toJS,
+    ((JSString _) => false.toJS).toJS,
+  );
   web.window.setProperty(
     '__jewelMatchDebugPerformHintMove'.toJS,
     (() => false.toJS).toJS,

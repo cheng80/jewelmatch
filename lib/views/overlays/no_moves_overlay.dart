@@ -1,6 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
+import '../../widgets/overlay_motion.dart';
+
 import '../../game/match_board_game.dart';
 import '../../resources/asset_paths.dart';
 import '../../resources/sound_manager.dart';
@@ -66,7 +68,7 @@ class NoMovesOverlay extends StatelessWidget {
             label: context.tr('shuffleBoard'),
             onPressed: () {
               SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-              game.shuffleBoard();
+              runOverlayExit(context, () => game.shuffleBoard());
             },
           ),
           const SizedBox(height: 14),
@@ -77,7 +79,7 @@ class NoMovesOverlay extends StatelessWidget {
             borderColor: JewelCandyLuminaTheme.outlineBright,
             onPressed: () {
               SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-              game.newBoard();
+              runOverlayExit(context, () => game.newBoard());
             },
           ),
           const SizedBox(height: 14),
