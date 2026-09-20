@@ -109,7 +109,7 @@
 - T4b는 타임업의 1900ms 제출 및 입력 시점, reduced motion의 즉시 표시를 함께 검증했다. 레벨 축하는 일반 3000ms, reduced motion 즉시 완료이며 시각 연출만 구동한다.
 - 최신 합본 근거였던 `/Users/cheng80/orca/workspaces/jewelmatch/_fx_orchestration/reports/verify_integrated_final.txt`는 `analyze 0`, `262 tests PASS`, Web build 0의 HISTORICAL 기록이다. 2026-09-20 16:24 KST 다른 세션에서 같은 작업트리를 재검증했고(`verify_claude_recheck.txt`, 같은 결과) 그 뒤 main에 병합했다. X2와 bomb 후속 변경으로 현재 기준에서는 STALE이다.
 - bomb E1 후속 리비전은 analyze 0, `274 tests PASS`, Web build 0을 남겼다. 이 결과도 해당 리비전의 HISTORICAL 기록이며 hyper/supernova E2 통합 검증을 포함하지 않는다.
-- Codex가 `fx-g2-sprites`를 재인수해 E2 구현과 실제 Flutter 렌더/전체279tests/analyze/Web build 검증을 완료했다. main 미반영 및 실기기 미검증 상태이며 상세는 11절이다.
+- Codex가 `fx-g2-sprites`를 재인수해 E2 구현과 실제 Flutter 렌더/전체279tests/analyze/Web build 검증을 완료했다. main `c3b64dd`에 병합했으며 실기기 미검증 상태다. 상세는 11절이다.
 
 - 합본 HUD 최종 진단(16:08 KST): 무손실 PNG의 추가 밝은 glyph 픽셀 0, 변한 픽셀은 confetti 색 합성으로 설명됐다. pause 150프레임 동안 game render/update 증가 0. 제품 소스 변경 없이 가설 기각. 근거: `_fx_orchestration/reports/T6_integrated_visual_fix.md`.
 
@@ -117,4 +117,4 @@
 - 기존 Orca G2 납품을 검수하고 동일 WT/구현 세션을 재사용했다. 각 효과는 1280×256, 256px 정수 셀 5칸, pivot128로 렌더한다. 효과별 캐시/실패 폴백과 공용 typed renderer를 사용하고 코드 타임라인으로 성장/회전/소멸한다.
 - bomb 곡선/배율과 세 효과 수명(.52/.60/.72초), 점수/보상/영향셀, supernova 십자 번개를 유지했다. 숨김 슬롯의 scale0으로 뒤 레이어가 사라지는 CPU Skia 문제를 실제픽셀로 재현하여 alpha0+가역변환으로 수정했다.
 - 전체279tests/Web release exit0. 초기 analyze의 테스트스타일 및 리뷰tmp 경고를 정리하고 최종 analyze exit0. 독립78관련회귀/4픽셀회귀 PASS, 데스크톱 보드캡처 확인. 보고서 `_fx_orchestration/reports/E2_review.md` 및 E2 검증 로그 참조.
-- fx-g2-sprites의 미커밋 상태이며 main 미반영. 실기기FPS/오디오/광고 미검증.21:20 기존Claude 인계예약.
+- 2026-09-20 19:54 KST: main `c3b64dd` 병합 후 analyze 0, 전체 279 tests PASS, Web release build 0을 재확인했다(`reports/verify_main_after_E2_merge.txt`). main과 feature의 tree 동일 및 clean 확인 후 `fx-g2-sprites` Worktree와 Orca 터미널 2개를 정리했다. 검증 자료는 `/Users/cheng80/orca/workspaces/jewelmatch/_fx_orchestration/backups_pre_cleanup/fx-g2-sprites-20260920-e2`에 보존했다. 실기기 FPS/오디오/광고 미검증, 21:20 기존 Claude main 인계 예약은 유지한다.

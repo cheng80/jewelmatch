@@ -2,7 +2,7 @@
 
 > 프로젝트 전체의 NOW. 다음 작업자 인계 문장은 HANDOFF.md에 둔다. 구현 상태와 검증 상태를 섞지 않는다.
 
-Updated: 2026-09-20 19:30 KST
+Updated: 2026-09-20 19:54 KST
 
 ## Current Phase
 Phase 3 — Stabilization (Phase 4 출시 값은 대기)
@@ -25,7 +25,7 @@ Phase 3 — Stabilization (Phase 4 출시 값은 대기)
 - [x] TASK-004d 합본 HUD 잔상 가설 진단: 추가 glyph 없음, 기존 confetti 겹침, 제품 수정 없음
 - [x] TASK-004e 다른 계열 교차 리뷰(X2) 결함 6건 수정과 main 병합
 - [x] TASK-004f bomb 범위 효과를 정지 그림 + 코드 타임라인 + 구운 글로우로 교체, main 병합
-- [x] TASK-004g hyper, supernova 레이어 전환 구현과 데스크톱 검증 완료 (fx-g2-sprites 미커밋, main 미반영)
+- [x] TASK-004g hyper, supernova 레이어 전환 구현과 데스크톱 검증 완료 (main `c3b64dd` 병합 및 작업 Worktree/Orca 세션 정리 완료)
 - [ ] TASK-004d 모바일 실기기 FPS 전후 비교, 장시간 WebView와 실제 광고 SDK 확인
 - [x] TASK-MIG-001 F1~T6 합본 analyze / test / web build 과거 통과 기록 보존. E2 데스크톱 검증은 완료, 실기기 스모크는 미실행
 
@@ -45,7 +45,7 @@ Phase 3 — Stabilization (Phase 4 출시 값은 대기)
 - ISSUE-005: 빈 App Store ID
 
 ## Implementation Status
-- 주요 기능: 3모드 매치-3, 특수 보석 탭 발동, 레벨 런 인벤토리 2차, 선택형 광고, 랭킹, 다국어. F1, T1, T2, T3, T4a, T4b, T5 연출 통합 상태. hyper/supernova 레이어 후속 E2는 fx-g2-sprites에서 구현과 데스크톱 검증을 완료했다(main 미반영). 버전 1.0.0+1
+- 주요 기능: 3모드 매치-3, 특수 보석 탭 발동, 레벨 런 인벤토리 2차, 선택형 광고, 랭킹, 다국어. F1, T1, T2, T3, T4a, T4b, T5 연출 통합 상태. hyper/supernova 레이어 후속 E2는 main `c3b64dd`에 반영했고 병합 후 데스크톱 검증을 통과했다. 버전 1.0.0+1
 - Release Readiness: 스토어 문서 초안과 채널 define은 있음. 운영 광고 그룹, Apple ID, URL, flavor 미입력. 장시간 모바일 웹 회귀 미완
 
 ## Verification Status
@@ -66,11 +66,11 @@ Phase 3 — Stabilization (Phase 4 출시 값은 대기)
 | Web 장시간 오디오/FPS | INCOMPLETE | HISTORICAL | 2026-08-23 이전 | PLAN-001 / ADR-004 원문 | UNKNOWN | 짧은 수동 확인만 통과. 장시간 카운터 없음. 원문부터 미완 |
 | Android/iOS store device | NOT_RUN | NONE | UNKNOWN | UNKNOWN | UNKNOWN | 출시 체크리스트 미완 |
 | Release build F1-T6 revision | PASS | HISTORICAL | 2026-09-20 15:53 KST | F1~T6 통합 리비전 | STALE | integrated_final Web build exit=0. 이후 X2와 bomb 후속 변경, 모바일/스토어 실기기 스모크는 별도 미실행 |
-| E2 hyper/supernova layer integration | PASS | RECHECKED | 2026-09-20 19:30 KST | `fx-g2-sprites` bce3490 + 미커밋 E2 | CURRENT | 전체279tests/Web build exit0, 최종 analyze exit0, 독립78회귀+픽셀4회귀와 실제보드캡처. 초기 analyze 실패는 리뷰 tmp 경고이며 정리 후 통과. 실기기 미검증 |
+| E2 hyper/supernova layer integration | PASS | RECHECKED | 2026-09-20 19:54 KST | main `c3b64dd` (후속 문서 갱신만 추가) | CURRENT | `verify_main_after_E2_merge.txt`: main 병합 후 analyze exit=0, 전체 279 tests PASS, Web release build exit=0. 병합 전 독립 78회귀+픽셀4회귀와 실제 보드 캡처도 확인. 실기기 미검증 |
 
 ## Next
-1. 검증 완료한 E2 미커밋 변경을 보존하고 21:20 기존 Claude에 인계. main 반영은 별도 후속 단계
-2. 실기기 FPS, 가독성, 오디오와 광고 흐름 확인
+1. 21:20 기존 Orca Claude main에 병합 완료 상태와 남은 실기기 검증을 인계. E2를 재적용하지 않는다
+2. 실기기 FPS, 가독성, 오디오와 광고 흐름 확인. iOS 15/16에서 연쇄와 저시간 틱의 피치 상승을 청취
 3. 모바일 실기기 `?fps=1` 전후 비교, 장시간 WebView 오디오/FPS와 실제 광고 SDK 확인
 4. PLAN-001 장시간 측정은 원문부터 INCOMPLETE. 별도 승인 작업이지 이관 공백 메우기가 아님
 5. STALE NAS/AIT를 현재 리비전으로 볼지는 별도 Task. 이관 완료 조건이 아님
