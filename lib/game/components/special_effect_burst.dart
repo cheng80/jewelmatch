@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
@@ -9,8 +10,10 @@ import 'package:flutter/services.dart';
 
 import '../match_board_logic.dart';
 import 'baked_glow_atlas.dart';
+import 'bomb_layer_timeline.dart';
 import '../../resources/asset_paths.dart';
 
+part 'special_effect_burst_bomb_layer_helpers.dart';
 part 'special_effect_burst_draw_helpers.dart';
 part 'special_effect_burst_explosion_helpers.dart';
 part 'special_effect_burst_flame_helpers.dart';
@@ -84,11 +87,16 @@ class SpecialEffectBurst extends PositionComponent {
   bool _active = false;
 
   final BakedGlowAtlas _bakedGlow = BakedGlowAtlas();
+  final _BombLayerRenderer _bombLayers = _BombLayerRenderer();
   final Path _lightningPath = Path();
   final Path _starPath = Path();
 
   @visibleForTesting
   bool get debugGlowReady => _bakedGlow.isReady;
+
+  /// bomb 레이어 아틀라스가 실제로 로드됐는지. 눈검증과 테스트용이다.
+  @visibleForTesting
+  static bool get debugBombLayerAtlasReady => _bombLayerAtlas != null;
 
   @override
   void onMount() {
@@ -108,6 +116,7 @@ class SpecialEffectBurst extends PositionComponent {
   static const _electricViolet = Color(0xFFC88DFF);
 
   static _SpecialAreaEffectAtlas? _areaEffectAtlas;
+  static _BombLayerAtlas? _bombLayerAtlas;
   static Future<void>? _areaEffectAtlasLoadFuture;
 
   int get _tier => performanceTier.clamp(0, 2);
@@ -144,6 +153,17 @@ class SpecialEffectBurst extends PositionComponent {
         final value = entry.value as Map<String, dynamic>;
         final imagePath = value['image'] as String;
         final image = await Flame.images.load(imagePath);
+        // 레이어 아틀라스를 쓰는 효과(bomb)는 공용 grid를 따르지 않는다.
+        final layerCellSize = value['layerCellSize'] as num?;
+        if (layerCellSize != null) {
+          _bombLayerAtlas = _BombLayerAtlas.validated(
+            image: image,
+            cellSize: layerCellSize,
+            layerCount: (value['layerCount'] as num?)?.toInt() ?? 0,
+            scale: (value['scale'] as num?)?.toDouble() ?? 0,
+          );
+          continue;
+        }
         final frameWidth = configuredFrameWidth ?? image.width / columns;
         final frameHeight = configuredFrameHeight ?? image.height / rows;
         final frames = <Rect>[];
@@ -173,6 +193,7 @@ class SpecialEffectBurst extends PositionComponent {
       _areaEffectAtlas = _SpecialAreaEffectAtlas(effects);
     } catch (_) {
       _areaEffectAtlas = const _SpecialAreaEffectAtlas({});
+      _bombLayerAtlas = null;
     }
   }
 

@@ -9,10 +9,10 @@
   },
   "effects": {
     "bomb": {
-      "image": "sprites/Special_Area_Bomb.png",
-      "scale": 4.05,
-      "centerOffsetX": -2.3,
-      "centerOffsetY": -2.1,
+      "image": "sprites/bomb_layers.png",
+      "layerCellSize": 256,
+      "layerCount": 5,
+      "scale": 3.4,
       "blend": "plus"
     },
     "hyper": {
