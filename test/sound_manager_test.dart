@@ -126,7 +126,14 @@ void main() {
   });
 
   test('웹 슬롯은 재생마다 preservesPitch와 playbackRate를 다시 쓴다', () {
-    expect(webSfxScript, contains('audio.preservesPitch = false;'));
+    // iOS 15/16은 webkit 접두사만 있어서 셋을 모두 끈다.
+    expect(
+      webSfxScript,
+      contains("'preservesPitch', 'webkitPreservesPitch', 'mozPreservesPitch'"),
+    );
+    expect(webSfxScript, contains('audio[key] = false;'));
+    // 셋 다 없으면 음높이는 그대로인데 속도만 빨라지므로 rate를 1로 둔다.
+    expect(webSfxScript, contains('supported && Number.isFinite(rate)'));
     expect(webSfxScript, contains('audio.playbackRate = safe;'));
     expect(
       webSfxScript,

@@ -77,9 +77,20 @@
 
   // 반음 상승은 playbackRate로 낸다. preservesPitch 기본값(true)이면 속도만 바뀌고
   // 피치가 유지되므로 재생마다 false로 다시 쓴다(ADR-004의 HTML Audio 4슬롯 그대로).
+  // 비접두사 속성은 Safari 17+에만 있다. iOS 15/16은 webkit 접두사를 쓴다.
+  // 셋 다 없으면 피치는 그대로인데 속도만 빨라지므로 rate를 1로 둔다.
+  const pitchKeys = ['preservesPitch', 'webkitPreservesPitch', 'mozPreservesPitch'];
   const applyRate = (audio, rate) => {
-    const safe = Number.isFinite(rate) && rate > 0 ? Math.min(2, Math.max(0.5, rate)) : 1;
-    audio.preservesPitch = false;
+    let supported = false;
+    for (const key of pitchKeys) {
+      if (key in audio) {
+        audio[key] = false;
+        supported = true;
+      }
+    }
+    const safe = supported && Number.isFinite(rate) && rate > 0
+      ? Math.min(2, Math.max(0.5, rate))
+      : 1;
     audio.playbackRate = safe;
     return safe;
   };
