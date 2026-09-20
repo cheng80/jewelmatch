@@ -52,7 +52,11 @@ class AssetPaths {
   static const String specialAreaEffectManifest =
       'sprites/special_area_effects.json';
 
-  /// Bomb 범위형 특수 이펙트 4×4 시트.
+  /// Bomb 범위형 특수 이펙트 레이어 아틀라스. 256px 정수 셀 5칸 가로 1행.
+  /// 칸 순서는 점화, 룬 고리, 불꽃 폭발, 회오리, 잔불이다.
+  static const String specialAreaEffectBombLayers = 'sprites/bomb_layers.png';
+
+  /// Bomb 범위형 특수 이펙트 4×4 시트. 레이어 아틀라스로 대체돼 더는 로드하지 않는다.
   static const String specialAreaEffectBomb = 'sprites/Special_Area_Bomb.png';
 
   /// Hyper 범위형 특수 이펙트 4×4 시트.
