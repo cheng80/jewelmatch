@@ -2,7 +2,7 @@
 
 > 프로젝트 전체의 NOW. 다음 작업자 인계 문장은 HANDOFF.md에 둔다. 구현 상태와 검증 상태를 섞지 않는다.
 
-Updated: 2026-09-20 16:50 KST
+Updated: 2026-09-20 19:00 KST
 
 ## Current Phase
 Phase 3 — Stabilization (Phase 4 출시 값은 대기)
@@ -23,6 +23,9 @@ Phase 3 — Stabilization (Phase 4 출시 값은 대기)
 - [x] TASK-004b 화면/오버레이 연출, 보석 피드백, 사운드 계층 및 blur 제거 통합, UI_UX 반영
 - [x] TASK-004c T6 레벨 클리어 시각 연출, reduced motion 즉시 완료 및 독립 리뷰 수정
 - [x] TASK-004d 합본 HUD 잔상 가설 진단: 추가 glyph 없음, 기존 confetti 겹침, 제품 수정 없음
+- [x] TASK-004e 다른 계열 교차 리뷰(X2) 결함 6건 수정과 main 병합
+- [x] TASK-004f bomb 범위 효과를 정지 그림 + 코드 타임라인 + 구운 글로우로 교체, main 병합
+- [ ] TASK-004g hyper, supernova 범위 효과를 같은 방식으로 교체 (낱장 생성 진행 중)
 - [ ] TASK-004d 모바일 실기기 FPS 전후 비교, 장시간 WebView와 실제 광고 SDK 확인
 - [x] TASK-MIG-001 최신 합본 analyze / test / web build 통과. 실기기 스모크는 미실행
 

@@ -2,7 +2,7 @@
 
 > 다음 작업자가 즉시 시작할 정보만 둔다. 프로젝트 전체 상태는 PROJECT_STATUS.md에 둔다.
 
-Updated: 2026-09-20 16:50 KST
+Updated: 2026-09-20 19:00 KST
 
 ## Current State
 문서 팩은 대체 가능(REPLACEABLE). 정본은 docs/. 이전 문서는 archive/docs/. F1~T6가 통합됐고 독립 리뷰의 입력 3건, 자원 해제와 릴리즈 퇴장 문제 2건을 수정했다. 검증 공백은 표에 남아 있다. 최종 합본 HUD 글자 중복 가설은 PNG 픽셀과 실제 렌더 진단에서 기각됐으며 기존 confetti 겹침으로 확인했다. 실기기 성능은 미검증이다.
@@ -14,6 +14,8 @@ Updated: 2026-09-20 16:50 KST
 - 2026-08-23 대체 가능성 점검 12항을 표준 팩만으로 통과. 이후 정본 경로를 docs/로 옮기고 이전 문서는 archive/docs/로 둠
 - 2026-09-20 F1, T1, T2, T3, T4a, T4b, T5, T6 통합 완료. T2가 F1 독립 검수의 입력 회귀 3건을 수정하고 회귀 테스트를 추가했으며 T5가 특수/HUD glow를 baked atlas로 전환
 - 최신 합본 검증 `verify_integrated_final.txt`: analyze 0, 262 tests PASS, Web build 0
+- 2026-09-20 다른 계열 교차 리뷰(X2)에서 확정된 결함 6건 수정을 main에 병합: 로딩 오버레이가 1.2초 뒤 멈추던 문제, iOS 15/16 Safari에서 피치 대신 배속만 바뀌던 문제(`webkitPreservesPitch`), 퇴장 고스트 해상도, 광고 결과 배너 위치, 웹 폴백 로그 rate, `CurvedAnimation` 해제
+- 2026-09-20 bomb 범위 효과를 16프레임 플립북에서 정지 그림 5장 + 코드 타임라인 + 구운 글로우 밑깔기로 교체(`bomb_layers.png` 1280×256, `bomb_layer_timeline.dart`). 정점 지름 약 3.1칸, 수명 0.52초 그대로, bomb 텍스처 6.00MiB → 1.25MiB. 병합 직전 검증: analyze 0, 274 tests PASS, Web build 0
 
 ## In Progress
 - Plan: `PLAN-004` 보드 연출 보강. F1, T1, T2, T3, T4a, T4b, T5, T6 구현과 통합 완료. 2026-09-20 통합 브랜치를 커밋해 main에 fast-forward 병합했다(로컬). push 여부는 `git status`로 확인한다
@@ -25,7 +27,8 @@ Updated: 2026-09-20 16:50 KST
 - Task: TASK-001c 실기기 30초 이상 카운터 보존
 
 ## Next Task
-1. 실기기 FPS, 가독성, 오디오와 광고 흐름 확인
+1. 실기기 FPS, 가독성, 오디오와 광고 흐름 확인. iOS 15/16 기기에서 연쇄와 저시간 틱의 피치가 실제로 오르는지 듣는다
+2. hyper와 supernova도 bomb과 같은 레이어 방식으로 넓힌다. 낱장은 sprite-gen으로 생성한다. 그 전까지 두 효과는 기존 1254px 플립북(`grid` 313.5) 그대로다. 더 이상 로드하지 않는 `Special_Area_Bomb.png`는 정리 후보다
 2. `?fps=1`로 모바일 실기기 FPS 전후 비교와 장시간 WebView 확인
 3. PLAN-001 실기기 장시간 측정 (원문부터 INCOMPLETE. 별도 승인 작업)
 4. 이전 문서는 archive/docs/에 있음. 삭제 여부는 별도 결정
