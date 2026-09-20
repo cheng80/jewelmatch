@@ -338,7 +338,10 @@ void _showOverlayExit(
         ancestor: overlay.context.findRenderObject(),
       );
       final size = Size(corner.dx - origin.dx, corner.dy - origin.dy);
-      final image = boundary.toImageSync(pixelRatio: 1);
+      // 기기 DPR로 찍어야 늘렸을 때 뭉개지지 않는다. 상한 2는 스냅샷 비용 때문이다.
+      final image = boundary.toImageSync(
+        pixelRatio: MediaQuery.devicePixelRatioOf(context).clamp(1.0, 2.0),
+      );
       late OverlayEntry entry;
       entry = OverlayEntry(
         builder: (_) => Positioned(
