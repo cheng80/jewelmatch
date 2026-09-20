@@ -2,12 +2,12 @@
 
 > 다음 작업자가 즉시 시작할 정보만 둔다. 프로젝트 전체 상태는 PROJECT_STATUS.md에 둔다.
 
-Updated: 2026-09-20 21:20 KST
+Updated: 2026-09-20 21:26 KST
 
 ## Current State
 최신 추가 변경: 중력을 제거한 매칭 파편의 초기 속도를 1.4배, 수명을 65%로 조정했다. 보석 위 유휴 반짝임 밝기는 2/3, 대각선 광택 스윕 속도는 80%다(한 칸 0.9초, 반복 10초). 최종 튜닝은 main에 반영하며 같은 제품 코드에서 analyze, 전체279tests, Web release build가 모두 통과했다. 개발 서버는 사용자 요청으로 정상 종료했고 8080 포트 리스너가 없음을 확인했다. 추가 실행 중인 구현/검증 프로세스는 없다.
 
-문서 팩은 대체 가능(REPLACEABLE). 정본은 docs/. 이전 문서는 archive/docs/. F1~T6가 통합됐고 독립 리뷰의 입력 3건, 자원 해제와 릴리즈 퇴장 문제 2건을 수정했다. 검증 공백은 표에 남아 있다. 최종 합본 HUD 글자 중복 가설은 PNG 픽셀과 실제 렌더 진단에서 기각됐으며 기존 confetti 겹침으로 확인했다. 실기기 성능은 미검증이다. E2 hyper/supernova 레이어 통합은 main `c3b64dd`에 병합했고 main 분석, 전체 279 tests, Web release build를 통과했다. `fx-g2-sprites` Worktree와 연결된 Orca 터미널 2개는 정리했다. 21:20 인계 대상인 기존 Claude main 세션은 자동 재개를 취소한 입력 대기 상태로 보존한다.
+문서 팩은 대체 가능(REPLACEABLE). 정본은 docs/. 이전 문서는 archive/docs/. F1~T6가 통합됐고 독립 리뷰의 입력 3건, 자원 해제와 릴리즈 퇴장 문제 2건을 수정했다. 검증 공백은 표에 남아 있다. 최종 합본 HUD 글자 중복 가설은 PNG 픽셀과 실제 렌더 진단에서 기각됐으며 기존 confetti 겹침으로 확인했다. 실기기 전체 검증은 미완이며 Android 단기 계측 결과는 아래 보고서를 따른다. E2 hyper/supernova 레이어 통합은 main `c3b64dd`에 병합했고 main 분석, 전체 279 tests, Web release build를 통과했다. `fx-g2-sprites` Worktree와 연결된 Orca 터미널 2개는 정리했다. 기존 Claude main 세션은 자동 재개를 취소한 입력 대기 상태로 보존하며, 재인계 예약도 사용자 요청으로 취소했다.
 
 ## Last Completed
 - 마이그레이션 가이드 기준으로 운영 칸을 이 팩에 맞춤
@@ -22,17 +22,17 @@ Updated: 2026-09-20 21:20 KST
 
 ## In Progress
 - Plan: `PLAN-004` 보드 연출 보강. F1, T1, T2, T3, T4a, T4b, T5, T6 구현과 통합 완료. 2026-09-20 통합 브랜치를 커밋해 main에 fast-forward 병합했다(로컬). push 여부는 `git status`로 확인한다
-- Task: 실기기 검증 인계. 합본 HUD 진단은 glyph 중복 근거 없음으로 마감했다.
-- Task: E2는 main 병합 및 작업 세션 정리 완료. 21:20 기존 Claude main에 현재 main과 검증 보고서를 인계한다.
+- Task: 실기기 검증. 합본 HUD 진단은 glyph 중복 근거 없음으로 마감했다.
+- Task: E2는 main 병합 및 작업 세션 정리 완료. Claude 재인계는 취소됐으며 Codex가 현재 main에서 계속한다.
 - 주의: T2의 균등 gem atlas 제출은 batch지만 여러 행의 착지 squash는 `drawImageRect` fallback으로 draw call이 9회를 넘을 수 있다. T5 special glow는 약 4.5MiB 공유 이미지이며 T4a HUD interactions와 painters 구조를 유지한다
 - 주의: T4b 타임업은 reduced motion에서도 결과를 즉시 읽히게 하되 1900ms 제출과 버튼 활성 시점을 유지한다. ego 캡처 문자 중복은 headless에서 재현되지 않아 원인 미확정
-- 주의: 모바일 실기기 FPS, 장시간 WebView, 실제 광고 SDK, 실제 기기 오디오 청취는 아직 검증하지 않았다
+- 주의: Android Chrome 단기 FPS 계측만 수행했다. 장시간 WebView, iPhone, 실제 광고 SDK, 실제 기기 오디오 청취는 미검증이다
 - E2 검증: 전체279tests와 Web build exit0, 최종 analyze exit0. 독립 관련78회귀와 별도픽셀4회귀 PASS. 고정pivot, tier, 풀 재사용, 종료, bomb 초기픽셀 및 supernova 외곽번개 보존 확인.
 - Plan: `PLAN-001`
 - Task: TASK-001c 실기기 30초 이상 카운터 보존
 
 ## Next Task
-1. 21:20 기존 Claude main에 E2 병합 결과와 후속 매칭/광택 튜닝 커밋을 함께 인계한다. 현재 main과 검증 보고서에서 이어가며 완료된 E2를 재적용하거나 정리된 Worktree를 재생성하지 않는다.
+1. Claude 재인계는 사용자 요청으로 취소했다. 현재 main과 Android 검증 보고서를 기준으로 이어간다. 완료된 E2를 재적용하거나 정리된 Worktree를 재생성하지 않는다.
 2. 실기기 FPS, 가독성, 오디오와 광고 흐름 확인. iOS 15/16 기기에서 연쇄와 저시간 틱의 피치가 실제로 오르는지 듣는다
 3. `?fps=1`로 모바일 실기기 FPS 전후 비교와 장시간 WebView 확인
 4. PLAN-001 실기기 장시간 측정 (원문부터 INCOMPLETE. 별도 승인 작업)
@@ -107,7 +107,7 @@ Updated: 2026-09-20 21:20 KST
 
 ## Open Questions
 - STALE 배포 증거를 현재 리비전에서 재검증할지는 이관 밖 결정
-- 21:20 KST 기존 Claude main으로 재인계 일정이 등록되어 있다. Codex 재인수 상태, E2 데스크톱 검증 완료와 실기기 검증 공백을 분리해 인계한다.
+- 21:20 KST Claude 재인계 예약은 사용자 요청으로 PAUSED 처리했다. 인계 프롬프트 전송 없음.
 - PLAN-002 식별 저장 정책
 
 ## Constraints / Do Not Change
@@ -130,3 +130,8 @@ Updated: 2026-09-20 21:20 KST
 - main `99622e9` 푸시, 로컬 웹 산출물 정리, NAS Wasm 배포 완료. 로컬 개발 서버와 scrcpy 미러링은 종료했다.
 - 사용자 첫 이펙트 멈춤 제보를 개발자 도구로 조사 중. 35초/유효 입력34회 측정에서 큰 멈춤은 재현되지 않았으나 90Hz 기기 평균63.94FPS/p95 33.57ms로 성능 검증은 미완. GPU/워커 추적을 포함한 원인 확정이 다음 우선 작업이다.
 - 원시자료와 제한은 `tmp/android-fps-20260920/RESULT.md`와 `profile.json`. 초기 화면 GAP280ms와 재측정 GAP55.94ms는 조건이 달라 개선 수치로 비교하지 않는다.
+
+## 재접속 확인과 인계 취소 (2026-09-20 21:26 KST)
+- 게임 탭 완전 종료 후 재접속 및 첫 매치/특수효과를 재측정했다. 로딩 최대190.2ms, 첫 매치22.4ms, 첫 bomb/hyper/supernova33.6/44.8/44.8ms. 긴 작업은 첫 매치 이전 Wasm 초기화/초기 렌더 구간에 집중됐다. 최초 사용자 멈춤의 동일 원인 여부는 미확정.
+- 상세 근거와 한계: [Android NAS FPS 검증](ANDROID_NAS_FPS_2026-09-20.md). 제품 코드 수정 없음.
+- 사용자 요청으로 Claude 인계 예약을 취소(PAUSED)했고 현재 Codex가 계속한다. 기존 Claude에 재개 프롬프트를 보내지 않았다.
