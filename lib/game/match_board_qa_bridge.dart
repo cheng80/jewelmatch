@@ -53,6 +53,82 @@ extension MatchBoardSimulationHints on MatchBoardGame {
     handleBoardTap(b['x'] as double, b['y'] as double);
     return board.stats.validSwaps > swapsBefore;
   }
+
+  /// 스왑해도 매치가 생기지 않는 이웃 두 칸. 눈검증의 무효 스왑 범프 확인용.
+  SimulationHintMove? readSimulationInvalidMove() {
+    if (!isPlaying ||
+        timeUp ||
+        board.inputLocked ||
+        board.introFillInProgress ||
+        board.state != 'idle') {
+      return null;
+    }
+    final valid = board.getAllValidMoves();
+    bool isValidPair(int ar, int ac, int br, int bc) {
+      for (final move in valid) {
+        if (move.a.x == ar &&
+            move.a.y == ac &&
+            move.b.x == br &&
+            move.b.y == bc) {
+          return true;
+        }
+        if (move.a.x == br &&
+            move.a.y == bc &&
+            move.b.x == ar &&
+            move.b.y == ac) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    for (var row = 0; row < MatchBoardGame.rows; row++) {
+      for (var col = 0; col < MatchBoardGame.cols; col++) {
+        for (final dir in const [
+          [0, 1],
+          [1, 0],
+        ]) {
+          final or = row + dir[0];
+          final oc = col + dir[1];
+          if (!board.isInside(or, oc)) continue;
+          if (board.getGem(row, col) == null) continue;
+          if (board.getGem(or, oc) == null) continue;
+          if (isValidPair(row, col, or, oc)) continue;
+
+          final aTopLeft = board.cellToPixel(row, col);
+          final bTopLeft = board.cellToPixel(or, oc);
+          final halfTile = board.tileSize / 2;
+          return {
+            'a': {
+              'row': row,
+              'col': col,
+              'x': aTopLeft.dx + halfTile,
+              'y': aTopLeft.dy + halfTile,
+            },
+            'b': {
+              'row': or,
+              'col': oc,
+              'x': bTopLeft.dx + halfTile,
+              'y': bTopLeft.dy + halfTile,
+            },
+            'tileSize': board.tileSize,
+            'state': board.state,
+          };
+        }
+      }
+    }
+    return null;
+  }
+
+  bool performSimulationInvalidMove() {
+    final move = readSimulationInvalidMove();
+    if (move == null) return false;
+    final a = move['a'] as Map<String, Object?>;
+    final b = move['b'] as Map<String, Object?>;
+    handleBoardTap(a['x'] as double, a['y'] as double);
+    handleBoardTap(b['x'] as double, b['y'] as double);
+    return true;
+  }
 }
 
 typedef SimulationGameState = Map<String, Object?>;

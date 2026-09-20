@@ -58,6 +58,24 @@ void installMatchBoardQaBridge(MatchBoardGame game) {
   );
 
   web.window.setProperty(
+    '__jewelMatchDebugPerformHintMove'.toJS,
+    (() => (_installedGame?.performSimulationHintMove() ?? false).toJS).toJS,
+  );
+  web.window.setProperty(
+    '__jewelMatchDebugPerformInvalidMove'.toJS,
+    (() => (_installedGame?.performSimulationInvalidMove() ?? false).toJS).toJS,
+  );
+  web.window.setProperty(
+    '__jewelMatchDebugSetTimeRemaining'.toJS,
+    ((JSNumber seconds) {
+      final currentGame = _installedGame;
+      if (currentGame == null || !currentGame.hasTimedClock) return false.toJS;
+      currentGame.timeRemaining = seconds.toDartDouble;
+      return true.toJS;
+    }).toJS,
+  );
+
+  web.window.setProperty(
     '__jewelMatchDebugSpecialEffects'.toJS,
     (() {
       _installedGame?.debugTriggerSpecialEffects();
@@ -91,6 +109,18 @@ void uninstallMatchBoardQaBridge(MatchBoardGame game) {
   web.window.setProperty('__jewelMatchContinueLevelUp'.toJS, (() {}).toJS);
   web.window.setProperty('__jewelMatchDebugShowSlot3Unlock'.toJS, (() {}).toJS);
   web.window.setProperty('__jewelMatchDebugSpecialEffects'.toJS, (() {}).toJS);
+  web.window.setProperty(
+    '__jewelMatchDebugPerformHintMove'.toJS,
+    (() => false.toJS).toJS,
+  );
+  web.window.setProperty(
+    '__jewelMatchDebugPerformInvalidMove'.toJS,
+    (() => false.toJS).toJS,
+  );
+  web.window.setProperty(
+    '__jewelMatchDebugSetTimeRemaining'.toJS,
+    ((JSNumber _) => false.toJS).toJS,
+  );
   web.window.setProperty(
     '__jewelMatchDebugSpecialEffect'.toJS,
     ((JSString _) => false.toJS).toJS,
