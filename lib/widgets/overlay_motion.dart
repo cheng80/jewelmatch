@@ -49,18 +49,26 @@ class _OverlayEnterTransitionState extends State<OverlayEnterTransition>
     _controller = AnimationController(vsync: this, duration: widget.duration);
   }
 
-  late final Animation<double> _scale = Tween<double>(
-    begin: widget.beginScale,
-    end: 1,
-  ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
-  late final Animation<double> _fade = CurvedAnimation(
+  late final CurvedAnimation _scaleCurve = CurvedAnimation(
+    parent: _controller,
+    curve: Curves.easeOutBack,
+  );
+  late final CurvedAnimation _fade = CurvedAnimation(
     parent: _controller,
     curve: const Interval(0, 0.6, curve: Curves.easeOut),
   );
+  late final CurvedAnimation _slideCurve = CurvedAnimation(
+    parent: _controller,
+    curve: Curves.easeOutCubic,
+  );
+  late final Animation<double> _scale = Tween<double>(
+    begin: widget.beginScale,
+    end: 1,
+  ).animate(_scaleCurve);
   late final Animation<Offset> _slide = Tween<Offset>(
     begin: widget.slideFrom,
     end: Offset.zero,
-  ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+  ).animate(_slideCurve);
 
   final GlobalKey _paintKey = GlobalKey();
   bool _exiting = false;
@@ -81,6 +89,9 @@ class _OverlayEnterTransitionState extends State<OverlayEnterTransition>
 
   @override
   void dispose() {
+    _scaleCurve.dispose();
+    _fade.dispose();
+    _slideCurve.dispose();
     _controller.dispose();
     super.dispose();
   }
