@@ -194,11 +194,13 @@ class SoundManager {
     _cancelPendingComboIfNeeded(path);
     final vol = GameSettings.sfxVolume;
     final rate = _playbackRate(pitchSemitones);
+    final webPool = kIsWeb ? _webSfxPool : null;
+    // preload 전 웹 폴백은 FlameAudio로 빠져 rate를 버린다. 로그도 실제 재생과 맞춘다.
+    final loggedRate = kIsWeb && webPool == null ? 1.0 : rate;
     SfxPlayLog.append(
-      'playSfx ${kIsWeb ? 'web' : 'native'} → path=$path vol=${vol.toStringAsFixed(2)} rate=${rate.toStringAsFixed(3)}',
+      'playSfx ${kIsWeb ? 'web' : 'native'} → path=$path vol=${vol.toStringAsFixed(2)} rate=${loggedRate.toStringAsFixed(3)}',
     );
     try {
-      final webPool = kIsWeb ? _webSfxPool : null;
       if (webPool != null) {
         webPool.play(path, vol, rate);
         return;
