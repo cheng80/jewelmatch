@@ -17,6 +17,7 @@ class GameLoadingOverlay extends StatefulWidget {
 class _GameLoadingOverlayState extends State<GameLoadingOverlay>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  bool _reduced = false;
 
   @override
   void initState() {
@@ -30,11 +31,14 @@ class _GameLoadingOverlayState extends State<GameLoadingOverlay>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (MediaQuery.disableAnimationsOf(context)) {
+    _reduced = MediaQuery.disableAnimationsOf(context);
+    // 로딩 해제는 1.2초를 넘길 수 있다. 끝날 때까지 움직여야 먹통으로 보이지 않는다.
+    // 동작 줄이기에서만 정지 상태로 둔다.
+    if (_reduced) {
       _controller.stop();
       _controller.value = 1;
     } else if (!_controller.isAnimating) {
-      _controller.forward();
+      _controller.repeat();
     }
   }
 
@@ -92,10 +96,15 @@ class _GameLoadingOverlayState extends State<GameLoadingOverlay>
                   },
                 ),
                 const SizedBox(height: 18),
-                const SizedBox(
+                SizedBox(
                   width: 34,
                   height: 34,
-                  child: Icon(Icons.hourglass_top_rounded),
+                  // 동작 줄이기에서는 값이 있는 인디케이터라 돌지 않는다.
+                  child: CircularProgressIndicator(
+                    value: _reduced ? 1 : null,
+                    strokeWidth: 3,
+                    color: accent,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(

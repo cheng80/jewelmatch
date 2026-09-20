@@ -255,7 +255,7 @@ void main() {
       },
     );
 
-    testWidgets('loading settles without continuous ticker, reduced=$reduced', (
+    testWidgets('loading keeps moving past 1.2s, reduced=$reduced', (
       tester,
     ) async {
       await _mount(
@@ -263,9 +263,15 @@ void main() {
         const GameLoadingOverlay(gameMode: JewelGameMode.timed),
         reduced: reduced,
       );
-      await tester.pumpAndSettle();
+      // 로딩 해제는 1.2초를 넘길 수 있다. 그 뒤에도 움직여야 먹통으로 보이지 않는다.
+      await tester.pump(const Duration(milliseconds: 1300));
       expect(find.text('불러오는 중...'), findsOneWidget);
-      expect(tester.binding.transientCallbackCount, 0);
+      if (reduced) {
+        await tester.pumpAndSettle();
+        expect(tester.binding.transientCallbackCount, 0);
+      } else {
+        expect(tester.binding.transientCallbackCount, greaterThan(0));
+      }
     });
   }
 
