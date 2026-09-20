@@ -472,9 +472,9 @@ Flame 게임 셸이다.
 - `supernova`는 bomb과 구분되는 8방향 별 폭발형 전용 프레임을 사용하며, 더 이상 일반 보석 위 오버레이 합성으로 렌더하지 않는다.
 - 현재 스프라이트 기준 셀 크기는 모두 `128×128`.
 - 일반 보석에는 현재 렌더러의 `ColorFilter.matrix`가 적용되어 전체 톤을 맞춘다. 전용 특수 스프라이트에는 일반 보석 색상 필터를 적용하지 않는다.
-- 범위형 발동 이펙트는 `special_area_effects.json` manifest가 지정한다. `hyper`와 `supernova`는 공용 `grid`(313.5px 셀, 4×4/16프레임) 플립북 시트를 캐싱해 그린다. 프레임별 투명도와 후반 fade는 PNG alpha에 베이크되어 있고 런타임에서는 별도 alpha 필터를 추가하지 않는다. `row`/`col`/`star`의 라이트닝 계열은 기존 절차형 렌더를 유지한다.
-- `bomb`만 레이어 방식이다(E1). `layerCellSize`가 있는 항목은 공용 `grid`를 따르지 않고 `bomb_layers.png`의 256px 정수 셀 가로 5칸을 쓴다. 칸은 점화, 룬 고리, 불꽃 폭발, 회오리, 잔불이며 전부 정지 그림이다. 크기 성장, 회전, 소멸은 `bomb_layer_timeline.dart`의 `evaluateBombLayers(t, out)`가 만드는 순수 값이고, t=1에서 모든 레이어의 배율과 알파가 0이 된다. 그리기는 구운 글로우(`GlowRadial.bomb`) 1회 뒤에 낱장 5칸을 `drawRawAtlas` 1회(`BlendMode.plus`)로 태워 프레임당 draw call 2회다. 버퍼는 컴포넌트 필드로 재사용한다.
-- 로더는 `layerCellSize` 항목에 한해 정수 셀과 실제 이미지 치수(`cellSize * layerCount` × `cellSize`)를 검증하고, 어긋나면 아틀라스를 만들지 않는다. 그러면 `bomb`은 스프라이트 경로가 아니라 기존 절차형 flame 렌더로 떨어진다. 레이어 아틀라스 도입 후 `Special_Area_Bomb.png`는 더 이상 로드하지 않는다.
+- 범위형 발동 이펙트는 `special_area_effects.json` manifest가 지정한다. E2에서 `bomb`, `hyper`, `supernova` 모두 1280×256 RGBA 정지 레이어 아틀라스(256px 정수 셀 5칸)와 코드 타임라인을 사용한다. 고정 pivot은 각 셀의 (128,128)이며 프레임별 중심 재보정은 하지 않는다. `row`/`col`/`star`는 기존 절차형 렌더를 유지하고 supernova의 십자 번개도 유지한다.
+- bomb은 `bomb_layer_timeline.dart`의 기존 곡선과 배율을 유지한다. hyper/supernova는 `area_layer_timeline.dart`의 개별 곡선으로 크기, 알파, 회전을 계산한다. 잔광 회전은 작게 제한하고 t=1에서 모든 레이어가 사라진다. 구운 글로우 뒤 정지 낱장 5칸을 `drawRawAtlas` 1회(`BlendMode.plus`)로 그린다. typed 버퍼와 Paint는 컴포넌트에서 재사용한다. 숨긴 칸은 alpha 0과 가역 변환을 사용하여 CPU Skia에서 후속 칸이 사라지는 문제를 방지한다. supernova 번개는 별도 그리므로 전체 draw call을 2회로 단정하지 않는다.
+- 로더는 효과 종류별 캐시에 저장하며 256px 정수 셀, 5칸 및 실제 이미지 치수를 검사한다. 잘못된 아틀라스나 로딩 실패는 해당 효과의 기존 절차형 렌더로만 폴백하며 다른 효과 캐시는 유지한다. 세 종류 모두 pool warm에서 준비한다. 이미지 소유는 `Flame.images`이고 glow lease 해제 계약은 유지한다. 기존 `Special_Area_*.png`는 보존하지만 현재 manifest는 로드하지 않는다. 새 hyper/supernova 두 장의 디코드 RGBA 크기는 합계 2.5MiB이며 GPU 실측은 아니다.
 
 #### 보드 연출 (PLAN-004)
 
@@ -507,8 +507,8 @@ Flame 게임 셸이다.
 | Hyper 특수 보석 `hyper` | `assets/images/sprites/Special_Action_Arcane.png` | 3번째 프레임 |
 | Supernova 특수 보석 `supernova` | `assets/images/sprites/Special_Action_Arcane.png` | 4번째 프레임 |
 | Bomb 범위 발동 VFX | `assets/images/sprites/bomb_layers.png` | `special_area_effects.json`의 `bomb` 설정, 256px 셀 가로 5칸 레이어 아틀라스 |
-| Hyper 범위 발동 VFX | `assets/images/sprites/Special_Area_Hyper.png` | `special_area_effects.json`의 `hyper` 설정, 4×4/16프레임 |
-| Supernova 범위 발동 VFX | `assets/images/sprites/Special_Area_Supernova.png` | `special_area_effects.json`의 `supernova` 설정, 4×4/16프레임 |
+| Hyper 범위 발동 VFX | `assets/images/sprites/hyper_layers.png` | `special_area_effects.json` hyper, 256px 셀 가로 5칸, 고정 pivot, 코드 타임라인 |
+| Supernova 범위 발동 VFX | `assets/images/sprites/supernova_layers.png` | `special_area_effects.json` supernova, 256px 셀 가로 5칸, 십자 번개 유지 |
 
 참고:
 
@@ -1780,7 +1780,7 @@ BoardJuiceLayer는 onMount에서 아틀라스를 확보하고 onRemove에서 해
 - T3는 콤보 및 매치 등급, T/L, 저시간 틱을 기존 에셋의 웹 피치로 매핑한다. 웹은 HTML Audio 고정 4슬롯과 unlock 정책을 유지하고, 네이티브 피치는 실기기 확인 전까지 고정 폴백이다.
 - T4a HUD는 목표, 콤보, 타임바, 시간 보너스, 저시간, 버튼, 힌트 배지 및 아이템 소모 피드백을 HUD 상태로만 관리한다. T4b 화면 계층은 공통 카드 240ms, exit 잔상 160ms, 다이얼로그 200ms, 타이틀 70ms 간격, 인벤토리 12% 상승, 타임업 점수 800ms 롤업을 사용한다. `MediaQuery.disableAnimations`에서는 시각 모션을 끝내지만 타임업 제출 및 입력 가능 시점은 1900ms를 유지한다. 레벨 축하는 일반 3000ms, reduced motion 즉시 완료다.
 - T5는 특수 burst와 HUD의 직접 런타임 `MaskFilter.blur`를 baked atlas로 바꾼다. 특수 atlas는 1536×768 RGBA 공유 이미지 약 4.5MiB이며 lease를 유지해 풀에서 재사용하고 마지막 소유자 제거 후 해제한다. HUD glow atlas는 실제 레이아웃 크기에서 생성하며 같은 크기에서는 재생성하지 않고 크기 변경과 remount에서 갱신한다. T4a의 HUD interactions와 painters 구조는 유지한다.
-- 현재 합본의 근거는 `/Users/cheng80/orca/workspaces/jewelmatch/_fx_orchestration/reports/verify_integrated_final.txt`다. 2026-09-20 15:53 KST 기준 `analyze exit=0`, 전체 `262 tests` 통과, Web build exit=0이다. 소스는 main 미반영 및 미커밋이며 실기기 FPS, 장시간 모바일 WebView, 실제 광고 SDK, 실제 기기 오디오 청취는 이 결과에 포함하지 않는다. T4b ego 캡처의 일부 문자 중복은 headless에서 재현되지 않아 원인을 확정하지 않았다.
+- 현재 합본의 근거였던 `/Users/cheng80/orca/workspaces/jewelmatch/_fx_orchestration/reports/verify_integrated_final.txt`는 2026-09-20 15:53 KST 기준 `analyze exit=0`, 전체 `262 tests` 통과, Web build exit=0인 HISTORICAL 기록이다. 이후 X2와 bomb 후속 변경으로 STALE이며, bomb 해당 리비전은 analyze 0, `274 tests PASS`, Web build 0을 기록했다. E2는 전체 279 tests, 최종 analyze, Web build와 실제 Flutter 픽셀/보드 캡처를 통과했다. 근거는 `reports/verify_E2_final.txt`의 테스트/빌드 종료코드와 `reports/E2_review.md`의 최종 analyze 0이다. 실기기 FPS, 장시간 모바일 WebView, 실제 광고 SDK, 실제 기기 오디오 청취는 미검증이다. T4b ego 캡처의 일부 문자 중복은 headless에서 재현되지 않아 원인을 확정하지 않았다.
 
 ### 최종 종료와 레벨 클리어 수명
 - GameWidget 최종 이탈은 `removeAll(children)`와 `processLifecycleEvents()`로 atlas/ticker 종료를 완료한다. 공유 이미지 캐시는 유지한다. 다음 GameView는 새 게임을 만든다.

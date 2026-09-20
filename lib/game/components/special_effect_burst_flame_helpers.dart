@@ -2,26 +2,7 @@ part of 'special_effect_burst.dart';
 
 extension _SpecialEffectBurstFlameDrawing on SpecialEffectBurst {
   void _renderExplosion(Canvas canvas, double t, double fade) {
-    // 레이어 경로가 먼저다. 글로우를 낱장보다 먼저 깔고 한 동작으로 움직인다.
-    final layerAtlas = SpecialEffectBurst._bombLayerAtlas;
-    if (layerAtlas != null) {
-      final tierScale = switch (_tier) {
-        0 => 1.0,
-        1 => 0.94,
-        _ => 0.86,
-      };
-      _bombLayers.render(
-        canvas,
-        layerAtlas,
-        _bakedGlow,
-        origin.toOffset(),
-        tileSize * layerAtlas.scale * tierScale,
-        t,
-        fade,
-        _glowScale,
-      );
-      return;
-    }
+    if (_renderAreaLayers(canvas, t, fade)) return;
     if (_renderAreaEffectSprite(canvas, t, fade)) return;
 
     final center = origin.toOffset();

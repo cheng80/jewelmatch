@@ -59,10 +59,15 @@ class AssetPaths {
   /// Bomb 범위형 특수 이펙트 4×4 시트. 레이어 아틀라스로 대체돼 더는 로드하지 않는다.
   static const String specialAreaEffectBomb = 'sprites/Special_Area_Bomb.png';
 
-  /// Hyper 범위형 특수 이펙트 4×4 시트.
+  /// Hyper와 Supernova의 정지 레이어 아틀라스. 256px 셀 5칸.
+  static const String specialAreaEffectHyperLayers = 'sprites/hyper_layers.png';
+  static const String specialAreaEffectSupernovaLayers =
+      'sprites/supernova_layers.png';
+
+  /// Hyper 범위형 특수 이펙트 레거시 4×4 시트. 레이어 경로는 로드하지 않는다.
   static const String specialAreaEffectHyper = 'sprites/Special_Area_Hyper.png';
 
-  /// Supernova 범위형 특수 이펙트 4×4 시트.
+  /// Supernova 범위형 특수 이펙트 레거시 4×4 시트. 레이어 경로는 로드하지 않는다.
   static const String specialAreaEffectSupernova =
       'sprites/Special_Area_Supernova.png';
 

@@ -35,9 +35,9 @@ bool isValidBombLayerAtlas({
   required double scale,
 }) {
   final cell = cellSize.toDouble();
-  if (cell <= 0 || cell != cell.roundToDouble()) return false;
+  if (!cell.isFinite || cell <= 0 || cell != cell.roundToDouble()) return false;
   if (layerCount != bombLayerSpriteCount) return false;
-  if (scale <= 0) return false;
+  if (!scale.isFinite || scale <= 0) return false;
   if (imageWidth != cell.round() * layerCount) return false;
   if (imageHeight != cell.round()) return false;
   return true;

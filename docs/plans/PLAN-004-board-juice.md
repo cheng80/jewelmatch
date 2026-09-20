@@ -20,7 +20,8 @@
 
 ### 제외
 - 규칙, 점수식, 기존 단계 타이밍(`removeDelay` 등) 변경. 단, 사용자 승인으로 유효 스왑 뒤 `swapSettle` 0.12초만 추가
-- 콜아웃 문구 번역, 새 에셋, 새 dependency
+- 콜아웃 문구 번역, 새 dependency
+- 새 에셋은 원칙적으로 제외한다. 단, 승인된 특수효과 레이어 후속(`bomb` E1 및 `hyper`/`supernova` G2 납품 후 E2 통합)의 정지 레이어 에셋은 기존 범위형 효과를 교체하기 위한 예외로 허용한다.
 - 프래그먼트 셰이더(모바일 WebView 호환 위험), 히트스톱
 
 ## 3. 현재 상태 / 전제
@@ -45,6 +46,7 @@
 - [x] T4a HUD 목표, 콤보, 타임바, 버튼, 힌트, 아이템 소모 피드백
 - [x] T4b 오버레이, 타이틀, 로딩, 인벤토리, 타임업, 광고 결과 화면 모션과 reduced motion 계약
 - [x] T5 특수 burst 및 HUD의 직접 런타임 blur를 baked glow atlas로 교체
+- [x] E2 hyper/supernova 범위 효과 레이어 통합과 데스크톱 검증 완료, 실기기 미검증
 
 ### Step 3 확인과 튜닝
 - [x] 데스크톱 실제 화면과 픽셀 렌더 확인(파티클 크기, 밝기, 수명, 콜아웃 위치). 합본 HUD 잔상은 별도 확인 중
@@ -62,7 +64,8 @@
 ## 6. 검증 계획
 - [x] Unit test: `test/board_juice_test.dart`(착지 스쿼시, 수렴과 탄생 팝, 무효 범프)
 - [x] F1, T1, T2, T3, T4a, T4b, T5, T6 전용 및 회귀 테스트
-- [x] 통합 최신 검증: `analyze exit=0`, 전체 `262 tests` PASS, Web build exit=0 (`reports/verify_integrated_final.txt`, 2026-09-20 15:53 KST)
+- [x] 통합 검증 기록: `analyze exit=0`, 전체 `262 tests` PASS, Web build exit=0 (`reports/verify_integrated_final.txt`, 2026-09-20 15:53 KST). HISTORICAL이며 X2와 bomb 후속 변경으로 STALE
+- [x] bomb E1 해당 리비전 검증 기록: analyze 0, `274 tests` PASS, Web build 0. HISTORICAL이며 E2 후속 통합 전 결과
 - [x] `flutter build web --release --no-pub` 통과(4칸 아틀라스 확장 전 리비전)
 - [x] 데스크톱 ego/headless 화면 검증 및 픽셀/위젯 검증. T4b ego 문자 중복은 headless에서 재현되지 않아 원인 미확정
 - [ ] 모바일 실기기 UI와 FPS 전후 비교
@@ -104,6 +107,14 @@
 - T2가 F1 독립 검수의 세 회귀를 수정했다. 안착 또는 제거 중 드래그를 거절하고, 무효 범프를 드래그 시작 및 geometry 변경에서 취소하며, 새 유효 스왑에서 잔여 복귀를 취소한다.
 - T2의 gem atlas는 512×640, 64px 셀이다. 정상 보석 제출은 batch draw를 사용하고 비균등 squash는 `drawImageRect` 예외 경로를 사용하므로 프레임별 draw call 상한 9를 계약으로 두지 않는다. T5 special glow는 약 4.5MiB 공유 이미지이며 T4a HUD interactions와 painters 구조를 유지한다.
 - T4b는 타임업의 1900ms 제출 및 입력 시점, reduced motion의 즉시 표시를 함께 검증했다. 레벨 축하는 일반 3000ms, reduced motion 즉시 완료이며 시각 연출만 구동한다.
-- 최신 합본 근거는 `/Users/cheng80/orca/workspaces/jewelmatch/_fx_orchestration/reports/verify_integrated_final.txt`다. `analyze 0`, `262 tests PASS`, Web build 0이다. 2026-09-20 16:24 KST 다른 세션에서 같은 작업트리를 재검증했고(`verify_claude_recheck.txt`, 같은 결과) 그 뒤 main에 병합했다. 실기기 성능은 미검증이다.
+- 최신 합본 근거였던 `/Users/cheng80/orca/workspaces/jewelmatch/_fx_orchestration/reports/verify_integrated_final.txt`는 `analyze 0`, `262 tests PASS`, Web build 0의 HISTORICAL 기록이다. 2026-09-20 16:24 KST 다른 세션에서 같은 작업트리를 재검증했고(`verify_claude_recheck.txt`, 같은 결과) 그 뒤 main에 병합했다. X2와 bomb 후속 변경으로 현재 기준에서는 STALE이다.
+- bomb E1 후속 리비전은 analyze 0, `274 tests PASS`, Web build 0을 남겼다. 이 결과도 해당 리비전의 HISTORICAL 기록이며 hyper/supernova E2 통합 검증을 포함하지 않는다.
+- Codex가 `fx-g2-sprites`를 재인수해 E2 구현과 실제 Flutter 렌더/전체279tests/analyze/Web build 검증을 완료했다. main 미반영 및 실기기 미검증 상태이며 상세는 11절이다.
 
 - 합본 HUD 최종 진단(16:08 KST): 무손실 PNG의 추가 밝은 glyph 픽셀 0, 변한 픽셀은 confetti 색 합성으로 설명됐다. pause 150프레임 동안 game render/update 증가 0. 제품 소스 변경 없이 가설 기각. 근거: `_fx_orchestration/reports/T6_integrated_visual_fix.md`.
+
+## 11. E2 hyper/supernova 레이어 전환 (2026-09-20 19:30 KST)
+- 기존 Orca G2 납품을 검수하고 동일 WT/구현 세션을 재사용했다. 각 효과는 1280×256, 256px 정수 셀 5칸, pivot128로 렌더한다. 효과별 캐시/실패 폴백과 공용 typed renderer를 사용하고 코드 타임라인으로 성장/회전/소멸한다.
+- bomb 곡선/배율과 세 효과 수명(.52/.60/.72초), 점수/보상/영향셀, supernova 십자 번개를 유지했다. 숨김 슬롯의 scale0으로 뒤 레이어가 사라지는 CPU Skia 문제를 실제픽셀로 재현하여 alpha0+가역변환으로 수정했다.
+- 전체279tests/Web release exit0. 초기 analyze의 테스트스타일 및 리뷰tmp 경고를 정리하고 최종 analyze exit0. 독립78관련회귀/4픽셀회귀 PASS, 데스크톱 보드캡처 확인. 보고서 `_fx_orchestration/reports/E2_review.md` 및 E2 검증 로그 참조.
+- fx-g2-sprites의 미커밋 상태이며 main 미반영. 실기기FPS/오디오/광고 미검증.21:20 기존Claude 인계예약.

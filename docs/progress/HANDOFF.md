@@ -2,10 +2,10 @@
 
 > 다음 작업자가 즉시 시작할 정보만 둔다. 프로젝트 전체 상태는 PROJECT_STATUS.md에 둔다.
 
-Updated: 2026-09-20 19:00 KST
+Updated: 2026-09-20 19:30 KST
 
 ## Current State
-문서 팩은 대체 가능(REPLACEABLE). 정본은 docs/. 이전 문서는 archive/docs/. F1~T6가 통합됐고 독립 리뷰의 입력 3건, 자원 해제와 릴리즈 퇴장 문제 2건을 수정했다. 검증 공백은 표에 남아 있다. 최종 합본 HUD 글자 중복 가설은 PNG 픽셀과 실제 렌더 진단에서 기각됐으며 기존 confetti 겹침으로 확인했다. 실기기 성능은 미검증이다.
+문서 팩은 대체 가능(REPLACEABLE). 정본은 docs/. 이전 문서는 archive/docs/. F1~T6가 통합됐고 독립 리뷰의 입력 3건, 자원 해제와 릴리즈 퇴장 문제 2건을 수정했다. 검증 공백은 표에 남아 있다. 최종 합본 HUD 글자 중복 가설은 PNG 픽셀과 실제 렌더 진단에서 기각됐으며 기존 confetti 겹침으로 확인했다. 실기기 성능은 미검증이다. 2026-09-20 19:15 KST Codex가 `fx-g2-sprites`를 재인수했고, E2 hyper/supernova 레이어 통합과 데스크톱 검증을 완료했으며 미커밋 상태로 보존한다(main 미반영).
 
 ## Last Completed
 - 마이그레이션 가이드 기준으로 운영 칸을 이 팩에 맞춤
@@ -13,26 +13,29 @@ Updated: 2026-09-20 19:00 KST
 - 코드와 어긋나던 점수 산식, HUD 랭킹, 시계, 제출 시점을 문서에 반영
 - 2026-08-23 대체 가능성 점검 12항을 표준 팩만으로 통과. 이후 정본 경로를 docs/로 옮기고 이전 문서는 archive/docs/로 둠
 - 2026-09-20 F1, T1, T2, T3, T4a, T4b, T5, T6 통합 완료. T2가 F1 독립 검수의 입력 회귀 3건을 수정하고 회귀 테스트를 추가했으며 T5가 특수/HUD glow를 baked atlas로 전환
-- 최신 합본 검증 `verify_integrated_final.txt`: analyze 0, 262 tests PASS, Web build 0
+- 과거 합본 검증 `verify_integrated_final.txt`: analyze 0, 262 tests PASS, Web build 0. X2와 bomb 후속 변경으로 HISTORICAL/STALE
 - 2026-09-20 다른 계열 교차 리뷰(X2)에서 확정된 결함 6건 수정을 main에 병합: 로딩 오버레이가 1.2초 뒤 멈추던 문제, iOS 15/16 Safari에서 피치 대신 배속만 바뀌던 문제(`webkitPreservesPitch`), 퇴장 고스트 해상도, 광고 결과 배너 위치, 웹 폴백 로그 rate, `CurvedAnimation` 해제
 - 2026-09-20 bomb 범위 효과를 16프레임 플립북에서 정지 그림 5장 + 코드 타임라인 + 구운 글로우 밑깔기로 교체(`bomb_layers.png` 1280×256, `bomb_layer_timeline.dart`). 정점 지름 약 3.1칸, 수명 0.52초 그대로, bomb 텍스처 6.00MiB → 1.25MiB. 병합 직전 검증: analyze 0, 274 tests PASS, Web build 0
+- G2 hyper/supernova 정지 레이어 PNG 납품과 정량 게이트 PASS를 확인했다. 해당 WT의 제품 통합과 실제 Flutter 렌더 검증을 완료했다. main 병합과 실기기 검증은 별도다.
 
 ## In Progress
 - Plan: `PLAN-004` 보드 연출 보강. F1, T1, T2, T3, T4a, T4b, T5, T6 구현과 통합 완료. 2026-09-20 통합 브랜치를 커밋해 main에 fast-forward 병합했다(로컬). push 여부는 `git status`로 확인한다
 - Task: 실기기 검증 인계. 합본 HUD 진단은 glyph 중복 근거 없음으로 마감했다.
+- Task: E2 hyper/supernova 레이어 통합은 fx-g2-sprites에서 완료했다. 미커밋 변경을 보존하고 21:20 기존 Claude에 인계한다.
 - 주의: T2의 균등 gem atlas 제출은 batch지만 여러 행의 착지 squash는 `drawImageRect` fallback으로 draw call이 9회를 넘을 수 있다. T5 special glow는 약 4.5MiB 공유 이미지이며 T4a HUD interactions와 painters 구조를 유지한다
 - 주의: T4b 타임업은 reduced motion에서도 결과를 즉시 읽히게 하되 1900ms 제출과 버튼 활성 시점을 유지한다. ego 캡처 문자 중복은 headless에서 재현되지 않아 원인 미확정
 - 주의: 모바일 실기기 FPS, 장시간 WebView, 실제 광고 SDK, 실제 기기 오디오 청취는 아직 검증하지 않았다
+- E2 검증: 전체279tests와 Web build exit0, 최종 analyze exit0. 독립 관련78회귀와 별도픽셀4회귀 PASS. 고정pivot, tier, 풀 재사용, 종료, bomb 초기픽셀 및 supernova 외곽번개 보존 확인.
 - Plan: `PLAN-001`
 - Task: TASK-001c 실기기 30초 이상 카운터 보존
 
 ## Next Task
-1. 실기기 FPS, 가독성, 오디오와 광고 흐름 확인. iOS 15/16 기기에서 연쇄와 저시간 틱의 피치가 실제로 오르는지 듣는다
-2. hyper와 supernova도 bomb과 같은 레이어 방식으로 넓힌다. 낱장은 sprite-gen으로 생성한다. 그 전까지 두 효과는 기존 1254px 플립북(`grid` 313.5) 그대로다. 더 이상 로드하지 않는 `Special_Area_Bomb.png`는 정리 후보다
-2. `?fps=1`로 모바일 실기기 FPS 전후 비교와 장시간 WebView 확인
-3. PLAN-001 실기기 장시간 측정 (원문부터 INCOMPLETE. 별도 승인 작업)
-4. 이전 문서는 archive/docs/에 있음. 삭제 여부는 별도 결정
-5. STALE NAS/AIT 재검증과 PLAN-001 실측은 이관 밖 별도 작업
+1. 21:20 기존 Claude에 fx-g2-sprites 미커밋 E2 변경과 보고서를 인계한다. 재적용하지 말고 현재 diff에서 이어간다.
+2. 실기기 FPS, 가독성, 오디오와 광고 흐름 확인. iOS 15/16 기기에서 연쇄와 저시간 틱의 피치가 실제로 오르는지 듣는다
+3. `?fps=1`로 모바일 실기기 FPS 전후 비교와 장시간 WebView 확인
+4. PLAN-001 실기기 장시간 측정 (원문부터 INCOMPLETE. 별도 승인 작업)
+5. 이전 문서는 archive/docs/에 있음. 삭제 여부는 별도 결정
+6. STALE NAS/AIT 재검증과 PLAN-001 실측은 이관 밖 별도 작업
 
 ## Blocked
 - PLAN-002, TASK-004: 외부 값/정책
@@ -68,7 +71,8 @@ Updated: 2026-09-20 19:00 KST
 
 | 항목 | Result | Evidence | Date | Revision | Validity | Source / Gap |
 |---|---|---|---|---|---|---|
-| Integrated F1-T6 analyze / test / web build | PASS | RECHECKED | 2026-09-20 15:53 KST | F1~T6 통합 커밋과 같은 내용의 작업트리 (병합 직전) | CURRENT | `verify_integrated_final.txt`: analyze exit=0 (1.8s), 262 tests passed, web build exit=0 |
+| Integrated F1-T6 analyze / test / web build | PASS | HISTORICAL | 2026-09-20 15:53 KST | F1~T6 통합 리비전 | STALE | `verify_integrated_final.txt`: analyze exit=0 (1.8s), 262 tests passed, web build exit=0. 이후 X2와 bomb 후속 변경으로 현재 기준이 아님 |
+| Bomb E1 layer analyze / test / web build | PASS | HISTORICAL | 2026-09-20 | bomb 레이어 적용 리비전 | STALE | 해당 리비전에서 analyze 0, 274 tests PASS, Web build 0. 이후 E2 hyper/supernova 후속 통합 전 결과 |
 | F1 input regression review | PASS | RECHECKED | 2026-09-20 | 동일 | CURRENT | T2의 3개 회귀 테스트와 pointer flow 통과 |
 | PLAN-004 desktop screen / widget / pixel checks | PASS | RECHECKED | 2026-09-20 | 동일 | CURRENT | T1~T5의 ego/headless, 위젯, 픽셀 근거. T4b ego 문자 중복은 headless 재현 없음, 원인 미확정 |
 | PLAN-004 mobile device UI / FPS | NOT_RUN | NONE | - | 동일 | UNKNOWN | 실기기 FPS 전후 비교와 장시간 WebView 미실행 |
@@ -78,7 +82,8 @@ Updated: 2026-09-20 19:00 KST
 | Apps in Toss 재배포 | PASS | HISTORICAL | 2026-08-15 | d777cf0 | STALE | git 문서: 일반 AIT 재배포. 이후 오디오 수정. 현재 리비전 미재검증 |
 | Web 장시간 오디오/FPS | INCOMPLETE | HISTORICAL | 2026-08-23 이전 | PLAN-001 / ADR-004 원문 | UNKNOWN | 짧은 수동 확인만 통과. 장시간 카운터 없음. 원문부터 미완 |
 | Android/iOS store device | NOT_RUN | NONE | UNKNOWN | UNKNOWN | UNKNOWN | 출시 체크리스트 미완 |
-| Release build this revision | PASS | RECHECKED | 2026-09-20 15:53 KST | F1~T6 통합 커밋과 같은 내용의 작업트리 (병합 직전) | CURRENT | integrated_final Web build exit=0. 모바일/스토어 실기기 스모크는 별도 미실행 |
+| Release build F1-T6 revision | PASS | HISTORICAL | 2026-09-20 15:53 KST | F1~T6 통합 리비전 | STALE | integrated_final Web build exit=0. 이후 X2와 bomb 후속 변경, 모바일/스토어 실기기 스모크는 별도 미실행 |
+| E2 hyper/supernova layer integration | PASS | RECHECKED | 2026-09-20 19:30 KST | `fx-g2-sprites` bce3490 + 미커밋 E2 | CURRENT | 전체279tests/Web build exit0, 최종 analyze exit0, 독립78회귀+픽셀4회귀와 실제보드캡처. 초기 analyze 실패는 리뷰 tmp 경고이며 정리 후 통과. 실기기 미검증 |
 
 ## Files to Read First
 1. progress/PROJECT_STATUS.md
@@ -98,7 +103,7 @@ Updated: 2026-09-20 19:00 KST
 
 ## Open Questions
 - STALE 배포 증거를 현재 리비전에서 재검증할지는 이관 밖 결정
-- 16:20 KST 기존 Claude 인계 예정. 검증 완료 합본과 남은 실기기 검증을 분리해 인계한다.
+- 21:20 KST 기존 Claude main으로 재인계 일정이 등록되어 있다. Codex 재인수 상태, E2 데스크톱 검증 완료와 실기기 검증 공백을 분리해 인계한다.
 - PLAN-002 식별 저장 정책
 
 ## Constraints / Do Not Change
@@ -111,6 +116,7 @@ Updated: 2026-09-20 19:00 KST
 - ADR-004: Web Audio로 되돌리지 말 것
 - STALE/INCOMPLETE를 숨기지 말 것. 이전 문서는 archive/docs/
 - 정본 docs/와 archive/docs/를 서로 링크로 묶지 말 것
+- 현재 E2 문서와 구현의 정본 작업 대상은 `fx-g2-sprites`다. 정리된 이전 통합 Worktree 경로를 현재 정본으로 사용하지 말 것
 - main 병합은 로컬 기준이다. 원격 반영과 실기기 검증을 완료로 오인하지 말 것
 
 - 합본 HUD 최종 진단(16:08 KST): 무손실 PNG의 추가 밝은 glyph 픽셀 0, 변한 픽셀은 confetti 색 합성으로 설명됐다. pause 150프레임 동안 game render/update 증가 0. 제품 소스 변경 없이 가설 기각. 근거: `_fx_orchestration/reports/T6_integrated_visual_fix.md`.
