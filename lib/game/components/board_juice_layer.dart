@@ -70,6 +70,7 @@ class BoardJuiceLayer extends PositionComponent
   final Float32List _y = Float32List(maxSparks);
   final Float32List _vx = Float32List(maxSparks);
   final Float32List _vy = Float32List(maxSparks);
+  final Float32List _gravityBySpark = Float32List(maxSparks);
   final Float32List _age = Float32List(maxSparks);
   final Float32List _life = Float32List(maxSparks);
   final Float32List _scale = Float32List(maxSparks);
@@ -238,6 +239,8 @@ class BoardJuiceLayer extends PositionComponent
     final extras = (_sparkBudgetPerBurst ~/ cells.length - 2).clamp(0, wanted);
     final power = 1 + math.min(combo, 6) * 0.07 + pattern.index * 0.08;
     final unit = ts / _atlasSize;
+    const speedUp = 1.4;
+    const lifeScale = 0.65;
     var sumX = 0.0;
     var sumY = 0.0;
     for (final cell in cells) {
@@ -246,8 +249,22 @@ class BoardJuiceLayer extends PositionComponent
       sumX += cx;
       sumY += cy;
       final rgb = _sparkRgb(cell.color);
-      _emit(_ring, cx, cy, life: 0.32, scale: unit * 1.25 * power, rgb: rgb);
-      _emit(_flash, cx, cy, life: 0.12, scale: unit * 0.75, rgb: 0xFFF3D0);
+      _emit(
+        _ring,
+        cx,
+        cy,
+        life: 0.32 * lifeScale,
+        scale: unit * 1.25 * power,
+        rgb: rgb,
+      );
+      _emit(
+        _flash,
+        cx,
+        cy,
+        life: 0.12 * lifeScale,
+        scale: unit * 0.75,
+        rgb: 0xFFF3D0,
+      );
       for (var i = 0; i < extras; i++) {
         final angle = switch (pattern) {
           MatchJuicePattern.four => i * math.pi / 2 + math.pi / 4,
@@ -256,15 +273,16 @@ class BoardJuiceLayer extends PositionComponent
           MatchJuicePattern.cross => i * math.pi / 2,
           MatchJuicePattern.normal => _rng.nextDouble() * 2 * math.pi,
         };
-        final speed = ts * (1.8 + _rng.nextDouble() * 3.6) * power;
+        final speed = ts * (1.8 + _rng.nextDouble() * 3.6) * power * speedUp;
         final isStar = i % 3 == 2;
         _emit(
           isStar ? _star : _shard,
           cx,
           cy,
           vx: math.cos(angle) * speed,
-          vy: math.sin(angle) * speed - ts * 1.4,
-          life: 0.55 + _rng.nextDouble() * 0.25,
+          vy: math.sin(angle) * speed,
+          gravity: 0,
+          life: (0.55 + _rng.nextDouble() * 0.25) * lifeScale,
           scale: unit * (0.46 + _rng.nextDouble() * 0.32) * power,
           rgb: pattern == MatchJuicePattern.five
               ? _sparkRgb(i % 6 + 1)
@@ -283,7 +301,7 @@ class BoardJuiceLayer extends PositionComponent
         _ring,
         centerX,
         centerY,
-        life: 0.36,
+        life: 0.36 * lifeScale,
         scale: unit * (combo == 2 ? 1.6 : 2.0),
         rgb: 0xFFD052,
       );
@@ -294,9 +312,10 @@ class BoardJuiceLayer extends PositionComponent
           _star,
           centerX,
           centerY,
-          vx: math.cos(angle) * ts * 2,
-          vy: math.sin(angle) * ts * 2,
-          life: 0.5,
+          vx: math.cos(angle) * ts * 2 * speedUp,
+          vy: math.sin(angle) * ts * 2 * speedUp,
+          gravity: 0,
+          life: 0.5 * lifeScale,
           scale: unit * 0.55,
           rgb: 0xFFD052,
         );
@@ -355,6 +374,7 @@ class BoardJuiceLayer extends PositionComponent
     double y, {
     double vx = 0,
     double vy = 0,
+    double gravity = _gravity,
     required double life,
     required double scale,
     required int rgb,
@@ -367,6 +387,7 @@ class BoardJuiceLayer extends PositionComponent
     _y[i] = y;
     _vx[i] = vx;
     _vy[i] = vy;
+    _gravityBySpark[i] = gravity;
     _age[i] = 0;
     _life[i] = life;
     _scale[i] = scale;
@@ -486,7 +507,7 @@ class BoardJuiceLayer extends PositionComponent
       if (kind == _twinkleKind) {
         final bloom = math.sin(p * math.pi);
         scale = _scale[i] * bloom;
-        alpha = bloom;
+        alpha = bloom * (2 / 3);
         _rot[i] += _spin[i] * dt;
       } else if (kind == _ring) {
         // 빠르게 퍼지고 천천히 옅어진다.
@@ -497,7 +518,7 @@ class BoardJuiceLayer extends PositionComponent
         alpha = 1 - p * p;
       } else {
         _vx[i] *= drag;
-        _vy[i] = _vy[i] * drag + _gravity * dt;
+        _vy[i] = _vy[i] * drag + _gravityBySpark[i] * dt;
         _x[i] += _vx[i] * dt;
         _y[i] += _vy[i] * dt;
         scale = _scale[i] * (1 - 0.55 * p);

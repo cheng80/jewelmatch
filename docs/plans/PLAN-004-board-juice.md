@@ -118,3 +118,19 @@
 - bomb 곡선/배율과 세 효과 수명(.52/.60/.72초), 점수/보상/영향셀, supernova 십자 번개를 유지했다. 숨김 슬롯의 scale0으로 뒤 레이어가 사라지는 CPU Skia 문제를 실제픽셀로 재현하여 alpha0+가역변환으로 수정했다.
 - 전체279tests/Web release exit0. 초기 analyze의 테스트스타일 및 리뷰tmp 경고를 정리하고 최종 analyze exit0. 독립78관련회귀/4픽셀회귀 PASS, 데스크톱 보드캡처 확인. 보고서 `_fx_orchestration/reports/E2_review.md` 및 E2 검증 로그 참조.
 - 2026-09-20 19:54 KST: main `c3b64dd` 병합 후 analyze 0, 전체 279 tests PASS, Web release build 0을 재확인했다(`reports/verify_main_after_E2_merge.txt`). main과 feature의 tree 동일 및 clean 확인 후 `fx-g2-sprites` Worktree와 Orca 터미널 2개를 정리했다. 검증 자료는 `/Users/cheng80/orca/workspaces/jewelmatch/_fx_orchestration/backups_pre_cleanup/fx-g2-sprites-20260920-e2`에 보존했다. 실기기 FPS/오디오/광고 미검증, 21:20 기존 Claude main 인계 예약은 유지한다.
+
+## 12. 기본 매칭 파편의 방사형 소멸 (2026-09-20)
+- 사용자 피드백: 매칭 파편이 퍼지다가 아래로 쏟아져 물방울이나 풀잎처럼 보인다.
+- `onGemsRemoved`의 파편/별과 콤보 별빛에 중력 0을 적용하고, 매칭 파편의 초기 위쪽 편향을 제거한다. 양 축에 같은 감속을 적용해 방출 방향을 유지하며 기존 축소/페이드아웃으로 끝낸다.
+- 중력은 고정 크기 typed 버퍼에 슬롯별로 저장하고 방출 때마다 초기화한다. 특수 생성/발동과 리필 입자는 기존 중력을 유지한다. 파티클 개수, 수명, busy 시간, 점수와 게임 판정은 변경하지 않는다.
+- 검증: `flutter analyze --no-pub` exit0, 전체 `flutter test --no-pub` 279 tests PASS. 로그 `tmp/match-radial-fx/`. 중력 제거 직후 시점에는 웹 릴리즈 재빌드 및 새 브라우저 캡처가 미실행이었고 main 미커밋 상태였다. 이후 튜닝과 최종 검증은 13절을 따른다.
+
+## 13. 매칭 속도와 보석 광택 튜닝 (2026-09-20 20:58 KST)
+- 사용자 요청: 파편이 더 빨리 퍼지고 사라지도록 조정, 반짝임 밝기 2/3, 대각선으로 이동하는 광택 스윕 감속. 사용자가 말한 스켈레톤 효과는 보석의 광택 스윕으로 확인했다.
+- 매칭 파편/콤보 별빛 초기 속도1.4배, 링/섬광/파편/콤보 별빛 수명0.65배. 기존 중력0 유지. `_twinkleKind` 알파에2/3를 곱한다.
+- 보석 광택의 시간 진행만0.6배로 낮췄다. 한 칸 통과0.72→1.2초, 반복6→10초. 보석별 위상과6프레임 아틀라스는 유지한다.
+- analyze exit0, 관련5파일34tests PASS (`tmp/match-radial-tuning/`). 실행 중 debug 서버 hot reload425ms 성공, 현재 게임 화면 유지 확인. 전체279tests는 직전 중력 제거 리비전의 과거 결과다. 이번 변경의 웹 릴리즈 빌드와 실기기 검증은 미실행.
+- 사용자 최종 조정(21:01 KST): 광택 스윕 시간 배율을 0.6→0.8로 변경했다. 최종 한 칸 통과 0.9초, 반복 주기 7.5초다.
+- 사용자 반복 주기 조정(2026-09-20 21:04 KST): 속도0.8/한 칸0.9초를 유지하고 위상 주기6→8로 변경해 반복을10초로 분리했다. 최종 analyze0/관련34tests PASS, debug hot reload625ms 성공.
+
+- 최종 main 반영 검증(2026-09-20 21:10 KST): 사용자 최종값 속도0.8/반복10초를 포함한 제품 코드에서 analyze exit0, 전체279tests PASS, Web release build exit0. 근거 `/Users/cheng80/orca/workspaces/jewelmatch/_fx_orchestration/reports/verify_main_tuning_before_commit.txt`. 튜닝 코드와 문서를 main에 함께 반영한다. 개발 서버는 사용자 요청으로 정상 종료했고 8080 리스너가 없음을 확인했다. 실기기 FPS/오디오/광고 검증은 남아 있다.

@@ -2,7 +2,7 @@
 
 > 프로젝트 전체의 NOW. 다음 작업자 인계 문장은 HANDOFF.md에 둔다. 구현 상태와 검증 상태를 섞지 않는다.
 
-Updated: 2026-09-20 19:54 KST
+Updated: 2026-09-20 21:10 KST
 
 ## Current Phase
 Phase 3 — Stabilization (Phase 4 출시 값은 대기)
@@ -26,6 +26,7 @@ Phase 3 — Stabilization (Phase 4 출시 값은 대기)
 - [x] TASK-004e 다른 계열 교차 리뷰(X2) 결함 6건 수정과 main 병합
 - [x] TASK-004f bomb 범위 효과를 정지 그림 + 코드 타임라인 + 구운 글로우로 교체, main 병합
 - [x] TASK-004g hyper, supernova 레이어 전환 구현과 데스크톱 검증 완료 (main `c3b64dd` 병합 및 작업 Worktree/Orca 세션 정리 완료)
+- [x] TASK-004h 기본 매칭 파편/콤보 별빛의 중력과 위쪽 편향 제거, 방사형 감속/소멸로 조정. 후속 확산1.4배, 수명65%, 유휴 반짝임2/3, 광택 스윕80%/반복10초 (main 반영)
 - [ ] TASK-004d 모바일 실기기 FPS 전후 비교, 장시간 WebView와 실제 광고 SDK 확인
 - [x] TASK-MIG-001 F1~T6 합본 analyze / test / web build 과거 통과 기록 보존. E2 데스크톱 검증은 완료, 실기기 스모크는 미실행
 
@@ -66,10 +67,12 @@ Phase 3 — Stabilization (Phase 4 출시 값은 대기)
 | Web 장시간 오디오/FPS | INCOMPLETE | HISTORICAL | 2026-08-23 이전 | PLAN-001 / ADR-004 원문 | UNKNOWN | 짧은 수동 확인만 통과. 장시간 카운터 없음. 원문부터 미완 |
 | Android/iOS store device | NOT_RUN | NONE | UNKNOWN | UNKNOWN | UNKNOWN | 출시 체크리스트 미완 |
 | Release build F1-T6 revision | PASS | HISTORICAL | 2026-09-20 15:53 KST | F1~T6 통합 리비전 | STALE | integrated_final Web build exit=0. 이후 X2와 bomb 후속 변경, 모바일/스토어 실기기 스모크는 별도 미실행 |
-| E2 hyper/supernova layer integration | PASS | RECHECKED | 2026-09-20 19:54 KST | main `c3b64dd` (후속 문서 갱신만 추가) | CURRENT | `verify_main_after_E2_merge.txt`: main 병합 후 analyze exit=0, 전체 279 tests PASS, Web release build exit=0. 병합 전 독립 78회귀+픽셀4회귀와 실제 보드 캡처도 확인. 실기기 미검증 |
+| E2 hyper/supernova layer integration | PASS | HISTORICAL | 2026-09-20 19:54 KST | main `c3b64dd` (후속 문서 갱신만 추가) | STALE | `verify_main_after_E2_merge.txt`: main 병합 후 analyze exit=0, 전체 279 tests PASS, Web release build exit=0. 병합 전 독립 78회귀+픽셀4회귀와 실제 보드 캡처도 확인. 실기기 미검증 |
+| 매칭 파편 방사형 소멸 | PASS | HISTORICAL | 2026-09-20 20:24 KST | main `9137895` + 미커밋 파편 수정 | STALE | `tmp/match-radial-fx/analyze.log`: analyze exit0, `test.log`: 전체 279 tests PASS. 웹 릴리즈 재빌드와 새 브라우저 캡처는 미실행 |
+| 매칭 속도/반짝임/광택 스윕 튜닝 | PASS | RECHECKED | 2026-09-20 21:06 KST | 이 문서를 포함한 main 튜닝 커밋과 동일 제품 코드 | CURRENT | `/Users/cheng80/orca/workspaces/jewelmatch/_fx_orchestration/reports/verify_main_tuning_before_commit.txt`: analyze exit0, 전체279tests PASS, Web release build exit0. 앞선 debug hot reload와 화면 유지 확인. 실기기 미검증 |
 
 ## Next
-1. 21:20 기존 Orca Claude main에 병합 완료 상태와 남은 실기기 검증을 인계. E2를 재적용하지 않는다
+1. 21:20 기존 Orca Claude main에 E2 병합 결과와 후속 매칭/광택 튜닝 커밋, 남은 실기기 검증을 인계. 개발 서버는 사용자 요청으로 중지했다. E2를 재적용하지 않는다
 2. 실기기 FPS, 가독성, 오디오와 광고 흐름 확인. iOS 15/16에서 연쇄와 저시간 틱의 피치 상승을 청취
 3. 모바일 실기기 `?fps=1` 전후 비교, 장시간 WebView 오디오/FPS와 실제 광고 SDK 확인
 4. PLAN-001 장시간 측정은 원문부터 INCOMPLETE. 별도 승인 작업이지 이관 공백 메우기가 아님

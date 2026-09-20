@@ -176,7 +176,8 @@ extension _MatchBoardGemAtlas on MatchBoardRenderer {
         !logic.introFillInProgress &&
         gem.bumpT < 0 &&
         logic.activeInvalidDragGem == null) {
-      final phase = (_animTime + gem.row * 0.14 + gem.col * 0.11) % 6;
+      // 광택은 80% 속도로 흐르고 10초마다 반복한다(8 / 0.8).
+      final phase = (_animTime * 0.8 + gem.row * 0.14 + gem.col * 0.11) % 8;
       if (phase < 0.72) {
         return _GemAtlasBatch.baseCount +
             color * 6 +
