@@ -37,6 +37,12 @@ class BoardGem {
   double targetX;
   double targetY;
 
+  /// 렌더 전용 연출 타이머(초). 음수면 비활성. 규칙 판정에는 쓰지 않는다.
+  /// [landT]: 낙하 착지 스쿼시, [popT]: 특수 보석 탄생 팝.
+  double landT = -1;
+  double popT = -1;
+  bool airborne = false;
+
   /// 풀에서 꺼낸 인스턴스를 새 보석처럼 재설정한다.
   void reset({
     required int id,
@@ -58,6 +64,9 @@ class BoardGem {
     this.y = y;
     this.targetX = targetX;
     this.targetY = targetY;
+    landT = -1;
+    popT = -1;
+    airborne = false;
   }
 }
 

@@ -1,16 +1,16 @@
 part of 'match_game_hud.dart';
 
 extension _MatchGameHudInteractions on MatchGameHud {
-  void _updateHudState() {
+  void _updateHudState(double dt) {
     final currentHudTextScale = game.hudTextScale;
     if (_cachedHudTextScale != currentHudTextScale) {
       _layout();
       return;
     }
 
-    if (_cachedScore != game.board.score) {
-      _rebuildScoreValue();
-    }
+    if (_scorePunch > 0) _scorePunch = math.max(0, _scorePunch - dt * 3.6);
+    if (_comboPunch > 0) _comboPunch = math.max(0, _comboPunch - dt * 3.2);
+    _rollScoreTowardTarget(dt);
 
     final latestBest = GameSettings.getBestMatchScore(game.gameMode);
     final latestBestProgressionLevel =
@@ -48,6 +48,28 @@ extension _MatchGameHudInteractions on MatchGameHud {
         _cachedMaxCombo != maxCombo) {
       _rebuildComboPainters();
     }
+  }
+
+  /// 점수가 오르면 약 0.05초 간격으로 굴려 올린다. 줄어들면(재시작) 바로 맞춘다.
+  void _rollScoreTowardTarget(double dt) {
+    final target = game.board.score;
+    final shown = _cachedScore;
+    if (shown == target) return;
+    if (shown == null || target < shown) {
+      _scoreRollTarget = target;
+      _rebuildScoreValue();
+      return;
+    }
+    if (_scoreRollTarget != target) {
+      _scoreRollTarget = target;
+      _scorePunch = 1;
+    }
+    _scoreRollTimer -= dt;
+    if (_scoreRollTimer > 0) return;
+    _scoreRollTimer = 0.045;
+    final remaining = target - shown;
+    final step = math.min(remaining, math.max(7, (remaining * 0.28).ceil()));
+    _rebuildScoreValue(shown + step);
   }
 
   void _renderHud(Canvas canvas) {

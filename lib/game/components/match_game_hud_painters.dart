@@ -139,6 +139,7 @@ extension _MatchGameHudPainterCache on MatchGameHud {
     final t = game.hudTextScale;
     final cur = _displayCurrentCombo();
     final mx = game.board.maxCombo;
+    if (cur > (_cachedDisplayedCombo ?? cur)) _comboPunch = 1;
     _cachedDisplayedCombo = cur;
     _cachedMaxCombo = mx;
     final sh = _hudLegibilityShadows();
@@ -196,9 +197,9 @@ extension _MatchGameHudPainterCache on MatchGameHud {
     )..layout();
   }
 
-  void _rebuildScoreValue() {
+  void _rebuildScoreValue([int? shownScore]) {
     final t = game.hudTextScale;
-    _cachedScore = game.board.score;
+    _cachedScore = shownScore ?? game.board.score;
     _scoreLabel = TextPainter(
       text: TextSpan(
         text: game.isProgressionMode
@@ -212,7 +213,7 @@ extension _MatchGameHudPainterCache on MatchGameHud {
       textDirection: ui.TextDirection.ltr,
     )..layout();
     final scoreText = game.isProgressionMode
-        ? '${_fmt.format(game.board.score)}\n'
+        ? '${_fmt.format(_cachedScore)}\n'
               '${game.localeString('targetScore', 'Target')} '
               '${_fmt.format(game.progressionTargetScore)}'
         : _fmt.format(_cachedScore);

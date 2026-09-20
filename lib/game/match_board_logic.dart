@@ -72,6 +72,9 @@ class MatchBoardLogic {
   final List<List<BoardGem?>> cells = [];
   String state = 'idle';
   int score = 0;
+
+  /// 직전 제거 단계에서 얻은 점수. 점수 팝업 연출용.
+  int lastRemovalScore = 0;
   int combo = 0;
   int lastCombo = 0;
   MatchBoardGameStats stats = MatchBoardGameStats();
@@ -184,6 +187,8 @@ class MatchBoardLogic {
   static const double defaultLock = 0.10;
   static const double tweenSpeed = 18;
   static const double invalidDragReturnDuration = 0.16;
+  static const double landSquashDuration = 0.24;
+  static const double spawnPopDuration = 0.34;
   static const double _invalidDragReturnOvershoot = 1.7;
 
   /// 인트로 줄 낙하만 — 일반 스왑/중력과 분리. 전체 8줄 합쳐 약 1.5~1.6초(기본 타일·60fps 근사).

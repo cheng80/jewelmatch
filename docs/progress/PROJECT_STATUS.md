@@ -2,7 +2,7 @@
 
 > 프로젝트 전체의 NOW. 다음 작업자 인계 문장은 HANDOFF.md에 둔다. 구현 상태와 검증 상태를 섞지 않는다.
 
-Updated: 2026-08-23
+Updated: 2026-09-20
 
 ## Current Phase
 Phase 3 — Stabilization (Phase 4 출시 값은 대기)
@@ -10,6 +10,7 @@ Phase 3 — Stabilization (Phase 4 출시 값은 대기)
 
 ## Active Plan
 - `PLAN-001` 모바일 웹 오디오/FPS 회귀 — IN_PROGRESS
+- `PLAN-004` 보드 연출 보강 — IN_PROGRESS (구현 완료, 화면 확인과 튜닝 미완)
 
 ## Current Tasks
 - [x] TASK-001a HTML Audio 4슬롯/경로/unlock/웹 BGM replay
@@ -18,6 +19,8 @@ Phase 3 — Stabilization (Phase 4 출시 값은 대기)
 - [ ] TASK-001d 무한 모드 배너 표시/미표시 A/B
 - [ ] TASK-001e 특수효과 표시/미표시 A/B
 - [ ] TASK-001f 결과로 Status/Handoff 갱신
+- [x] TASK-004a PLAN-004 Step 1, 2 구현 (보석 물리감, BoardJuiceLayer, HUD 롤업)
+- [ ] TASK-004b PLAN-004 Step 3 화면 확인, 수치 튜닝, 실기기 FPS 전후 비교, UI_UX 반영
 - [x] TASK-MIG-001 flutter test / analyze 통과. 릴리즈 빌드·실기기 스모크는 미실행
 
 ## Completed
@@ -45,8 +48,9 @@ Phase 3 — Stabilization (Phase 4 출시 값은 대기)
 
 | 항목 | Result | Evidence | Date | Revision | Validity | Source / Gap |
 |---|---|---|---|---|---|---|
-| Unit / Widget | PASS | RECHECKED | 2026-08-23 | 현재 작업트리 (코드 HEAD 0cd1d00 + 문서 이관) | CURRENT | Resume Commands로 flutter test --no-pub 133 passed |
-| Analyze | PASS | RECHECKED | 2026-08-23 | 동일 | CURRENT | flutter analyze --no-pub No issues found |
+| Unit / Widget | PASS | RECHECKED | 2026-09-20 | 현재 작업트리 (HEAD 1ab48e2 + PLAN-004 미커밋) | CURRENT | flutter test --no-pub 135 passed |
+| Analyze | PASS | RECHECKED | 2026-09-20 | 동일 | CURRENT | flutter analyze --no-pub No issues found |
+| PLAN-004 화면 확인 | NOT_RUN | NONE | - | 동일 | UNKNOWN | 자동화 브라우저 창 가려짐으로 스크린샷 실패. 사람 눈 확인 필요 |
 | NAS Web smoke | PASS | HISTORICAL | 2026-08-15 | a821b19 | STALE | git 문서: NAS 웹 재배포 성공. 이후 0cd1d00 오디오 수정. 현재 리비전 미재검증 |
 | Apps in Toss 재배포 | PASS | HISTORICAL | 2026-08-15 | d777cf0 | STALE | git 문서: 일반 AIT 재배포. 이후 오디오 수정. 현재 리비전 미재검증 |
 | Web 장시간 오디오/FPS | INCOMPLETE | HISTORICAL | 2026-08-23 이전 | PLAN-001 / ADR-004 원문 | UNKNOWN | 짧은 수동 확인만 통과. 장시간 카운터 없음. 원문부터 미완 |

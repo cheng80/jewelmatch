@@ -61,10 +61,32 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
     final cx = game.safeContentCenterX;
     final scoreY = _scoreBlockTop + 4;
     _scoreLabel.paint(canvas, Offset(cx - _scoreLabel.width / 2, scoreY));
-    _scoreValue.paint(
+    _paintPunched(
       canvas,
-      Offset(cx - _scoreValue.width / 2, scoreY + _scoreLabel.height + 4),
+      _scoreValue,
+      cx,
+      scoreY + _scoreLabel.height + 4,
+      1 + 0.14 * _scorePunch * _scorePunch,
     );
+  }
+
+  /// [painter]를 [centerX] 가운데 정렬로 그리되 자기 중심 기준으로 [scale]만큼 키운다.
+  void _paintPunched(
+    Canvas canvas,
+    TextPainter painter,
+    double centerX,
+    double top,
+    double scale,
+  ) {
+    if (scale == 1) {
+      painter.paint(canvas, Offset(centerX - painter.width / 2, top));
+      return;
+    }
+    canvas.save();
+    canvas.translate(centerX, top + painter.height / 2);
+    canvas.scale(scale);
+    painter.paint(canvas, Offset(-painter.width / 2, -painter.height / 2));
+    canvas.restore();
   }
 
   void _renderComboStrip(Canvas canvas) {
@@ -117,12 +139,12 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
       canvas,
       Offset(leftCenterX - _comboLeftLabel.width / 2, ly0),
     );
-    _comboLeftValue.paint(
+    _paintPunched(
       canvas,
-      Offset(
-        leftCenterX - _comboLeftValue.width / 2,
-        ly0 + _comboLeftLabel.height + gapLabelValue,
-      ),
+      _comboLeftValue,
+      leftCenterX,
+      ly0 + _comboLeftLabel.height + gapLabelValue,
+      1 + 0.4 * _comboPunch * _comboPunch,
     );
 
     _comboRightLabel.paint(

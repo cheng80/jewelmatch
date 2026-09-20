@@ -28,9 +28,11 @@ class MatchBoardRenderer extends PositionComponent
 
   static const double _cellCornerRatio = 0.04;
   static const double _removalMinAlpha = 0.08;
-  static const double _removalMinScale = 0.72;
+  static const double _removalMinScale = 0.3;
+  static const double _removalPopScale = 1.2;
+  static const double _removalPopPhase = 0.3;
   static const double _removalMaxRotation = math.pi;
-  static const double _removalMaxFlashAlpha = 0.20;
+  static const double _removalMaxFlashAlpha = 0.30;
   static const List<double> _normalSpriteColorMatrix = <double>[
     0.90556,
     0.06296,
@@ -83,6 +85,12 @@ class MatchBoardRenderer extends PositionComponent
   /// `flame_tab_order` [CubeButton]과 같은 cos 펄스, 다만 [_hintPulseHz]로 속도만 조정.
   double _hintPulseTime = 0;
 
+  /// 선택 맥동, 특수 보석 호흡 등 상시 연출의 공용 시계.
+  double _animTime = 0;
+
+  /// 힌트 쌍이 서로 쪽으로 끌리는 거리(px). 힌트가 없으면 0.
+  double _hintNudge = 0;
+
   /// 게임 색상 1~6 → 시트 열 인덱스 (시트 순서: 빨강, 은백, 초록, 노랑, 보라, 주황, 파랑).
   static const List<int> _sheetColByColor1based = [0, 6, 3, 2, 4, 5];
 
@@ -105,6 +113,8 @@ class MatchBoardRenderer extends PositionComponent
   final Paint _compositedSpritePaint = Paint()
     ..filterQuality = FilterQuality.medium;
   final Paint _removalFlashPaint = Paint();
+  final Paint _popRingPaint = Paint()..style = PaintingStyle.stroke;
+  final Paint _lowTimePulsePaint = Paint()..style = PaintingStyle.stroke;
   final Paint _proceduralShadowPaint = Paint();
   final Paint _proceduralGradientPaint = Paint();
   final Paint _proceduralStrokePaint = Paint()
@@ -245,6 +255,7 @@ class MatchBoardRenderer extends PositionComponent
   @override
   void update(double dt) {
     super.update(dt);
+    _animTime += dt;
     final ha = logic.hintCellA;
     final hb = logic.hintCellB;
     if (ha != null &&
@@ -289,8 +300,10 @@ class MatchBoardRenderer extends PositionComponent
     if (_boardChromePicture != null) {
       canvas.drawPicture(_boardChromePicture!);
     }
+    _drawLowTimePulse(canvas, bx, by, bw, bh);
 
     _updateRemovalVisualState();
+    _updateHintNudge(ts);
 
     final needsBoardClip =
         logic.introFillInProgress ||

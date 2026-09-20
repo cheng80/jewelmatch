@@ -30,7 +30,7 @@
           TitleView / GameView / SettingView
             GameView → GameWidget<MatchBoardGame>
               viewport: MatchGameHud
-              world: MatchBoardRenderer + ParticlePool + SpecialEffectPool
+              world: MatchBoardRenderer + BoardJuiceLayer + SpecialEffectPool
             MatchBoardLogic: 보드 규칙
             VM: SettingsNotifier, RankingNotifier
             Services: SoundManager, RankingService, AdService, IntossLeaderboardService
@@ -275,7 +275,7 @@ Flutter App Shell
       └─ MatchBoardGame
          ├─ camera.viewport → MatchGameHud
          └─ world → MatchBoardRenderer
-            ├─ ParticlePool
+            ├─ BoardJuiceLayer
             └─ SpecialEffectPool
 ```
 
@@ -332,7 +332,7 @@ GameView.build()
             ├─ camera.viewfinder anchor = topLeft, position = (0,0)
             ├─ camera.viewport.add(MatchGameHud(...))
             ├─ world.add(MatchBoardRenderer(logic: board))
-            ├─ ParticlePool(world)
+            ├─ world.add(BoardJuiceLayer())
             ├─ SpecialEffectPool(world)
             ├─ installMatchBoardQaBridge(this)
             └─ Timed 모드면 RankingService.fetchTop1()
@@ -474,6 +474,24 @@ Flame 게임 셸이다.
 - 일반 보석에는 현재 렌더러의 `ColorFilter.matrix`가 적용되어 전체 톤을 맞춘다. 전용 특수 스프라이트에는 일반 보석 색상 필터를 적용하지 않는다.
 - 범위형 발동 이펙트(`bomb`, `hyper`, `supernova`의 중앙 폭발/마법 발동)는 `special_area_effects.json` manifest가 지정하는 4×4 정방형 스프라이트 시트를 캐싱해 그린다. 프레임별 투명도와 후반 fade는 PNG alpha에 베이크되어 있고 런타임에서는 별도 alpha 필터를 추가하지 않는다. `row`/`col`/`star`의 라이트닝 계열은 기존 절차형 렌더를 유지한다.
 
+#### 보드 연출 (PLAN-004)
+
+규칙 판정과 분리된 렌더 전용 연출이다. 모바일 웹 예산(PLAN-001 5.3, 5.4) 때문에 `render()`/`update()`에서 `Paint`, `TextPainter`, 리스트를 만들지 않고 blur와 `saveLayer`를 쓰지 않는다.
+
+- `BoardGem.landT` / `popT` / `airborne`: 렌더 전용 타이머. `MatchBoardLogic._tickGemJuice`가 진행한다. 반 칸 넘게 떨어지던 보석이 목표까지 `tileSize * 0.12` 안으로 들어오면 `landT`를 시작한다(`landSquashDuration` 0.24초). 풀 재사용 시 `reset()`에서 초기화된다.
+- 착지 스쿼시: `_drawGem`이 셀 바닥 기준으로 세로 최대 약 15% 눌렀다가 되튕긴다. 인트로 낙하에도 적용된다.
+- 제거 팝: 제거 진행 30%까지 1.2배로 부풀고 이후 0.3배, 알파 0.08까지 수축한다. `removeDelay`(0.18초)는 그대로다.
+- 특수 보석 탄생: `_convergeOnSpawns`가 특수 보석을 만든 매치 그룹의 제거 예정 보석 `targetX/Y`를 생성 칸으로 바꿔 빨려 들게 하고, 생성된 보석의 `popT`를 시작한다(`spawnPopDuration` 0.34초, 1.5배에서 복귀 + 확장 링). 제거 집합에 없는 보석의 목표는 건드리지 않는다.
+- 무효 스왑 범프: `_trySwapImpl` 무효 분기에서 두 보석을 서로 쪽으로 30% 밀어 두고 기존 트윈으로 복귀시킨다. 목표 좌표는 바꾸지 않는다.
+- 상시 연출: 선택 보석 맥동, 힌트 쌍이 서로 쪽으로 끌림, 특수 보석 호흡(id 위상차), 저시간(10초 이하) 보드 테두리 붉은 맥동(타임 틱과 같은 박자).
+- `BoardJuiceLayer`(world, priority 130): 파티클 192슬롯 링 버퍼를 `Float32List`/`Int32List`로 들고, 종류가 달라도 프레임당 `drawRawAtlas` 1회(`BlendMode.plus`)로 그린다. 아틀라스는 로드 때 64px 칸 4개(별, 섬광, 충격파 링, 파편)를 `toImageSync`로 한 번 굽고 광륜도 여기에 구워 런타임 blur가 없다. `drawRawAtlas` 원본 사각형은 LTRB다. 제거 칸마다 링 1 + 섬광 1은 항상, 파편(속도 방향 정렬, 중력)과 별(회전)은 단계별 6/8/10개를 버스트당 150개 예산 안에서 낸다. 유휴 상태에서는 0.18~0.53초마다 보석 하이라이트 위치에 반짝임 1개.
+- CustomPainter는 쓰지 않는다. Flame `Component.render(Canvas)`가 받는 것이 CustomPainter와 같은 `dart:ui` Canvas라 표현력과 비용이 같고, 별도 위젯 레이어만 늘어난다.
+- 점수 팝업과 콤보 콜아웃: 이벤트당 `TextPainter` 1개, 슬롯 6개(0번은 콜아웃 전용). 알파 페이드 대신 스케일로 사라진다. 점수는 `MatchBoardLogic.lastRemovalScore`를 쓴다. 콜아웃 문구는 콤보 2부터 GOOD, GREAT, AWESOME, AMAZING, UNBELIEVABLE 순이며 번역하지 않는다.
+- 콤보 셰이크: 특수 발동이 없는 4개 이상 매치 또는 콤보 3 이상에서 `min(1.6 + combo * 0.7, 5.0)` 세기, 0.2초. 특수 발동은 기존 셰이크만 쓴다.
+- `hasActiveVisualEffects`는 `BoardJuiceLayer.busy`(버스트와 텍스트만, 유휴 반짝임 제외)와 특수효과 풀을 본다. 유휴 반짝임을 포함하면 레벨업 판정이 영원히 대기하므로 포함하지 않는다.
+- HUD: 점수는 약 0.045초 간격으로 남은 차이의 28%(최소 7)씩 굴러 올라가고 확대 펀치가 붙는다. 점수가 줄면(재시작) 즉시 맞춘다. 현재 콤보 값도 오를 때 펀치가 붙는다. 저장되는 점수와 랭킹 점수는 `board.score` 그대로다.
+- 이전 `ParticleBurst`/`ParticlePool`은 67a2417에서 스폰이 빠진 뒤 warm-up만 남아 있었고, 이번에 삭제했다.
+
 현재 렌더 에셋 매핑은 다음과 같다.
 
 | 용도 | 파일 | 프레임/규칙 |
@@ -578,7 +596,7 @@ MatchBoardGame.onLoad()
 ├─ _hud = MatchGameHud(onPausePressed: ...)
 ├─ camera.viewport.add(_hud)
 ├─ world.add(MatchBoardRenderer(logic: board))
-├─ _particlePool = ParticlePool(world)
+├─ world.add(_juiceLayer)  // BoardJuiceLayer
 ├─ _specialEffectPool = SpecialEffectPool(world)
 ├─ installMatchBoardQaBridge(this)
 └─ if (isTimedMode) RankingService.fetchTop1()
@@ -612,7 +630,7 @@ MatchBoardGame
 │  └─ MatchGameHud
 └─ world
    └─ MatchBoardRenderer
-      + ParticlePool / SpecialEffectPool
+      + BoardJuiceLayer / SpecialEffectPool
 ```
 
 ## 6. 좌표계와 safe area 기준

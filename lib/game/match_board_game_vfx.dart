@@ -3,7 +3,7 @@ part of 'match_board_game.dart';
 extension MatchBoardGameVfx on MatchBoardGame {
   bool get hasActiveVisualEffects =>
       _effectPoolsReady &&
-      (_particlePool.activeCount > 0 || _specialEffectPool.activeCount > 0);
+      (_juiceLayer.busy || _specialEffectPool.activeCount > 0);
 
   void _spawnSpecialEffectEvents() {
     if (!_effectPoolsReady) return;
@@ -51,7 +51,7 @@ extension MatchBoardGameVfx on MatchBoardGame {
     return Colors.white;
   }
 
-  /// 매치 제거 시 파티클 스폰 + 추가 SFX.
+  /// 매치 제거 시 스파크, 점수 팝업, 콤보 콜아웃, 콤보 셰이크 + SFX.
   void _spawnParticles(
     List<({int row, int col, int color})> cells,
     bool bigMatch,
@@ -67,6 +67,24 @@ extension MatchBoardGameVfx on MatchBoardGame {
       SoundManager.playComboSfxDelayed(AssetPaths.sfxComboHit);
     } else {
       SoundManager.playSfx(AssetPaths.sfxCollect);
+    }
+
+    if (!_effectPoolsReady) return;
+    _juiceLayer.onGemsRemoved(
+      cells,
+      bigMatch: bigMatch,
+      hasSpecial: hasSpecial,
+      combo: combo,
+      gained: board.lastRemovalScore,
+    );
+    // 특수 발동은 자체 셰이크가 있다. 일반 매치는 큰 매치와 연쇄에서만 살짝 흔든다.
+    if (!hasSpecial && (bigMatch || combo >= 3)) {
+      _boardShake.queue(
+        SpecialEffectShake(
+          intensity: min(1.6 + combo * 0.7, 5.0),
+          duration: 0.2,
+        ),
+      );
     }
   }
 }

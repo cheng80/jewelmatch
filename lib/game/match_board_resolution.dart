@@ -30,7 +30,8 @@ extension MatchBoardResolution on MatchBoardLogic {
           MatchBoardLogic.scoreBase +
           max(0, removed - 3) * MatchBoardLogic.scoreExtraPerGem;
       final comboBonus = max(1, combo);
-      score += ((base + specialBonus) * comboBonus).round();
+      lastRemovalScore = ((base + specialBonus) * comboBonus).round();
+      score += lastRemovalScore;
 
       final raw =
           (timedModeBonusBaseUnits +
@@ -144,10 +145,36 @@ extension MatchBoardResolution on MatchBoardLogic {
       stats.recordSpecialCreated(spawn.kind);
     }
     applySpawnInfo(spawns);
+    _convergeOnSpawns(matchData, spawns, removalSet);
     activateSpecials(removalSet, queue);
     pendingMoveInfo = null;
     _startRemovalPhaseImpl(removalSet);
     return true;
+  }
+
+  /// 특수 보석을 만든 매치 그룹은 제거되는 동안 생성 칸으로 빨려 들고,
+  /// 생성된 보석은 탄생 팝을 시작한다. 제거 예정 보석의 화면 목표만 바꾼다.
+  void _convergeOnSpawns(
+    MatchData matchData,
+    List<SpecialSpawn> spawns,
+    Map<String, bool> removalSet,
+  ) {
+    for (final spawn in spawns) {
+      final to = cellToPixel(spawn.row, spawn.col);
+      for (final group in matchData.groups) {
+        if (!group.cells.any((c) => c.x == spawn.row && c.y == spawn.col)) {
+          continue;
+        }
+        for (final cell in group.cells) {
+          if (!removalSet.containsKey(_cellKey(cell.x, cell.y))) continue;
+          final gem = getGem(cell.x, cell.y);
+          if (gem == null) continue;
+          gem.targetX = to.dx;
+          gem.targetY = to.dy;
+        }
+      }
+      getGem(spawn.row, spawn.col)?.popT = 0;
+    }
   }
 
   void _finishResolutionFlowImpl() {

@@ -10,9 +10,9 @@ import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import '../services/game_settings.dart';
 import '../services/ranking_service.dart';
+import 'components/board_juice_layer.dart';
 import 'components/match_board_renderer.dart';
 import 'components/match_game_hud.dart';
-import 'components/particle_burst.dart';
 import 'components/special_effect_pool.dart';
 import 'item_inventory.dart';
 import 'item_kind.dart';
@@ -103,7 +103,7 @@ class MatchBoardGame extends FlameGame {
   static const int progressionModeHintsPerStage = 1;
 
   late final MatchBoardLogic board;
-  late final ParticlePool _particlePool;
+  final BoardJuiceLayer _juiceLayer = BoardJuiceLayer();
   late final SpecialEffectPool _specialEffectPool;
   final MatchBoardCameraShake _boardShake = MatchBoardCameraShake();
   final Vector2 _boardShakeOffset = Vector2.zero();
@@ -321,7 +321,7 @@ class MatchBoardGame extends FlameGame {
 
     world.add(MatchBoardRenderer(logic: board));
 
-    _particlePool = ParticlePool(world);
+    await world.add(_juiceLayer);
     _specialEffectPool = SpecialEffectPool(world);
     if (kIsWeb) {
       await _warmInitialEffectPools();
@@ -335,17 +335,13 @@ class MatchBoardGame extends FlameGame {
   }
 
   Future<void> _warmInitialEffectPools() {
-    return Future.wait([
-      _particlePool.warm(burstCount: 10, particleCapacity: 18),
-      _specialEffectPool.warm(burstCount: 8),
-    ]);
+    return _specialEffectPool.warm(burstCount: 8);
   }
 
   @override
   void onRemove() {
     uninstallMatchBoardQaBridge(this);
     if (_effectPoolsReady) {
-      _particlePool.clear();
       _specialEffectPool.clear();
       _effectPoolsReady = false;
     }

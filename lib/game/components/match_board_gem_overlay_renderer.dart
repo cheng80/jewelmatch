@@ -18,8 +18,20 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
     final rawProgress =
         1 - (logic.stageTimer / MatchBoardLogic.removeDelay).clamp(0.0, 1.0);
     final eased = rawProgress * rawProgress * (3 - 2 * rawProgress);
-    _removalVisualAlpha = 1 - (1 - MatchBoardRenderer._removalMinAlpha) * eased;
-    _removalVisualScale = 1 - (1 - MatchBoardRenderer._removalMinScale) * eased;
+    // 팝: 초반에는 선명한 채로 살짝 부풀고, 이후 빠르게 수축하며 사라진다.
+    const popPhase = MatchBoardRenderer._removalPopPhase;
+    const popScale = MatchBoardRenderer._removalPopScale;
+    if (rawProgress < popPhase) {
+      _removalVisualAlpha = 1;
+      _removalVisualScale =
+          1 + (popScale - 1) * math.sin(rawProgress / popPhase * math.pi / 2);
+    } else {
+      final q = (rawProgress - popPhase) / (1 - popPhase);
+      _removalVisualAlpha =
+          1 - (1 - MatchBoardRenderer._removalMinAlpha) * q * q;
+      _removalVisualScale =
+          popScale - (popScale - MatchBoardRenderer._removalMinScale) * q * q;
+    }
     _removalVisualRotation = MatchBoardRenderer._removalMaxRotation * eased;
     _removalFlashAlpha = MatchBoardRenderer._removalMaxFlashAlpha * (1 - eased);
 
@@ -51,6 +63,56 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
         radius,
       ),
       _removalFlashPaint,
+    );
+  }
+
+  /// 타임 틱과 같은 박자로 보드 테두리가 붉게 맥동한다.
+  void _drawLowTimePulse(
+    Canvas canvas,
+    double bx,
+    double by,
+    double bw,
+    double bh,
+  ) {
+    final g = game;
+    if (!g.hasTimedClock || !g.isPlaying) return;
+    final t = g.timeRemaining;
+    if (t <= 0 || t > MatchBoardGame.timedLowTimeTickMaxSeconds) return;
+    final beat = t - t.floorToDouble();
+    final ts = logic.tileSize;
+    _lowTimePulsePaint
+      ..strokeWidth = ts * (0.05 + 0.07 * beat)
+      ..color = const Color(0xFFFF4D4D).withValues(alpha: 0.75 * beat * beat);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(bx - 2, by - 2, bw + 4, bh + 4),
+        const Radius.circular(12),
+      ),
+      _lowTimePulsePaint,
+    );
+  }
+
+  void _updateHintNudge(double ts) {
+    if (logic.hintCellA == null ||
+        logic.hintCellB == null ||
+        logic.state != 'idle' ||
+        logic.introFillInProgress) {
+      _hintNudge = 0;
+      return;
+    }
+    final t = (_hintPulseTime * MatchBoardRenderer._hintPulseHz * 2) % 1.0;
+    _hintNudge = ts * 0.09 * (0.5 - 0.5 * math.cos(t * 2 * math.pi));
+  }
+
+  void _drawSpawnPopRing(Canvas canvas, BoardGem gem, double ts) {
+    final p = gem.popT / MatchBoardLogic.spawnPopDuration;
+    _popRingPaint
+      ..strokeWidth = 1 + ts * 0.09 * (1 - p)
+      ..color = const Color(0xFFFFF0A6).withValues(alpha: 0.9 * (1 - p));
+    canvas.drawCircle(
+      Offset(gem.x + ts / 2, gem.y + ts / 2),
+      ts * (0.35 + 0.75 * p),
+      _popRingPaint,
     );
   }
 
@@ -136,18 +198,66 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
       _drawRemovalCellFlash(canvas, gem, ts);
     }
 
-    final hasRemovalTransform =
-        isRemovalVisualCell && _removalVisualScale < 0.999;
+    var sx = 1.0;
+    var sy = 1.0;
+    var rotation = 0.0;
+    var shiftX = 0.0;
+    var shiftY = 0.0;
+    var anchorY = y + ts / 2;
+    if (isRemovalVisualCell) {
+      sx = sy = _removalVisualScale;
+      rotation = _removalVisualRotation * (gem.id.isEven ? 1 : -1);
+    } else {
+      if (gem.landT >= 0) {
+        // 착지 스쿼시: 바닥 기준으로 눌렸다가 살짝 늘어난 뒤 복원.
+        final p = gem.landT / MatchBoardLogic.landSquashDuration;
+        final wave = math.sin(p * 2 * math.pi) * (1 - p);
+        sy -= 0.20 * wave;
+        sx += 0.13 * wave;
+        anchorY = y + ts * 0.91;
+      }
+      if (gem.popT >= 0) {
+        _drawSpawnPopRing(canvas, gem, ts);
+        final p = 1 - gem.popT / MatchBoardLogic.spawnPopDuration;
+        final s = 1 + 0.5 * p * p;
+        sx *= s;
+        sy *= s;
+      } else if (gem.kind != GemKind.normal) {
+        // 특수 보석 호흡. id로 위상을 어긋나게 해 보드가 한꺼번에 뛰지 않는다.
+        final s = 1 + 0.04 * math.sin(_animTime * 3.2 + gem.id);
+        sx *= s;
+        sy *= s;
+      }
+      if (logic.state == 'idle') {
+        final sel = logic.selected;
+        if (sel != null && sel.x == gem.row && sel.y == gem.col) {
+          final s = 1 + 0.09 * (0.5 + 0.5 * math.sin(_animTime * 8));
+          sx *= s;
+          sy *= s;
+        }
+      }
+      if (_hintNudge > 0) {
+        final ha = logic.hintCellA!;
+        final hb = logic.hintCellB!;
+        final isA = ha.x == gem.row && ha.y == gem.col;
+        if (isA || (hb.x == gem.row && hb.y == gem.col)) {
+          final dir = isA ? 1 : -1;
+          shiftX = (hb.y - ha.y) * dir * _hintNudge;
+          shiftY = (hb.x - ha.x) * dir * _hintNudge;
+        }
+      }
+    }
 
-    if (hasRemovalTransform) {
+    final hasGemTransform =
+        sx != 1 || sy != 1 || rotation != 0 || shiftX != 0 || shiftY != 0;
+
+    if (hasGemTransform) {
       final cx = gem.x + ts / 2;
-      final cy = gem.y + ts / 2;
-      final rotationDirection = gem.id.isEven ? 1 : -1;
       canvas.save();
-      canvas.translate(cx, cy);
-      canvas.rotate(_removalVisualRotation * rotationDirection);
-      canvas.scale(_removalVisualScale, _removalVisualScale);
-      canvas.translate(-cx, -cy);
+      canvas.translate(cx + shiftX, anchorY + shiftY);
+      if (rotation != 0) canvas.rotate(rotation);
+      canvas.scale(sx, sy);
+      canvas.translate(-cx, -anchorY);
     }
 
     if (compositedOverlaySprite != null && specialSprite == null) {
@@ -164,7 +274,7 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
         size: _spriteRenderSize,
         overridePaint: compositedPaint,
       );
-      if (hasRemovalTransform) canvas.restore();
+      if (hasGemTransform) canvas.restore();
       return;
     }
 
@@ -202,6 +312,6 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
         alpha: isRemovalVisualCell ? _removalVisualAlpha : 1,
       );
     }
-    if (hasRemovalTransform) canvas.restore();
+    if (hasGemTransform) canvas.restore();
   }
 }

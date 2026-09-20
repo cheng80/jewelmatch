@@ -81,7 +81,15 @@ class MatchGameHud extends PositionComponent
   String? _cachedRankingTop1Name;
   int? _cachedRankingTop1Score;
   double? _cachedHudTextScale;
+
+  /// 화면에 표시 중인 점수. 실제 점수까지 짧게 굴러 올라간다.
   int? _cachedScore;
+  int _scoreRollTarget = 0;
+  double _scoreRollTimer = 0;
+
+  /// 점수와 콤보 값이 오를 때 1에서 0으로 감쇠하는 확대 펀치.
+  double _scorePunch = 0;
+  double _comboPunch = 0;
   int? _cachedTimedSeconds;
   int? _cachedProgressionXp;
   int? _cachedDisplayedCombo;
@@ -526,7 +534,7 @@ class MatchGameHud extends PositionComponent
   @override
   void update(double dt) {
     super.update(dt);
-    _updateHudState();
+    _updateHudState(dt);
   }
 
   @override

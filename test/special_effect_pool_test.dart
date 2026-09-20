@@ -1,7 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:stonematch/game/components/particle_burst.dart';
 import 'package:stonematch/game/components/special_effect_burst.dart';
 import 'package:stonematch/game/components/special_effect_pool.dart';
 import 'package:stonematch/game/match_board_logic.dart';
@@ -56,20 +55,6 @@ void main() {
     );
 
     expect(pool.cachedCount, 2);
-    expect(pool.activeCount, 1);
-  });
-
-  test('particle pool can be warmed with particle capacity', () async {
-    final parent = Component();
-    final pool = ParticlePool(parent);
-
-    await pool.warm(burstCount: 4, particleCapacity: 18);
-
-    expect(pool.cachedCount, 4);
-
-    pool.spawn(center: Vector2.zero(), baseColor: Colors.orange, count: 18);
-
-    expect(pool.cachedCount, 3);
     expect(pool.activeCount, 1);
   });
 
@@ -184,30 +169,33 @@ void main() {
     expect(desktop.activeCount, 3);
   });
 
-  test('desktop high impact effects still avoid full cost when overlapping', () {
-    final parent = Component();
-    final pool = SpecialEffectPool(parent, constrainedDevice: false);
+  test(
+    'desktop high impact effects still avoid full cost when overlapping',
+    () {
+      final parent = Component();
+      final pool = SpecialEffectPool(parent, constrainedDevice: false);
 
-    pool.spawn(
-      effectKind: GemKind.bomb,
-      origin: Vector2.zero(),
-      affectedCenters: const [],
-      tileSize: 64,
-      baseColor: Colors.orange,
-    );
-    pool.spawn(
-      effectKind: GemKind.bomb,
-      origin: Vector2.all(10),
-      affectedCenters: const [],
-      tileSize: 64,
-      baseColor: Colors.orange,
-    );
+      pool.spawn(
+        effectKind: GemKind.bomb,
+        origin: Vector2.zero(),
+        affectedCenters: const [],
+        tileSize: 64,
+        baseColor: Colors.orange,
+      );
+      pool.spawn(
+        effectKind: GemKind.bomb,
+        origin: Vector2.all(10),
+        affectedCenters: const [],
+        tileSize: 64,
+        baseColor: Colors.orange,
+      );
 
-    final tiers = parent.children
-        .whereType<SpecialEffectBurst>()
-        .map((burst) => burst.performanceTier)
-        .toList(growable: false);
+      final tiers = parent.children
+          .whereType<SpecialEffectBurst>()
+          .map((burst) => burst.performanceTier)
+          .toList(growable: false);
 
-    expect(tiers, equals([1, 2]));
-  });
+      expect(tiers, equals([1, 2]));
+    },
+  );
 }

@@ -44,6 +44,7 @@ extension MatchBoardUpdate on MatchBoardLogic {
             gem.y = gem.targetY;
           }
         }
+        _tickGemJuice(gem, dt);
       }
     }
 
@@ -80,8 +81,29 @@ extension MatchBoardUpdate on MatchBoardLogic {
           final s = min(1.0, dt * MatchBoardLogic.tweenSpeed);
           gem.x += (gem.targetX - gem.x) * s;
           gem.y += (gem.targetY - gem.y) * s;
+          _tickGemJuice(gem, dt);
         }
       }
+    }
+  }
+
+  /// 반 칸 넘게 떨어지던 보석이 목표 근처에 닿으면 착지 스쿼시를 시작하고,
+  /// 렌더 전용 연출 타이머를 진행한다.
+  void _tickGemJuice(BoardGem gem, double dt) {
+    final dy = gem.targetY - gem.y;
+    if (dy > tileSize * 0.5) {
+      gem.airborne = true;
+    } else if (gem.airborne && dy <= tileSize * 0.12) {
+      gem.airborne = false;
+      gem.landT = 0;
+    }
+    if (gem.landT >= 0) {
+      gem.landT += dt;
+      if (gem.landT >= MatchBoardLogic.landSquashDuration) gem.landT = -1;
+    }
+    if (gem.popT >= 0) {
+      gem.popT += dt;
+      if (gem.popT >= MatchBoardLogic.spawnPopDuration) gem.popT = -1;
     }
   }
 

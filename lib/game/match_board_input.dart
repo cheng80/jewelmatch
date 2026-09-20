@@ -60,6 +60,13 @@ extension MatchBoardInput on MatchBoardLogic {
     final matchB = findMatchesAt(ar, ac);
     if (matchA.groups.isEmpty && matchB.groups.isEmpty) {
       swapCells(ar, ac, br, bc);
+      // 무효 스왑 범프: 서로 쪽으로 밀렸다가 기존 트윈으로 제자리에 돌아온다.
+      final bumpX = (gemB.targetX - gemA.targetX) * 0.3;
+      final bumpY = (gemB.targetY - gemA.targetY) * 0.3;
+      gemA.x += bumpX;
+      gemA.y += bumpY;
+      gemB.x -= bumpX;
+      gemB.y -= bumpY;
       lastActionText = 'bad swap';
       lockInput(MatchBoardLogic.invalidSwapLock);
       onInvalidSwap?.call();

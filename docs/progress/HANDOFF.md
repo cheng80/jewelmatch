@@ -2,7 +2,7 @@
 
 > 다음 작업자가 즉시 시작할 정보만 둔다. 프로젝트 전체 상태는 PROJECT_STATUS.md에 둔다.
 
-Updated: 2026-08-23
+Updated: 2026-09-20
 
 ## Current State
 문서 팩은 대체 가능(REPLACEABLE). 정본은 docs/. 이전 문서는 archive/docs/. 검증 공백은 표에 남아 있다. 게임 다음 작업은 PLAN-001.
@@ -14,6 +14,9 @@ Updated: 2026-08-23
 - 2026-08-23 대체 가능성 점검 12항을 표준 팩만으로 통과. 이후 정본 경로를 docs/로 옮기고 이전 문서는 archive/docs/로 둠
 
 ## In Progress
+- Plan: `PLAN-004` 보드 연출 보강. Step 1, 2 구현 끝, 전부 미커밋 작업트리 상태
+- Task: TASK-004b. `flutter run -d chrome`으로 직접 보고 `board_juice_layer.dart`의 파티클 크기, 수명, 개수와 콜아웃 위치를 튜닝. 그 뒤 `?fps=1`로 모바일 웹 전후 비교, 02_UI_UX SCREEN-003 반영
+- 주의: 파티클과 텍스트는 아직 화면에서 확인한 적 없음. 테스트는 로직(착지, 수렴, 범프)만 본다
 - Plan: `PLAN-001`
 - Task: TASK-001c 실기기 30초 이상 카운터 보존
 
@@ -32,6 +35,7 @@ Updated: 2026-08-23
 - ISSUE-005: 빈 App Store ID
 
 ## Changed Contracts
+- PLAN-004: `ParticleBurst`/`ParticlePool` 삭제, `BoardJuiceLayer`로 대체. `hasActiveVisualEffects`는 유휴 반짝임을 포함하지 않음. HUD 점수는 롤업 표시값이고 저장/랭킹은 `board.score` 그대로
 - BR-040: 레벨 1~5는 level*7500, 6부터 37500+(level-5)*5000. ADR-006
 - BR-092: HUD 랭킹/top1은 타임 전용
 - BR-073: 시계는 인트로, 즉시형 확인, 프리즘 색 선택 중 정지
@@ -53,8 +57,9 @@ Updated: 2026-08-23
 
 | 항목 | Result | Evidence | Date | Revision | Validity | Source / Gap |
 |---|---|---|---|---|---|---|
-| Unit / Widget | PASS | RECHECKED | 2026-08-23 | 현재 작업트리 (코드 HEAD 0cd1d00 + 문서 이관) | CURRENT | Resume Commands로 flutter test --no-pub 133 passed |
-| Analyze | PASS | RECHECKED | 2026-08-23 | 동일 | CURRENT | flutter analyze --no-pub No issues found |
+| Unit / Widget | PASS | RECHECKED | 2026-09-20 | 현재 작업트리 (HEAD 1ab48e2 + PLAN-004 미커밋) | CURRENT | flutter test --no-pub 135 passed |
+| Analyze | PASS | RECHECKED | 2026-09-20 | 동일 | CURRENT | flutter analyze --no-pub No issues found |
+| PLAN-004 화면 확인 | NOT_RUN | NONE | - | 동일 | UNKNOWN | 자동화 브라우저 창 가려짐으로 스크린샷 실패. 사람 눈 확인 필요 |
 | NAS Web smoke | PASS | HISTORICAL | 2026-08-15 | a821b19 | STALE | git 문서: NAS 웹 재배포 성공. 이후 0cd1d00 오디오 수정. 현재 리비전 미재검증 |
 | Apps in Toss 재배포 | PASS | HISTORICAL | 2026-08-15 | d777cf0 | STALE | git 문서: 일반 AIT 재배포. 이후 오디오 수정. 현재 리비전 미재검증 |
 | Web 장시간 오디오/FPS | INCOMPLETE | HISTORICAL | 2026-08-23 이전 | PLAN-001 / ADR-004 원문 | UNKNOWN | 짧은 수동 확인만 통과. 장시간 카운터 없음. 원문부터 미완 |
@@ -64,9 +69,10 @@ Updated: 2026-08-23
 ## Files to Read First
 1. progress/PROJECT_STATUS.md
 2. 이 파일
-3. plans/PLAN-001-mobile-web-audio-fps.md
-4. decisions/ADR-004-web-html-audio-sfx.md
-5. 01_PRODUCT_SPEC.md 의 FR-003, FR-010
+3. plans/PLAN-004-board-juice.md
+4. plans/PLAN-001-mobile-web-audio-fps.md
+5. decisions/ADR-004-web-html-audio-sfx.md
+6. 01_PRODUCT_SPEC.md 의 FR-003, FR-010
 
 ## Resume Commands
 이 팩만 보고 실행한다. 비밀은 넣지 않는다.
