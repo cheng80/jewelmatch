@@ -2,12 +2,12 @@
 
 > 다음 작업자가 즉시 시작할 정보만 둔다. 프로젝트 전체 상태는 PROJECT_STATUS.md에 둔다.
 
-Updated: 2026-09-20 21:26 KST
+Updated: 2026-09-20 21:31 KST
 
 ## Current State
 최신 추가 변경: 중력을 제거한 매칭 파편의 초기 속도를 1.4배, 수명을 65%로 조정했다. 보석 위 유휴 반짝임 밝기는 2/3, 대각선 광택 스윕 속도는 80%다(한 칸 0.9초, 반복 10초). 최종 튜닝은 main에 반영하며 같은 제품 코드에서 analyze, 전체279tests, Web release build가 모두 통과했다. 개발 서버는 사용자 요청으로 정상 종료했고 8080 포트 리스너가 없음을 확인했다. 추가 실행 중인 구현/검증 프로세스는 없다.
 
-문서 팩은 대체 가능(REPLACEABLE). 정본은 docs/. 이전 문서는 archive/docs/. F1~T6가 통합됐고 독립 리뷰의 입력 3건, 자원 해제와 릴리즈 퇴장 문제 2건을 수정했다. 검증 공백은 표에 남아 있다. 최종 합본 HUD 글자 중복 가설은 PNG 픽셀과 실제 렌더 진단에서 기각됐으며 기존 confetti 겹침으로 확인했다. 실기기 전체 검증은 미완이며 Android 단기 계측 결과는 아래 보고서를 따른다. E2 hyper/supernova 레이어 통합은 main `c3b64dd`에 병합했고 main 분석, 전체 279 tests, Web release build를 통과했다. `fx-g2-sprites` Worktree와 연결된 Orca 터미널 2개는 정리했다. 기존 Claude main 세션은 자동 재개를 취소한 입력 대기 상태로 보존하며, 재인계 예약도 사용자 요청으로 취소했다.
+문서 팩은 대체 가능(REPLACEABLE). 정본은 docs/. 이전 문서는 archive/docs/. F1~T6가 통합됐고 독립 리뷰의 입력 3건, 자원 해제와 릴리즈 퇴장 문제 2건을 수정했다. 검증 공백은 표에 남아 있다. 최종 합본 HUD 글자 중복 가설은 PNG 픽셀과 실제 렌더 진단에서 기각됐으며 기존 confetti 겹침으로 확인했다. 실기기 전체 검증은 미완이며 Android 단기 계측 결과는 아래 보고서를 따른다. E2 hyper/supernova 레이어 통합은 main `c3b64dd`에 병합했고 main 분석, 전체 279 tests, Web release build를 통과했다. `fx-g2-sprites` Worktree와 연결된 Orca 터미널 2개는 정리했다. 기존 Claude main 세션은 사용자 정리 요청으로 종료했고, 재인계 예약도 취소 상태다.
 
 ## Last Completed
 - 마이그레이션 가이드 기준으로 운영 칸을 이 팩에 맞춤
@@ -135,3 +135,9 @@ Updated: 2026-09-20 21:26 KST
 - 게임 탭 완전 종료 후 재접속 및 첫 매치/특수효과를 재측정했다. 로딩 최대190.2ms, 첫 매치22.4ms, 첫 bomb/hyper/supernova33.6/44.8/44.8ms. 긴 작업은 첫 매치 이전 Wasm 초기화/초기 렌더 구간에 집중됐다. 최초 사용자 멈춤의 동일 원인 여부는 미확정.
 - 상세 근거와 한계: [Android NAS FPS 검증](ANDROID_NAS_FPS_2026-09-20.md). 제품 코드 수정 없음.
 - 사용자 요청으로 Claude 인계 예약을 취소(PAUSED)했고 현재 Codex가 계속한다. 기존 Claude에 재개 프롬프트를 보내지 않았다.
+
+## 사용 종료 세션과 브랜치 정리 (2026-09-20 21:31 KST)
+- jewelmatch Orca Claude main 세션 `term_15b04b61-db10-4b8c-a439-b4a5739056b8`을 닫았다. 개별 close의 ptyKilled=true, 후속 terminal list의0개, 해당 Claude와 자식 프로세스 부재로 종료를 확인했다. 최초 bulk close의 완료 확인 오류는 개별 종료와 후속 검증으로 해소했다.
+- Git/Orca 워크트리는 main1개뿐이며 잔여 작업 워크트리나 prune 대상이 없다. main에 조상으로 포함된 `codex/intoss-level-leaderboard-ui`(643781d) 로컬 브랜치를 `git branch -d`로 삭제했다. 로컬 브랜치는 main만 남는다. 원격 브랜치는 변경하지 않았다.
+- main 사용자 변경과 미추적 파일 없음. 원본 에셋/보고서/Android 원시 계측/이전 Worktree 백업 보존. 정리 전 터미널 메타데이터/화면과 브랜치/Worktree 목록은 `_fx_orchestration/backups_pre_cleanup/main-session-20260920/`에 보관했다.
+- 기존 Claude 재개 기록을 현재 작업의 인계 대상으로 사용하지 않는다. 취소한 인계 예약은 PAUSED 유지. 현재 Codex 작업과 다른 프로젝트 세션은 유지했다.
