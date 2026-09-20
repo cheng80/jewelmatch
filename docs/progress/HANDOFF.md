@@ -2,9 +2,11 @@
 
 > 다음 작업자가 즉시 시작할 정보만 둔다. 프로젝트 전체 상태는 PROJECT_STATUS.md에 둔다.
 
-Updated: 2026-09-20 21:31 KST
+Updated: 2026-09-20 22:44 KST
 
 ## Current State
+이번 NAS 미러링 검증은 사용자 요청으로 종료했다. Android/iPhone 측정 결과와 한계는 보고서에 보존했고 QA 원시자료는 정리했다. 추가 프로파일링과 미러링 유무 비교를 자동으로 재개하지 않는다.
+
 최신 추가 변경: 중력을 제거한 매칭 파편의 초기 속도를 1.4배, 수명을 65%로 조정했다. 보석 위 유휴 반짝임 밝기는 2/3, 대각선 광택 스윕 속도는 80%다(한 칸 0.9초, 반복 10초). 최종 튜닝은 main에 반영하며 같은 제품 코드에서 analyze, 전체279tests, Web release build가 모두 통과했다. 개발 서버는 사용자 요청으로 정상 종료했고 8080 포트 리스너가 없음을 확인했다. 추가 실행 중인 구현/검증 프로세스는 없다.
 
 문서 팩은 대체 가능(REPLACEABLE). 정본은 docs/. 이전 문서는 archive/docs/. F1~T6가 통합됐고 독립 리뷰의 입력 3건, 자원 해제와 릴리즈 퇴장 문제 2건을 수정했다. 검증 공백은 표에 남아 있다. 최종 합본 HUD 글자 중복 가설은 PNG 픽셀과 실제 렌더 진단에서 기각됐으며 기존 confetti 겹침으로 확인했다. 실기기 전체 검증은 미완이며 Android 단기 계측 결과는 아래 보고서를 따른다. E2 hyper/supernova 레이어 통합은 main `c3b64dd`에 병합했고 main 분석, 전체 279 tests, Web release build를 통과했다. `fx-g2-sprites` Worktree와 연결된 Orca 터미널 2개는 정리했다. 기존 Claude main 세션은 사용자 정리 요청으로 종료했고, 재인계 예약도 취소 상태다.
@@ -26,13 +28,13 @@ Updated: 2026-09-20 21:31 KST
 - Task: E2는 main 병합 및 작업 세션 정리 완료. Claude 재인계는 취소됐으며 Codex가 현재 main에서 계속한다.
 - 주의: T2의 균등 gem atlas 제출은 batch지만 여러 행의 착지 squash는 `drawImageRect` fallback으로 draw call이 9회를 넘을 수 있다. T5 special glow는 약 4.5MiB 공유 이미지이며 T4a HUD interactions와 painters 구조를 유지한다
 - 주의: T4b 타임업은 reduced motion에서도 결과를 즉시 읽히게 하되 1900ms 제출과 버튼 활성 시점을 유지한다. ego 캡처 문자 중복은 headless에서 재현되지 않아 원인 미확정
-- 주의: Android Chrome 단기 FPS 계측만 수행했다. 장시간 WebView, iPhone, 실제 광고 SDK, 실제 기기 오디오 청취는 미검증이다
+- 주의: Android Chrome 단기 FPS 계측과 iPhone NAS 미러링 검증을 수행했다. 폰 단독 iPhone 성능, 장시간 WebView, 실제 광고 SDK, 실제 기기 오디오 청취는 미검증이다
 - E2 검증: 전체279tests와 Web build exit0, 최종 analyze exit0. 독립 관련78회귀와 별도픽셀4회귀 PASS. 고정pivot, tier, 풀 재사용, 종료, bomb 초기픽셀 및 supernova 외곽번개 보존 확인.
 - Plan: `PLAN-001`
 - Task: TASK-001c 실기기 30초 이상 카운터 보존
 
 ## Next Task
-1. Claude 재인계는 사용자 요청으로 취소했다. 현재 main과 Android 검증 보고서를 기준으로 이어간다. 완료된 E2를 재적용하거나 정리된 Worktree를 재생성하지 않는다.
+1. 이번 NAS 미러링 검증은 종료했다. 추가 프로파일링은 진행하지 않으며 아래 검증 공백은 별도 요청 전까지 남겨 둔다. Claude 재인계는 취소 상태다. 완료된 E2를 재적용하거나 정리된 Worktree를 재생성하지 않는다.
 2. 실기기 FPS, 가독성, 오디오와 광고 흐름 확인. iOS 15/16 기기에서 연쇄와 저시간 틱의 피치가 실제로 오르는지 듣는다
 3. `?fps=1`로 모바일 실기기 FPS 전후 비교와 장시간 WebView 확인
 4. PLAN-001 실기기 장시간 측정 (원문부터 INCOMPLETE. 별도 승인 작업)
@@ -77,7 +79,7 @@ Updated: 2026-09-20 21:31 KST
 | Bomb E1 layer analyze / test / web build | PASS | HISTORICAL | 2026-09-20 | bomb 레이어 적용 리비전 | STALE | 해당 리비전에서 analyze 0, 274 tests PASS, Web build 0. 이후 E2 hyper/supernova 후속 통합 전 결과 |
 | F1 input regression review | PASS | RECHECKED | 2026-09-20 | 동일 | CURRENT | T2의 3개 회귀 테스트와 pointer flow 통과 |
 | PLAN-004 desktop screen / widget / pixel checks | PASS | RECHECKED | 2026-09-20 | 동일 | CURRENT | T1~T5의 ego/headless, 위젯, 픽셀 근거. T4b ego 문자 중복은 headless 재현 없음, 원인 미확정 |
-| PLAN-004 mobile device UI / FPS | PARTIAL | RECHECKED | 2026-09-20 21:20 KST | `99622e9` | INCOMPLETE | Android Chrome35초 rAF 평균63.94FPS, p95 33.57ms, GAP55.94ms. 첫 멈춤 원인 미확정, iPhone/광고A/B/장시간 미완. `tmp/android-fps-20260920/RESULT.md` |
+| PLAN-004 mobile device UI / FPS | PARTIAL | RECHECKED | 2026-09-20 22:09 KST | `99622e9` | INCOMPLETE | Android Chrome35초 rAF 평균63.94FPS, p95 33.57ms, GAP55.94ms. iPhone 미러링 특수효과30초 AVG46.3/LOW35.3/GAP53ms. 첫 멈춤 원인과 폰 단독/토스/광고A/B/장시간 미확인. 원시자료는 정리했고 보고서를 보존했다. [Android 상세](ANDROID_NAS_FPS_2026-09-20.md), [iPhone 상세](IPHONE_NAS_FPS_2026-09-20.md) |
 | T6 level celebration | PASS | RECHECKED | 2026-09-20 | 동일 | CURRENT | 일반 3000ms / reduced motion 즉시, 점수/시간/보상 불변 테스트와 합본 화면 확인 |
 | Independent review fixes | PASS | RECHECKED | 2026-09-20 | 동일 | CURRENT | F1 입력 3건, 게임 이탈 자원 해제와 release snapshot P2 수정 및 재검증. 합본 HUD 추가 진단은 기존 confetti 겹침으로 마감 |
 | NAS Web smoke | PASS | RECHECKED | 2026-09-20 21:20 KST | 제품 main `99622e9` | CURRENT | `tmp/nas-deploy-20260920/`: Wasm 배포 HTTP200, index/bootstrap/wasm/MP3 원격 해시 일치, deep route200, 격리 헤더, 두 모드 랭킹 조회 통과. Android 게임 로드 확인 |
@@ -122,7 +124,7 @@ Updated: 2026-09-20 21:31 KST
 - 정본 docs/와 archive/docs/를 서로 링크로 묶지 말 것
 - 현재 작업 폴더는 `/Users/cheng80/Desktop/Anther_Works/Flutter_Project/FlutterFrame_work/jewelmatch`의 main이다. 정리된 `fx-g2-sprites`나 이전 통합 Worktree를 사용하지 말 것
 - 삭제 전 자료 148파일의 SHA256을 확인했고 `/Users/cheng80/orca/workspaces/jewelmatch/_fx_orchestration/backups_pre_cleanup/fx-g2-sprites-20260920-e2`에 보존했다. 보고서와 보드 PNG는 `/Users/cheng80/orca/workspaces/jewelmatch/_fx_orchestration`에도 유지한다.
-- 제품 main `99622e9`는 origin/main 푸시 및 NAS 배포 완료. Android 짧은 계측만 수행했으며 전체 실기기 검증 완료로 오인하지 말 것
+- 제품 main `99622e9`는 origin/main 푸시 및 NAS 배포 완료. Android 단기 계측과 iPhone 미러링 검증을 수행했으며 전체 실기기 검증 완료로 오인하지 말 것
 
 - 합본 HUD 최종 진단(16:08 KST): 무손실 PNG의 추가 밝은 glyph 픽셀 0, 변한 픽셀은 confetti 색 합성으로 설명됐다. pause 150프레임 동안 game render/update 증가 0. 제품 소스 변경 없이 가설 기각. 근거: `_fx_orchestration/reports/T6_integrated_visual_fix.md`.
 
@@ -141,3 +143,28 @@ Updated: 2026-09-20 21:31 KST
 - Git/Orca 워크트리는 main1개뿐이며 잔여 작업 워크트리나 prune 대상이 없다. main에 조상으로 포함된 `codex/intoss-level-leaderboard-ui`(643781d) 로컬 브랜치를 `git branch -d`로 삭제했다. 로컬 브랜치는 main만 남는다. 원격 브랜치는 변경하지 않았다.
 - main 사용자 변경과 미추적 파일 없음. 원본 에셋/보고서/Android 원시 계측/이전 Worktree 백업 보존. 정리 전 터미널 메타데이터/화면과 브랜치/Worktree 목록은 `_fx_orchestration/backups_pre_cleanup/main-session-20260920/`에 보관했다.
 - 기존 Claude 재개 기록을 현재 작업의 인계 대상으로 사용하지 않는다. 취소한 인계 예약은 PAUSED 유지. 현재 Codex 작업과 다른 프로젝트 세션은 유지했다.
+
+## iPhone NAS 미러링 제어 확인 (2026-09-20 21:41 KST)
+
+- 제품 `99622e9` NAS Wasm 빌드. iPhone14 Pro Max/iOS26.6.2, 사용자가 미리 연 홈 화면 웹 앱을 Mac iPhone 미러링에서 제어했다. 토스 앱 검증은 아니다. 가설은 미러링으로 실제 게임 입력이 가능하다는 것이며, 진입과 매칭 후 보드/점수 변화로 확인했다. 제품/사운드 설정 변경 없음. 배너 없음, 효과 켜짐, 실제 청취 미검증.
+- 무한 모드 진입, 인접 보석을 두 번씩 탭하는 교환2회, 첫 매칭 및 후속 연쇄 동작을 확인했다. 점수0→100→4050, 최대 콤보3. 입력/대기가 섞인 약1분 확인이며 마지막30초 내부 패널은 AVG40.2/LOW31.3/GAP75ms. 진입 직후 GAP1375ms는 로딩이 섞인 창으로 별도 취급한다. 마지막 화면은 이 Codex 대화의 21:38 미러링 캡처에 있으며, 연속 프레임 로그/영상 파일은 수집하지 않았다. 미러링 부하를 분리하지 않았으므로 폰 단독 FPS나 원래 제보한 멈춤의 원인으로 일반화하지 않는다.
+- Xcode27.0, USB connected/paired, Developer Mode Enabled, DDI contentIsCompatible=true/isUsable=true 확인. `xctrace list devices`는 처음 Offline, 재조회에서 Devices로 변경됐으나 실제 Animation Hitches 5초 기록 시도는 `Timed out waiting for device to boot`(exit13)로 실패했다. 이후 CoreDevice는 booted/connected를 유지했다. 기기가 꺼진 것으로 해석하지 않으며 Instruments 준비 상태 불일치 원인은 미확정. 유효한 trace/CPU/100ms 이상 이벤트 수/프로세스별 분석 결과 없음.
+- 다음 비교는 동일 NAS 무한 모드에서 미러링을 끄고 사용자가 직접 같은 입력을 하는30초 측정이다. 먼저 Instruments 실제 기록 가능 상태를 확인해야 한다. 이번에는 제품 코드/배포 변경 없이 문서만 갱신했으며, 프로파일 명령은 종료됐다. 미러링과 게임은 사용자가 이어 볼 수 있게 유지했다.
+
+## iPhone 후속 반복 테스트 (2026-09-20 22:09 KST)
+
+- 위21:41 기록 이후 테스트를 재개했다. 일반 매칭 탭/드래그와 연쇄를 확인했고, 별도 Safari NAS 진단 보드에서 특수효과를5초 간격6회/30.274초 재생했다. 내부 패널 AVG46.3/LOW35.3/GAP53ms. 같은 보드30.404초 대기는47.7/44.1/28ms. 미러링이 켜진 조건이며 폰 단독/토스 결과로 일반화하지 않는다.
+- Instruments GUI에서는30초 기록과 원시3.4GiB 생성을 확인했다. 후처리 중 Mac 디스크 부족과 앱 종료로 분석 실패. 축소 추출도 공간 부족으로 중단하고 이번 실행의 임시 캐시만 정리했다. 원시 기록은 압축526MB, SHA256 왕복 검증 후 보존했다. 긴 멈춤 건수/CPU/GPU 분석 완료로 표시하지 않는다.
+- [iPhone NAS 검증](IPHONE_NAS_FPS_2026-09-20.md)에 조건, 결과, 차단 상태와 복구 경로를 기록했다. 측정 탭/추적 프로세스 정리, 기존 Safari 탭과 홈 화면 앱 보존. 제품 코드/배포/커밋/푸시 변경 없음.
+- 22:11 원래 홈 화면 앱 복귀 시 재로딩 후 타이틀 표시. 이전 보드 복원은 확인되지 않았으며, 백그라운드 복귀/메모리 상황을 분리한 추가 확인 대상으로 남긴다.
+
+## QA 임시 산출물 정리 (2026-09-20 22:20 KST)
+
+- 사용자 요청으로 `tmp/qa/`의 임시 파일, `tmp/android-fps-20260920/`, `tmp/nas-deploy-20260920/`, `tmp/match-radial-fx/`, `tmp/match-radial-tuning/`, `tmp/stone_submission_package/`, `build/test_cache/`, `build/unit_test_assets/`와 이번 Instruments 실행의 잔여 임시 폴더를 정리했다. 총533파일, 할당 크기797,634,560바이트. 실행 중인 계측/개발 서버와 대상 파일의 열린 핸들은 없었다.
+- `tmp/qa/`에는 원본 위치가 사라진 BRICK ZERO 참고 PDF2개만 남겼다. 사용자 소스/에셋, 제품 빌드/배포본, 제출 ZIP, 인계 백업, 결과 문서는 유지했다. Git 변경은 보고서/상태 문서뿐이다.
+- 위 시간별 기록의 원시자료 보존 설명은22:20 정리 이전 상태다. Android 프레임/CPU 기록과 iPhone 압축 추적은 현재 없으며 재분석하려면 새 측정이 필요하다. 확정된 수치와 미검증 범위는 두 실기기 보고서에 남겼다.
+
+## 미러링 검증 종료 결정 (2026-09-20 22:44 KST)
+
+- 사용자가 미러링 검증을 종료하고 추가 프로파일링을 하지 않기로 했다. 위 과거 항목의 Instruments 재개, 원시 추적 재수집, 미러링 유무 비교를 자동으로 이어서 실행하지 않는다.
+- 기존 Android/iPhone 측정 수치와 한계만 보존한다. 전체 성능 검증을 통과한 것으로 해석하지 않는다. iPhone 미러링, scrcpy, Instruments, xctrace 프로세스는 모두 실행 중이지 않다. 제품 코드/배포 변경 없음.

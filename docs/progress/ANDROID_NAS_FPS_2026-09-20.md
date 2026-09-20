@@ -30,6 +30,9 @@
 - 제품 코드 변경 없이 조사했다. iPhone/토스 광고 A/B, 장시간 검증, 수동 플레이와 미러링 부하의 정량 비교는 남아 있다.
 
 ## 근거
+
+2026-09-20 22:20 사용자 요청으로 아래 QA/검증 임시 산출물을 정리했다. 경로는 당시 수집 이력이며 현재 파일은 없다. 측정 결과와 원인 분석의 한계는 이 문서에 보존한다. 원시 프레임/CPU 자료를 다시 분석하려면 새 측정이 필요하다.
+
 - `tmp/nas-deploy-20260920/deploy.log`, `verification.json`: NAS HTTP200, 주요4파일 로컬/원격 SHA256 일치, SPA 경로200, COOP/COEP, 두 모드 랭킹 조회, ZIP PHP/환경파일 제외.
 - `tmp/android-fps-20260920/profile.json`:35초 최초 재측정 원시자료.
 - `tmp/android-fps-20260920/reopen/frames.json`, `cpu.cpuprofile`, `events.json`, `navigation.json`, `longtask-cpu-correlation.json`, `summary.json`, `final.png`: 완전 탭 종료/재접속 측정.
