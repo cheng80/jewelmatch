@@ -414,14 +414,35 @@ class _ExitFrameState extends State<_ExitFrame>
 void showAdSuccessFeedback(BuildContext context, String message) {
   final overlay = Overlay.maybeOf(context);
   if (overlay == null) return;
-  final top = MediaQuery.paddingOf(context).top + 24;
   final media = MediaQuery.of(context);
+  var top = media.padding.top + 24;
+  var left = 24.0;
+  var width = media.size.width - 48;
+  // 게임은 PhoneFrame의 FittedBox 안에서 축소 렌더된다. 같은 파일의 고스트 경로처럼
+  // 호출한 화면을 overlay 기준으로 환산해야 배너가 프레임 밖으로 새지 않는다.
+  final caller = context.findRenderObject();
+  final overlayBox = overlay.context.findRenderObject();
+  if (caller is RenderBox &&
+      caller.hasSize &&
+      overlayBox is RenderBox &&
+      overlayBox.hasSize) {
+    final origin = caller.localToGlobal(Offset.zero, ancestor: overlayBox);
+    final corner = caller.localToGlobal(
+      caller.size.bottomRight(Offset.zero),
+      ancestor: overlayBox,
+    );
+    if (corner.dx - origin.dx > 96) {
+      top = origin.dy + 24;
+      left = origin.dx + 24;
+      width = corner.dx - origin.dx - 48;
+    }
+  }
   late OverlayEntry entry;
   entry = OverlayEntry(
     builder: (_) => Positioned(
       top: top,
-      left: 24,
-      right: 24,
+      left: left,
+      width: width,
       child: IgnorePointer(
         child: Center(
           child: Material(
