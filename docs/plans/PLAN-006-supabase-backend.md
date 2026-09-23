@@ -69,10 +69,10 @@
 - [x] 발견 후 수정(2026-09-24): 보충 한도에 걸리면 버튼이 "광고 준비 중"으로 보여 한도를 알리지 못했다. 버튼은 비활성 한도 문구, 안내 줄은 다음 충전 시각(KST 0시)으로 바꿨고, 광고를 본 뒤 서버가 한도로 거절한 경우도 한도 문구로 알린다(`RefillGrantOutcome`, 이벤트 `outcome`). 위젯 테스트 2건, 정책 테스트 2건 추가. 로컬 웹에서 영어, 한국어 보충 시나리오 17항목과 실제 백엔드 25항목 재통과
 
 ### Step 4 — 배포와 정리
-- [ ] NAS 웹 배포(`tools/deploy_match_web.sh`, config 포함)와 원격 확인
-- [ ] 앱인토스 테스트 빌드(`npm run build:intoss:test`)와 QR 확인
-- [ ] 공모전 ZIP 스킬(`build-stone-match-submission`)이 config를 넣도록 조정할지 결정
-- [ ] NAS `ranking.php` 폐기 시점 결정. 폐기 전까지 파일은 NAS와 저장소에 남긴다
+- [x] NAS 웹 배포(2026-09-24, `56e55a6`): 데스크톱 Playwright로 익명 가입, 랭킹 제출과 서버 기록, 두 번째 탭 사용자 유지, RLS 음성 5건, 이벤트 적재 확인. 광고가 꺼진 웹 빌드라 보충 광고 항목은 해당 없음. 안드로이드 실기기(SM-A245N, Android 16, Chrome 153)를 ADB 원격 디버깅으로 조작해 로드 4.7초, 익명 가입, 시간 종료 제출 200, 이벤트 적재 확인. 20초 플레이 rAF 평균 68.7fps(90Hz), p95 33.5ms, 최대 101ms. 시험 사용자와 행은 모두 삭제
+- [ ] 앱인토스 테스트 빌드: `.ait`(appName `stonematch`, 압축 해제 66.5MB) 빌드와 `ait deploy` 콘솔 업로드 완료(deploymentId `01a0cf90-3f74-7371-9055-43700af3daae`). 토스 앱 QR 실기기 확인은 사용자 결정으로 구조 개편 뒤로 미룸. 참고: 연결한 안드로이드 폰에는 토스 앱이 없다
+- [x] 공모전 ZIP 스킬: 권장안대로 `config/supabase.json`을 빌드에 넣고, 검사 기준을 `ranking.php` 주소에서 Supabase 프로젝트 주소로 바꿨다. 설정 파일이 없으면 중단하고 ZIP에 설정 파일은 넣지 않는다. 시험 출력으로 끝까지 통과
+- [x] NAS `ranking.php` 폐기(2026-09-24): 새 빌드 모두 호출하지 않음을 확인하고 저장소에서 제거. NAS에 남은 파일과 JSON 삭제는 사용자 수동 작업
 - [x] 개인정보처리방침 초안과 스토어 데이터 안내 문구 갱신: [PRIVACY_POLICY_DRAFT.md](../release/PRIVACY_POLICY_DRAFT.md)(한국어, 영어, Apple App Privacy, Google Play Data safety 표), PRODUCT_SPEC 스토어 문구 4블록. 법률 검토, 문의처, 광고 SDK 수집 항목, 보관 기간은 [확정 필요]
 - [ ] 요금제와 일시 중지 정책 확인
 
@@ -105,5 +105,5 @@
 ## 8. 완료 조건
 - [x] 원격 프로젝트에 스키마 적용, 권고 확인, 익명 로그인 활성화
 - [x] 원격 스모크와 RLS 음성 확인
-- [ ] NAS와 앱인토스 빌드에서 랭킹, 보충 제한, 이벤트 동작 확인
+- [ ] NAS와 앱인토스 빌드에서 랭킹, 보충 제한, 이벤트 동작 확인(NAS 완료, 앱인토스 QR은 구조 개편 뒤)
 - [x] PROJECT_STATUS, HANDOFF 갱신(Step 3까지)

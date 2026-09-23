@@ -36,7 +36,7 @@ Stone Match는 Flutter와 Flame 기반 8×8 매치 3 퍼즐 게임이다.
 - 진행 랭킹은 완료한 레벨 수다. [ADR-002](decisions/ADR-002-ranking-completed-levels.md), BR-001
 - TimeUp 진입 또는 일시정지 나가기에서 제출한다. Pause 나가기는 await, TimeUp 나가기는 기다리지 않는다. BR-093, [ADR-007](decisions/ADR-007-ranking-submit-timing.md)
 - 랭킹 장애가 플레이/나가기를 막지 않는다. BR-002
-- matchranking/ranking.php는 웹 빌드와 공모전 ZIP에 넣지 않는다.
+- NAS 랭킹 `matchranking/ranking.php`는 2026-09-24 폐기해 저장소에서 제거했다. 새로 만들거나 빌드와 ZIP에 넣지 않는다.
 - 게임 내 랭킹, 보충 광고 제한, 이벤트 로그의 저장소는 Supabase다(ADR-009). secret/service_role 키는 어디에도 두지 않고, 공개용 키와 URL은 Git 제외 파일 config/supabase.json으로만 넣는다.
 - 운영 랭킹 초기화는 승인, 백업, dry-run, 예상 건수, 사후 조회 순서다.
 - Riverpod codegen을 새로 도입하지 않는다.

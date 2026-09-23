@@ -4,7 +4,7 @@
 > 시스템의 HOW와 기술 계약만 기록한다.
 
 작성 기준일: 2026-08-23, 계약 정합 수정 2026-08-23
-근거: pubspec.yaml, lib/, matchranking/ranking.php, 테스트
+근거: pubspec.yaml, lib/, supabase/migrations/, 테스트
 
 ## 1. 기술 스택
 
@@ -19,7 +19,7 @@
 | Audio | flame_audio + 웹 HTML Audio 4슬롯 | ADR-004 |
 | HTTP | http | 랭킹 |
 | Ads | Apps in Toss SDK 3.x (intoss 채널) | AdService 추상화 |
-| Ranking backend | PHP 단일 파일 + JSON | NAS matchranking |
+| Ranking backend | Supabase RPC(PostgREST), 익명 로그인 | ADR-009. NAS `ranking.php`는 2026-09-24 폐기 |
 | Version | 1.0.0+1 | pubspec.yaml |
 
 ## 2. Architecture
@@ -53,7 +53,7 @@
 - Secret 관리: Supabase secret/service_role 키는 클라이언트, 저장소, 문서에 두지 않는다. 공개용 키와 URL도 코드에 쓰지 않고 `config/supabase.json`(Git 제외)으로 넣는다. MATCH_DEPLOY_TOKEN은 .env / NAS env. 문서, 로그, URL에 넣지 않는다
 - 클라이언트 저장 금지 정보: 관리자 토큰, secret 키, 키스토어 비밀번호, 토스 사용자 식별자, 광고 식별자. 익명 세션 토큰은 로컬 저장하되 로그와 이벤트에 넣지 않는다
 - AppConfig.appStoreId는 출시 전 입력. 현재 빈 문자열
-- 이전 NAS ranking.php는 CORS * 와 관리자 토큰 헤더(X-Ranking-Admin-Token) 방식이었다. 폐기 예정
+- 이전 NAS ranking.php는 CORS * 와 관리자 토큰 헤더(X-Ranking-Admin-Token) 방식이었다. 2026-09-24 폐기
 
 ## 4. 데이터 모델
 
@@ -123,7 +123,7 @@ StorageKeys: bgm/sfx volume·mute, keepScreenOn, showFps, best scores by mode, p
 저장소: Supabase(ADR-009). 프로젝트 URL과 공개용 키는 `config/supabase.json`(Git 제외)에서 dart-define으로 넣는다. 스키마 정본은 `supabase/migrations/20260923142920_stone_match_init.sql`.
 호출: `SupabaseGateway`가 `POST {URL}/rest/v1/rpc/{함수}`와 `POST {URL}/auth/v1/...`을 부른다. 헤더 `apikey: <공개용 키>`, 로그인이 필요한 호출은 `Authorization: Bearer <익명 사용자 JWT>`.
 관련: FR-009, FR-010, BR-001, BR-002, BR-103
-2026-09-23 이전 NAS `ranking.php` 계약(아래 "이전 NAS API")은 새 빌드 배포 뒤 폐기 대상이다. NAS 기록은 이관하지 않는다.
+2026-09-23 이전 NAS `ranking.php` 계약(아래 "이전 NAS API")은 2026-09-24 새 빌드 배포와 함께 폐기했다. NAS 기록은 이관하지 않았다.
 
 ### API-000 익명 인증
 
@@ -198,7 +198,7 @@ JS bridge stoneMatchLeaderboard.submitLevelScore(score)
 - 사용자당 1분 300건 초과는 `game_events_rate_limited`로 거절
 - 현재 이벤트: `session_start`(platform), `round_start`(mode), `round_end`(mode, reason, score, level?, duration_s?), `level_clear`(level, score, max_combo), `stage_continue`(level), `ranking_submit`(mode, score, ok, ranked?, rank?, failure?), `ad_reward`(placement, result, granted, outcome?, item?, level?). `outcome`은 보충 광고만 기록하며 `granted`, `adNotCompleted`, `limitReached`, `rejected` 중 하나다(`AdRewardPolicy.grantRefillVerified`의 `RefillGrantOutcome`)
 
-### 이전 NAS API (폐기 예정)
+### 이전 NAS API (2026-09-24 폐기, 기록용)
 
 Base: https://cheng80.myqnapcloud.com/matchranking/ranking.php. `?action=list|top1`(GET), `?action=submit`(POST `{name, score, mode}`), `?action=reset`(POST, 헤더 `X-Ranking-Admin-Token`). JSON 파일 두 개에 모드별 상위 30건만 저장했다. 2026-09-23 클라이언트 연결을 끊었다. 파일은 NAS 폐기 결정 전까지 저장소와 NAS에 남긴다.
 
@@ -1017,7 +1017,7 @@ render()
 
 # 랭킹 클라이언트 계약
 
-서버 API는 **`ranking_server.md`**, PHP는 `matchranking/ranking.php`다.
+서버 API는 이 문서 5절의 Supabase RPC다(ADR-009). 아래 "랭킹 서버 운영"의 NAS 절차와 `matchranking/ranking.php`는 2026-09-24 폐기했다.
 이 문서는 Flutter 클라이언트가 언제 무엇을 보내는지만 적는다. 코드: `lib/game/match_board_game.dart`의 `rankingScore`, `lib/vm/ranking_notifier.dart`, `lib/views/overlays/pause_menu_overlay.dart`, `lib/views/overlays/time_up_overlay.dart`.
 
 ## 제출값
@@ -1060,6 +1060,8 @@ Apps in Toss는 레벨 제출값을 공식 리더보드에도 보낸다. 게임 
 원문 제목 키: `ranking_server.md` (이 파일에 흡수됨)
 
 # 랭킹 서버 운영
+
+> 2026-09-24 폐기, 기록용. 현재 랭킹 초기화는 5절 API-004(Supabase 백업, dry-run, 삭제) 절차를 따른다.
 
 랭킹 초기화는 NAS에서 JSON을 백업한 뒤 한 모드씩 실행한다. 관리자 토큰은 `/share/Web/.match_deploy.env`의 `MATCH_DEPLOY_TOKEN`을 재사용하며 URL, 요청 body, 로그에 넣지 않는다.
 

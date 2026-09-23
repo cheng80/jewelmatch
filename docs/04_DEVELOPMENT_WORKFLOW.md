@@ -152,7 +152,7 @@ DONE은 구현뿐 아니라 필요한 검증과 문서 갱신까지 끝난 상�
 - 랭킹 서버 장애가 게임 진행이나 타이틀 복귀를 막아서는 안 된다.
 - 2026-09-23부터 게임 내 랭킹 저장소는 Supabase다(ADR-009, PLAN-006). 스키마 변경은 `supabase/migrations/`에 새 마이그레이션으로 추가하고 원격 적용 뒤 보안 권고(advisors)를 확인한다. 적용한 마이그레이션 파일은 고치지 않는다.
 - Supabase secret/service_role 키는 클라이언트, 저장소, 문서, 로그에 두지 않는다. 공개용 키와 URL은 `config/supabase.json`(Git 제외)에만 둔다.
-- `matchranking/ranking.php`는 폐기 예정이며 Flutter 웹 빌드와 공모전 ZIP에 포함되지 않는다. 폐기 결정 전까지 NAS와 저장소에 남긴다.
+- NAS `matchranking/ranking.php`는 2026-09-24 폐기해 저장소에서 제거했다. NAS에 남은 파일과 JSON은 NAS 관리 화면에서 수동으로 지운다.
 - 운영 랭킹에 유효한 시험 기록을 넣거나 데이터를 초기화하지 않는다. 원격 스모크 기록은 확인 직후 SQL로 지우고 건수를 기록한다. 초기화는 사용자 승인 뒤 백업, dry-run, 예상 건수 고정, 사후 조회 순서로 수행한다(TECH_SPEC API-004).
 - 게임 흐름은 `architecture/game_flow.md`, 초기화와 복원은 `tools/ranking_server.md`를 따른다.
 
@@ -715,7 +715,7 @@ Stone Match 출시 전 확인 목록이다.
 
 - [ ] 실제 배포 경로와 `--base-href` 일치
 - [ ] `tools/deploy_match_web.sh` 환경 변수 확인
-- [ ] `matchranking/` 서버 파일과 `ranking_data.json` 권한 확인
+- [x] `matchranking/` NAS 랭킹은 2026-09-24 폐기(Supabase로 대체). 남은 NAS 파일 삭제는 수동 작업
 - [ ] 배포 후 첫 로드, 라우팅, 사운드 unlock, 랭킹 API 스모크 테스트
 
 ## Apps in Toss
