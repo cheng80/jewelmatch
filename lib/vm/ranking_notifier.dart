@@ -71,8 +71,20 @@ class RankingNotifier extends Notifier<RankingSubmitState> {
     required String trRankSaveFailed,
     required String trRankSubmitFailed,
     required String trIntossLevelRankSubmitFailed,
+    String? skipMessage,
   }) async {
     if (state.isSubmitting || state.submitted || score <= 0) return;
+    // URL 실험 설정으로 한 판은 서버와 앱인토스 리더보드에 올리지 않는다.
+    if (skipMessage != null) {
+      EventLogger.instance.log('ranking_submit', {
+        'mode': mode.queryValue,
+        'score': score,
+        'ok': false,
+        'failure': 'experiment_url',
+      });
+      state = RankingSubmitState(submitted: true, rankMessage: skipMessage);
+      return;
+    }
 
     state = state.copyWith(isSubmitting: true);
 

@@ -34,12 +34,27 @@ void main() {
     url = null;
     GameplayConfigService.urlOverride = () => url;
     GameplayFlags.current = const GameplayFlags();
+    GameplayFlags.currentFromUrl = false;
   });
 
   Future<void> prefs([Map<String, Object> values = const {}]) async {
     SharedPreferences.setMockInitialValues(values);
     await StorageHelper.init();
   }
+
+  // 검수 R4 P1-2: URL로 바꾼 값이면 표시가 켜져 그 판은 랭킹에 올리지 않는다.
+  test('marks url overrides so those rounds skip ranking', () async {
+    await prefs();
+    GameplayConfigService.applyCached();
+    expect(GameplayFlags.currentFromUrl, isFalse);
+    url = 'mg';
+    GameplayConfigService.applyCached();
+    expect(GameplayFlags.currentFromUrl, isTrue);
+    expect(GameplayFlags.current.multiplierGem, isTrue);
+    url = ' ';
+    GameplayConfigService.applyCached();
+    expect(GameplayFlags.currentFromUrl, isFalse);
+  });
 
   test('applies cache first, then remote replaces it and is cached', () async {
     await prefs({

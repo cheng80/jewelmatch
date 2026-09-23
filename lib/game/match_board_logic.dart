@@ -147,6 +147,9 @@ class MatchBoardLogic {
   /// 이 판에 적용한 실험 기능 스위치. 판 시작 때 [GameplayFlags.current]를 받아 판 도중에는 바꾸지 않는다.
   GameplayFlags flags = const GameplayFlags();
 
+  /// 이 판의 스위치가 웹 URL로 바뀐 값인지. true면 랭킹 제출을 건너뛴다.
+  bool flagsFromUrl = false;
+
   /// 타임 모드 판이면 true. T1, Time 보석, Multiplier 보석은 이 값과 [flags]가 모두 켜져야 동작한다.
   bool timedModeRules = false;
 

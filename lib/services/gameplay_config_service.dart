@@ -64,6 +64,8 @@ class GameplayConfigService {
   }
 
   static void _apply(GameplayFlags base) {
-    GameplayFlags.current = base.withUrlOverride(urlOverride());
+    final raw = urlOverride();
+    GameplayFlags.currentFromUrl = raw != null && raw.trim().isNotEmpty;
+    GameplayFlags.current = base.withUrlOverride(raw);
   }
 }

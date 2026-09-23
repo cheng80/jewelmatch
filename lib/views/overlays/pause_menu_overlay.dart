@@ -114,6 +114,9 @@ class PauseMenuOverlay extends ConsumerWidget {
                       trIntossLevelRankSubmitFailed: context.tr(
                         'intossLevelRankSubmitFailed',
                       ),
+                      skipMessage: game.board.flagsFromUrl
+                          ? context.tr('rankSkippedExperiment')
+                          : null,
                     );
               }
               if (!context.mounted) return;

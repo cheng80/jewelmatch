@@ -200,10 +200,12 @@ extension MatchBoardResolution on MatchBoardLogic {
         : MatchJuicePattern.normal;
     var removalSet = buildRemovalSet(matchData, spawns);
     final queue = buildSpecialQueue(removalSet);
+    // T1 "3개 매치 단독": 그룹이 하나이고 그 그룹이 3개일 때만(검수 R4 P2-1).
     _plainThreeStep =
         spawns.isEmpty &&
         queue.isEmpty &&
-        matchData.groups.every((g) => g.length == 3);
+        matchData.groups.length == 1 &&
+        matchData.groups.first.length == 3;
     _consumeSpawnMaterialBonuses(spawns);
 
     for (final spawn in spawns) {

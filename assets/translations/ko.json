@@ -102,6 +102,7 @@
   "rankLoadFailed": "랭킹을 불러오지 못했습니다",
   "rankSaveFailed": "랭킹 기록을 저장하지 못했습니다",
   "rankSubmitFailed": "랭킹 서버에 연결할 수 없습니다",
+  "rankSkippedExperiment": "URL 실험 설정으로 한 판이라 랭킹에 올리지 않았습니다",
   "rankRetrySubmit": "랭킹 기록 다시 제출",
   "rankingTitle": "랭킹",
   "rankingWeeklyResetNotice": "이번 주 기록 순위입니다. 매주 월요일 0시(한국 시간)에 초기화됩니다.",

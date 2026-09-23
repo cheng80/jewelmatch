@@ -181,6 +181,7 @@ class _RetryRankingNotifier extends RankingNotifier {
     required String trRankSaveFailed,
     required String trRankSubmitFailed,
     required String trIntossLevelRankSubmitFailed,
+    String? skipMessage,
   }) async {
     calls++;
     this.mode = mode;

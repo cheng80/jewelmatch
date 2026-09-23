@@ -102,6 +102,7 @@
   "rankLoadFailed": "無法載入排行榜",
   "rankSaveFailed": "無法儲存排行榜紀錄",
   "rankSubmitFailed": "無法連線排行榜伺服器",
+  "rankSkippedExperiment": "本局使用了 URL 實驗設定，未計入排行榜",
   "rankRetrySubmit": "重新提交排行榜紀錄",
   "rankingTitle": "排行榜",
   "rankingWeeklyResetNotice": "本週紀錄排行。每週一0點(韓國時間)重置。",

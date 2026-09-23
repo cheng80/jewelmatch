@@ -102,6 +102,7 @@
   "rankLoadFailed": "无法加载排行榜",
   "rankSaveFailed": "无法保存排行榜记录",
   "rankSubmitFailed": "无法连接排行榜服务器",
+  "rankSkippedExperiment": "本局使用了 URL 实验设置，未计入排行榜",
   "rankRetrySubmit": "重新提交排行榜记录",
   "rankingTitle": "排行榜",
   "rankingWeeklyResetNotice": "本周记录排行。每周一0点(韩国时间)重置。",

@@ -10,6 +10,7 @@ extension MatchBoardGameFlow on MatchBoardGame {
     // 실험 기능 스위치는 새 판(첫 보드, 다시 하기, 다음 레벨)에서만 다시 읽는다.
     if (newRound) {
       board.flags = GameplayFlags.current;
+      board.flagsFromUrl = GameplayFlags.currentFromUrl;
       board.colorCount = board.flags.colorCountFor(
         progressionMode: isProgressionMode,
         level: progressionLevel,

@@ -137,6 +137,9 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
           trIntossLevelRankSubmitFailed: context.tr(
             'intossLevelRankSubmitFailed',
           ),
+          skipMessage: widget.game.board.flagsFromUrl
+              ? context.tr('rankSkippedExperiment')
+              : null,
         );
   }
 

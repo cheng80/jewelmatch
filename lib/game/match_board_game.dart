@@ -214,7 +214,8 @@ class MatchBoardGame extends FlameGame {
 
   /// 레벨 모드 도전 스테이지 목표. 일반 레벨과 다른 모드는 null.
   StageChallenge? get stageChallenge => isProgressionMode
-      ? StageChallenge.forLevel(progressionLevel, colorCount: board.colorCount)
+      // 색 목표는 7색 스위치와 무관하게 6색 기준으로 정해 같은 레벨은 항상 같은 목표다(검수 R4 P3-6).
+      ? StageChallenge.forLevel(progressionLevel)
       : null;
   double get progressionRatio => JewelRankProgression.stageProgressRatio(
     level: progressionLevel,

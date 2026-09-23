@@ -102,6 +102,7 @@
   "rankLoadFailed": "ランキングを読み込めませんでした",
   "rankSaveFailed": "ランキング記録を保存できませんでした",
   "rankSubmitFailed": "ランキングサーバーに接続できません",
+  "rankSkippedExperiment": "URLの実験設定で遊んだため、ランキングには登録しませんでした",
   "rankRetrySubmit": "ランキング記録を再送信",
   "rankingTitle": "ランキング",
   "rankingWeeklyResetNotice": "今週の記録の順位です。毎週月曜0時(韓国時間)にリセットされます。",

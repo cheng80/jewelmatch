@@ -43,5 +43,9 @@ void main() {
     expect(base.withUrlOverride('-tg,t1,c7:6,nolhc').tag, 't1,c7:6,nolhc');
     expect(base.withUrlOverride('c7').seventhColorFromLevel, 10);
     expect(base.withUrlOverride('unknown, MG ').tag, 'tg,mg');
+    // all, none, nolhc 앞의 '-'는 무시한다(검수 R4 P3-5).
+    expect(base.withUrlOverride('-all'), base);
+    expect(base.withUrlOverride('-none'), base);
+    expect(base.withUrlOverride('-nolhc'), base);
   });
 }

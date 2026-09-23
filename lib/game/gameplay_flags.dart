@@ -35,6 +35,9 @@ class GameplayFlags {
   /// 앱 전체의 현재 값. 원격 설정과 URL 적용 결과가 여기에 들어간다.
   static GameplayFlags current = const GameplayFlags();
 
+  /// [current]가 웹 URL `?exp=`로 덮어쓴 값인지. 이렇게 시작한 판은 랭킹에 올리지 않는다(검수 R4 P1-2).
+  static bool currentFromUrl = false;
+
   static int? _optInt(Object? value) {
     if (value is int) return value;
     if (value is num) return value.toInt();
@@ -80,6 +83,8 @@ class GameplayFlags {
       if (token.isEmpty) continue;
       final off = token.startsWith('-');
       final name = off ? token.substring(1) : token;
+      // all, none, nolhc는 켜고 끄는 뜻이 이미 들어 있어 '-'를 붙이면 무시한다(오타가 반대 결과를 내지 않게).
+      if (off && (name == 'all' || name == 'none' || name == 'nolhc')) continue;
       switch (name) {
         case 'none':
           t1 = false;
