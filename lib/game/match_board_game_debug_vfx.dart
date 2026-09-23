@@ -1,6 +1,25 @@
 part of 'match_board_game.dart';
 
 extension MatchBoardGameDebugVfx on MatchBoardGame {
+  /// QA 전용(qaPerf): 대기 중인 보드의 한 칸을 특수 보석으로 바꾼다. 발동은 하지 않는다.
+  /// Last Hurrah와 하이퍼 교환을 브라우저에서 확인하려고 쓴다.
+  bool debugPlaceSpecial(GemKind kind, int row, int col) {
+    if (kind == GemKind.normal ||
+        !isPlaying ||
+        timeUp ||
+        board.inputLocked ||
+        board.introFillInProgress ||
+        board.state != 'idle') {
+      return false;
+    }
+    final gem = board.getGem(row, col);
+    if (gem == null) return false;
+    gem
+      ..kind = kind
+      ..color = _qaSpecialEffectColor(kind);
+    return true;
+  }
+
   /// Android QA hook that drives the real board special-cell resolution path.
   bool triggerQaSpecialEffect(GemKind kind, {bool chain = false}) {
     if (kind == GemKind.normal ||
