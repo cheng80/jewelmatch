@@ -152,6 +152,11 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
         !widget.adRewardPolicy.canContinueStage(widget.game.stageAttemptId)) {
       return;
     }
+    EventLogger.instance.log('continue_clicked', {
+      'mode': widget.game.gameMode.name,
+      'level': widget.game.progressionLevel,
+      'score': widget.game.board.score,
+    });
     SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
     setState(() {
       _showingAd = true;

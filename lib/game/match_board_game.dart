@@ -734,7 +734,14 @@ class MatchBoardGame extends FlameGame {
       inventory: runInventory,
       isAllowed: isItemEnabled,
     );
-    return !identical(before, nextStageLoadoutDraft);
+    final changed = !identical(before, nextStageLoadoutDraft);
+    if (changed) {
+      EventLogger.instance.log('item_equipped', {
+        'item_kind': item.name,
+        'slot_index': slotIndex,
+      });
+    }
+    return changed;
   }
 
   bool canUseTestItem(ItemKind item) {
@@ -852,7 +859,9 @@ class MatchBoardGame extends FlameGame {
   }
 
   void cancelItemTargeting() {
-    if (activeTargetItem == null) return;
+    final item = activeTargetItem;
+    if (item == null) return;
+    _logItemEvent('item_target_cancel', item);
     activeTargetItem = null;
     selectedPrismColor = null;
     pendingImmediateItemConfirm = null;
@@ -892,6 +901,7 @@ class MatchBoardGame extends FlameGame {
     );
     if (used) {
       _consumeRunInventoryIfNeeded(item);
+      _logItemEvent('item_used', item);
     }
     _showItemFeedback(used ? _targetUsedMessage(item) : '선택한 보석에는 사용할 수 없습니다');
     SoundManager.playSfx(used ? AssetPaths.sfxSpecialGem : AssetPaths.sfxFail);
@@ -950,10 +960,22 @@ class MatchBoardGame extends FlameGame {
     }
     if (used) {
       _consumeRunInventoryIfNeeded(item);
+      _logItemEvent('item_used', item);
     }
     _showItemFeedback(feedback);
     SoundManager.playSfx(used ? AssetPaths.sfxSpecialGem : AssetPaths.sfxFail);
     return used;
+  }
+
+  /// 아이템 이벤트 공통 파라미터(Product Spec 웹 테스트 이벤트 로깅 필수 이벤트).
+  void _logItemEvent(String name, ItemKind item) {
+    EventLogger.instance.log(name, {
+      'item_kind': item.name,
+      'target_required': item.needsTarget,
+      'mode': gameMode.name,
+      if (isProgressionMode) 'level': progressionLevel,
+      if (hasTimedClock) 'time_left': timeRemaining.round(),
+    });
   }
 
   void _consumeRunInventoryIfNeeded(ItemKind item) {

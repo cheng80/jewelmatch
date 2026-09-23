@@ -128,6 +128,12 @@ extension MatchBoardGameProgression on MatchBoardGame {
     );
     for (final reward in rewards) {
       runInventory.add(reward.item, reward.quantity);
+      EventLogger.instance.log('item_earned', {
+        'item_kind': reward.item.name,
+        'quantity': reward.quantity,
+        'reason': reward.reasonKey,
+        'level': levelUpFromLevel,
+      });
     }
     latestStageRewards = List<StageRewardGrant>.unmodifiable(rewards);
     _stageRewardClaimKey = claimKey;
