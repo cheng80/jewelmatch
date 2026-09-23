@@ -148,9 +148,17 @@ void main() {
       final fresh = _board();
       _putSpecial(fresh, 2, 2, GemKind.bomb);
       final run = LastHurrah(fresh);
-      expect(fresh.comboScoreMultiplier, LastHurrah.useComboMultiplier);
+      expect(fresh.comboScoreMultiplier, isTrue);
       run.finishInstantly();
       expect(fresh.comboScoreMultiplier, isTrue);
+
+      final off = _board()
+        ..flags = const GameplayFlags(lastHurrahComboMultiplier: false);
+      _putSpecial(off, 2, 2, GemKind.bomb);
+      final offRun = LastHurrah(off);
+      expect(off.comboScoreMultiplier, isFalse);
+      offRun.finishInstantly();
+      expect(off.comboScoreMultiplier, isTrue);
     });
   });
 

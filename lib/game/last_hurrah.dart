@@ -13,7 +13,7 @@ class LastHurrah {
   LastHurrah(this.board, {Random? random})
     : _random = random ?? Random(),
       scoreBefore = board.score {
-    board.comboScoreMultiplier = useComboMultiplier;
+    board.comboScoreMultiplier = board.flags.lastHurrahComboMultiplier;
   }
 
   /// 전체 마무리 연출 상한(초). 넘으면 남은 발동을 즉시 계산으로 끝낸다.
@@ -21,9 +21,6 @@ class LastHurrah {
 
   /// 첫 발동 전에 LAST HURRAH 표시를 읽을 시간(초). [maxSeconds]에 포함된다.
   static const double startDelaySeconds = 0.4;
-
-  /// 마무리 점수의 콤보 배수 적용 여부(BR-011 연쇄 규칙). 플레이테스트로 바꾼다.
-  static const bool useComboMultiplier = true;
 
   /// 연쇄로 특수 보석이 계속 생겨도 끝나도록 둔 발동 상한.
   static const int maxActivations = 64;

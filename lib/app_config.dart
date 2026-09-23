@@ -100,6 +100,9 @@ class StorageKeys {
 
   /// 누적 랭크, 배지, 기록 화면용 로컬 기록(JSON). 안의 `v`로 형식 버전을 구분한다.
   static const String playerRecords = 'player_records';
+
+  /// 마지막으로 받은 원격 실험 기능 스위치(JSON, GameplayFlags.toJson). URL 덮어쓰기는 저장하지 않는다.
+  static const String gameplayFlags = 'gameplay_flags';
 }
 
 /// 인앱 리뷰: TitleView에서 일정 기간(일) 경과 후 requestReview 호출.

@@ -398,6 +398,19 @@ class SupabaseGateway {
     );
   }
 
+  /// 공개 조회(anon). [pathAndQuery]는 `/rest/v1/` 뒤 경로와 쿼리(예: `app_config?key=eq.x&select=value`).
+  Future<BackendResult<Object?>> select(String pathAndQuery) {
+    if (!isConfigured) {
+      return Future.value(
+        const BackendResult.failure(BackendFailure.notConfigured),
+      );
+    }
+    return _send(
+      Uri.parse('${config.baseUrl}/rest/v1/$pathAndQuery'),
+      headers: _baseHeaders(),
+    );
+  }
+
   Future<BackendResult<Object?>> _restPost(
     String path,
     String body, {
@@ -458,13 +471,22 @@ class SupabaseGateway {
     Uri uri, {
     required Map<String, String> headers,
     required String body,
+  }) => _send(uri, headers: headers, body: body);
+
+  /// [body]가 null이면 GET, 아니면 POST.
+  Future<BackendResult<Object?>> _send(
+    Uri uri, {
+    required Map<String, String> headers,
+    String? body,
   }) async {
     final ownsClient = _client == null;
     final client = _client ?? http.Client();
     try {
-      final response = await client
-          .post(uri, headers: headers, body: body)
-          .timeout(timeout);
+      final response =
+          await (body == null
+                  ? client.get(uri, headers: headers)
+                  : client.post(uri, headers: headers, body: body))
+              .timeout(timeout);
       final decoded = _tryDecode(response.body);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return BackendResult.success(decoded);

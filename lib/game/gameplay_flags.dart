@@ -26,6 +26,12 @@ class GameplayFlags {
   /// Last Hurrah 자동 발동 점수에 연쇄 콤보 배수를 적용할지.
   final bool lastHurrahComboMultiplier;
 
+  /// 새 판의 보석 색 수. 레벨 모드에서 [seventhColorFromLevel] 이상이면 7, 그 밖(타임, 무한 모드 포함)은 6.
+  int colorCountFor({required bool progressionMode, required int level}) {
+    final from = seventhColorFromLevel;
+    return progressionMode && from != null && level >= from ? 7 : 6;
+  }
+
   /// 앱 전체의 현재 값. 원격 설정과 URL 적용 결과가 여기에 들어간다.
   static GameplayFlags current = const GameplayFlags();
 

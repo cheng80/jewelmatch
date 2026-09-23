@@ -14,6 +14,7 @@ import 'resources/asset_paths.dart';
 import 'resources/sound_manager.dart';
 import 'services/backend/backend_bootstrap.dart';
 import 'services/game_settings.dart';
+import 'services/gameplay_config_service.dart';
 import 'services/in_app_review_service.dart';
 import 'services/wakelock_service.dart';
 import 'utils/storage_helper.dart';
@@ -30,6 +31,8 @@ void main() async {
   await EasyLocalization.ensureInitialized();
   await StorageHelper.init();
   await InAppReviewService.saveFirstLaunchDateIfNeeded();
+  GameplayConfigService.applyCached();
+  unawaited(GameplayConfigService.refresh());
   unawaited(BackendBootstrap.start());
   if (kIsWeb) {
     unawaited(SoundManager.preload());
