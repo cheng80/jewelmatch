@@ -238,6 +238,7 @@ class _GameViewState extends State<GameView> {
           'challengeSpecial': context.tr('challengeSpecial'),
           'challengeGems': context.tr('challengeGems'),
           'bestScore': context.tr('bestScore'),
+          'hudWeeklyTop': context.tr('hudWeeklyTop'),
           'combo': context.tr('combo'),
           'timeLeft': context.tr('timeLeft'),
           'unlimitedMode': context.tr('unlimitedMode'),

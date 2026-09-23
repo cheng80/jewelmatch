@@ -26,9 +26,11 @@ extension _MatchGameHudPainterCache on MatchGameHud {
     String bestValueText;
     if (isTimedMode && top1Name != null && top1Score != null) {
       bestValueText = _fmt.format(top1Score);
+      // 타임 모드 1위는 이번 주(KST 월요일 시작) 기록 기준이다.
+      final weekly = game.localeString('hudWeeklyTop', 'Week');
       _bestLabel = TextPainter(
         text: TextSpan(
-          text: top1Name,
+          text: '$weekly $top1Name',
           style: _ts(
             size: 12 * t,
             color: JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.95),

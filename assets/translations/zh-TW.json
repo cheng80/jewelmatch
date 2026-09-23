@@ -105,6 +105,7 @@
   "rankRetrySubmit": "重新提交排行榜紀錄",
   "rankingTitle": "排行榜",
   "rankingWeeklyResetNotice": "本週紀錄排行。每週一0點(韓國時間)重置。",
+  "hudWeeklyTop": "本週",
   "dailyBoardToday": "今日盤面 {month}月{day}日",
   "rankingLevelTab": "等級排行",
   "rankingTimeTab": "本週計時",

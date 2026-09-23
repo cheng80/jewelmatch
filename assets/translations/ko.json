@@ -105,6 +105,7 @@
   "rankRetrySubmit": "랭킹 기록 다시 제출",
   "rankingTitle": "랭킹",
   "rankingWeeklyResetNotice": "이번 주 기록 순위입니다. 매주 월요일 0시(한국 시간)에 초기화됩니다.",
+  "hudWeeklyTop": "이번 주",
   "dailyBoardToday": "오늘의 보드 {month}월 {day}일",
   "rankingLevelTab": "레벨 랭킹",
   "rankingTimeTab": "이번 주 타임",

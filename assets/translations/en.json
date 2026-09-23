@@ -105,6 +105,7 @@
   "rankRetrySubmit": "Submit ranking record again",
   "rankingTitle": "Ranking",
   "rankingWeeklyResetNotice": "This week's scores. Resets every Monday at 00:00 KST.",
+  "hudWeeklyTop": "Week",
   "dailyBoardToday": "Today's board {month}/{day}",
   "rankingLevelTab": "Level Ranking",
   "rankingTimeTab": "Weekly Time",
