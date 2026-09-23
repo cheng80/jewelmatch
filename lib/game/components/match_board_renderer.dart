@@ -3,13 +3,13 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
-import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
 
 import '../../resources/asset_paths.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../match_board_game.dart';
 import '../match_board_logic.dart';
+import 'board_atlas.dart';
 
 part 'match_board_chrome_renderer.dart';
 part 'match_board_gem_atlas.dart';
@@ -18,8 +18,8 @@ part 'match_board_gem_overlay_renderer.dart';
 part 'match_board_procedural_renderer.dart';
 
 /// 매치 보드 격자·보석·플래시·선택 표시.
-/// `Jewel_Arcane.png`(896×128, 7프레임×128), row/col legacy 특수 시트,
-/// bomb/star/hyper/supernova 액션 특수 시트 사용.
+/// 보석, row/col legacy 특수, bomb/star/hyper/supernova 액션 특수, 배지 칸을
+/// 모두 [BoardAtlas] 한 장에서 읽는다.
 ///
 /// 힌트: [MatchBoardLogic.showHint]가 고른 **한 쌍**만, 보석 위에 흰색 펄스(느리게 깜박임).
 /// 다른 칸에는 오버레이를 그리지 않는다.
@@ -43,10 +43,12 @@ class MatchBoardRenderer extends PositionComponent
   bool useGemBatching = true;
   @visibleForTesting
   bool get hasGemAtlas => _gemBatch.image != null;
-  ui.Image? _jewelImage;
 
-  /// Time, Multiplier 보석 배지 한 장 시트. 없으면 배지를 그리지 않는다.
+  /// Time, Multiplier 배지를 그리는 [BoardAtlas] 이미지와 칸. 없으면 배지를 그리지 않는다.
+  /// 배지는 drawImageRect로 그린다. drawRawAtlas나 구운 atlas(toImageSync)로 옮기면
+  /// 밉맵 없이 샘플링돼 작은 배지 그림이 원본과 달라진다(측정: 최대 채널 차 112).
   ui.Image? _badgeImage;
+  final List<Rect> _badgeSources = List<Rect>.filled(2, Rect.zero);
   final Paint _badgePaint = Paint()..filterQuality = FilterQuality.medium;
   final Map<String, TextPainter> _badgeLabels = {};
   double _badgeLabelTileSize = 0;
@@ -83,12 +85,7 @@ class MatchBoardRenderer extends PositionComponent
   /// 기본 보석 스프라이트 시트 열 0~6 (각 128×128).
   final List<Sprite?> _sheetSprites = List<Sprite?>.filled(7, null);
   final Map<GemKind, Sprite?> _specialSprites = <GemKind, Sprite?>{};
-  final Map<GemKind, Sprite?> _overlaySprites = <GemKind, Sprite?>{};
-  final Map<GemKind, List<Sprite?>> _compositedOverlaySprites =
-      <GemKind, List<Sprite?>>{};
 
-  static const double _frameW = 128;
-  static const double _frameH = 128;
   static const List<GemKind> _specialSheetKinds = <GemKind>[
     GemKind.col,
     GemKind.row,
@@ -99,9 +96,6 @@ class MatchBoardRenderer extends PositionComponent
     GemKind.hyper,
     GemKind.supernova,
   ];
-  static const Map<GemKind, String> _overlayAssetPaths = <GemKind, String>{
-    GemKind.star: AssetPaths.starOverlay,
-  };
 
   /// 힌트 펄스 위상 속도(낮을수록 느리게 한 박자).
   static const double _hintPulseHz = 0.32;
@@ -156,80 +150,42 @@ class MatchBoardRenderer extends PositionComponent
   Future<void> onLoad() async {
     await super.onLoad();
     try {
-      final img = await Flame.images.load(AssetPaths.jewelSpriteSheet);
-      _jewelImage = img;
-      for (var i = 0; i < 7; i++) {
-        _sheetSprites[i] = Sprite(
-          img,
-          srcPosition: Vector2(i * _frameW, 0),
-          srcSize: Vector2(_frameW, _frameH),
+      final atlas = await BoardAtlas.load();
+      Sprite? sprite(String name) {
+        final rect = atlas.frames[name];
+        if (rect == null) return null;
+        return Sprite(
+          atlas.image,
+          srcPosition: Vector2(rect.left, rect.top),
+          srcSize: Vector2(rect.width, rect.height),
         );
       }
-    } catch (_) {
-      for (var i = 0; i < 7; i++) {
-        _sheetSprites[i] = null;
+
+      for (var i = 0; i < _sheetSprites.length; i++) {
+        _sheetSprites[i] = sprite('gem_$i');
       }
-    }
-    try {
-      final img = await Flame.images.load(AssetPaths.specialSpriteSheet);
       for (var i = 0; i < _specialSheetKinds.length; i++) {
-        _specialSprites[_specialSheetKinds[i]] = Sprite(
-          img,
-          srcPosition: Vector2(i * _frameW, 0),
-          srcSize: Vector2(_frameW, _frameH),
-        );
+        _specialSprites[_specialSheetKinds[i]] = sprite('legacy_$i');
       }
-    } catch (_) {
-      for (final kind in _specialSheetKinds) {
-        _specialSprites[kind] = null;
-      }
-    }
-    try {
-      final img = await Flame.images.load(AssetPaths.specialActionSpriteSheet);
       for (var i = 0; i < _specialActionSheetKinds.length; i++) {
-        _specialSprites[_specialActionSheetKinds[i]] = Sprite(
-          img,
-          srcPosition: Vector2(i * _frameW, 0),
-          srcSize: Vector2(_frameW, _frameH),
-        );
+        _specialSprites[_specialActionSheetKinds[i]] = sprite('action_$i');
       }
-    } catch (_) {
-      for (final kind in _specialActionSheetKinds) {
-        _specialSprites[kind] = null;
+      final time = atlas.frames['badge_0'];
+      final multiplier = atlas.frames['badge_1'];
+      if (time != null && multiplier != null) {
+        _badgeSources
+          ..[0] = time
+          ..[1] = multiplier;
+        _badgeImage = atlas.image;
       }
-    }
-    try {
-      _badgeImage = await Flame.images.load(AssetPaths.gemBadges);
     } catch (_) {
       _badgeImage = null;
-    }
-    for (final entry in _overlayAssetPaths.entries) {
-      try {
-        final img = await Flame.images.load(entry.value);
-        _overlaySprites[entry.key] = Sprite(
-          img,
-          srcPosition: Vector2.zero(),
-          srcSize: Vector2(_frameW, _frameH),
-        );
-      } catch (_) {
-        _overlaySprites[entry.key] = null;
-      }
     }
   }
 
   @override
   void onMount() {
     super.onMount();
-    if (_jewelImage != null) {
-      for (final entry in _overlaySprites.entries) {
-        if (entry.value != null) {
-          _compositedOverlaySprites[entry.key] = _buildCompositedOverlaySprites(
-            _jewelImage!,
-            entry.value!.image,
-          );
-        }
-      }
-    }
     _buildGemAtlas();
     _rebuildBoardChromePicture();
   }
@@ -239,54 +195,8 @@ class MatchBoardRenderer extends PositionComponent
     _boardChromePicture?.dispose();
     _boardChromePicture = null;
     _gemBatch.dispose();
-    for (final sprites in _compositedOverlaySprites.values) {
-      for (final sprite in sprites) {
-        sprite?.image.dispose();
-      }
-    }
-    _compositedOverlaySprites.clear();
     _disposeBadgeLabels();
     super.onRemove();
-  }
-
-  List<Sprite?> _buildCompositedOverlaySprites(
-    ui.Image jewelImage,
-    ui.Image overlayImage,
-  ) {
-    return [
-      for (var i = 0; i < _sheetColByColor1based.length; i++)
-        _buildCompositedOverlaySprite(
-          jewelImage,
-          overlayImage,
-          _sheetColByColor1based[i],
-        ),
-    ];
-  }
-
-  Sprite _buildCompositedOverlaySprite(
-    ui.Image jewelImage,
-    ui.Image overlayImage,
-    int sheetColumn,
-  ) {
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-    final dst = Rect.fromLTWH(0, 0, _frameW, _frameH);
-    final baseSize = _frameW * 0.82 / (112 / 128);
-    final baseInset = (_frameW - baseSize) / 2;
-    final baseDst = Rect.fromLTWH(baseInset, baseInset, baseSize, baseSize);
-    final src = Rect.fromLTWH(sheetColumn * _frameW, 0, _frameW, _frameH);
-    canvas
-      ..drawImageRect(jewelImage, src, baseDst, _normalSpritePaint)
-      ..drawImageRect(
-        overlayImage,
-        dst,
-        dst,
-        Paint()..filterQuality = FilterQuality.medium,
-      );
-    final picture = recorder.endRecording();
-    final image = picture.toImageSync(_frameW.toInt(), _frameH.toInt());
-    picture.dispose();
-    return Sprite(image);
   }
 
   @override

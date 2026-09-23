@@ -1,7 +1,8 @@
 import 'dart:typed_data';
+import 'dart:ui';
 
 /// Bomb 범위 효과를 이루는 레이어. 그리는 순서이기도 하다.
-/// [BombLayer.glow]만 구운 글로우이고 나머지는 `bomb_layers.png`의 칸 순서다.
+/// [BombLayer.glow]만 구운 글로우이고 나머지는 `board_atlas.png`의 `bomb_0`~`bomb_4` 칸 순서다.
 enum BombLayer { glow, ignition, ring, burst, swirl, ember }
 
 /// 레이어 하나가 쓰는 float 개수: scale, alpha, angle(라디안).
@@ -25,21 +26,26 @@ const List<List<double>> _curves = [
   /* ember    */ [0.52, 0.70, 1.00, 1.05, 0.62, 0.55],
 ];
 
-/// bomb 레이어 아틀라스 규격 검사. manifest 값과 실제 이미지가 맞아야 한다.
-/// 셀은 정수여야 하고 칸은 가로 한 줄이다.
-bool isValidBombLayerAtlas({
+/// 범위 효과 레이어 칸 규격 검사. 칸은 [bombLayerSpriteCount]개이고 모두 같은 정수 크기의
+/// 정사각형이며, 정수 좌표로 이미지 안에 있어야 한다.
+bool isValidAreaLayerFrames({
+  required List<Rect> frames,
   required int imageWidth,
   required int imageHeight,
-  required num cellSize,
-  required int layerCount,
   required double scale,
 }) {
-  final cell = cellSize.toDouble();
-  if (!cell.isFinite || cell <= 0 || cell != cell.roundToDouble()) return false;
-  if (layerCount != bombLayerSpriteCount) return false;
+  if (frames.length != bombLayerSpriteCount) return false;
   if (!scale.isFinite || scale <= 0) return false;
-  if (imageWidth != cell.round() * layerCount) return false;
-  if (imageHeight != cell.round()) return false;
+  final cell = frames.first.width;
+  if (!cell.isFinite || cell <= 0 || cell != cell.roundToDouble()) return false;
+  for (final f in frames) {
+    if (f.width != cell || f.height != cell) return false;
+    if (f.left != f.left.roundToDouble() || f.top != f.top.roundToDouble()) {
+      return false;
+    }
+    if (f.left < 0 || f.top < 0) return false;
+    if (f.right > imageWidth || f.bottom > imageHeight) return false;
+  }
   return true;
 }
 

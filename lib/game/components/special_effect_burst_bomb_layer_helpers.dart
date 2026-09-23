@@ -1,21 +1,72 @@
 part of 'special_effect_burst.dart';
 
+final Paint _areaLayerPaint = Paint()
+  ..blendMode = BlendMode.plus
+  ..filterQuality = FilterQuality.medium;
+
+/// 같은 프레임에 켜진 범위 효과들의 레이어를 모아 `drawRawAtlas` 한 번으로 그린다.
+/// 레이어는 모두 같은 이미지([BoardAtlas])와 plus 블렌드라, 효과 사이 순서가 바뀌어도
+/// 결과가 같다(plus는 교환 가능). 효과(priority 120) 뒤, 주스 레이어(130) 앞에 그린다.
+class AreaLayerBatch extends Component {
+  AreaLayerBatch() : super(priority: 121);
+
+  // ponytail: 고정 용량. 넘치면 그 효과는 스스로 그린다.
+  static const int _capacity = 24 * bombLayerSpriteCount;
+  final Float32List _transforms = Float32List(_capacity * 4);
+  final Float32List _rects = Float32List(_capacity * 4);
+  final Int32List _colors = Int32List(_capacity);
+  ui.Image? _image;
+  int _count = 0;
+
+  /// 받아들이면 true. 이미지가 다르거나 꽉 찼으면 false라 호출한 쪽이 직접 그린다.
+  bool queue(
+    ui.Image image,
+    Float32List transforms,
+    Float32List rects,
+    Int32List colors,
+  ) {
+    if (!isMounted) return false;
+    if (_count > 0 && !identical(_image, image)) return false;
+    final n = colors.length;
+    if (_count + n > _capacity) return false;
+    _image = image;
+    _transforms.setRange(_count * 4, (_count + n) * 4, transforms);
+    _rects.setRange(_count * 4, (_count + n) * 4, rects);
+    _colors.setRange(_count, _count + n, colors);
+    _count += n;
+    return true;
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final image = _image;
+    if (_count == 0 || image == null) return;
+    canvas.drawRawAtlas(
+      image,
+      Float32List.sublistView(_transforms, 0, _count * 4),
+      Float32List.sublistView(_rects, 0, _count * 4),
+      Int32List.sublistView(_colors, 0, _count),
+      BlendMode.modulate,
+      null,
+      _areaLayerPaint,
+    );
+    _count = 0;
+    _image = null;
+  }
+}
+
 /// 정지 낱장 5칸을 효과별 곡선으로 움직인다. bomb 곡선과 배율은 유지한다.
-/// 구운 글로우를 먼저 깔고, 낱장은 `drawRawAtlas` 한 번에 태운다.
+/// 구운 글로우를 먼저 깔고, 낱장은 `drawRawAtlas`로 태운다([AreaLayerBatch]가 있으면 모아서).
 class _AreaLayerRenderer {
   final Float32List _values = Float32List(bombLayerBufferLength);
   final Float32List _transforms = Float32List(bombLayerSpriteCount * 4);
-  final Float32List _rects = Float32List(bombLayerSpriteCount * 4);
   final Int32List _colors = Int32List(bombLayerSpriteCount);
-  final Paint _paint = Paint()
-    ..blendMode = BlendMode.plus
-    ..filterQuality = FilterQuality.medium;
-  bool _rectsReady = false;
 
   void render(
     Canvas canvas,
     _AreaLayerAtlas atlas,
     BakedGlowAtlas glow,
+    AreaLayerBatch? batch,
     Offset center,
     double baseSize,
     double t,
@@ -72,16 +123,6 @@ class _AreaLayerRenderer {
     }
 
     final cell = atlas.cellSize;
-    if (!_rectsReady) {
-      for (var slot = 0; slot < bombLayerSpriteCount; slot++) {
-        _rects[slot * 4] = slot * cell;
-        _rects[slot * 4 + 1] = 0;
-        _rects[slot * 4 + 2] = (slot + 1) * cell;
-        _rects[slot * 4 + 3] = cell;
-      }
-      _rectsReady = true;
-    }
-
     final anchor = cell / 2;
     var visible = false;
     for (var slot = 0; slot < bombLayerSpriteCount; slot++) {
@@ -109,50 +150,63 @@ class _AreaLayerRenderer {
       _colors[slot] = ((alpha * 255).round().clamp(0, 255) << 24) | 0x00FFFFFF;
     }
     if (!visible) return;
-
+    if (batch != null &&
+        batch.queue(atlas.image, _transforms, atlas.rects, _colors)) {
+      return;
+    }
     canvas.drawRawAtlas(
       atlas.image,
       _transforms,
-      _rects,
+      atlas.rects,
       _colors,
       BlendMode.modulate,
       null,
-      _paint,
+      _areaLayerPaint,
     );
   }
 }
 
-/// 정수 셀과 이미지 치수를 확인한 범위 효과 아틀라스.
+/// [BoardAtlas]에서 한 효과의 레이어 칸 5개를 확인해 담는다.
 class _AreaLayerAtlas {
   const _AreaLayerAtlas({
     required this.image,
+    required this.rects,
     required this.cellSize,
     required this.scale,
   });
 
   final ui.Image image;
+
+  /// drawRawAtlas 소스 사각형 5개(left, top, right, bottom). 칸 안쪽 그대로다.
+  final Float32List rects;
   final double cellSize;
   final double scale;
 
-  /// manifest 값과 실제 이미지가 맞을 때만 아틀라스를 만든다. 아니면 null이다.
+  /// `<name>_0`~`<name>_4` 칸이 규격에 맞을 때만 만든다. 아니면 null이다.
   static _AreaLayerAtlas? validated({
-    required ui.Image image,
-    required num cellSize,
-    required int layerCount,
+    required BoardAtlas atlas,
+    required String name,
     required double scale,
   }) {
-    if (!isValidBombLayerAtlas(
-      imageWidth: image.width,
-      imageHeight: image.height,
-      cellSize: cellSize,
-      layerCount: layerCount,
+    final frames = [
+      for (var i = 0; i < bombLayerSpriteCount; i++) atlas.frames['${name}_$i'],
+    ];
+    if (frames.any((f) => f == null)) return null;
+    final rects = frames.cast<Rect>();
+    if (!isValidAreaLayerFrames(
+      frames: rects,
+      imageWidth: atlas.image.width,
+      imageHeight: atlas.image.height,
       scale: scale,
     )) {
       return null;
     }
     return _AreaLayerAtlas(
-      image: image,
-      cellSize: cellSize.toDouble(),
+      image: atlas.image,
+      rects: Float32List.fromList([
+        for (final r in rects) ...[r.left, r.top, r.right, r.bottom],
+      ]),
+      cellSize: rects.first.width,
       scale: scale,
     );
   }
@@ -177,6 +231,7 @@ extension _SpecialEffectAreaLayers on SpecialEffectBurst {
       canvas,
       atlas,
       _bakedGlow,
+      layerBatch,
       origin.toOffset(),
       tileSize * atlas.scale * tierScale,
       t,

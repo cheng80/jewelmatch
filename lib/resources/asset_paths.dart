@@ -38,50 +38,16 @@ class AssetPaths {
   /// 폰트 family 이름 (pubspec.yaml에 등록된 이름과 동일)
   static const String fontNexonLv2Gothic = 'NexonLv2Gothic';
 
-  /// 7열×128px 보석 스프라이트 시트 (색은 코드에서 열 인덱스로 매핑)
+  /// 7열×128px 보석 스프라이트 시트. HUD 프리즘 보석과 로딩 화면만 쓴다.
+  /// 보드와 게임 방법 화면은 [boardAtlas]의 `gem_0`~`gem_6` 칸을 쓴다.
   static const String jewelSpriteSheet = 'sprites/Jewel_Arcane.png';
 
-  /// 2열×128px legacy 특수 보석 시트 (순서: legacy col, legacy row)
-  static const String specialSpriteSheet = 'sprites/Special_Arcane.png';
+  /// 보드 텍스처 한 장. 보석, 특수 보석, 배지, 범위 효과 레이어 칸이 모두 들어 있다.
+  /// `tools/atlas/board.json`으로 다시 만든다. 칸 이름과 좌표는 [boardAtlasManifest].
+  static const String boardAtlas = 'sprites/board_atlas.png';
 
-  /// 4열×128px 액션 특수 보석 시트 (순서: bomb, star, hyper, supernova)
-  static const String specialActionSpriteSheet =
-      'sprites/Special_Action_Arcane.png';
-
-  /// 범위형 특수 이펙트 atlas 제어 manifest.
-  static const String specialAreaEffectManifest =
-      'sprites/special_area_effects.json';
-
-  /// Bomb 범위형 특수 이펙트 레이어 아틀라스. 256px 정수 셀 5칸 가로 1행.
-  /// 칸 순서는 점화, 룬 고리, 불꽃 폭발, 회오리, 잔불이다.
-  static const String specialAreaEffectBombLayers = 'sprites/bomb_layers.png';
-
-  /// Bomb 범위형 특수 이펙트 4×4 시트. 레이어 아틀라스로 대체돼 더는 로드하지 않는다.
-  static const String specialAreaEffectBomb = 'sprites/Special_Area_Bomb.png';
-
-  /// Hyper와 Supernova의 정지 레이어 아틀라스. 256px 셀 5칸.
-  static const String specialAreaEffectHyperLayers = 'sprites/hyper_layers.png';
-  static const String specialAreaEffectSupernovaLayers =
-      'sprites/supernova_layers.png';
-
-  /// Hyper 범위형 특수 이펙트 레거시 4×4 시트. 레이어 경로는 로드하지 않는다.
-  static const String specialAreaEffectHyper = 'sprites/Special_Area_Hyper.png';
-
-  /// Supernova 범위형 특수 이펙트 레거시 4×4 시트. 레이어 경로는 로드하지 않는다.
-  static const String specialAreaEffectSupernova =
-      'sprites/Special_Area_Supernova.png';
-
-  /// 레거시 폭탄 보석용 독립 오버레이. 현재 메인 보드 렌더에서는 사용하지 않는다.
-  static const String flameOverlay = 'sprites/flame_overlay.png';
-
-  /// 별 보석용 독립 오버레이.
-  static const String starOverlay = 'sprites/star_overlay.png';
-
-  /// 타임 모드 실험 속성 배지 256×128. 열 0 시계(Time 보석), 열 1 배율 판(Multiplier 보석).
-  static const String gemBadges = 'sprites/Gem_Badges.png';
-
-  /// 레거시 초신성 보석용 독립 오버레이. 현재 메인 보드 렌더에서는 사용하지 않는다.
-  static const String supernovaOverlay = 'sprites/supernova_overlay.png';
+  /// [boardAtlas]의 칸 좌표. Flutter 번들 경로는 `assets/images/` 뒤에 붙인다.
+  static const String boardAtlasManifest = 'sprites/board_atlas.json';
 
   /// 고대 판타지 유적 배경. Flutter 위젯에서는 전체 assets 경로를 사용한다.
   static const String ancientRuinsSpaceBackground =

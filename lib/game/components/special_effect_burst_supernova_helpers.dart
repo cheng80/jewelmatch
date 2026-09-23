@@ -2,8 +2,7 @@ part of 'special_effect_burst.dart';
 
 extension _SpecialEffectBurstSupernovaDrawing on SpecialEffectBurst {
   void _renderSupernova(Canvas canvas, double t, double fade) {
-    if (_renderAreaLayers(canvas, t, fade) ||
-        _renderAreaEffectSprite(canvas, t, fade)) {
+    if (_renderAreaLayers(canvas, t, fade)) {
       final left = _axisExtreme(horizontal: true, first: true);
       final right = _axisExtreme(horizontal: true, first: false);
       final top = _axisExtreme(horizontal: false, first: true);

@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame/flame.dart';
+import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -84,19 +85,9 @@ void main() {
   test(
     'atlas kind isolation and fixed 128px pivot through growth and rotation',
     () async {
-      final images = <GemKind, ui.Image>{};
-      for (final kind in _kinds) {
-        images[kind] = _synthetic(switch (kind) {
-          GemKind.bomb => const Color(0xFFFF0000),
-          GemKind.hyper => const Color(0xFF00FF00),
-          _ => const Color(0xFF0000FF),
-        });
-      }
+      final atlas = _synthetic();
       try {
-        await _load(
-          _manifest(),
-          (path) async => images[_kinds.firstWhere((k) => path == k.name)]!,
-        );
+        await _load(_manifest(), (_) async => atlas);
         for (final kind in _kinds) {
           for (final t in [0.04, 0.22, 0.55, 0.82]) {
             final burst = _burst(kind, 2)..update(_life(kind) * t);
@@ -106,11 +97,7 @@ void main() {
             expect(sums[channel], greaterThan(0), reason: '$kind t=$t');
             for (var c = 0; c < 3; c++) {
               if (c != channel) {
-                expect(
-                  sums[c],
-                  0,
-                  reason: 'loader overwrote $kind with another atlas',
-                );
+                expect(sums[c], 0, reason: '$kind read another kind cells');
               }
             }
             final b = _bbox(pixels);
@@ -128,41 +115,40 @@ void main() {
         }
       } finally {
         await restore();
-        for (final image in images.values) {
-          image.dispose();
-        }
+        atlas.dispose();
       }
     },
   );
 
   test(
-    'invalid cells/count/size and missing image isolate fallback to that kind',
+    'invalid or missing cells isolate fallback to that kind, missing image to all',
     () async {
-      final valid = _synthetic(Colors.red);
-      final wrongSize = _synthetic(Colors.blue, width: 1024);
+      final atlas = _synthetic();
       try {
         for (final invalid in [
           'fractional-cell',
-          'fractional-count',
-          'wrong-size',
-          'missing',
-          'zero-scale',
+          'missing-cell',
+          'non-square',
+          'outside-image',
+          'missing-image',
         ]) {
           final manifest = _manifest();
-          final effect =
-              (manifest['effects'] as Map<String, dynamic>)['hyper']
-                  as Map<String, dynamic>;
-          if (invalid == 'fractional-cell') effect['layerCellSize'] = 255.5;
-          if (invalid == 'fractional-count') effect['layerCount'] = 5.5;
-          if (invalid == 'zero-scale') effect['scale'] = 0;
-          await _load(manifest, (path) async {
-            if (path == 'hyper') {
-              if (invalid == 'missing') throw StateError('missing hyper asset');
-              if (invalid == 'wrong-size') return wrongSize;
-            }
-            return valid;
+          final frames = manifest['frames'] as Map<String, dynamic>;
+          final hyper = frames['hyper_2'] as Map<String, dynamic>;
+          if (invalid == 'fractional-cell') hyper['w'] = 255.5;
+          if (invalid == 'missing-cell') frames.remove('hyper_4');
+          if (invalid == 'non-square') hyper['h'] = 128;
+          if (invalid == 'outside-image') hyper['y'] = 700;
+          await _load(manifest, (_) async {
+            if (invalid == 'missing-image') throw StateError('missing atlas');
+            return atlas;
           });
-          expect(SpecialEffectBurst.debugLayerAtlasReady(GemKind.bomb), isTrue);
+          final imageMissing = invalid == 'missing-image';
+          expect(
+            SpecialEffectBurst.debugLayerAtlasReady(GemKind.bomb),
+            !imageMissing,
+            reason: invalid,
+          );
           expect(
             SpecialEffectBurst.debugLayerAtlasReady(GemKind.hyper),
             isFalse,
@@ -170,7 +156,7 @@ void main() {
           );
           expect(
             SpecialEffectBurst.debugLayerAtlasReady(GemKind.supernova),
-            isTrue,
+            !imageMissing,
             reason: 'a failed hyper must not abort later entries',
           );
           final burst = _burst(GemKind.hyper, 2)..update(0.12);
@@ -180,18 +166,64 @@ void main() {
             reason: 'procedural fallback',
           );
         }
-        await _load({'effects': {}}, (_) async => valid);
+        await _load({'frames': {}}, (_) async => atlas);
         for (final kind in [GemKind.hyper, GemKind.supernova]) {
           final fallback = _burst(kind, 2)..update(0.12);
           expect(_energy(await _pixels(fallback)), greaterThan(0));
         }
       } finally {
         await restore();
-        valid.dispose();
-        wrongSize.dispose();
+        atlas.dispose();
       }
     },
   );
+
+  testWidgets('pool batch draws every active area effect layer in one call', (
+    tester,
+  ) async {
+    final (parent, pool) = await mountEffectParent(tester);
+    for (final kind in _kinds) {
+      pool.spawn(
+        effectKind: kind,
+        origin: Vector2.all(256),
+        affectedCenters: const [],
+        tileSize: 48,
+        baseColor: Colors.blue,
+      );
+    }
+    await tester.runAsync(parent.findGame()!.ready);
+    final bursts = parent.children.whereType<SpecialEffectBurst>().toList();
+    expect(bursts, hasLength(3));
+    expect(bursts.every((b) => b.isMounted), isTrue);
+    for (final burst in bursts) {
+      burst.update(0.15);
+    }
+    final spy = _AtlasCountCanvas();
+    parent.renderTree(spy);
+    expect(spy.layerCalls, 1);
+    expect(spy.layerEntries, 15);
+
+    // 묶은 결과와 효과별로 따로 그린 결과가 픽셀까지 같다(plus 블렌드).
+    Future<Uint8List> capture() async {
+      final recorder = ui.PictureRecorder();
+      parent.renderTree(ui.Canvas(recorder));
+      final picture = recorder.endRecording();
+      final image = await picture.toImage(_side, _side);
+      final bytes = (await image.toByteData())!.buffer.asUint8List();
+      image.dispose();
+      picture.dispose();
+      return bytes;
+    }
+
+    final batched = (await tester.runAsync(capture))!;
+    for (final burst in bursts) {
+      burst.layerBatch = null;
+    }
+    final separate = (await tester.runAsync(capture))!;
+    expect(_energy(batched), greaterThan(0));
+    expect(batched, orderedEquals(separate));
+    pool.clear();
+  });
 
   test(
     'real Flutter start/peak/tail/end, tiers, glow leases and captured frames',
@@ -275,21 +307,21 @@ void main() {
       expect(hyper, isNot(orderedEquals(nova)));
       for (final bad in [double.nan, double.infinity]) {
         expect(
-          isValidBombLayerAtlas(
+          isValidAreaLayerFrames(
+            frames: [for (var i = 0; i < 5; i++) Rect.fromLTWH(0, 0, bad, bad)],
             imageWidth: 1280,
             imageHeight: 256,
-            cellSize: bad,
-            layerCount: 5,
             scale: 4,
           ),
           false,
         );
         expect(
-          isValidBombLayerAtlas(
+          isValidAreaLayerFrames(
+            frames: [
+              for (var i = 0; i < 5; i++) Rect.fromLTWH(i * 256.0, 0, 256, 256),
+            ],
             imageWidth: 1280,
             imageHeight: 256,
-            cellSize: 256,
-            layerCount: 5,
             scale: bad,
           ),
           false,
@@ -297,6 +329,26 @@ void main() {
       }
     },
   );
+}
+
+/// 실제 게임처럼 붙은(mounted) 부모와 효과 풀. 레이어 묶음은 붙어 있을 때만 모은다.
+Future<(Component, SpecialEffectPool)> mountEffectParent(
+  WidgetTester tester,
+) async {
+  final game = FlameGame();
+  final parent = Component();
+  await tester.runAsync(() async {
+    await SpecialEffectBurst.debugReloadAreaEffectSprites(
+      bundle: rootBundle,
+      loadImage: Flame.images.load,
+    );
+    await tester.pumpWidget(GameWidget(game: game));
+    await game.toBeLoaded();
+    await game.add(parent);
+    await game.ready();
+  });
+  expect(parent.isMounted, isTrue);
+  return (parent, SpecialEffectPool(parent, constrainedDevice: false));
 }
 
 double _life(GemKind k) => switch (k) {
@@ -368,28 +420,37 @@ List<int> _bbox(Uint8List p) {
   return [x0, y0, x1, y1];
 }
 
-ui.Image _synthetic(Color color, {int width = 1280}) {
+/// 종류마다 한 줄씩(bomb 빨강, hyper 초록, supernova 파랑) 256px 5칸.
+ui.Image _synthetic() {
   final recorder = ui.PictureRecorder();
   final canvas = ui.Canvas(recorder);
-  final paint = ui.Paint()..color = color;
-  for (var i = 0; i < 5; i++) {
-    canvas.drawCircle(Offset(i * 256 + 128, 128), 32, paint);
+  for (var row = 0; row < _kinds.length; row++) {
+    final paint = ui.Paint()
+      ..color = [
+        const Color(0xFFFF0000),
+        const Color(0xFF00FF00),
+        const Color(0xFF0000FF),
+      ][row];
+    for (var i = 0; i < 5; i++) {
+      canvas.drawCircle(Offset(i * 256 + 128, row * 256 + 128), 32, paint);
+    }
   }
   final picture = recorder.endRecording();
-  final image = picture.toImageSync(width, 256);
+  final image = picture.toImageSync(1280, 768);
   picture.dispose();
   return image;
 }
 
 Map<String, dynamic> _manifest() => {
-  'effects': {
-    for (final k in _kinds)
-      k.name: {
-        'image': k.name,
-        'layerCellSize': 256,
-        'layerCount': 5,
-        'scale': 4.5,
-      },
+  'frames': <String, dynamic>{
+    for (var row = 0; row < _kinds.length; row++)
+      for (var i = 0; i < 5; i++)
+        '${_kinds[row].name}_$i': <String, dynamic>{
+          'x': i * 256,
+          'y': row * 256,
+          'w': 256,
+          'h': 256,
+        },
   },
 };
 Future<void> _load(
@@ -399,6 +460,22 @@ Future<void> _load(
   bundle: _Bundle(manifest),
   loadImage: load,
 );
+
+class _AtlasCountCanvas implements ui.Canvas {
+  int layerCalls = 0;
+  int layerEntries = 0;
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    if (invocation.memberName == #drawRawAtlas) {
+      final paint = invocation.positionalArguments[6] as ui.Paint;
+      if (paint.filterQuality == ui.FilterQuality.medium) {
+        layerCalls++;
+        layerEntries += (invocation.positionalArguments[3] as Int32List).length;
+      }
+    }
+    return null;
+  }
+}
 
 class _Bundle extends CachingAssetBundle {
   _Bundle(this.manifest);

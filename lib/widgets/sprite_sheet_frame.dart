@@ -3,6 +3,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../game/components/board_atlas.dart';
+
 /// 스프라이트 시트에서 고정 프레임 크기 기준으로 한 칸만 정확히 잘라 그린다.
 class SpriteSheetFrame extends StatelessWidget {
   const SpriteSheetFrame({
@@ -46,12 +48,47 @@ class SpriteSheetFrame extends StatelessWidget {
           if (!snapshot.hasData) {
             return const SizedBox.shrink();
           }
+          final image = snapshot.data!;
+          final frame = frameSize.toDouble();
+          final maxFrameIndex = (image.width / frame).floor() - 1;
+          final safeIndex = frameIndex.clamp(0, maxFrameIndex);
           return CustomPaint(
             painter: _SpriteSheetFramePainter(
-              image: snapshot.data!,
-              frameIndex: frameIndex,
-              frameSize: frameSize.toDouble(),
+              image: image,
+              src: Rect.fromLTWH(safeIndex * frame, 0, frame, frame),
               opacity: opacity,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// [BoardAtlas]에서 이름 붙은 칸 하나를 그린다. 불러오기 전이나 실패하면 빈 칸이다.
+/// 이미지는 보드와 같은 Flame.images 캐시 한 장을 공유한다.
+class BoardAtlasFrame extends StatelessWidget {
+  const BoardAtlasFrame(this.frame, {super.key, required this.size});
+
+  final String frame;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: FutureBuilder<BoardAtlas>(
+        future: BoardAtlas.load(),
+        builder: (context, snapshot) {
+          final atlas = snapshot.data;
+          final src = atlas?.frames[frame];
+          if (atlas == null || src == null) return const SizedBox.shrink();
+          return CustomPaint(
+            painter: _SpriteSheetFramePainter(
+              image: atlas.image,
+              src: src,
+              opacity: 1,
             ),
           );
         },
@@ -63,26 +100,16 @@ class SpriteSheetFrame extends StatelessWidget {
 class _SpriteSheetFramePainter extends CustomPainter {
   const _SpriteSheetFramePainter({
     required this.image,
-    required this.frameIndex,
-    required this.frameSize,
+    required this.src,
     required this.opacity,
   });
 
   final ui.Image image;
-  final int frameIndex;
-  final double frameSize;
+  final Rect src;
   final double opacity;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final maxFrameIndex = (image.width / frameSize).floor() - 1;
-    final safeIndex = frameIndex.clamp(0, maxFrameIndex);
-    final srcRect = Rect.fromLTWH(
-      safeIndex * frameSize,
-      0,
-      frameSize,
-      frameSize,
-    );
     final paint = Paint()..filterQuality = FilterQuality.medium;
     final alpha = opacity.clamp(0.0, 1.0);
     if (alpha < 1.0) {
@@ -91,14 +118,13 @@ class _SpriteSheetFramePainter extends CustomPainter {
         BlendMode.modulate,
       );
     }
-    canvas.drawImageRect(image, srcRect, Offset.zero & size, paint);
+    canvas.drawImageRect(image, src, Offset.zero & size, paint);
   }
 
   @override
   bool shouldRepaint(covariant _SpriteSheetFramePainter oldDelegate) {
     return oldDelegate.image != image ||
-        oldDelegate.frameIndex != frameIndex ||
-        oldDelegate.frameSize != frameSize ||
+        oldDelegate.src != src ||
         oldDelegate.opacity != opacity;
   }
 }

@@ -91,16 +91,6 @@ class HowToPlaySpecialGemPreview extends StatelessWidget {
       GemKind.supernova => 3,
       GemKind.normal || GemKind.row || GemKind.col => null,
     };
-    final overlayAssetPath = switch (kind) {
-      GemKind.normal ||
-      GemKind.row ||
-      GemKind.col ||
-      GemKind.bomb ||
-      GemKind.star ||
-      GemKind.hyper ||
-      GemKind.supernova => null,
-    };
-
     return SizedBox(
       width: 52,
       height: 52,
@@ -116,14 +106,6 @@ class HowToPlaySpecialGemPreview extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(4),
               child: HowToPlayActionSpecialGemClip(actionSpecialSheetCol),
-            )
-          else if (overlayAssetPath != null && gemSheetCol != null)
-            Padding(
-              padding: const EdgeInsets.all(4),
-              child: HowToPlayOverlayGemClip(
-                sheetCol: gemSheetCol!,
-                overlayAssetPath: overlayAssetPath,
-              ),
             )
           else
             Padding(

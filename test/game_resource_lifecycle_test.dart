@@ -196,6 +196,11 @@ void main() {
         Flame.images.fromCache(AssetPaths.jewelSpriteSheet),
         same(sharedJewel),
       );
+      // 보드 아틀라스도 공유 캐시 소유라 게임 퇴장으로 해제되지 않는다.
+      expect(
+        Flame.images.fromCache(AssetPaths.boardAtlas).debugDisposed,
+        isFalse,
+      );
     },
   );
 

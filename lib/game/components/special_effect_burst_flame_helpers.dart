@@ -3,7 +3,6 @@ part of 'special_effect_burst.dart';
 extension _SpecialEffectBurstFlameDrawing on SpecialEffectBurst {
   void _renderExplosion(Canvas canvas, double t, double fade) {
     if (_renderAreaLayers(canvas, t, fade)) return;
-    if (_renderAreaEffectSprite(canvas, t, fade)) return;
 
     final center = origin.toOffset();
     final heat = Curves.easeOutBack.transform(min(t * 1.28, 1));

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../resources/asset_paths.dart';
 import '../../../theme/jewel_candy_lumina_theme.dart';
 import '../../../widgets/sprite_sheet_frame.dart';
 
 const double howToPlayGemSize = 36;
-const double howToPlayOverlayRatio = 112 / 128;
 
 class HowToPlayMatchExample extends StatelessWidget {
   const HowToPlayMatchExample(this.cols, {super.key});
@@ -55,6 +53,7 @@ class HowToPlaySwapExample extends StatelessWidget {
   }
 }
 
+/// 보석 칸. [sheetCol]은 `Jewel_Arcane` 열 번호이고 board_atlas의 `gem_<열>` 칸이다.
 class HowToPlayGemClip extends StatelessWidget {
   const HowToPlayGemClip(this.sheetCol, {super.key});
 
@@ -62,15 +61,11 @@ class HowToPlayGemClip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SpriteSheetFrame(
-      assetPath: 'assets/images/${AssetPaths.jewelSpriteSheet}',
-      frameIndex: sheetCol,
-      frameSize: 128,
-      size: howToPlayGemSize,
-    );
+    return BoardAtlasFrame('gem_$sheetCol', size: howToPlayGemSize);
   }
 }
 
+/// legacy 특수 보석 칸(0 col, 1 row).
 class HowToPlaySpecialGemClip extends StatelessWidget {
   const HowToPlaySpecialGemClip(this.sheetCol, {super.key});
 
@@ -78,15 +73,11 @@ class HowToPlaySpecialGemClip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SpriteSheetFrame(
-      assetPath: 'assets/images/${AssetPaths.specialSpriteSheet}',
-      frameIndex: sheetCol,
-      frameSize: 128,
-      size: howToPlayGemSize,
-    );
+    return BoardAtlasFrame('legacy_$sheetCol', size: howToPlayGemSize);
   }
 }
 
+/// 액션 특수 보석 칸(0 bomb, 1 star, 2 hyper, 3 supernova).
 class HowToPlayActionSpecialGemClip extends StatelessWidget {
   const HowToPlayActionSpecialGemClip(this.sheetCol, {super.key});
 
@@ -94,43 +85,7 @@ class HowToPlayActionSpecialGemClip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SpriteSheetFrame(
-      assetPath: 'assets/images/${AssetPaths.specialActionSpriteSheet}',
-      frameIndex: sheetCol,
-      frameSize: 128,
-      size: howToPlayGemSize,
-    );
-  }
-}
-
-class HowToPlayOverlayGemClip extends StatelessWidget {
-  const HowToPlayOverlayGemClip({
-    super.key,
-    required this.sheetCol,
-    required this.overlayAssetPath,
-  });
-
-  final int sheetCol;
-  final String overlayAssetPath;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox.square(
-      dimension: howToPlayGemSize,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          HowToPlayGemClip(sheetCol),
-          Image.asset(
-            'assets/images/$overlayAssetPath',
-            width: howToPlayGemSize * howToPlayOverlayRatio,
-            height: howToPlayGemSize * howToPlayOverlayRatio,
-            fit: BoxFit.contain,
-            filterQuality: FilterQuality.medium,
-          ),
-        ],
-      ),
-    );
+    return BoardAtlasFrame('action_$sheetCol', size: howToPlayGemSize);
   }
 }
 

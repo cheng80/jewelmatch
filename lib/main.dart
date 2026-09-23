@@ -9,6 +9,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'app.dart';
 import 'app_config.dart';
+import 'game/components/board_atlas.dart';
 import 'game/components/special_effect_burst.dart';
 import 'resources/asset_paths.dart';
 import 'resources/sound_manager.dart';
@@ -62,15 +63,12 @@ void main() async {
 
 Future<void> _preloadGameVisualAssets() {
   return Future.wait([
-    Flame.images.load(AssetPaths.jewelSpriteSheet),
-    Flame.images.load(AssetPaths.specialSpriteSheet),
-    Flame.images.load(AssetPaths.specialActionSpriteSheet),
+    // 보드, 범위 효과, 게임 방법 화면이 같이 쓰는 한 장.
+    BoardAtlas.load(),
     SpecialEffectBurst.preloadAreaEffectSprites(),
+    // HUD 프리즘 보석과 로딩 화면은 아직 원본 보석 시트를 쓴다.
+    Flame.images.load(AssetPaths.jewelSpriteSheet),
     SpriteSheetFrame.precache('assets/images/${AssetPaths.jewelSpriteSheet}'),
-    SpriteSheetFrame.precache('assets/images/${AssetPaths.specialSpriteSheet}'),
-    SpriteSheetFrame.precache(
-      'assets/images/${AssetPaths.specialActionSpriteSheet}',
-    ),
   ]);
 }
 

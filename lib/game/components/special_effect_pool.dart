@@ -18,6 +18,9 @@ class SpecialEffectPool {
   final Component _parent;
   final bool _constrainedDevice;
   final List<SpecialEffectBurst> _pool = [];
+
+  /// 범위 효과 레이어를 한 번에 그리는 공용 묶음. 첫 효과를 만들 때 붙인다.
+  final AreaLayerBatch _layerBatch = AreaLayerBatch();
   final Set<SpecialEffectBurst> _active = <SpecialEffectBurst>{};
   int _activeLineSweeps = 0;
 
@@ -118,7 +121,8 @@ class SpecialEffectPool {
   }
 
   SpecialEffectBurst _createBurst() {
-    final burst = SpecialEffectBurst();
+    if (_layerBatch.parent == null) _parent.add(_layerBatch);
+    final burst = SpecialEffectBurst()..layerBatch = _layerBatch;
     burst.onExpired = _returnToPool;
     return burst;
   }
@@ -145,5 +149,6 @@ class SpecialEffectPool {
       burst.deactivateForPool();
       burst.removeFromParent();
     }
+    _layerBatch.removeFromParent();
   }
 }

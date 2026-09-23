@@ -99,109 +99,73 @@ void main() {
     }
   });
 
-  test('아틀라스 규격 검증은 정수 셀과 실제 치수를 요구한다', () {
-    const ok = {
-      'imageWidth': 1280,
-      'imageHeight': 256,
-      'cellSize': 256,
-      'layerCount': 5,
-      'scale': 3.4,
-    };
+  test('레이어 칸 검증은 같은 정수 정사각형 5칸이 이미지 안에 있기를 요구한다', () {
+    List<Rect> row({double cell = 256, double y = 0, int count = 5}) => [
+      for (var i = 0; i < count; i++)
+        Rect.fromLTWH(i * (cell + 4) + 2, y, cell, cell),
+    ];
+    bool valid(List<Rect> frames, {double scale = 3.4}) =>
+        isValidAreaLayerFrames(
+          frames: frames,
+          imageWidth: 1320,
+          imageHeight: 1044,
+          scale: scale,
+        );
+    expect(valid(row()), isTrue);
+    expect(valid(row(cell: 313.5)), isFalse, reason: '비정수 셀은 거부한다');
+    expect(valid(row(count: 4)), isFalse, reason: '칸 수가 레이어 수와 달라도 거부한다');
+    expect(valid(row(y: 900)), isFalse, reason: '이미지 밖 칸은 거부한다');
     expect(
-      isValidBombLayerAtlas(
-        imageWidth: 1280,
-        imageHeight: 256,
-        cellSize: 256,
-        layerCount: 5,
-        scale: 3.4,
-      ),
-      isTrue,
-      reason: '$ok',
-    );
-    expect(
-      isValidBombLayerAtlas(
-        imageWidth: 1254,
-        imageHeight: 1254,
-        cellSize: 313.5,
-        layerCount: 5,
-        scale: 3.4,
-      ),
+      valid([...row().take(4), const Rect.fromLTWH(1042, 0, 256, 128)]),
       isFalse,
-      reason: '비정수 셀은 거부한다',
+      reason: '크기가 다른 칸은 거부한다',
     );
-    expect(
-      isValidBombLayerAtlas(
-        imageWidth: 1024,
-        imageHeight: 256,
-        cellSize: 256,
-        layerCount: 5,
-        scale: 3.4,
-      ),
-      isFalse,
-      reason: '치수가 칸 수와 안 맞으면 거부한다',
-    );
-    expect(
-      isValidBombLayerAtlas(
-        imageWidth: 1280,
-        imageHeight: 512,
-        cellSize: 256,
-        layerCount: 5,
-        scale: 3.4,
-      ),
-      isFalse,
-      reason: '가로 한 줄이 아니면 거부한다',
-    );
-    expect(
-      isValidBombLayerAtlas(
-        imageWidth: 1024,
-        imageHeight: 256,
-        cellSize: 256,
-        layerCount: 4,
-        scale: 3.4,
-      ),
-      isFalse,
-      reason: '칸 수가 레이어 수와 달라도 거부한다',
-    );
-    expect(
-      isValidBombLayerAtlas(
-        imageWidth: 1280,
-        imageHeight: 256,
-        cellSize: 256,
-        layerCount: 5,
-        scale: 0,
-      ),
-      isFalse,
-      reason: 'scale이 0이면 거부한다',
-    );
+    expect(valid(row(y: 0.5)), isFalse, reason: '비정수 좌표는 거부한다');
+    expect(valid(row(), scale: 0), isFalse, reason: 'scale이 0이면 거부한다');
+    for (final bad in [double.nan, double.infinity]) {
+      expect(valid(row(), scale: bad), isFalse);
+    }
   });
 
-  test('manifest의 bomb 항목과 실제 png가 규격을 만족한다', () {
+  test('board_atlas manifest의 범위 효과 칸과 실제 png가 규격을 만족한다', () {
     final manifest =
         jsonDecode(
-              File('assets/images/sprites/special_area_effects.json')
-                  .readAsStringSync(),
+              File('assets/images/sprites/board_atlas.json').readAsStringSync(),
             )
             as Map<String, dynamic>;
-    final bomb =
-        (manifest['effects'] as Map<String, dynamic>)['bomb']
-            as Map<String, dynamic>;
-    final png = File('assets/images/${bomb['image']}').readAsBytesSync();
+    final png = File('assets/images/sprites/board_atlas.png').readAsBytesSync();
     final header = ByteData.sublistView(png);
     expect(png.sublist(1, 4), orderedEquals('PNG'.codeUnits));
-    expect(
-      isValidBombLayerAtlas(
-        imageWidth: header.getUint32(16),
-        imageHeight: header.getUint32(20),
-        cellSize: bomb['layerCellSize'] as num,
-        layerCount: (bomb['layerCount'] as num).toInt(),
-        scale: (bomb['scale'] as num).toDouble(),
-      ),
-      isTrue,
-    );
-    // 기준 크기. bomb이 지우는 3×3 칸을 폭발이 덮어야 한다(E1 수정 1차).
-    expect(bomb['scale'], 4.5);
-    // 공용 grid는 hyper와 supernova가 계속 쓴다.
-    expect((manifest['grid'] as Map<String, dynamic>)['frameWidth'], 313.5);
+    final width = header.getUint32(16);
+    final height = header.getUint32(20);
+    expect(manifest['size'], [width, height]);
+    expect(width, lessThanOrEqualTo(2048));
+    expect(height, lessThanOrEqualTo(2048));
+    final frames = manifest['frames'] as Map<String, dynamic>;
+    for (final kind in ['bomb', 'hyper', 'supernova']) {
+      final rects = [
+        for (var i = 0; i < 5; i++)
+          switch (frames['${kind}_$i'] as Map<String, dynamic>) {
+            final f => Rect.fromLTWH(
+              (f['x'] as num).toDouble(),
+              (f['y'] as num).toDouble(),
+              (f['w'] as num).toDouble(),
+              (f['h'] as num).toDouble(),
+            ),
+          },
+      ];
+      expect(
+        isValidAreaLayerFrames(
+          frames: rects,
+          imageWidth: width,
+          imageHeight: height,
+          scale: 4.5,
+        ),
+        isTrue,
+        reason: kind,
+      );
+      expect(rects.first.width, 256, reason: '$kind 레이어 칸은 256px');
+    }
   });
 
   test('아틀라스가 없으면 bomb는 기존 절차 경로로 떨어진다', () async {

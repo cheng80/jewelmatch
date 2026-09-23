@@ -1,18 +1,15 @@
-import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
-import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../match_board_logic.dart';
 import 'baked_glow_atlas.dart';
+import 'board_atlas.dart';
 import 'bomb_layer_timeline.dart';
 import 'area_layer_timeline.dart';
-import '../../resources/asset_paths.dart';
 
 part 'special_effect_burst_bomb_layer_helpers.dart';
 part 'special_effect_burst_draw_helpers.dart';
@@ -22,7 +19,6 @@ part 'special_effect_burst_geometry_helpers.dart';
 part 'special_effect_burst_hypercube_helpers.dart';
 part 'special_effect_burst_light_helpers.dart';
 part 'special_effect_burst_particle_helpers.dart';
-part 'special_effect_burst_sprite_helpers.dart';
 part 'special_effect_burst_supernova_helpers.dart';
 part 'special_effect_burst_sweep_helpers.dart';
 
@@ -89,6 +85,9 @@ class SpecialEffectBurst extends PositionComponent {
 
   final BakedGlowAtlas _bakedGlow = BakedGlowAtlas();
   final _AreaLayerRenderer _areaLayers = _AreaLayerRenderer();
+
+  /// 붙어 있으면 범위 효과 레이어를 여기 모아 한 번에 그린다. [SpecialEffectPool]이 넣는다.
+  AreaLayerBatch? layerBatch;
   final Path _lightningPath = Path();
   final Path _starPath = Path();
 
@@ -111,10 +110,8 @@ class SpecialEffectBurst extends PositionComponent {
     required Future<ui.Image> Function(String) loadImage,
   }) {
     _layerAtlases.clear();
-    _areaEffectAtlas = null;
     return _areaEffectAtlasLoadFuture = _loadAreaEffectAtlas(
-      bundle: bundle,
-      loadImage: loadImage,
+      BoardAtlas.read(bundle, loadImage),
     );
   }
 
@@ -135,9 +132,15 @@ class SpecialEffectBurst extends PositionComponent {
   static const _electricBlue = Color(0xFF74F6FF);
   static const _electricViolet = Color(0xFFC88DFF);
 
-  static _SpecialAreaEffectAtlas? _areaEffectAtlas;
   static final Map<GemKind, _AreaLayerAtlas> _layerAtlases = {};
   static Future<void>? _areaEffectAtlasLoadFuture;
+
+  /// 범위 효과 기준 크기(칸 배수). 레이어 칸은 [BoardAtlas]의 `<종류>_0`~`_4`다.
+  static const Map<GemKind, double> _areaLayerScales = {
+    GemKind.bomb: 4.5,
+    GemKind.hyper: 4.35,
+    GemKind.supernova: 4.65,
+  };
 
   int get _tier => performanceTier.clamp(0, 2);
 
@@ -146,105 +149,26 @@ class SpecialEffectBurst extends PositionComponent {
   }
 
   static Future<void> _ensureAreaEffectAtlasLoaded() {
-    return _areaEffectAtlasLoadFuture ??= _loadAreaEffectAtlas();
+    return _areaEffectAtlasLoadFuture ??= _loadAreaEffectAtlas(
+      BoardAtlas.load(),
+    );
   }
 
-  static Future<void> _loadAreaEffectAtlas({
-    AssetBundle? bundle,
-    Future<ui.Image> Function(String)? loadImage,
-  }) async {
+  static Future<void> _loadAreaEffectAtlas(Future<BoardAtlas> source) async {
     try {
-      final raw =
-          jsonDecode(
-                await (bundle ?? rootBundle).loadString(
-                  'assets/images/${AssetPaths.specialAreaEffectManifest}',
-                ),
-              )
-              as Map<String, dynamic>;
-      final grid = raw['grid'] as Map<String, dynamic>? ?? const {};
-      final columns = (grid['columns'] as num?)?.toInt() ?? 0;
-      final rows = (grid['rows'] as num?)?.toInt() ?? 0;
-      final frameCount = (grid['frameCount'] as num?)?.toInt() ?? 0;
-      final configuredFrameWidth = (grid['frameWidth'] as num?)?.toDouble();
-      final configuredFrameHeight = (grid['frameHeight'] as num?)?.toDouble();
-      final rawEffects = raw['effects'] as Map<String, dynamic>;
-      final effects = <GemKind, _SpecialAreaEffectDefinition>{};
-
-      for (final entry in rawEffects.entries) {
-        final kind = _specialAreaEffectKindFromName(entry.key);
-        if (kind == null) continue;
-        try {
-          final value = entry.value as Map<String, dynamic>;
-          final imagePath = value['image'] as String;
-          final image =
-              await (loadImage?.call(imagePath) ??
-                  Flame.images.load(imagePath));
-          // Each effect owns its definition; one failed asset cannot erase another.
-          final layerCellSize = value['layerCellSize'] as num?;
-          if (layerCellSize != null) {
-            final count = value['layerCount'] as num?;
-            if (layerCellSize != 256 || count != bombLayerSpriteCount) continue;
-            final atlas = _AreaLayerAtlas.validated(
-              image: image,
-              cellSize: layerCellSize,
-              layerCount: bombLayerSpriteCount,
-              scale: (value['scale'] as num?)?.toDouble() ?? 0,
-            );
-            if (atlas != null) _layerAtlases[kind] = atlas;
-            continue;
-          }
-          if (columns <= 0 || rows <= 0 || frameCount <= 0) continue;
-          final frameWidth = configuredFrameWidth ?? image.width / columns;
-          final frameHeight = configuredFrameHeight ?? image.height / rows;
-          final frames = <Rect>[];
-          for (var i = 0; i < frameCount; i++) {
-            final col = i % columns;
-            final row = i ~/ columns;
-            frames.add(
-              Rect.fromLTWH(
-                col * frameWidth,
-                row * frameHeight,
-                frameWidth,
-                frameHeight,
-              ),
-            );
-          }
-          effects[kind] = _SpecialAreaEffectDefinition(
-            image: image,
-            frames: frames,
-            scale: (value['scale'] as num?)?.toDouble() ?? 4.0,
-            centerOffset: Offset(
-              (value['centerOffsetX'] as num?)?.toDouble() ?? 0,
-              (value['centerOffsetY'] as num?)?.toDouble() ?? 0,
-            ),
-            blendMode: _specialAreaEffectBlendMode(value['blend'] as String?),
-          );
-        } catch (_) {
-          // This kind keeps its procedural fallback; retain successfully loaded kinds.
-          continue;
-        }
+      final atlas = await source;
+      for (final entry in _areaLayerScales.entries) {
+        // 칸이 빠지거나 규격이 틀린 종류만 절차 그림으로 떨어진다.
+        final layer = _AreaLayerAtlas.validated(
+          atlas: atlas,
+          name: entry.key.name,
+          scale: entry.value,
+        );
+        if (layer != null) _layerAtlases[entry.key] = layer;
       }
-      _areaEffectAtlas = _SpecialAreaEffectAtlas(effects);
     } catch (_) {
-      _areaEffectAtlas = const _SpecialAreaEffectAtlas({});
       _layerAtlases.clear();
     }
-  }
-
-  static GemKind? _specialAreaEffectKindFromName(String name) {
-    return switch (name) {
-      'bomb' => GemKind.bomb,
-      'hyper' => GemKind.hyper,
-      'supernova' => GemKind.supernova,
-      _ => null,
-    };
-  }
-
-  static BlendMode _specialAreaEffectBlendMode(String? name) {
-    return switch (name) {
-      'srcOver' => BlendMode.srcOver,
-      _ => BlendMode.plus,
-    };
   }
 
   double get _alphaScale {
@@ -356,37 +280,5 @@ class SpecialEffectBurst extends PositionComponent {
       case GemKind.normal:
         break;
     }
-  }
-}
-
-class _SpecialAreaEffectAtlas {
-  const _SpecialAreaEffectAtlas(this.effects);
-
-  final Map<GemKind, _SpecialAreaEffectDefinition> effects;
-
-  _SpecialAreaEffectDefinition? definitionFor(GemKind kind) => effects[kind];
-}
-
-class _SpecialAreaEffectDefinition {
-  const _SpecialAreaEffectDefinition({
-    required this.image,
-    required this.frames,
-    required this.scale,
-    required this.centerOffset,
-    required this.blendMode,
-  });
-
-  final ui.Image image;
-  final List<Rect> frames;
-  final double scale;
-  final Offset centerOffset;
-  final BlendMode blendMode;
-
-  Rect frameFor(double t) {
-    final index = (t.clamp(0.0, 1.0) * frames.length).floor().clamp(
-      0,
-      frames.length - 1,
-    );
-    return frames[index];
   }
 }

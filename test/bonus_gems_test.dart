@@ -4,6 +4,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stonematch/game/components/board_atlas.dart';
 import 'package:stonematch/game/components/match_board_renderer.dart';
 import 'package:stonematch/game/components/match_game_hud.dart';
 import 'package:stonematch/game/jewel_game_mode.dart';
@@ -116,10 +117,8 @@ class _BadgeSpy implements ui.Canvas {
   dynamic noSuchMethod(Invocation invocation) {
     expect(invocation.memberName, isNot(#saveLayer));
     if (invocation.memberName == #drawImageRect) {
-      final image = invocation.positionalArguments[0] as ui.Image;
-      if (image.width == 256 && image.height == 128) {
-        sources.add(invocation.positionalArguments[1] as ui.Rect);
-      }
+      // 보석은 구운 atlas의 drawRawAtlas라 drawImageRect는 배지뿐이다.
+      sources.add(invocation.positionalArguments[1] as ui.Rect);
     }
     return null;
   }
@@ -416,27 +415,33 @@ void main() {
       expect(h.debugReadFeedback()['multiplierPunch'], 0);
     });
 
-    test('renderer draws one badge per bonus gem from the sheet', () async {
-      final g = game(JewelGameMode.timed);
-      final board = g.board..setGeometry(x: 16, y: 16, tile: 48);
-      for (var r = 0; r < 8; r++) {
-        for (var c = 0; c < 8; c++) {
-          board.setGem(r, c, board.createGem(r, c, c % 6 + 1, GemKind.normal));
+    test(
+      'renderer draws one badge per bonus gem from the board atlas',
+      () async {
+        final g = game(JewelGameMode.timed);
+        final board = g.board..setGeometry(x: 16, y: 16, tile: 48);
+        for (var r = 0; r < 8; r++) {
+          for (var c = 0; c < 8; c++) {
+            board.setGem(
+              r,
+              c,
+              board.createGem(r, c, c % 6 + 1, GemKind.normal),
+            );
+          }
         }
-      }
-      board.getGem(2, 2)!.bonus = GemBonus.time;
-      board.getGem(5, 5)!.bonus = GemBonus.multiplier;
-      final renderer = MatchBoardRenderer(logic: board)..game = g;
-      await renderer.onLoad();
-      renderer.onMount();
-      final spy = _BadgeSpy();
-      renderer.render(spy);
-      expect(spy.sources, [
-        const ui.Rect.fromLTWH(0, 0, 128, 128),
-        const ui.Rect.fromLTWH(128, 0, 128, 128),
-      ]);
-      expect(renderer.gemAtlasDrawCalls, 1);
-      renderer.onRemove();
-    });
+        board.getGem(2, 2)!.bonus = GemBonus.time;
+        board.getGem(5, 5)!.bonus = GemBonus.multiplier;
+        final renderer = MatchBoardRenderer(logic: board)..game = g;
+        await renderer.onLoad();
+        renderer.onMount();
+        final spy = _BadgeSpy();
+        renderer.render(spy);
+        final atlas = await BoardAtlas.load();
+        expect(spy.sources, [atlas.frames['badge_0'], atlas.frames['badge_1']]);
+        expect(spy.sources.first.size, const ui.Size(128, 128));
+        expect(renderer.gemAtlasDrawCalls, 1);
+        renderer.onRemove();
+      },
+    );
   });
 }

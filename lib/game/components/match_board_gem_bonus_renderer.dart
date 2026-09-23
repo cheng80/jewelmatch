@@ -1,9 +1,9 @@
 part of 'match_board_renderer.dart';
 
-/// Time, Multiplier 보석 배지. 보석을 모두 제출한 뒤 한 장 시트에서 drawImageRect로 그린다.
+/// Time, Multiplier 보석 배지. 보석을 모두 제출한 뒤 [BoardAtlas]의 배지 칸에서
+/// drawImageRect로 그린다.
 /// 보드 위 속성 보석은 최대 3개라 그리기 호출이 몇 번만 늘어난다.
 extension _MatchBoardGemBonusRenderer on MatchBoardRenderer {
-  static const double _badgeFrame = 128;
   static const double _timeBadgeRatio = 0.45;
   static const double _multiplierBadgeRatio = 0.55;
 
@@ -52,7 +52,7 @@ extension _MatchBoardGemBonusRenderer on MatchBoardRenderer {
         : Rect.fromCenter(center: Offset(cx, cy), width: size, height: size);
     canvas.drawImageRect(
       image,
-      Rect.fromLTWH(isTime ? 0 : _badgeFrame, 0, _badgeFrame, _badgeFrame),
+      _badgeSources[isTime ? 0 : 1],
       dst,
       _badgePaint,
     );

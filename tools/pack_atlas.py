@@ -10,12 +10,17 @@
   "manifest": "assets/images/sprites/board_atlas.json",
   "padding": 2,
   "maxWidth": 2048,
+  "powerOfTwo": true,
   "sources": [
     {"name": "badge_time", "file": "assets/images/sprites/Gem_Badges.png", "rect": [0, 0, 128, 128]},
     {"prefix": "gem_", "file": "assets/images/sprites/Jewel_Arcane.png", "cell": [128, 128], "count": 7}
   ]
 }
 grid 소스는 이름이 prefix + 0부터의 번호다(가로 우선, columns 생략 시 이미지 폭 / 칸 폭).
+powerOfTwo(기본 true)가 false면 결과 크기를 2의 거듭제곱 대신 align의 배수로 올린다.
+align(기본 1)은 칸 시작 좌표와 결과 크기를 이 값의 배수로 맞춘다. 칸 크기도 이 값의 배수면
+밉맵 단계 log2(align)까지 칸 안쪽 텍셀이 원본 시트와 같게 평균된다(예: 16이면 1/16 축소까지).
+홀수 폭 단계가 생기면 밉맵 필터가 칸 경계를 넘으므로 결과 크기도 맞춘다.
 
 사용: python3 tools/pack_atlas.py 설정.json [--check]
 --check는 파일을 쓰지 않고 결과 크기와 칸 수만 출력한다.
@@ -52,24 +57,28 @@ def load_sources(config):
     return items
 
 
-def pack(items, padding, max_width):
+def pack(items, padding, max_width, power_of_two=True, align=1):
     # 높이 내림차순 선반(shelf) 배치. 칸 크기가 몇 종류뿐이라 이 정도면 충분하다.
     order = sorted(items, key=lambda it: (-it[1].height, -it[1].width, it[0]))
+
+    def up(v):
+        return -(-v // align) * align
+
     placements = {}
     x = y = shelf_h = 0
     width = 0
     for name, img in order:
-        w = img.width + padding * 2
-        h = img.height + padding * 2
-        if w > max_width:
+        if up(padding) + img.width + padding > max_width:
             raise SystemExit(f"{name} 폭 {img.width}이 maxWidth를 넘는다")
-        if x + w > max_width:
+        if up(x + padding) + img.width + padding > max_width:
             x = 0
             y += shelf_h
             shelf_h = 0
-        placements[name] = (x + padding, y + padding, img)
-        x += w
-        shelf_h = max(shelf_h, h)
+        ox = up(x + padding)
+        oy = up(y + padding)
+        placements[name] = (ox, oy, img)
+        x = ox + img.width + padding
+        shelf_h = max(shelf_h, oy + img.height + padding - y)
         width = max(width, x)
     height = y + shelf_h
 
@@ -79,6 +88,8 @@ def pack(items, padding, max_width):
             p *= 2
         return p
 
+    if not power_of_two:
+        return placements, up(width), up(height)
     return placements, pow2(width), pow2(height)
 
 
@@ -102,7 +113,13 @@ def main():
     check = "--check" in sys.argv
     padding = int(config.get("padding", 2))
     items = load_sources(config)
-    placements, width, height = pack(items, padding, int(config.get("maxWidth", 2048)))
+    placements, width, height = pack(
+        items,
+        padding,
+        int(config.get("maxWidth", 2048)),
+        bool(config.get("powerOfTwo", True)),
+        int(config.get("align", 1)),
+    )
     print(f"{len(items)} frames -> {width}x{height}")
     if check:
         return
