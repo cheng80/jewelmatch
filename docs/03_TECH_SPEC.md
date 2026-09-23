@@ -44,7 +44,7 @@
 - render()/update()에서 Paint, TextPainter, Vector2, 리스트, 문자열 키를 반복 생성하지 않는다
 - 임시 산출물은 tmp/ 하위
 
-주요 모듈: lib/game/match_board_*.dart, lib/ads/, lib/services/ranking_service.dart, lib/services/backend/(Supabase), lib/services/event_logger.dart, lib/vm/
+주요 모듈: lib/game/match_board_*.dart, lib/game/speed_bonus.dart, lib/ads/, lib/services/ranking_service.dart, lib/services/backend/(Supabase), lib/services/event_logger.dart, lib/services/records/(PlayerRecords, CumulativeRank, RecordBadge, RecordsStore), lib/vm/
 
 ## 3. 인증 / 권한 / 보안
 
@@ -111,6 +111,10 @@
 ### Entity: Settings
 
 StorageKeys: bgm/sfx volume·mute, keepScreenOn, showFps, best scores by mode, playerName, review flags.
+
+### Entity: PlayerRecords (PLAN-005 R1)
+
+로컬 키 `player_records` 하나에 JSON(`v`=1). 누적 점수, 누적 랭크, 모드별 최고, 최고 한 수, 최장 연쇄, 누적 제거, 특수 보석 누적(bomb, star, hyper, supernova), hyperSwaps(H2 누적), 배지 등급. 손상값은 빈 기록으로 초기화한다. 반영 지점은 `MatchBoardGame.commitRecords`(판 종료 `logRoundEnd`, 레벨 클리어)이며 같은 스테이지의 재반영은 앞서 반영한 통계를 빼고 더한다.
 
 ### 관계 / 제약
 
