@@ -284,6 +284,14 @@ JSObject _stateToJs(SimulationGameState state) {
   );
   object.setProperty('isPlaying'.toJS, (state['isPlaying'] as bool).toJS);
   object.setProperty('boardState'.toJS, (state['boardState'] as String).toJS);
+  final dailyKey = state['dailyKey'] as String?;
+  if (dailyKey != null) {
+    object.setProperty('dailyKey'.toJS, dailyKey.toJS);
+  }
+  object.setProperty(
+    'boardSignature'.toJS,
+    (state['boardSignature'] as String).toJS,
+  );
   object.setProperty(
     'boardGeometry'.toJS,
     _mapToJsObject(state['boardGeometry'] as Map<String, Object?>),

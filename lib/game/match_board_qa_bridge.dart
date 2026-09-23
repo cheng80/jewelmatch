@@ -134,6 +134,25 @@ extension MatchBoardSimulationHints on MatchBoardGame {
 typedef SimulationGameState = Map<String, Object?>;
 
 extension MatchBoardSimulationState on MatchBoardGame {
+  /// QA 전용: 칸마다 색 번호와 종류 첫 글자. 빈 칸은 '.'. 일일 보드 재현 확인에 쓴다.
+  String _readBoardSignature() {
+    final buffer = StringBuffer();
+    for (var row = 0; row < board.rows; row++) {
+      if (row > 0) buffer.write('/');
+      for (var col = 0; col < board.cols; col++) {
+        final gem = board.getGem(row, col);
+        if (gem == null) {
+          buffer.write('.');
+        } else {
+          buffer
+            ..write(gem.color)
+            ..write(gem.kind.name[0]);
+        }
+      }
+    }
+    return buffer.toString();
+  }
+
   Map<String, Object?>? _readChallengeState() {
     final challenge = stageChallenge;
     if (challenge == null) return null;
@@ -187,6 +206,8 @@ extension MatchBoardSimulationState on MatchBoardGame {
       'recentlyUnlockedLoadoutSlotIndices': recentlyUnlockedLoadoutSlotIndices,
       'isPlaying': isPlaying,
       'boardState': board.state,
+      'dailyKey': board.dailyKey,
+      'boardSignature': _readBoardSignature(),
       'boardGeometry': {
         'x': board.boardX,
         'y': board.boardY,
