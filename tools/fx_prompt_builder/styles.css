@@ -15,6 +15,7 @@
   --warn: #ffcb52;
   --warn-soft: rgba(255, 203, 82, 0.1);
   --c-a: #7c9cff;
+  --c-t: #b58cff;
   --c-h: #ff6b8b;
   --c-b: #ffcb52;
   --c-g: #46e2d2;
@@ -87,6 +88,12 @@ code { font-family: var(--mono); font-size: 0.88em; }
 .card.check input:checked + .card-body::after { background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='%230c0e14' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat; border-color: var(--accent); }
 .cards-check { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 .badge { font-style: normal; font-size: 11px; font-weight: 600; padding: 1px 6px; margin-left: 4px; border-radius: 999px; background: rgba(70, 226, 210, 0.14); color: #7ff0e2; vertical-align: 1px; }
+.ref { font-style: normal; font-size: 12px; color: #c7b4ff; margin-top: 2px; }
+.area-ico { display: grid; grid-template-columns: repeat(5, 9px); grid-auto-rows: 9px; gap: 2px; margin-bottom: 8px; }
+.area-ico i { display: block; border-radius: 2px; background: var(--surface-3); }
+.area-ico i.on { background: var(--c-b); }
+.area-ico i.src { box-shadow: inset 0 0 0 1.5px #ffffff; }
+.area-ico i.src.on { background: #ffe19b; }
 .vis { display: block; height: 54px; border-radius: 8px; margin-bottom: 6px; border: 1px solid rgba(255, 255, 255, 0.06); image-rendering: pixelated; }
 .swatches { display: flex; height: 22px; border-radius: 6px; overflow: hidden; margin-bottom: 6px; border: 1px solid rgba(255, 255, 255, 0.08); }
 .swatches i { flex: 1; }
@@ -127,12 +134,14 @@ textarea { resize: vertical; line-height: 1.5; }
 .timeline, .phasebar-track { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--surface-3); gap: 2px; }
 .timeline i, .phasebar-track i { display: block; min-width: 3px; }
 .tl-a { background: var(--c-a); }
+.tl-t { background: var(--c-t); }
 .tl-h { background: var(--c-h); }
 .tl-b { background: var(--c-b); }
 .tl-g { background: var(--c-g); }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 8px 0 0; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .legend span[class]::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: 0; }
 .lg-a::before { background: var(--c-a); }
+.lg-t::before { background: var(--c-t); }
 .lg-h::before { background: var(--c-h); }
 .lg-b::before { background: var(--c-b); }
 .lg-g::before { background: var(--c-g); }

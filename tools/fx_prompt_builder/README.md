@@ -1,26 +1,32 @@
 # 이펙트 프롬프트 빌더
 
-단계별로 고르면 Flutter(Dart)에서 쓸 수 있는 게임 이펙트 제작 프롬프트를 만드는 정적 웹 도구다. 빌드 없이 `index.html`을 브라우저로 열면 된다.
+단계별로 고르면 여러 게임에 다시 쓸 수 있는 Flutter(Dart) 이펙트 제작 프롬프트를 만드는 정적 웹 도구다. 빌드 없이 `index.html`을 브라우저로 열면 된다.
 
 ## 흐름
 
-용도, 스타일, 색, 구성 요소, 타이밍, 강도와 등급, 접근성과 피드백, Flutter 구현, 결과물 순서로 고르면 마지막 단계에 프롬프트가 나온다. 오른쪽 미리보기는 같은 수치로 예고, 정지, 폭발, 여운을 재생하는 근사치다. 선택은 브라우저에 자동 저장되고 JSON으로 내보내고 불러올 수 있다.
+이펙트 종류, 발동과 범위, 스타일, 색, 구성 요소, 타이밍, 강도와 단계, 접근성과 피드백, Flutter 구현, 결과물 순서로 고르면 마지막 단계에 프롬프트가 나온다. 오른쪽 미리보기는 같은 수치로 차지, 이동, 정지, 임팩트, 여운을 재생하는 근사치다. 선택은 브라우저에 자동 저장되고 JSON으로 내보내고 불러올 수 있다.
+
+## 범용 구조
+
+- 이펙트는 게임과 분리된다. 결과 코드는 `source`(발동점), `target`(임팩트 기준점), `hits`(영향 지점), `unit`(길이 기준), `level`(단계)만 받고, 지점이 터질 때 `onHit`로 알린다.
+- 발동 방식 11가지(제자리, 탄환, 빔, 낙하, 갈래 줄기, 쓸기, 근접, 오라, 수집, 순차, 지속)와 범위 9가지(한 점, 3칸, 3x3, 한 줄, 십자, 굵은 십자, 같은 종류, 무작위, 전체), 시점 4가지(횡스크롤, 탑다운, 퍼즐 판, UI)를 조합한다.
+- 이펙트 종류 17가지는 이 조합의 추천값 묶음이다. 마법과 액션, 퍼즐, 공통으로 나눈다.
 
 ## 참고한 방식
 
-- X 글(majidmanzarpour, 2026-09-22)의 픽셀 마법사 프롬프트: 고정 논리 해상도와 정수 배율, 고정 팔레트, IDLE, CHARGE, CAST, RECOVER 상태 머신, 할당 없는 파티클 풀, 고정 60Hz 스텝, 품질 기준.
-- Claude 공유 대화 "Building a card reveal animation": 파일 맨 위 제약 시트(FORMAT, PALETTE, MARKS, LIGHT, RULES, SOUND), 등급이 오를수록 강해지고 아래 등급에는 나오지 않는 규칙, 히트스톱과 임팩트 프레임, "더 쥬시하게"와 증상 지적을 반복하는 후속 프롬프트.
+- X 글(majidmanzarpour, 2026-09-22)의 도트 마법사 프롬프트: 고정 논리 해상도와 정수 배율, 약 24색 팔레트, IDLE, CHARGE, CAST, RECOVER 상태 머신, 할당 없는 파티클 풀, 팔레트 색이 단계적으로 바뀌는 스파크, 1px 림 라이트, 고정 60Hz 스텝, 품질 기준. 기본 스타일과 데모 장면이 이 구성을 따른다.
+- 퍼즐 게임: Bejeweled Flame, Star, Hypercube, Supernova, Blazing Speed, Last Hurrah(`tmp/bejeweled-research/` 조사), 캔디크러시 특수 사탕 조합(공식 도움말), Tetris Effect 줄 제거와 Zone, 입자 세기 Min, Mid, Max 설정. 동작 구조와 리듬만 참고하고 에셋과 고유 디자인은 따르지 않도록 프롬프트에 적는다.
+- Claude 공유 대화(카드 공개 연출): 파일 맨 위 제약 시트, 단계가 오를수록 강해지고 아래 단계에는 나오지 않는 규칙, 결과를 보고 이어 보내는 후속 프롬프트. 카드 공개 연출 자체는 넣지 않았다.
 
 ## 파일
 
 | 파일 | 역할 |
 |---|---|
-| `data.js` | 선택지, 용도별 추천값, 등급별 수치 계산(`FX.derive`) |
+| `data.js` | 선택지, 이펙트 종류별 추천값, 단계별 수치 계산(`FX.derive`) |
 | `prompt.js` | 선택 상태를 한국어 또는 영어 프롬프트와 후속 프롬프트로 변환 |
-| `preview.js` | 캔버스 미리보기. 픽셀 스타일은 저해상도 버퍼와 Bayer 디더, 나머지는 가산광 |
+| `preview.js` | 캔버스 미리보기. 횡스크롤(도트 마법사와 슬라임), 퍼즐 판(7x6), UI(상자와 코인 HUD) 장면 |
 | `app.js` | 단계 화면, 입력 처리, 저장, 복사와 내보내기 |
 
 ## Flutter 호환 기준
 
-프롬프트는 Flutter SDK만으로 구현하도록 지시한다(Flame 대상은 Flame 포함). `CustomPainter(repaint:)`와 `Ticker`, 고정 크기 typed 버퍼와 `drawRawAtlas`, 미리 구운 글로우와 `BlendMode.plus`, `MediaQuery.disableAnimationsOf`, 소리 대신 cue 콜백을 쓴다. HTML 프로토타입을 함께 받는 경우에도 Flutter Canvas로 1:1 옮길 수 있는 Canvas 2D 호출만 허용한다.
-
+프롬프트는 Flutter SDK만으로 구현하도록 지시한다(Flame 대상은 Flame 포함). `CustomPainter(repaint:)`와 `Ticker`, 고정 크기 typed 버퍼와 `drawRawAtlas`, 미리 구운 글로우와 `BlendMode.plus`, `MediaQuery.disableAnimationsOf`, 소리 대신 cue 콜백, 플레이어가 고르는 `strength`를 쓴다. HTML 프로토타입을 함께 받는 경우에도 Flutter Canvas로 1:1 옮길 수 있는 Canvas 2D 호출만 허용한다.
