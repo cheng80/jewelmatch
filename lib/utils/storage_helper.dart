@@ -52,6 +52,9 @@ class StorageHelper {
     }
   }
 
+  /// 저장 매체에서 캐시를 다시 읽는다(웹의 다른 탭이 쓴 값 반영).
+  static Future<void> reload() => _store.reload();
+
   /// 삭제
   static Future<void> remove(String key) async {
     await _store.remove(key);

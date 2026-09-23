@@ -12,6 +12,7 @@ import 'app_config.dart';
 import 'game/components/special_effect_burst.dart';
 import 'resources/asset_paths.dart';
 import 'resources/sound_manager.dart';
+import 'services/backend/backend_bootstrap.dart';
 import 'services/game_settings.dart';
 import 'services/in_app_review_service.dart';
 import 'services/wakelock_service.dart';
@@ -29,6 +30,7 @@ void main() async {
   await EasyLocalization.ensureInitialized();
   await StorageHelper.init();
   await InAppReviewService.saveFirstLaunchDateIfNeeded();
+  unawaited(BackendBootstrap.start());
   if (kIsWeb) {
     unawaited(SoundManager.preload());
     unawaited(_preloadGameVisualAssets());

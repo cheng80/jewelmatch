@@ -94,6 +94,9 @@ class StorageKeys {
   static const String reviewRequestedAfterFirstClear =
       'review_requested_after_first_clear';
   static const String reviewRequestedOnTitle = 'review_requested_on_title';
+
+  /// Supabase 익명 로그인 세션(JSON). 비밀값이 아니지만 사용자 식별에 쓰이므로 로그에 남기지 않는다.
+  static const String supabaseSession = 'supabase_session';
 }
 
 /// 인앱 리뷰: TitleView에서 일정 기간(일) 경과 후 requestReview 호출.

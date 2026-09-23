@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app_config.dart';
+import '../services/event_logger.dart';
 import '../services/game_settings.dart';
 import '../services/intoss_leaderboard_service.dart';
 import '../services/ranking_service.dart';
@@ -46,6 +47,8 @@ class RankingSubmitState {
 /// View에서 `ref.read(rankingProvider.notifier).submit(...)` 호출.
 /// 결과는 필요한 필드만 `select`로 구독해 UI에 반영한다.
 class RankingNotifier extends Notifier<RankingSubmitState> {
+  static const Duration submitTimeout = Duration(seconds: 8);
+
   @override
   RankingSubmitState build() => const RankingSubmitState();
 
@@ -76,14 +79,31 @@ class RankingNotifier extends Notifier<RankingSubmitState> {
     final name = GameSettings.playerName;
     final intossSubmission =
         IntossLeaderboardService.shouldSubmit(AppConfig.storeChannel, mode)
-        ? IntossLeaderboardService.submitLevelScore(score)
+        ? IntossLeaderboardService.submitLevelScore(
+            score,
+          ).timeout(submitTimeout, onTimeout: () => false)
         : null;
-    final result = await RankingService.submit(
-      mode: mode,
-      name: name,
-      score: score,
-    );
+    // 나가기 대기 상한(BR-093). 두 제출의 상한은 같은 시각에 시작해 전체 대기가 8초를 넘지 않는다.
+    final result =
+        await RankingService.submit(
+          mode: mode,
+          name: name,
+          score: score,
+        ).timeout(
+          submitTimeout,
+          onTimeout: () =>
+              const RankingResult.failure(RankingFailure.unavailable),
+        );
     final intossSubmitted = await intossSubmission;
+    EventLogger.instance.log('ranking_submit', {
+      'mode': mode.queryValue,
+      'score': score,
+      'ok': result.isSuccess,
+      if (result.isSuccess) 'ranked': result.data!.ranked,
+      if (result.isSuccess && result.data!.rank != null)
+        'rank': result.data!.rank!,
+      if (!result.isSuccess) 'failure': result.failure!.name,
+    });
 
     String message;
     if (!result.isSuccess) {

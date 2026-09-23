@@ -197,3 +197,6 @@ tmp/
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
+
+# Supabase 연결 값 (공개용 키도 코드와 문서에 두지 않는다)
+config/supabase.json

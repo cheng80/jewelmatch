@@ -1,5 +1,4 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'backend/supabase_gateway.dart';
 
 enum RankingMode {
   level('level'),
@@ -43,100 +42,49 @@ class RankingResult<T> {
   bool get isSuccess => failure == null;
 }
 
+/// 게임 내 랭킹(타임 점수, 레벨 완료 수). 저장소는 Supabase(ADR-009).
+///
+/// - 조회는 공개용 키만으로 anon 역할로 `get_ranking`을 부른다.
+/// - 제출은 익명 로그인 뒤 `submit_ranking`을 부른다.
+/// - 실패는 기존 4가지 유형으로 돌려주며 플레이와 나가기를 막지 않는다(BR-002).
 class RankingService {
   RankingService._();
 
-  static const String _baseUrl =
-      'https://cheng80.myqnapcloud.com/matchranking/ranking.php';
-
-  static Uri _uri(String action, RankingMode mode) {
-    return Uri.parse('$_baseUrl?action=$action&mode=${mode.queryValue}');
-  }
-
-  static RankingFailure? _serverFailure(Map<String, dynamic> body) {
-    return switch (body['error']) {
-      'ranking_load_failed' => RankingFailure.loadFailed,
-      'ranking_save_failed' => RankingFailure.saveFailed,
-      _ => null,
-    };
-  }
-
-  static Future<RankingResult<Map<String, dynamic>>> _request(
-    String action,
-    RankingMode mode, {
-    Map<String, dynamic>? jsonBody,
-    http.Client? client,
-  }) async {
-    final ownsClient = client == null;
-    final requestClient = client ?? http.Client();
-    try {
-      final uri = _uri(action, mode);
-      final res =
-          await (jsonBody == null
-                  ? requestClient.get(uri)
-                  : requestClient.post(
-                      uri,
-                      headers: {'Content-Type': 'application/json'},
-                      body: jsonEncode(jsonBody),
-                    ))
-              .timeout(const Duration(seconds: 6));
-      if (res.statusCode == 404) {
-        return const RankingResult.failure(RankingFailure.notFound);
-      }
-
-      final decoded = jsonDecode(res.body);
-      if (decoded is! Map<String, dynamic>) {
-        return const RankingResult.failure(RankingFailure.unavailable);
-      }
-      final failure = _serverFailure(decoded);
-      if (failure != null) return RankingResult.failure(failure);
-      if (res.statusCode != 200 || decoded['ok'] != true) {
-        return const RankingResult.failure(RankingFailure.unavailable);
-      }
-      return RankingResult.success(decoded);
-    } catch (_) {
-      return const RankingResult.failure(RankingFailure.unavailable);
-    } finally {
-      if (ownsClient) requestClient.close();
-    }
-  }
-
   static Future<RankingResult<RankingEntry?>> fetchTop1({
     RankingMode mode = RankingMode.time,
-    http.Client? client,
+    SupabaseGateway? gateway,
   }) async {
-    final result = await _request('top1', mode, client: client);
+    final result = await _list(mode, limit: 1, gateway: gateway);
     if (!result.isSuccess) return RankingResult.failure(result.failure!);
-    try {
-      final body = result.data!;
-      if (body['mode'] != mode.queryValue) {
-        return const RankingResult.failure(RankingFailure.unavailable);
-      }
-      final top1 = body['top1'];
-      if (top1 == null) return const RankingResult.success(null);
-      return RankingResult.success(
-        RankingEntry.fromJson(top1 as Map<String, dynamic>),
-      );
-    } catch (_) {
-      return const RankingResult.failure(RankingFailure.unavailable);
-    }
+    final list = result.data!;
+    return RankingResult.success(list.isEmpty ? null : list.first);
   }
 
   static Future<RankingResult<List<RankingEntry>>> fetchList({
     RankingMode mode = RankingMode.time,
-    http.Client? client,
+    SupabaseGateway? gateway,
+  }) {
+    return _list(mode, gateway: gateway);
+  }
+
+  static Future<RankingResult<List<RankingEntry>>> _list(
+    RankingMode mode, {
+    int? limit,
+    SupabaseGateway? gateway,
   }) async {
-    final result = await _request('list', mode, client: client);
-    if (!result.isSuccess) return RankingResult.failure(result.failure!);
+    final backend = gateway ?? SupabaseGateway.instance;
+    final result = await backend.rpc('get_ranking', {
+      'p_mode': mode.queryValue,
+      'p_limit': ?limit,
+    }, requireAuth: false);
+    if (!result.isSuccess) {
+      return RankingResult.failure(_failureFor(result.failure!, save: false));
+    }
     try {
-      final body = result.data!;
-      if (body['mode'] != mode.queryValue) {
-        return const RankingResult.failure(RankingFailure.unavailable);
-      }
-      final list = body['ranking'] as List<dynamic>;
+      final rows = result.data as List<dynamic>;
       return RankingResult.success(
-        list
-            .map((e) => RankingEntry.fromJson(e as Map<String, dynamic>))
+        rows
+            .map((row) => RankingEntry.fromJson(row as Map<String, dynamic>))
             .toList(),
       );
     } catch (_) {
@@ -148,17 +96,19 @@ class RankingService {
     required RankingMode mode,
     required String name,
     required int score,
-    http.Client? client,
+    SupabaseGateway? gateway,
   }) async {
-    final result = await _request(
-      'submit',
-      mode,
-      client: client,
-      jsonBody: {'name': name, 'score': score, 'mode': mode.queryValue},
-    );
-    if (!result.isSuccess) return RankingResult.failure(result.failure!);
+    final backend = gateway ?? SupabaseGateway.instance;
+    final result = await backend.rpc('submit_ranking', {
+      'p_mode': mode.queryValue,
+      'p_name': name,
+      'p_score': score,
+    });
+    if (!result.isSuccess) {
+      return RankingResult.failure(_failureFor(result.failure!, save: true));
+    }
     try {
-      final body = result.data!;
+      final body = result.data as Map<String, dynamic>;
       if (body['mode'] != mode.queryValue) {
         return const RankingResult.failure(RankingFailure.unavailable);
       }
@@ -173,5 +123,21 @@ class RankingService {
     } catch (_) {
       return const RankingResult.failure(RankingFailure.unavailable);
     }
+  }
+
+  static RankingFailure _failureFor(
+    BackendFailure failure, {
+    required bool save,
+  }) {
+    return switch (failure) {
+      BackendFailure.notFound => RankingFailure.notFound,
+      BackendFailure.server ||
+      BackendFailure.rejected ||
+      BackendFailure.rateLimited =>
+        save ? RankingFailure.saveFailed : RankingFailure.loadFailed,
+      BackendFailure.notConfigured ||
+      BackendFailure.network ||
+      BackendFailure.unauthorized => RankingFailure.unavailable,
+    };
   }
 }
