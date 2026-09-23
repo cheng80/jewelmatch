@@ -300,7 +300,7 @@ class MatchGameHud extends PositionComponent
     'sans-serif',
   ];
 
-  static const List<int> _gemSheetColByColor1based = [0, 6, 3, 2, 4, 5];
+  static const List<int> _gemSheetColByColor1based = [0, 6, 3, 2, 4, 5, 1];
   static const double _gemFrameSize = 128;
   TextStyle _ts({
     required double size,

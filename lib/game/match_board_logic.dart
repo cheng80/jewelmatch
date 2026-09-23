@@ -41,7 +41,8 @@ class MatchBoardLogic {
 
   final int rows;
   final int cols;
-  final int colorCount;
+  /// 이 판의 보석 색 수. 기본 6이며 7색 실험(GameplayFlags.seventhColorFromLevel)이 켜진 레벨에서는 새 보드를 만들기 전에 7로 바꾼다.
+  int colorCount;
   final void Function()? onNoMoves;
 
   /// 타임 모드 전용: 매치 제거 단계마다 **정수 초**만큼만 호출한다.
@@ -261,7 +262,8 @@ class MatchBoardLogic {
     Color(0xFF66C982),
     Color(0xFFA56ED4),
     Color(0xFFEF8B48),
-    Color(0xFF55C8C4),
+    // 7번째 색은 시트의 흰 돌(열 1)이라 효과 색도 밝은 돌색으로 맞춘다.
+    Color(0xFFD8CCB6),
   ];
 
   double stageTimer = 0;

@@ -109,7 +109,8 @@ class MatchBoardRenderer extends PositionComponent
   double _hintNudge = 0;
 
   /// 게임 색상 1~6 → 시트 열 인덱스 (시트 순서: 빨강, 은백, 초록, 노랑, 보라, 주황, 파랑).
-  static const List<int> _sheetColByColor1based = [0, 6, 3, 2, 4, 5];
+  /// 색 1~7 → `Jewel_Arcane.png` 열. 7번째 색은 흰 돌(열 1)이다.
+  static const List<int> _sheetColByColor1based = [0, 6, 3, 2, 4, 5, 1];
 
   ui.Picture? _boardChromePicture;
   double? _cachedTileSize;
