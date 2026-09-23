@@ -2,9 +2,11 @@
 
 > 다음 작업자가 즉시 시작할 정보만 둔다. 프로젝트 전체 상태는 PROJECT_STATUS.md에 둔다.
 
-Updated: 2026-09-24 01:09 KST
+Updated: 2026-09-24 05:40 KST
 
 ## Current State
+2026-09-24 05:40: PLAN-005 1차(하이퍼 교환, Speed Bonus, Last Hurrah, 기록과 장기 목표)를 main `b71ba31`에 반영하고 NAS에 배포했다. 로컬 웹과 실제 백엔드, Android 폰 NAS 검증을 통과했다. 사용자 결정으로 앱 구조 개편 완료가 우선이고 앱인토스 QR 확인과 광고(AdMob)는 그 뒤다. Step 4(일일 동일 보드, 주간 순위)와 Step 5(레벨 도전 스테이지)는 Orca 워커(`plan005b-daily`, `plan005b-challenge`, run `run_588b87db9418`)가 구현 중이다. D8, D9는 권장안으로 정했다(PROJECT_STATUS 하단).
+
 2026-09-24 01:09: Supabase 원격 프로젝트 `stone-match`(ref `irbdozfwptserldnisew`, 서울)에 마이그레이션 2개와 인증 설정을 적용했고, 로컬 웹 빌드로 실제 백엔드 검수를 마쳤다(PLAN-006 Step 2~3). 시험 데이터는 지웠다. 배포는 하지 않았다.
 
 2026-09-24: PLAN-006 로컬 코드의 독립 검수와 두 차례 수정, 보존 마이그레이션 초안, 개인정보처리방침 초안을 마쳤다. 원격 적용은 여전히 Supabase 연결 대기다.
@@ -48,8 +50,8 @@ Updated: 2026-09-24 01:09 KST
 4. PLAN-001 실기기 장시간 측정 (원문부터 INCOMPLETE. 별도 승인 작업)
 5. 이전 문서는 archive/docs/에 있음. 삭제 여부는 별도 결정
 6. STALE AIT 재검증과 PLAN-001 실측은 이관 밖 별도 작업
-7. 게임 방향 개편: 사용자 결정(D1~D10) 후 PLAN-005 Step 1a부터. 결정 전 특수 보석 규칙 변경 금지
-8. Supabase: PLAN-006 Step 4(NAS 배포, 앱인토스 확인). 이 파일 하단 "Supabase 기반 구축 인계" 참고
+7. 게임 방향 개편: PLAN-005 Step 4, 5 워커 결과 병합과 검수, 주간 순위 마이그레이션 원격 적용, Step 2 남은 이벤트와 플레이테스트 양식. D7은 사용자 플레이 판단
+8. Supabase: NAS 배포 완료. 앱인토스 QR 확인은 구조 개편 뒤. 원격 검증 뒤에는 시험 데이터를 지운다(game_events, ad_refill_claims, ranking_entries, 익명 auth.users)
 9. 광고는 구조 작업을 끝낸 뒤 손본다(ADR-003 개정). 웹(NAS)은 테스트 전용이라 광고를 넣지 않고, Play와 App Store는 이후 Google AdMob을 `AdService` 구현으로 붙인다. 그 전에는 광고 SDK를 추가하지 않는다
 
 ## Blocked

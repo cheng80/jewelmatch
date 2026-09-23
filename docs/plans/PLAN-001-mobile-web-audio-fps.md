@@ -208,6 +208,7 @@ xcrun xctrace record \
 | 게임 루프 할당 축소, 사운드 해제 후 자동 30초 | AVG 55.0, LOW 41.7, GAP 139ms | 평균은 개선됐지만 순간 정지 잔존 |
 | 같은 실행의 시스템 추적 | WebContent 정지 22회, 100ms 이상 20회, GPU 20회, `mediaremoted` 29회 | 오디오와 GPU 동시 정지 영향 큼 |
 | 수동 플레이 체감 | AVG 약 47, LOW 약 36, 드물게 5 FPS 관찰 | 정식 동일 조건 A/B가 아닌 사용자 관찰값 |
+| 2026-09-24 Android NAS `b71ba31`(PLAN-005 1차) | SM-A245N 90Hz, CDP rAF 20초 플레이 평균 89 FPS, p95 11.2ms, Last Hurrah 중 약 88 FPS | 하이퍼 교환, Speed Bonus, Last Hurrah 추가 뒤 단기 회귀 없음. 장시간, 토스 WebView, iPhone은 미측정 |
 
 ### GC 해석
 

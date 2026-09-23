@@ -41,3 +41,9 @@
 ## 작업 상태
 - 사용자가21:20 Claude 재인계를 취소했다. 예약 `stone-match-claude`는PAUSED. 기존 Claude를 재개시키는 프롬프트는 보내지 않았다.
 - 로컬 개발 서버, 미러링, 자동 입력/프로파일 프로세스 종료. 측정용 ADB9228 포워딩 제거 완료. 휴대폰 게임 탭은 유지한다.
+
+## 후속 측정: PLAN-005 1차 (2026-09-24)
+- 대상: NAS `b71ba31`(하이퍼 교환, Speed Bonus, Last Hurrah, 기록 화면 포함). 같은 SM-A245N, Android 16, Chrome 153, 90Hz. USB ADB와 `adb forward tcp:9222 localabstract:chrome_devtools_remote`로 CDP에 붙어 rAF를 쟀다.
+- 결과: 타임 모드 20초 플레이 평균 89 FPS, p95 11.2ms. Last Hurrah 진행 중 약 88 FPS. 판 종료 뒤 랭킹 제출 200 1회.
+- 배포 직후 폰에서 skwasm이 "function signature mismatch", "memory access out of bounds"로 멈췄다. 이전 캐시의 `main.dart.*` 파일이 새 파일과 섞인 것이 원인이었고, NAS `.htaccess`에 코드 파일 no-cache 헤더를 넣어 해결했다.
+- 한계: 장시간, 토스 WebView, 실제 광고 SDK, 오디오 청취는 측정하지 않았다.

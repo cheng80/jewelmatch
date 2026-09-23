@@ -3,7 +3,7 @@
 > 프로젝트의 큰 Phase/Milestone만 기록한다. 상세 구현 계획은 `../plans/PLAN-xxx.md`로 분리한다. 현재 Task는 `PROJECT_STATUS.md`에서 관리한다.
 
 작성 기준일: 2026-08-23
-갱신: 2026-09-24 (Supabase 원격 적용과 검수 반영)
+갱신: 2026-09-24 05:40 KST (PLAN-005 1차 반영, 앱인토스와 광고는 구조 개편 뒤)
 
 ## Phase 1 — Foundation
 - [x] Flutter+Flame 8×8 코어, 타이틀/게임/설정, 심플+타임, 웹 빌드
@@ -20,14 +20,14 @@
 - [x] 스토어 문서 초안, 채널 define, 광고 정책, 앱인토스 테스트 빌드
 - [ ] 운영 광고 그룹, Apple ID, 개인정보/지원 URL, flavor/서명
 - [ ] Play, App Store 광고: Google AdMob(ADR-003 개정). 계획된 구조 작업(PLAN-006 배포, PLAN-005 코어) 뒤 진행. 웹(NAS)은 테스트 전용이라 광고 없음
-- [ ] 광고 일일 제한 서버 영속 (Supabase 원격 적용과 검수 완료, 새 빌드 배포 대기. PLAN-006)
-- [ ] Supabase 기반 구축: 랭킹 이전, 원격 설정, 이벤트 로그 (원격 프로젝트 `stone-match` 적용과 검수 완료, NAS와 앱인토스 배포 대기. ADR-009, PLAN-006)
+- [x] 광고 일일 제한 서버 영속 (Supabase 원격 적용, NAS 배포. PLAN-006)
+- [ ] Supabase 기반 구축: 랭킹 이전, 원격 설정, 이벤트 로그 (원격 적용과 NAS 배포 완료. 앱인토스 QR 확인은 구조 개편 뒤. ADR-009, PLAN-006)
 
 ## Phase 5 — Gameplay Direction (ADR-008 Accepted, PLAN-005 IN_PROGRESS)
-- [ ] 방향 승인과 미결정 사항 D1~D10 결정 (D1~D6 승인, D7은 플레이테스트 뒤, D8, D9는 해당 단계 전)
-- [ ] 두 타이머 모드 공통 60초 코어: 하이퍼 큐브 교환, Speed Bonus, Last Hurrah, 시간 보상 조정
+- [ ] 방향 승인과 미결정 사항 D1~D10 결정 (D1~D6 승인, D8, D9 권장안 결정, D10 해당 없음, D7은 플레이테스트 뒤)
+- [ ] 두 타이머 모드 공통 60초 코어: 하이퍼 큐브 교환, Speed Bonus, Last Hurrah 완료. 시간 보상 조정(D7) 대기
 - [ ] 내부 이벤트 로거와 플레이테스트 기록
-- [ ] 재화 없는 장기 목표: 누적 랭크, 배지, 기록 화면
+- [x] 재화 없는 장기 목표: 누적 랭크, 배지, 기록 화면
 - [ ] 타임 모드 경쟁 형식(일일 동일 보드, 주간 순위), 레벨 모드 규칙 변형 스테이지
 
 ## Phase 6 — Economy
