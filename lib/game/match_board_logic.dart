@@ -2,12 +2,14 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import 'daily_seed.dart';
 import 'item_kind.dart';
 import 'match_board_matching.dart';
 import 'match_board_models.dart';
 import 'match_board_spawn_classifier.dart';
 import 'match_board_specials.dart';
 
+export 'daily_seed.dart' show DailySeed;
 export 'match_board_models.dart';
 
 part 'match_board_resolution.dart';
@@ -128,7 +130,21 @@ class MatchBoardLogic {
   /// UI에서 `localizations` 넣기 전 폴백.
   String lastActionText = '';
 
-  final Random _random = Random();
+  /// 보드 상태를 바꾸는 난수(시작 보드, 리필 색, 셔플). 힌트, Last Hurrah,
+  /// 시각 효과 난수는 따로 둬서 같은 시드와 입력이면 같은 보드가 나온다.
+  Random _random = Random();
+
+  /// 힌트 순서 전용 난수. 보드 흐름에 영향을 주지 않는다.
+  final Random _hintRandom = Random();
+
+  /// 일일 보드 판의 날짜 키(YYYY-MM-DD). 무작위 보드 판이면 null.
+  String? dailyKey;
+
+  /// 일일 보드 판을 시작한다. 이후 보드 난수는 그 날 시드에서만 나온다.
+  void startDailyBoard(String key) {
+    dailyKey = key;
+    _random = DailyRandom(DailySeed.seedFor(key));
+  }
 
   /// BoardGem 오브젝트 풀. 제거된 보석을 여기 반납하고, 생성 시 재활용한다.
   final List<BoardGem> _gemPool = [];

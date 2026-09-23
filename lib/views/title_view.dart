@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../app_config.dart' show RoutePaths;
+import '../game/daily_seed.dart';
 import '../game/jewel_game_mode.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
@@ -253,14 +254,21 @@ class _TitleContent extends StatelessWidget {
         const SizedBox(height: 6),
         StaggerReveal(
           index: 3,
-          child: TitleRoundButton(
-            label: context.tr('modeTimed'),
-            panelColor: TitleButtonPalette.brown,
-            iconAssetPath: AssetPaths.modeIconTimed,
-            onPressed: () {
-              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-              onShowNameDialog('timed');
-            },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TitleRoundButton(
+                label: context.tr('modeTimed'),
+                panelColor: TitleButtonPalette.brown,
+                iconAssetPath: AssetPaths.modeIconTimed,
+                onPressed: () {
+                  SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                  onShowNameDialog('timed');
+                },
+              ),
+              const SizedBox(height: 2),
+              const _DailyBoardCaption(),
+            ],
           ),
         ),
         const SizedBox(height: 6),
@@ -294,6 +302,31 @@ class _TitleContent extends StatelessWidget {
         TitleVersionFooter(packageInfo: packageInfo),
         const Spacer(flex: 2),
       ],
+    );
+  }
+}
+
+/// 타임 모드는 모두가 같은 날 같은 보드를 받는다. 날짜는 KST 기준이다.
+// ponytail: 타이틀을 다시 그릴 때만 날짜가 바뀐다. 자정에 켜 둔 화면은 다음 빌드에서 갱신.
+class _DailyBoardCaption extends StatelessWidget {
+  const _DailyBoardCaption();
+
+  @override
+  Widget build(BuildContext context) {
+    final key = DailySeed.keyFor(DateTime.now());
+    return Text(
+      context.tr(
+        'dailyBoardToday',
+        namedArgs: {
+          'month': int.parse(key.substring(5, 7)).toString(),
+          'day': int.parse(key.substring(8, 10)).toString(),
+        },
+      ),
+      style: TextStyle(
+        color: Colors.white.withValues(alpha: 0.82),
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
     );
   }
 }

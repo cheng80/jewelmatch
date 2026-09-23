@@ -376,7 +376,11 @@ class MatchBoardGame extends FlameGame {
   void _logRoundStart() {
     _roundStartedAt = DateTime.now();
     speedBonus.reset();
-    EventLogger.instance.log('round_start', {'mode': gameMode.name});
+    EventLogger.instance.log('round_start', {
+      'mode': gameMode.name,
+      if (isTimedMode)
+        'daily_key': board.dailyKey ?? DailySeed.keyFor(DateTime.now()),
+    });
   }
 
   /// 판 종료 이벤트. [reason]은 time_up, exit, restart.

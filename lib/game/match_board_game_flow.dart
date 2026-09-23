@@ -1,10 +1,16 @@
 part of 'match_board_game.dart';
 
 extension MatchBoardGameFlow on MatchBoardGame {
+  /// [newRound]가 false면 판 도중 새 보드(NoMoves)라 일일 시드를 다시 쓰지 않는다.
   void _generateFreshBoardWithStartSfx({
     BoardFillIntroKind introKind = BoardFillIntroKind.roundStart,
     bool pauseIntroUntilRelease = false,
+    bool newRound = true,
   }) {
+    // 타임 모드는 판 시작 시각의 KST 날짜 시드를 쓴다. 판 도중 자정이 지나도 유지한다.
+    if (newRound && isTimedMode) {
+      board.startDailyBoard(DailySeed.keyFor(DateTime.now()));
+    }
     board.generateFreshBoard(introKind: introKind);
     if (introKind == BoardFillIntroKind.roundStart) {
       board.introFillPaused = pauseIntroUntilRelease;
@@ -64,7 +70,6 @@ extension MatchBoardGameFlow on MatchBoardGame {
     // 일시정지 다시 하기도 판 종료로 반영한다. TimeUp 뒤에는 이미 반영했다.
     if (!timeUp) logRoundEnd('restart');
     _stageAttemptSerial += 1;
-    _logRoundStart();
     overlays.remove('TimeUp');
     overlays.remove('PauseMenu');
     overlays.remove('NoMoves');
@@ -104,6 +109,8 @@ extension MatchBoardGameFlow on MatchBoardGame {
       _lastFlooredSecondForTimeTic = timeRemaining.floor();
     }
     _generateFreshBoardWithStartSfx();
+    // 새 판의 일일 키가 정해진 뒤 기록한다.
+    _logRoundStart();
     _syncIntroInputBlock();
     resumeEngine();
     isPlaying = true;
@@ -199,7 +206,7 @@ extension MatchBoardGameFlow on MatchBoardGame {
 
   void _newBoardImpl() {
     final shouldResume = overlays.isActive('NoMoves') && !timeUp;
-    _generateFreshBoardWithStartSfx();
+    _generateFreshBoardWithStartSfx(newRound: false);
     overlays.remove('NoMoves');
     overlays.remove('GameStats');
     _syncIntroInputBlock();

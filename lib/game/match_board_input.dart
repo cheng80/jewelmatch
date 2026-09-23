@@ -235,7 +235,7 @@ extension MatchBoardInput on MatchBoardLogic {
     if (_hintMovesSignature != signature) {
       _hintMovesSignature = signature;
       _hintMoveIndex = 0;
-      _shuffledHintMoves = List<ValidMovePair>.of(moves)..shuffle(_random);
+      _shuffledHintMoves = List<ValidMovePair>.of(moves)..shuffle(_hintRandom);
     }
     final shuffledMoves = _shuffledHintMoves;
     final pick = shuffledMoves[_hintMoveIndex % shuffledMoves.length];

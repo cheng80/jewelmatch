@@ -51,5 +51,11 @@ void main() {
       isIntoss ? findsOneWidget : findsNothing,
     );
     expect(tester.takeException(), isNull);
+
+    // 타임 탭은 이번 주 기준임을 알린다.
+    await tester.tap(find.text('이번 주 타임'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('매주 월요일 0시'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

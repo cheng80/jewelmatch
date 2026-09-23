@@ -147,10 +147,27 @@ class _RankingListPopupState extends State<RankingListPopup> {
                     mode: RankingMode.level,
                     emptyText: context.tr('rankingEmpty'),
                   ),
-                  _RankingList(
-                    future: _timeFuture,
-                    mode: RankingMode.time,
-                    emptyText: context.tr('rankingEmpty'),
+                  // 타임 랭킹은 서버가 이번 주(KST 월요일 0시 시작) 기록만 준다.
+                  Column(
+                    children: [
+                      Text(
+                        context.tr('rankingWeeklyResetNotice'),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: JewelCandyLuminaTheme.textParchment,
+                          fontSize: 12,
+                          height: 1.3,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: _RankingList(
+                          future: _timeFuture,
+                          mode: RankingMode.time,
+                          emptyText: context.tr('rankingEmpty'),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
