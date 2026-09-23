@@ -212,7 +212,11 @@ extension _MatchGameHudPainterCache on MatchGameHud {
       ),
       textDirection: ui.TextDirection.ltr,
     )..layout();
-    final scoreText = game.isProgressionMode
+    final challenge = game.stageChallenge;
+    _rebuildChallengeValue(challenge);
+    final scoreText = challenge != null
+        ? _fmt.format(_cachedScore)
+        : game.isProgressionMode
         ? '${_fmt.format(_cachedScore)}\n'
               '${game.localeString('targetScore', 'Target')} '
               '${_fmt.format(game.progressionTargetScore)}'
@@ -230,5 +234,38 @@ extension _MatchGameHudPainterCache on MatchGameHud {
       textAlign: TextAlign.center,
     )..layout(maxWidth: game.safeContentWidth * 0.9);
     if (game.isProgressionMode) _rebuildTimeBarText();
+  }
+
+  void _rebuildChallengeValue(StageChallenge? challenge) {
+    _challenge = challenge;
+    if (challenge == null) {
+      _challengeValue = null;
+      _challengeProgress = null;
+      return;
+    }
+    final progress = challenge.progress(game.board.stats);
+    _challengeProgress = progress;
+    final count = '$progress/${challenge.target}';
+    final text = switch (challenge.kind) {
+      StageChallengeKind.color => count,
+      StageChallengeKind.special =>
+        '${game.localeString('challengeSpecial', 'Specials')} $count',
+      StageChallengeKind.gems =>
+        '${game.localeString('challengeGems', 'Gems')} $count',
+    };
+    final done = progress >= challenge.target;
+    final t = game.hudTextScale;
+    _challengeValue = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: _ts(
+          size: 22 * t,
+          // 달성하면 밝은 초록으로 바꿔 한눈에 보이게 한다.
+          color: done ? const Color(0xFF7CFFB2) : const Color(0xFFFFFDE7),
+          weight: FontWeight.bold,
+        ),
+      ),
+      textDirection: ui.TextDirection.ltr,
+    )..layout();
   }
 }

@@ -58,6 +58,20 @@ void installMatchBoardQaBridge(MatchBoardGame game) {
   );
 
   web.window.setProperty(
+    '__jewelMatchDebugSetProgressionLevel'.toJS,
+    ((JSNumber level) {
+      final currentGame = _installedGame;
+      if (currentGame == null || !currentGame.isProgressionMode) return;
+      currentGame.progressionLevel = level.toDartInt;
+    }).toJS,
+  );
+
+  web.window.setProperty(
+    '__jewelMatchDebugFillChallenge'.toJS,
+    (() => _installedGame?.debugFillStageChallenge()).toJS,
+  );
+
+  web.window.setProperty(
     '__jewelMatchDebugPerformHintMove'.toJS,
     (() => (_installedGame?.performSimulationHintMove() ?? false).toJS).toJS,
   );
@@ -204,6 +218,11 @@ JSObject _stateToJs(SimulationGameState state) {
   object.setProperty('score'.toJS, (state['score'] as int).toJS);
   object.setProperty('level'.toJS, (state['level'] as int).toJS);
   object.setProperty('targetScore'.toJS, (state['targetScore'] as int).toJS);
+  final challenge = state['challenge'] as Map<String, Object?>?;
+  object.setProperty(
+    'challenge'.toJS,
+    challenge == null ? null : _mapToJsObject(challenge),
+  );
   object.setProperty(
     'levelUpActive'.toJS,
     (state['levelUpActive'] as bool).toJS,

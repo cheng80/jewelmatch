@@ -15,6 +15,7 @@ import '../../theme/jewel_candy_lumina_theme.dart';
 import '../item_kind.dart';
 import '../match_board_game.dart';
 import '../match_board_logic.dart';
+import '../stage_challenge.dart';
 import 'baked_hud_glow_atlas.dart';
 
 part 'match_game_hud_buttons.dart';
@@ -76,6 +77,11 @@ class MatchGameHud extends PositionComponent
 
   late TextPainter _scoreLabel;
   late TextPainter _scoreValue;
+
+  /// 도전 스테이지 목표 줄. 일반 레벨과 다른 모드는 null.
+  TextPainter? _challengeValue;
+  StageChallenge? _challenge;
+  int? _challengeProgress;
   late TextPainter _bestLabel;
   late TextPainter _bestValue;
   TextPainter? _timeInBar;
@@ -764,6 +770,7 @@ class MatchGameHud extends PositionComponent
     'goalNear': _goalNear,
     'goalReached': _goalReached,
     'goalPunch': _goalPunch.value,
+    'challengeText': _challengeValue?.plainText,
     'hintPunch': _hintBadgePunch.value,
     'pressPunch': _pressPunch.value,
     'pressedRect': _pressedRect,

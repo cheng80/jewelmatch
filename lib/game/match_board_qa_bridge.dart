@@ -134,12 +134,24 @@ extension MatchBoardSimulationHints on MatchBoardGame {
 typedef SimulationGameState = Map<String, Object?>;
 
 extension MatchBoardSimulationState on MatchBoardGame {
+  Map<String, Object?>? _readChallengeState() {
+    final challenge = stageChallenge;
+    if (challenge == null) return null;
+    return {
+      'kind': challenge.kind.name,
+      'target': challenge.target,
+      'progress': challenge.progress(board.stats),
+      'color': challenge.color,
+    };
+  }
+
   SimulationGameState readSimulationState() {
     return {
       'mode': gameMode.queryParam,
       'score': board.score,
       'level': progressionLevel,
       'targetScore': progressionTargetScore,
+      'challenge': _readChallengeState(),
       'levelUpActive': overlays.isActive('LevelUp'),
       'stageInventoryActive': overlays.isActive('StageInventory'),
       'levelCelebrationActive': overlays.isActive('LevelCelebration'),

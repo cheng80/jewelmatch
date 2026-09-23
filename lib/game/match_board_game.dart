@@ -29,6 +29,7 @@ import 'match_board_logic.dart';
 import 'match_board_qa_bridge.dart';
 import 'match_board_specials.dart';
 import 'speed_bonus.dart';
+import 'stage_challenge.dart';
 import 'stage_reward.dart';
 
 part 'match_board_game_vfx.dart';
@@ -204,6 +205,11 @@ class MatchBoardGame extends FlameGame {
       : board.score;
   int get progressionTargetScore =>
       JewelRankProgression.scoreTargetForLevel(progressionLevel);
+
+  /// 레벨 모드 도전 스테이지 목표. 일반 레벨과 다른 모드는 null.
+  StageChallenge? get stageChallenge => isProgressionMode
+      ? StageChallenge.forLevel(progressionLevel, colorCount: board.colorCount)
+      : null;
   double get progressionRatio => JewelRankProgression.stageProgressRatio(
     level: progressionLevel,
     score: board.score,

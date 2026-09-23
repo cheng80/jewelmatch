@@ -66,13 +66,27 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
       // 목표 80% 이상: 읽는 데 방해되지 않을 만큼만 숨 쉬듯 커졌다 작아진다.
       scale += 0.018 * (1 + math.sin(_hudClock * 5.0));
     }
-    _paintPunched(
+    final valueTop = scoreY + _scoreLabel.height + 4;
+    _paintPunched(canvas, _scoreValue, cx, valueTop, scale);
+    final challengeValue = _challengeValue;
+    final challenge = _challenge;
+    if (challengeValue == null || challenge == null) return;
+    final top = valueTop + _scoreValue.height + 2;
+    final color = challenge.color;
+    if (color == null) {
+      challengeValue.paint(canvas, Offset(cx - challengeValue.width / 2, top));
+      return;
+    }
+    // 색 목표는 보석 스프라이트로 색을 보여 줘 색 이름 번역이 필요 없다.
+    final icon = challengeValue.height * 1.05;
+    const gap = 4.0;
+    final left = cx - (icon + gap + challengeValue.width) / 2;
+    _drawPrismGemSprite(
       canvas,
-      _scoreValue,
-      cx,
-      scoreY + _scoreLabel.height + 4,
-      scale,
+      Rect.fromLTWH(left, top + (challengeValue.height - icon) / 2, icon, icon),
+      color,
     );
+    challengeValue.paint(canvas, Offset(left + icon + gap, top));
   }
 
   /// [painter]를 [centerX] 가운데 정렬로 그리되 자기 중심 기준으로 [scale]만큼 키운다.

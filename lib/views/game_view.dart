@@ -234,6 +234,9 @@ class _GameViewState extends State<GameView> {
         g.setLocaleStrings({
           'score': context.tr('score'),
           'targetScore': context.tr('targetScore'),
+          'challengeStage': context.tr('challengeStage'),
+          'challengeSpecial': context.tr('challengeSpecial'),
+          'challengeGems': context.tr('challengeGems'),
           'bestScore': context.tr('bestScore'),
           'combo': context.tr('combo'),
           'timeLeft': context.tr('timeLeft'),

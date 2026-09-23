@@ -131,6 +131,9 @@ class MatchBoardGameStats {
   int matchGroups = 0;
   int removedGems = 0;
   final Map<GemKind, int> removedByKind = _emptyKindCounts();
+
+  /// 색별 일반 보석 제거 수(키는 1부터 시작하는 색). 도전 스테이지 색 목표에 쓴다.
+  final Map<int, int> removedNormalByColor = {};
   int specialGemsCreated = 0;
   final Map<GemKind, int> specialCreatedByKind = _emptyKindCounts();
   int specialGemsActivated = 0;
@@ -159,9 +162,12 @@ class MatchBoardGameStats {
     matchGroups += count;
   }
 
-  void recordGemRemoved(GemKind kind) {
+  void recordGemRemoved(GemKind kind, [int color = 0]) {
     removedGems++;
     removedByKind[kind] = (removedByKind[kind] ?? 0) + 1;
+    if (kind == GemKind.normal && color > 0) {
+      removedNormalByColor[color] = (removedNormalByColor[color] ?? 0) + 1;
+    }
   }
 
   void recordSpecialCreated(GemKind kind) {

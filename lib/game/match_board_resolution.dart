@@ -14,7 +14,7 @@ extension MatchBoardResolution on MatchBoardLogic {
       final gem = getGem(row, col);
       if (gem != null) {
         removed++;
-        stats.recordGemRemoved(gem.kind);
+        stats.recordGemRemoved(gem.kind, gem.color);
         if (_isSpecial(gem.kind)) {
           hasSpecial = true;
           specialBonus += _specialActivationScoreBonus(gem.kind);

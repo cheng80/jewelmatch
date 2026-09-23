@@ -548,6 +548,8 @@ void main() {
 void _clearProgressionStage(MatchBoardGame game, {required int level}) {
   game.progressionLevel = level;
   game.board.score = game.progressionTargetScore;
+  // 4의 배수 레벨은 도전 스테이지라 점수 대신 목표를 채운다.
+  game.debugFillStageChallenge();
   game.board.introFillInProgress = false;
   game.isPlaying = true;
   game.update(0);

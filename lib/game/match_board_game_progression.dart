@@ -20,7 +20,11 @@ extension MatchBoardGameProgression on MatchBoardGame {
         hasActiveVisualEffects) {
       return;
     }
-    if (board.score < progressionTargetScore) return;
+    final challenge = stageChallenge;
+    final cleared = challenge == null
+        ? board.score >= progressionTargetScore
+        : challenge.isComplete(board.stats);
+    if (!cleared) return;
     final nextLevel = progressionLevel + 1;
     levelUpFromLevel = progressionLevel;
     levelUpToLevel = nextLevel;
@@ -28,6 +32,7 @@ extension MatchBoardGameProgression on MatchBoardGame {
       'level': progressionLevel,
       'score': board.score,
       'max_combo': board.maxCombo,
+      if (challenge != null) 'challenge': challenge.kind.name,
     });
     progressionNextBoardBonusKinds = _bonusKindsForNextLevel();
     _grantStageRewardsOnce();
@@ -80,6 +85,12 @@ extension MatchBoardGameProgression on MatchBoardGame {
     _syncIntroInputBlock();
     resumeEngine();
     isPlaying = true;
+    if (stageChallenge != null) {
+      _showItemFeedback(
+        localeString('challengeStage', 'Challenge Stage'),
+        seconds: 2.4,
+      );
+    }
   }
 
   void _showLevelUpPopupAfterCelebrationImpl() {
@@ -106,7 +117,10 @@ extension MatchBoardGameProgression on MatchBoardGame {
     final rewards = StageRewardEvaluator.evaluate(
       stats: board.stats,
       score: board.score,
-      targetScore: progressionTargetScore,
+      // 도전 스테이지는 목표 달성을 targetRatio 1.0으로 본다.
+      targetScore: stageChallenge == null
+          ? progressionTargetScore
+          : board.score,
       maxCombo: board.maxCombo,
       remainingHints: _remainingHints,
       stageStartRemainingHints: _stageStartRemainingHints,
@@ -219,5 +233,21 @@ extension MatchBoardGameProgression on MatchBoardGame {
     }
     board.score = JewelRankProgression.scoreTargetForLevel(progressionLevel);
     board.maxCombo = 5;
+    debugFillStageChallenge();
+  }
+
+  /// QA 전용: 도전 스테이지 목표를 채운 통계로 만든다.
+  void debugFillStageChallenge() {
+    final challenge = stageChallenge;
+    if (challenge == null) return;
+    final stats = board.stats;
+    switch (challenge.kind) {
+      case StageChallengeKind.color:
+        stats.removedNormalByColor[challenge.color!] = challenge.target;
+      case StageChallengeKind.special:
+        stats.specialGemsActivated = challenge.target;
+      case StageChallengeKind.gems:
+        stats.removedGems = challenge.target;
+    }
   }
 }

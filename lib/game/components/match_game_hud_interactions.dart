@@ -115,9 +115,21 @@ extension _MatchGameHudInteractions on MatchGameHud {
       _goalReached = false;
       return;
     }
-    final target = game.progressionTargetScore;
-    if (target <= 0) return;
-    final ratio = game.board.score / target;
+    final challenge = game.stageChallenge;
+    final double ratio;
+    if (challenge != null) {
+      final progress = challenge.progress(game.board.stats);
+      if (progress != _challengeProgress ||
+          challenge.kind != _challenge?.kind ||
+          challenge.target != _challenge?.target) {
+        _rebuildScoreValue(_cachedScore);
+      }
+      ratio = progress / challenge.target;
+    } else {
+      final target = game.progressionTargetScore;
+      if (target <= 0) return;
+      ratio = game.board.score / target;
+    }
     if (ratio >= 1) {
       if (!_goalReached) {
         _goalReached = true;
