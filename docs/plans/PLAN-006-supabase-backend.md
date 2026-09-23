@@ -74,13 +74,13 @@
 - [x] 공모전 ZIP 스킬: 권장안대로 `config/supabase.json`을 빌드에 넣고, 검사 기준을 `ranking.php` 주소에서 Supabase 프로젝트 주소로 바꿨다. 설정 파일이 없으면 중단하고 ZIP에 설정 파일은 넣지 않는다. 시험 출력으로 끝까지 통과
 - [x] NAS `ranking.php` 폐기(2026-09-24): 새 빌드 모두 호출하지 않음을 확인하고 저장소에서 제거. NAS에 남은 파일과 JSON 삭제는 사용자 수동 작업
 - [x] 개인정보처리방침 초안과 스토어 데이터 안내 문구 갱신: [PRIVACY_POLICY_DRAFT.md](../release/PRIVACY_POLICY_DRAFT.md)(한국어, 영어, Apple App Privacy, Google Play Data safety 표), PRODUCT_SPEC 스토어 문구 4블록. 법률 검토, 문의처, 광고 SDK 수집 항목, 보관 기간은 [확정 필요]
-- [ ] 요금제와 일시 중지 정책 확인
+- [ ] 요금제와 일시 중지 정책 확인: 조직 요금제는 CLI로 조회되지 않아 대시보드 확인이 필요하다. Free 요금제는 약 7일 동안 활동이 적으면 일시 중지되고, 1주 전 경고 메일이 오며, 대시보드에서 1년 안에 재개할 수 있다(Supabase 문서 Project Pausing). 일시 중지되면 BR-002에 따라 게임은 계속되고 랭킹만 연결 불가로 보인다. 출시 전에 유료 요금제 여부를 정한다(비용 결정)
 
 ### Step 5 — 후속
 - [x] 보존 기간 정리 마이그레이션 초안: `supabase/migrations/20260924090000_stone_match_retention.sql`. `game_events` 90일, `ad_refill_claims` 35일, 매일 KST 04:00과 04:10 pg_cron, private SECURITY DEFINER 함수, 재실행 안전. PGlite 스텁으로 확인. 원격 pg_cron 동작은 Step 2 뒤 확인
-- [ ] 오래된 익명 사용자 정리: SQL로 `auth.users`를 지우지 않고 관리자 API로 처리한다. 랭킹은 `on delete set null`이라 남는다
+- [x] 오래된 익명 사용자 정리(2026-09-24, 원격 적용): `20260924140000_stone_match_anon_cleanup.sql`. 관리자 API 대신 Supabase 익명 로그인 공식 문서의 SQL과 pg_cron 방식을 따랐다. 가입, 로그인, 세션 갱신이 모두 90일보다 오래된 익명 사용자만 매일 KST 04:20에 지운다. 랭킹은 `on delete set null`이라 남는다. 원격 트랜잭션 안에서 가짜 사용자 5명으로 확인 후 되돌림
 - [ ] PLAN-003 영속 인벤토리의 서버 백업 여부
-- [ ] PLAN-005 기록, 배지, 일일 시드 테이블
+- [x] PLAN-005 기록, 배지, 일일 시드 테이블: 필요 없음. 기록과 배지는 로컬 저장(Product Spec 6-6), 일일 시드는 클라이언트 계산, 주간 순위는 `ranking_entries.week_start`(PLAN-007)
 - [ ] 클라이언트 원격 설정 읽기(기능 플래그가 생길 때)
 
 ## 5. 예상 변경 범위

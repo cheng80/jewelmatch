@@ -3,11 +3,11 @@
 ## Metadata
 - Plan ID: `PLAN-005`
 - Title: 60초 점수 경쟁 중심 게임 방향 개편(공통 코어, 장기 목표, 경쟁 형식)
-- Status: `IN_PROGRESS` (2026-09-24 D1~D6 권장안 승인, Step 1a, 1b, 3 착수)
+- Status: `IN_PROGRESS` (2026-09-24 Step 1a, 1b, 1c, 3, 4, 5 구현 완료. 남은 것: 1d 시간 보상(D7, 플레이테스트), Step 2 아이템과 이어하기 이벤트)
 - Related Requirement: `FR-001`, `FR-002`, `FR-003`, `FR-004`, `FR-005`, `FR-006`, `FR-009`, `FR-012`
 - Related ADR: `ADR-008`(Proposed), `ADR-001`, `ADR-002`, `ADR-006`, `ADR-007`
 - Owner:
-- Updated: 2026-09-23
+- Updated: 2026-09-24
 
 기획 본문, 근거, 수치 시작값, 미결정 사항(D1~D10)은 [01_PRODUCT_SPEC.md](../01_PRODUCT_SPEC.md)의 "게임 방향 기획" 절이 정본이다. 이 PLAN은 구현 순서와 변경 범위만 다룬다.
 
@@ -50,8 +50,8 @@
 - [x] D2 H1, H2, H3 모두 채택, 탭 발동 색은 가장 많은 색. D3 H2 반환 없음, 점수와 시간 상한. D4 탭 유지. ADR-001 개정 절
 - [x] D5 Speed Bonus는 타임 모드만, BR-011과 별도 가산, 콤보 배수 미적용
 - [x] D6 Last Hurrah는 타임 모드만, 끝난 뒤 제출. 레벨 모드는 해당 없음. ADR-007 개정 절
-- [ ] Step 4 전: D8(앱인토스 공식 리더보드 대상). D10(기존 타임 기록 처리)은 Supabase 랭킹에 실사용 기록이 없어 해당 없음(2026-09-24)
-- [ ] Step 5 전: D9(레벨 규칙 변형과 이동 제한 혼합)
+- [x] Step 4 전: D8(앱인토스 공식 리더보드 대상) — 권장안으로 레벨 완료 수 유지(2026-09-24). D10(기존 타임 기록 처리)은 Supabase 랭킹에 실사용 기록이 없어 해당 없음(2026-09-24)
+- [x] Step 5 전: D9 — 권장안으로 이동 제한 미혼합, 4의 배수 레벨 도전 스테이지(2026-09-24)
 
 ### Step 1 — 공통 60초 코어
 #### 1a. 하이퍼 큐브 교환(H1~H3)
@@ -92,9 +92,9 @@
 
 ### Step 2 — 내부 이벤트 로거와 플레이테스트
 - [x] 로거 어댑터: 2026-09-23 `EventLogger`로 구현하고 Supabase `game_events`에 보낸다(PLAN-006, ADR-009). 게임 코드는 SDK를 직접 부르지 않는다
-- [ ] 기존 필수 이벤트(아이템 플랜 3.5차)와 Product Spec 8-3 추가 이벤트 연결
+- [ ] 기존 필수 이벤트(아이템 플랜 3.5차)와 Product Spec 8-3 추가 이벤트 연결. 8-3 추가 이벤트와 `daily_key`, `challenge` 파라미터는 연결 완료. 아이템과 이어하기 클릭 이벤트는 남음
 - [ ] 개인 식별 정보 미기록, 임시 sessionId만 사용
-- [ ] Product Spec 8-2 플레이테스트 항목을 매 단계 뒤 기록. 결과는 이 PLAN 하단 "플레이테스트 기록"에 남긴다
+- [ ] Product Spec 8-2 플레이테스트 항목을 매 단계 뒤 기록. 결과는 이 PLAN 하단 "플레이테스트 기록"에 남긴다(양식 준비 완료, 기록은 사용자 플레이 필요)
 
 ### Step 3 — 기록과 장기 목표(R1)
 구현(2026-09-24, `baaff7c`): `lib/services/records/`, 기록 화면 `/records`(SCREEN-016), 결과 화면 알림, `badge_earned`, `rank_up`.
@@ -106,13 +106,15 @@
 - [x] 테스트: 저장과 로드, 손상값 복구, 배지 판정, 랭크 경계, 기록 화면 넘침
 
 ### Step 4 — 타임 모드 경쟁 형식(C1)
-- [ ] 시작 시 서버 변경(기간 구분, 날짜 시드)을 포함한 별도 PLAN 작성
-- [ ] 날짜 시드 보드와 리필 순서 재현 테스트
-- [ ] 운영 랭킹 초기화가 필요하면 승인, 백업, dry-run, 예상 건수, 사후 조회 절차
+구현(2026-09-24, `4435ecb`, 검수 수정 포함): [PLAN-007](PLAN-007-daily-board-weekly-ranking.md).
+- [x] 시작 시 서버 변경(기간 구분, 날짜 시드)을 포함한 별도 PLAN 작성(PLAN-007). 시드는 클라이언트가 계산
+- [x] 날짜 시드 보드와 리필 순서 재현 테스트(단위 테스트와 두 브라우저 비교)
+- [x] 운영 랭킹 초기화: 기록을 지우지 않고 조회 범위만 바꾸므로 해당 없음
 
 ### Step 5 — 레벨 모드 규칙 변형(V1)
-- [ ] D9 결정 후 스테이지 규칙 데이터 구조, 목표 HUD, 이동 카운터, 색별 제거 통계
-- [ ] BR-040, ADR-006과 목표 관계 정리
+구현(2026-09-24, `87f50ca`, 검수 수정 포함): `lib/game/stage_challenge.dart`, BR-043.
+- [x] D9 결정 후 스테이지 규칙 데이터 구조, 목표 HUD, 색별 제거 통계(이동 카운터는 D9로 제외)
+- [x] BR-040, ADR-006과 목표 관계 정리: 4의 배수 레벨만 목표 점수 대신 도전 목표(BR-043), 그 밖의 레벨은 BR-040 그대로
 
 ## 5. 예상 변경 범위
 - 파일/모듈: `lib/game/match_board_input.dart`, `match_board_specials.dart`, `match_board_resolution.dart`, `match_board_logic.dart`, `match_board_game_timing.dart`, `match_board_game_mode_rules.dart`, `match_board_models.dart`, `lib/game/components/` HUD, `lib/views/overlays/time_up_overlay.dart`, `pause_menu_overlay.dart`, `how_to_play/`, `lib/vm/ranking_notifier.dart`, 번역 파일, 새 기록 및 로거 모듈

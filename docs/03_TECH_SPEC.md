@@ -93,7 +93,7 @@
 | score | int | >0 제출 | 타임=점수, 레벨=완료 레벨 |
 | ts | int? | epoch | |
 
-저장소: Supabase `ranking_entries`(id, user_id, mode, name, score, created_at). 클라이언트에는 name, score, ts(created_at epoch)만 돌아온다.
+저장소: Supabase `ranking_entries`(id, user_id, mode, name, score, created_at, week_start). 클라이언트에는 name, score, ts(created_at epoch)만 돌아온다. `week_start`는 `date_trunc('week', created_at at time zone 'Asia/Seoul')::date` 생성 열(KST 월요일)이며 클라이언트가 쓸 수 없다. 인덱스 `ranking_entries_mode_week_score_idx`(mode, week_start, score desc, created_at, id). 마이그레이션 `20260924120000_stone_match_weekly_ranking.sql`(BR-095). `20260924160000_stone_match_weekly_ranking_plan.sql`은 두 RPC를 plpgsql로 바꿔 time과 그 밖의 모드를 별도 문장으로 나눈다. PG17은 SQL 함수 본문을 인자 없이 계획해 한 문장 조건으로는 주간 인덱스를 쓰지 못하고 전체 기간 기록을 훑기 때문이다(검수 P2-1, PGlite 강제 generic 계획에서 time 조회 버퍼 1009에서 4).
 `user_id`는 null 허용이고 `on delete set null`이다. 익명 사용자를 지워도 공개 랭킹 기록은 남는다. `ad_refill_claims`, `game_events`는 사용자와 함께 지워진다(cascade).
 이름 규칙: 1~20자, 앞뒤 공백 없음, 제어 문자와 보이지 않는 서식 문자, 방향 문자, 한글 채움 문자 금지(이모지와 문자 결합에 쓰는 ZWJ, ZWNJ는 허용), 보이는 문자가 하나도 없는 이름 금지. `submit_ranking`은 금지 문자를 지운 뒤 trim과 20자 절단을 한다. 입력은 있었는데 정리 뒤 보이는 문자가 남지 않으면 클라이언트 기본값과 같은 `GUEST`로 저장하고, 입력이 비어 있으면 거부한다. 체크 제약은 직접 삽입을 막는 마지막 방어다.
 
@@ -106,7 +106,7 @@
 | ad_refill_claims | 보충 광고 지급 기록(KST claim_date, item) | authenticated 본인 조회, 본인 삽입 |
 | game_events | 이벤트 로그 | authenticated 본인 삽입만 |
 
-보존(초안, 원격 미적용): `supabase/migrations/20260924090000_stone_match_retention.sql`이 pg_cron으로 매일 `game_events` 90일, `ad_refill_claims` 35일 지난 행을 지운다(KST 04:00, 04:10). 정리 함수는 `private` 스키마에 있고 클라이언트 역할은 실행할 수 없다. 익명 사용자 정리는 관리자 API로 따로 한다.
+보존(원격 적용): `supabase/migrations/20260924090000_stone_match_retention.sql`이 pg_cron으로 매일 `game_events` 90일, `ad_refill_claims` 35일 지난 행을 지운다(KST 04:00, 04:10). 익명 사용자 정리(원격 적용, 2026-09-24): `20260924140000_stone_match_anon_cleanup.sql`의 `private.purge_inactive_anonymous_users(p_inactive_days default 90, p_dry_run default false)`가 KST 04:20에 돈다. 가입, 마지막 로그인, 세션 생성과 갱신이 모두 90일보다 오래된 익명 사용자만 지운다(30일 미만 값은 30일로 보정). Supabase 익명 로그인 공식 문서의 SQL과 pg_cron 방식이다. 랭킹 행은 이름과 점수가 남고, 이벤트와 보충 기록은 함께 지워진다. 지워진 사용자의 클라이언트는 토큰 갱신이 거절되면 새 익명 사용자로 가입한다. 정리 함수는 모두 `private` 스키마에 있고 클라이언트 역할은 실행할 수 없다.
 
 ### Entity: Settings
 
@@ -150,6 +150,7 @@ RPC `get_ranking(p_mode text, p_limit integer default null)`, anon 호출(로그
 
 - `p_limit`가 null이면 `app_config.ranking.list_limit`(기본 30), 1~100으로 제한
 - 정렬: score 내림차순, 같은 점수는 먼저 등록한 기록이 위
+- `time`은 이번 주(KST 월요일 00:00 시작, `week_start`) 기록만 돌려준다. `level`은 전체 기간(BR-095). 시그니처와 반환 열은 주간 변경 전과 같다
 - 클라이언트: `RankingService.fetchList(mode:)`
 
 ### API-002 1위
@@ -162,7 +163,9 @@ RPC `get_ranking(p_mode text, p_limit integer default null)`, anon 호출(로그
 RPC `submit_ranking(p_mode text, p_name text, p_score integer)`, 익명 로그인 필요
 
 **Success**
-    { "mode": "time"|"level", "ranked": true|false, "rank": n, "score": n }
+    { "mode": "time"|"level", "ranked": true|false, "rank": n, "score": n, "week_start": "YYYY-MM-DD"(time만) }
+
+- `time` 순위는 방금 넣은 행과 같은 주 안에서 센다
 
 - 동일 이름 다중 기록 허용(BR-090). 모든 기록을 저장하고 `rank <= list_limit`이면 ranked=true
 - 이름은 앞뒤 공백 제거 후 1~20자. score는 1 이상, 레벨 10,000 이하, 타임 1,000,000,000 이하
