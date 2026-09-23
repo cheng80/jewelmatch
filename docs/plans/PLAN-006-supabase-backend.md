@@ -51,19 +51,22 @@
 - 남은 확인: 실제 브라우저 두 탭에서 세션 공유, 앱인토스 채널의 8초 마감 실측, 원격 GoTrue refresh 재사용 감지 동작. 8초 상한 뒤 서버 저장이 늦게 성공하면 TimeUp 재제출로 같은 점수가 두 번 기록될 수 있다(BR-090상 허용 범위, 추후 판단)
 - 보류: 순위 계산 비용(행 수 비례), 점수 상한 강화. 실측 최대 점수와 행 증가 추이를 본 뒤 정한다
 
-### Step 2 — 원격 프로젝트 준비 (Supabase 연결 대기)
-- [ ] Codex Supabase 앱이 대상 조직을 보는지 확인
-- [ ] 프로젝트 선택 또는 생성. 이름 `stone-match`, 지역 `ap-northeast-2`(서울). 생성 전 비용 조회, 비용이 있으면 사용자 확인
-- [ ] 마이그레이션 적용(`apply_migration`, 이름 `stone_match_init`, 로컬 파일과 같은 SQL)
-- [ ] `get_advisors` 보안, 성능 권고 확인과 수정
-- [ ] 익명 로그인 활성화(Authentication > Sign In / Providers). 도구로 바꿀 수 없으면 대시보드에서 한 번 켠다
-- [ ] 공개용 키와 URL 조회 → `config/supabase.json` 작성(Git 제외 확인)
+### Step 2 — 원격 프로젝트 준비 (완료 2026-09-24)
+- [x] 연결: Codex Supabase 앱은 조직을 보지 못해 Supabase CLI 로그인으로 진행했다
+- [x] 프로젝트 생성: 조직 `faewovqniqkzgjqoggwk`, 이름 `stone-match`, ref `irbdozfwptserldnisew`, 서울. 요금제는 CLI로 확인할 수 없어 사용자 승인 뒤 생성. DB 비밀번호는 `tmp/supabase-remote/db-password`(Git 제외, 권한 600)
+- [x] 마이그레이션 적용: `supabase db push`로 init, retention 2개. `supabase migration list`에서 로컬과 원격 일치
+- [x] 권고: 보안 0건, 성능은 새 DB의 미사용 인덱스 INFO 6건뿐. `cron.job` 2건 활성, anon 실행 권한은 `get_ranking`만
+- [x] 인증 설정: 익명 로그인 켬, 이메일 가입 끔. `tmp/supabase-remote/push/supabase/config.toml`에 두 값만 적어 `config push`(나머지 원격 설정은 그대로)
+- [x] 공개용 키와 URL로 `config/supabase.json` 작성, Git 제외 확인
 
-### Step 3 — 원격 검증
-- [ ] REST 스모크: 익명 가입, `get_ranking` 빈 목록, `submit_ranking` 시험 기록, `ad_refill_status`, `claim_ad_refill` 4회째 거절, `game_events` 삽입
-- [ ] RLS 음성 확인: anon의 `user_id` 조회 거부, 다른 사용자의 보충 기록 미노출, anon의 제출 거부, `game_events` 조회 거부
-- [ ] 시험 기록 정리: 운영 랭킹에 유효한 시험 기록을 남기지 않는다. 스모크 기록은 확인 직후 SQL로 삭제하고 건수를 남긴다
-- [ ] `flutter run -d chrome --dart-define-from-file=config/supabase.json`으로 제출, 목록, 보충 광고(mock), 이벤트 적재 확인
+### Step 3 — 원격 검증 (완료 2026-09-24)
+방법: `STORE_CHANNEL=intoss`, `INTOSS_AD_MODE=mock`, `config/supabase.json`을 넣은 `--wasm` 릴리즈 빌드를 로컬 서버로 띄우고 Playwright(헤드리스 Chromium)로 조작했다. 게임 조작은 `qaPerf=1` QA 훅(힌트 수, 남은 시간 설정, 상태 읽기)을 썼고, 서버 값은 `supabase db query --linked`로 대조했다. 스크립트와 로그는 `tmp/local-verify/`(Git 제외).
+- [x] 게임 흐름(백엔드 없는 빌드): 타임 모드 시간 종료, 랭킹 연결 불가 문구와 다시 제출 버튼, 보충 광고 3회 뒤 비활성, 일시정지 나가기(토스 제출 무응답 8.3초, 브리지 없음 0.07초), 외부 요청 0건, 페이지 오류 0건
+- [x] 실제 백엔드 25항목: 익명 가입 1회, 세션 저장, 시간 종료 제출 200과 순위 문구, 서버 기록 일치, 두 번째 탭 가입 없음, 보충 광고 3회 `claim_ad_refill` 200과 4번째 비활성, 서버 3건, 새 페이지에서 서버 값으로 0회, 다른 사용자는 3회, anon `get_ranking`에 `user_id` 없음, RLS 음성 5건(401), 이벤트 6종 적재, 토큰과 이메일 미포함, 4xx와 5xx 없음
+- [x] 경계 조건: 다른 탭이 refresh 토큰을 회전하고 12초 뒤 이 탭이 401을 받아도 새 가입과 옛 토큰 재사용 없이 저장된 세션을 채택해 재제출 200(R-1). 서버와 토스 제출이 모두 무응답이어도 나가기 8.2초(R-2). 인증 사용자도 다른 사용자 보충 기록과 랭킹 `user_id`를 못 봄
+- [x] 보존 함수 원격 수동 실행(삭제 0건)
+- [x] 시험 기록 정리: 익명 사용자 6명, 랭킹 3건, 보충 6건, 이벤트 44건을 지워 모두 0건
+- 발견(기존 동작): 보충 한도에 걸리면 버튼 문구가 "광고 준비 중"으로 보여 한도 초과를 알리지 못한다
 
 ### Step 4 — 배포와 정리
 - [ ] NAS 웹 배포(`tools/deploy_match_web.sh`, config 포함)와 원격 확인

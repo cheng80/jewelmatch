@@ -2,7 +2,7 @@
 
 > 프로젝트 전체의 NOW. 다음 작업자 인계 문장은 HANDOFF.md에 둔다. 구현 상태와 검증 상태를 섞지 않는다.
 
-Updated: 2026-09-24 00:34 KST
+Updated: 2026-09-24 01:09 KST
 
 ## Current Phase
 Phase 3 — Stabilization (Phase 4 출시 값은 대기)
@@ -13,7 +13,7 @@ Phase 5 게임 방향 개편은 기획(제안) 단계다. 코드 변경 없음.
 - `PLAN-001` 모바일 웹 오디오/FPS 회귀 — IN_PROGRESS
 - `PLAN-004` 보드 연출 보강 — IN_PROGRESS (F1, T1, T2, T3, T4a, T4b, T5, T6 통합 완료, T6 및 독립 리뷰 수정 완료, 합본 HUD 잔상 가설은 픽셀 진단으로 기각, 기존 confetti 겹침)
 - `PLAN-005` Bejeweled Blitz 계승 게임 방향 개편 — DRAFT (ADR-008 Proposed, D1~D10 결정 대기)
-- `PLAN-006` Supabase 기반 구축 — IN_PROGRESS (Step 1 로컬 구현과 독립 검수 수정 완료, 보존 마이그레이션과 개인정보 초안 작성, Step 2 원격 적용은 Supabase 연결 대기)
+- `PLAN-006` Supabase 기반 구축 — IN_PROGRESS (Step 1~3 완료: 원격 프로젝트 `stone-match` 적용과 로컬 웹 실제 백엔드 검수 통과. Step 4 NAS, 앱인토스 배포 남음)
 
 ## Current Tasks
 - [x] TASK-001a HTML Audio 4슬롯/경로/unlock/웹 BGM replay
@@ -82,7 +82,7 @@ Phase 5 게임 방향 개편은 기획(제안) 단계다. 코드 변경 없음.
 | 게임 방향 기획 문서화 | PASS | RECHECKED | 2026-09-23 23:17 KST | 문서만 변경, 제품 코드 `b6a949e`와 동일 | CURRENT | 문서 전용 변경. 변경 문서 8개의 상대 링크 전수 확인(깨진 링크 0), 추가 줄 중간점 0, `git diff --check` 통과. 코드 테스트 대상 아님 |
 | Supabase 1단계 analyze / test / wasm build | PASS | RECHECKED | 2026-09-23 23:40 KST | `b6a949e` + 미커밋 PLAN-006 변경 | CURRENT | analyze 0건, 전체 300 tests PASS, `flutter build web --release --wasm`(가짜 연결 값) exit 0. 원격 Supabase 미적용이라 실제 서버 동작은 미검증 |
 | Supabase 검수 수정 analyze / test / wasm / SQL | PASS | RECHECKED | 2026-09-24 00:30 KST | `b6a949e` + 미커밋 PLAN-006 변경 | CURRENT | `flutter analyze lib test` 0건, 전체 310 tests PASS, `--wasm` 릴리즈 빌드 exit 0. PGlite 하네스 58건, 20건, 보존 OK(`tmp/orca-plan006/`). 전체 `flutter analyze`는 `tmp/fx-prompt-builder`의 기존 info 1건만 보고. 원격, 브라우저 두 탭 미검증 |
-| Supabase 원격 스모크 / RLS | NOT_RUN | NONE | UNKNOWN | UNKNOWN | UNKNOWN | Supabase 연결 대기(PLAN-006 Step 3) |
+| Supabase 원격 스모크 / RLS (로컬 웹 + 실제 백엔드) | PASS | RECHECKED | 2026-09-24 01:05 KST | `e1a75c5` | CURRENT | Playwright 헤드리스, `tmp/local-verify/live.log` 25항목, `live_edge.log` R-1, R-2, RLS. 백엔드 없는 빌드 흐름 3개 시나리오 통과. 시험 데이터 정리 후 0건. 실기기, 토스 WebView 미검증 |
 
 ## Next
 1. 이번 NAS 미러링 검증은 사용자 요청으로 종료했다. 기존 Android/iPhone 측정 결과와 한계를 보존하며, 추가 프로파일링은 진행하지 않는다. 개발 서버와 미러링/계측 프로세스는 종료 상태다. Claude 인계 예약도 취소 상태를 유지한다
@@ -92,7 +92,7 @@ Phase 5 게임 방향 개편은 기획(제안) 단계다. 코드 변경 없음.
 5. STALE AIT를 현재 리비전으로 볼지는 별도 Task. 이관 완료 조건이 아님
 6. 출시 값이 오면 TASK-004. 식별 정책이 오면 PLAN-002를 READY
 7. 게임 방향 개편: D1~D10 결정 후 PLAN-005 Step 1a(하이퍼 큐브 교환)부터. 결정 전에는 특수 보석 규칙을 바꾸지 않는다
-8. Supabase: Codex Supabase 앱이 대상 조직을 보면 PLAN-006 Step 2~3(프로젝트, 마이그레이션 2개, 익명 로그인, 공개용 키, 원격 스모크, pg_cron 확인). 2026-09-24 00:10 KST 재확인에서도 조직과 프로젝트 목록이 비어 있다
+8. Supabase: PLAN-006 Step 4(새 빌드 NAS 배포, 앱인토스 테스트 빌드와 WebView에서 `*.supabase.co` 호출 확인, `ranking.php` 폐기 시점). 보충 한도 도달 시 "광고 준비 중" 문구 개선 검토
 
 - 합본 HUD 최종 진단(16:08 KST): 무손실 PNG의 추가 밝은 glyph 픽셀 0, 변한 픽셀은 confetti 색 합성으로 설명됐다. pause 150프레임 동안 game render/update 증가 0. 제품 소스 변경 없이 가설 기각. 근거: `_fx_orchestration/reports/T6_integrated_visual_fix.md`.
 
@@ -150,8 +150,9 @@ Phase 5 게임 방향 개편은 기획(제안) 단계다. 코드 변경 없음.
 - 새 파일: `supabase/migrations/20260924090000_stone_match_retention.sql`(game_events 90일, ad_refill_claims 35일 pg_cron 정리 초안), `docs/release/PRIVACY_POLICY_DRAFT.md`(법률 검토 전 초안). PRODUCT_SPEC 스토어 문구 4블록을 Supabase 기준으로 바꿨다.
 - 검증: 위 표의 "Supabase 검수 수정" 행. 커밋, 원격 적용, 배포는 하지 않았다.
 
-## 이펙트 프롬프트 빌더 추가 (2026-09-24 00:05 KST)
+## 이펙트 프롬프트 빌더 (2026-09-24 01:29 KST 갱신)
 
-- 사용자 요청으로 X 글(픽셀 마법사 프롬프트)과 Claude 공유 대화(카드 공개 연출 반복 개선)를 분석해, 단계별 선택으로 Flutter용 이펙트 제작 프롬프트를 만드는 정적 웹 도구 `tools/fx_prompt_builder/`를 추가했다. 제품 코드, 테스트, 배포는 바뀌지 않았다.
-- 검증: 프롬프트 생성 1,260개 조합에서 빈 값과 중간점 없음. 헤드리스 Chromium으로 10단계 이동, 5개 스타일 미리보기 렌더링, 길게 누르기 충전, 복사, JSON 내보내기와 불러오기, 새로고침 후 유지, 390px 모바일 가로 넘침 0을 확인했고 페이지 오류는 0건이다. 프롬프트가 지시하는 Flutter와 Flame API는 점검용 Dart 파일로 `dart analyze` 오류 없이 확인했다.
-- 한계: 이 도구로 만든 프롬프트를 실제 AI에 넣어 Dart 이펙트를 생성하고 실행해 보는 끝단 확인은 하지 않았다. 점검 스크립트와 스크린샷은 `tmp/fx-prompt-builder/`(Git 제외)에 있다. 커밋하지 않았다.
+- 사용자 요청으로 X 글(도트 마법사 프롬프트)과 Claude 공유 대화를 분석해, 단계별 선택으로 Flutter용 이펙트 제작 프롬프트를 만드는 정적 웹 도구 `tools/fx_prompt_builder/`를 만들었다. 첫 버전은 다른 세션 커밋 `e1a75c5`에 함께 들어갔다.
+- 01:29 개편(미커밋): 사용자 피드백에 따라 카드 보상 공개와 Stone Match 전용 맥락을 빼고 범용 구조로 바꿨다. 이펙트 17종(마법과 액션, 퍼즐, 공통), 발동 방식 11가지, 범위 9가지, 시점 4가지. 기본 스타일은 도트, 데모 장면은 마법사 글 구성. 퍼즐 이펙트는 Bejeweled(`tmp/bejeweled-research/`), 캔디크러시 공식 도움말, Tetris Effect 자료를 참고했다. 결과 코드는 source, target, hits, unit 좌표만 받는다.
+- 검증: 프롬프트 생성 3,114개 조합에서 빈 값과 중간점 없음. 헤드리스 Chromium으로 11단계 이동, 17개 이펙트 전부 최상위 단계 재생(영향 지점 전부 발동), 발동과 범위와 시점 교차 조합, 길게 누르기 충전, 복사, JSON 내보내기와 불러오기, 새로고침 후 유지, 390px 모바일 가로 넘침 0을 확인했고 페이지 오류는 0건이다. 프롬프트가 지시하는 Flutter와 Flame API(새 `play` 시그니처, `onHit`, `GlobalKey`, `Overlay` 포함)는 점검용 Dart 파일로 `dart analyze` 문제 0건을 확인했다. 이 파일이 전체 `flutter analyze`에 남기던 info 1건도 없앴다.
+- 한계: 이 도구로 만든 프롬프트를 실제 AI에 넣어 Dart 이펙트를 생성하고 실행해 보는 끝단 확인은 하지 않았다. 점검 스크립트와 스크린샷은 `tmp/fx-prompt-builder/`(Git 제외). 제품 코드는 바꾸지 않았다.

@@ -2,9 +2,11 @@
 
 > 다음 작업자가 즉시 시작할 정보만 둔다. 프로젝트 전체 상태는 PROJECT_STATUS.md에 둔다.
 
-Updated: 2026-09-24 00:34 KST
+Updated: 2026-09-24 01:09 KST
 
 ## Current State
+2026-09-24 01:09: Supabase 원격 프로젝트 `stone-match`(ref `irbdozfwptserldnisew`, 서울)에 마이그레이션 2개와 인증 설정을 적용했고, 로컬 웹 빌드로 실제 백엔드 검수를 마쳤다(PLAN-006 Step 2~3). 시험 데이터는 지웠다. 배포는 하지 않았다.
+
 2026-09-24: PLAN-006 로컬 코드의 독립 검수와 두 차례 수정, 보존 마이그레이션 초안, 개인정보처리방침 초안을 마쳤다. 원격 적용은 여전히 Supabase 연결 대기다.
 
 2026-09-23: Supabase 기반 구축(PLAN-006) 1단계 코드와 스키마를 구현했다. 원격 프로젝트 적용은 Codex Supabase 앱 연결 대기다. 아래 게임 방향 기획 상태도 그대로 유효하다.
@@ -47,7 +49,7 @@ Updated: 2026-09-24 00:34 KST
 5. 이전 문서는 archive/docs/에 있음. 삭제 여부는 별도 결정
 6. STALE AIT 재검증과 PLAN-001 실측은 이관 밖 별도 작업
 7. 게임 방향 개편: 사용자 결정(D1~D10) 후 PLAN-005 Step 1a부터. 결정 전 특수 보석 규칙 변경 금지
-8. Supabase: 연결 복구 후 PLAN-006 Step 2~3. 이 파일 하단 "Supabase 기반 구축 인계" 참고
+8. Supabase: PLAN-006 Step 4(NAS 배포, 앱인토스 확인). 이 파일 하단 "Supabase 기반 구축 인계" 참고
 
 ## Blocked
 - PLAN-002, TASK-004: 외부 값/정책
@@ -58,7 +60,7 @@ Updated: 2026-09-24 00:34 KST
 - ISSUE-004: 인벤토리 비영속 (2차 허용)
 - ISSUE-005: 빈 App Store ID
 - ISSUE-006: 외부 지표 없음(미출시), GA4와 Firebase와 내부 로거 미연동. PLAN-005 Step 2
-- PLAN-006: Supabase 원격 미적용. `config/supabase.json` 없는 빌드는 랭킹 연결 불가
+- PLAN-006: 원격 적용과 검수 완료, 배포 전. 현재 NAS와 앱인토스 배포본은 여전히 NAS 랭킹을 쓴다. `config/supabase.json` 없는 빌드는 랭킹 연결 불가
 
 ## Changed Contracts
 - PLAN-004: `ParticleBurst`/`ParticlePool` 삭제, `BoardJuiceLayer`로 대체. `hasActiveVisualEffects`는 유휴 반짝임을 포함하지 않음. HUD 점수는 롤업 표시값이고 저장/랭킹은 `board.score` 그대로. F1~T6 통합과 T2 입력 회귀 및 독립 리뷰 P2 수정 완료
@@ -195,18 +197,19 @@ Updated: 2026-09-24 00:34 KST
 
 ## Supabase 기반 구축 인계 (2026-09-23 23:47 KST)
 
-- PLAN-006 Step 1(로컬 준비)은 끝났고 Step 2(원격 프로젝트)는 Supabase 연결 대기다. 연결되면 `list_organizations`로 대상 조직(대시보드 URL의 org id)을 확인하고, 프로젝트 `stone-match`를 서울 지역에 만들기 전에 비용을 조회한다. 비용이 있으면 사용자 확인을 받는다.
-- 마이그레이션은 `20260923142920_stone_match_init.sql`, `20260924090000_stone_match_retention.sql` 순서로 그대로 적용한다. 적용 뒤 `get_advisors`, 익명 로그인 활성화(이메일 가입은 끔), 공개용 키로 `config/supabase.json` 작성, PLAN-006 Step 3 스모크와 RLS 음성 확인, `cron.job` 2건 확인 순서다. 스모크 랭킹 기록은 확인 직후 지운다.
-- 원격 확인 추가 항목: anon의 `has_function_privilege`가 `get_ranking`만 true인지, 403과 401 상태 코드 매핑, 익명 가입 빈도 제한 값. 브라우저 두 탭에서 사용자 ID가 유지되는지.
+- 2026-09-24 갱신: 원격 연결은 Supabase CLI 로그인으로 한다(Codex Supabase 앱은 조직을 보지 못함). 저장소는 `supabase link`로 `irbdozfwptserldnisew`에 연결돼 있다(`supabase/.temp`, Git 제외). SQL 확인은 `supabase db query --linked`, 권고는 `supabase db advisors --linked`. DB 비밀번호는 `tmp/supabase-remote/db-password`.
+- 원격 인증 설정을 바꿀 때는 저장소 `supabase/config.toml`(로컬 개발용 값 포함)을 밀지 않는다. `tmp/supabase-remote/push/supabase/config.toml`처럼 바꿀 값만 적은 파일로 `supabase config diff` 뒤 `config push`한다.
+- 실제 백엔드 재검수: `flutter build web --release --wasm --base-href / --dart-define=STORE_CHANNEL=intoss --dart-define=INTOSS_AD_MODE=mock --dart-define-from-file=config/supabase.json -o tmp/local-verify/web-live`, `cd tmp/local-verify && DIR=web-live PORT=8766 node serve.js`, 다른 터미널에서 `BASE=http://127.0.0.1:8766 node s4_live.js`, `node s5_live_edge.js`. 끝나면 시험 사용자와 행을 SQL로 지운다.
+- 아직 확인하지 않은 것: 익명 가입 빈도 제한 값(원격 기본값 유지), 실기기와 앱인토스 WebView, pg_cron의 실제 새벽 실행(`cron.job_run_details`).
 - 검수 기록과 PGlite 하네스는 `tmp/orca-plan006/`(Git 제외)에 있다. `review/`, `recheck/`, `recheck2/` 보고서와 `pglite/run_fixed.mjs`, `recheck/sql_recheck_fixed.mjs`, `retention/test.mjs`로 SQL을 다시 확인할 수 있다.
 - 개인정보처리방침은 `docs/release/PRIVACY_POLICY_DRAFT.md` 초안이다. 문의처, 광고 SDK 수집 항목, 보관 기간, 국외 이전 해석은 [확정 필요]다.
 - `config/supabase.json` 없이 만든 빌드는 랭킹이 연결 불가로 표시된다. 운영 앱인토스 빌드(`npm run build:intoss`)는 파일이 없으면 실패한다. 공모전 ZIP 스킬은 아직 config를 넣지 않는다.
 - NAS `ranking.php`는 새 빌드 배포 전까지 기존 배포본이 계속 쓴다. 폐기 시점은 사용자 결정 대기.
-- 제품 코드와 문서는 미커밋 상태다. 앞선 게임 방향 기획 문서 변경도 함께 미커밋이다.
+- 제품 코드와 문서는 `d102ee3`, `a13b121`, `e1a75c5`로 로컬 커밋됐고 push 전이다. 이 인계 갱신은 그 뒤의 미커밋 변경이다.
 
-## 이펙트 프롬프트 빌더 인계 (2026-09-24 00:05 KST)
+## 이펙트 프롬프트 빌더 인계 (2026-09-24 01:29 KST 갱신)
 
 - `tools/fx_prompt_builder/index.html`을 브라우저로 열어 쓴다. 구조와 참고 출처는 같은 폴더 `README.md`.
-- 수치를 바꾸려면 `data.js`의 `FX.derive` 표(강도별 입자 수, 섬광, 흔들림)와 `prompt.js`의 구성 요소 문구를 함께 고친다. 미리보기(`preview.js`)도 같은 값을 읽는다.
-- 재검증: `node tmp/fx-prompt-builder/smoke.js`(조합 생성), `node tmp/fx-prompt-builder/e2e.js`(브라우저, `playwright-core`와 사용자 캐시의 헤드리스 Chromium 필요).
-- 다른 세션의 Supabase 작업 파일과 겹치지 않는다. 미커밋 상태다.
+- 01:29 범용 개편은 미커밋이다. 첫 버전은 `e1a75c5`에 들어가 있다. 저장 키가 `fxPromptBuilder.v2`로 바뀌어 첫 버전의 브라우저 저장값은 읽지 않는다.
+- 이펙트 종류를 늘리려면 `data.js`의 `FX.EFFECTS`에 추천값 묶음을 추가한다. 새 발동 방식이나 범위는 `FX.DELIVERIES`, `FX.AREAS`와 `preview.js`의 `buildHits`, `hitTimes`, `drawDelivery`, `prompt.js`의 `deliveryText`, `areaText`를 함께 고친다.
+- 재검증: 저장소 루트에서 `node tmp/fx-prompt-builder/smoke.js`(조합 생성), `tmp/fx-prompt-builder`에서 `node e2e2.js`(브라우저, `playwright-core`와 사용자 캐시의 헤드리스 Chromium 필요).
