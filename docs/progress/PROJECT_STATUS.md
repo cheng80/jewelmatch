@@ -2,17 +2,18 @@
 
 > 프로젝트 전체의 NOW. 다음 작업자 인계 문장은 HANDOFF.md에 둔다. 구현 상태와 검증 상태를 섞지 않는다.
 
-Updated: 2026-09-24 05:40 KST
+Updated: 2026-09-24 05:55 KST
 
 ## Current Phase
 Phase 3 — Stabilization (Phase 4 출시 값은 대기)
-Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 반영했고 Step 4(일일 동일 보드, 주간 순위), Step 5(레벨 도전 스테이지)를 Orca 워커가 구현 중이다. 2026-09-24 사용자 결정: 앱 구조 개편 완료가 우선이고 앱인토스 빌드 확인과 광고(AdMob)는 그 뒤로 미룬다.
+Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 반영했고 Step 4(일일 동일 보드, 주간 순위), Step 5(레벨 도전 스테이지)도 main에 반영하고 NAS에 배포했다(`223303e`). PLAN-005에 남은 것은 시간 보상 T1(D7, 플레이테스트)과 아이템, 이어하기 이벤트다. 2026-09-24 사용자 결정: 앱 구조 개편 완료가 우선이고 앱인토스 빌드 확인과 광고(AdMob)는 그 뒤로 미룬다.
 이관 단계: 대체 가능(REPLACEABLE). 2026-08-23 표준 팩만으로 대체 가능성 점검 12항 통과. 정본은 docs/. 이전 문서는 archive/docs/. 릴리즈 준비와 분리.
 
 ## Active Plan
 - `PLAN-001` 모바일 웹 오디오/FPS 회귀 — IN_PROGRESS
 - `PLAN-004` 보드 연출 보강 — IN_PROGRESS (F1, T1, T2, T3, T4a, T4b, T5, T6 통합 완료, T6 및 독립 리뷰 수정 완료, 합본 HUD 잔상 가설은 픽셀 진단으로 기각, 기존 confetti 겹침)
-- `PLAN-005` Bejeweled Blitz 계승 게임 방향 개편 — IN_PROGRESS (ADR-008 Accepted. Step 1a, 1b, 1c, 3 main 반영. Step 2 이벤트 연결, Step 4, Step 5 진행 중. D7은 플레이테스트 대기, D8, D9는 권장안으로 결정)
+- `PLAN-005` Bejeweled Blitz 계승 게임 방향 개편 — IN_PROGRESS (ADR-008 Accepted. Step 1a, 1b, 1c, 3, 4, 5 main 반영. Step 2 아이템과 이어하기 이벤트, 1d(D7 플레이테스트) 남음. D8, D9 권장안 결정)
+- `PLAN-007` 일일 동일 보드와 주간 순위 — DONE
 - `PLAN-006` Supabase 기반 구축 — IN_PROGRESS (Step 1~3 완료, Step 4 NAS 배포 완료(`b71ba31`). 앱인토스 QR 확인은 사용자 결정으로 보류. 남은 것: 익명 사용자 정리 정책, Supabase 요금제와 일시정지 정책)
 
 ## Current Tasks
@@ -36,8 +37,10 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 - [x] TASK-005b D1~D6 권장안 승인(2026-09-24). D10 해당 없음. D8, D9는 막히면 권장안이라는 사용자 승인에 따라 권장안으로 결정. D7은 플레이테스트 대기
 - [x] TASK-005c Step 1a 하이퍼 교환 H1~H3(`f343fad`), 1b Speed Bonus(`936dfee`), 1c Last Hurrah(`a2d78d2`), Step 3 기록과 장기 목표(`baaff7c`), 통합 검수 R-1~R-10 수정(`f8a209d`, `b71ba31`)
 - [ ] TASK-005d Step 2 남은 이벤트(아이템, 이어하기) 연결과 플레이테스트 기록 양식
-- [ ] TASK-005e Step 4 일일 동일 보드와 주간 순위(PLAN-007, Supabase 마이그레이션) — Orca 워커 구현 중
-- [ ] TASK-005f Step 5 레벨 도전 스테이지 — Orca 워커 구현 중
+- [x] TASK-005e Step 4 일일 동일 보드와 주간 순위(PLAN-007, `4435ecb`, 조회 계획 보강 `70cad69`, 원격 적용)
+- [x] TASK-005f Step 5 레벨 도전 스테이지(`87f50ca`, BR-043)
+- [x] TASK-005g 독립 검수 R3(P0 0, P1 1, P2 1, P3 7) 반영(`f2a26ae`, `70cad69`), 비활성 익명 사용자 정리(`cef0acc`)
+- [ ] TASK-001g ISSUE-007 멀티스레드 skwasm 같은 탭 재로드 멈춤 대응
 - [x] TASK-006a Supabase 스키마, 익명 로그인 게이트웨이, 랭킹 이전, 보충 광고 서버 확인, 이벤트 로거 구현과 테스트
 - [x] TASK-006b Supabase 원격 프로젝트 준비, 마이그레이션 적용, 원격 스모크, NAS 배포(`b71ba31`)
 
@@ -56,6 +59,7 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 - ISSUE-003: refill 3회 → Supabase 익명 사용자 기준으로 원격 적용과 NAS 배포 완료(PLAN-006). 저장소 삭제나 재설치 시 새 사용자라 제한이 새로 시작된다(BR-103)
 - ISSUE-004: RunInventory 비영속 → PLAN-003 (2차 범위로는 허용)
 - ISSUE-005: 빈 App Store ID
+- ISSUE-007: 같은 탭에서 게임 문서를 다시 불러오면 멀티스레드 skwasm(격리 헤더 있음)이 "memory access out of bounds", "table index is out of bounds", "divide by zero"로 멈춘다. `b71ba31`에서도 재현되는 기존 문제다. 새 Chrome 첫 로드는 NAS 3회와 로컬 10회 모두 정상. 단일 스레드 skwasm(격리 헤더 없음)은 같은 탭 재로드 4회 모두 정상이지만 FPS가 약 89에서 45로 떨어진다 → PLAN-001
 - ISSUE-006: 미출시로 외부 사용 지표 없음. GA4, Firebase Analytics 미연동. 내부 이벤트 로거는 Supabase `game_events`로 동작한다. 시험 데이터는 매 검증 뒤 지워 현재 수집 데이터는 없다 → PLAN-006, PLAN-005 Step 2
 
 ## Implementation Status
@@ -92,11 +96,15 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 | Supabase 원격 스모크 재실행(최종 점수 비교) | PASS | RECHECKED | 2026-09-24 05:30 KST | `b71ba31` | CURRENT | `s4_live.js`를 판 도중 점수 대신 제출한 최종 점수와 TimeUp 점수로 비교하게 고친 뒤 26/26 PASS. 시험 데이터 정리 후 사용자, 랭킹, 이벤트, 광고 기록 0건 |
 | Android NAS PLAN-005 1차 FPS | PASS | RECHECKED | 2026-09-24 04:50 KST | NAS `b71ba31` | CURRENT | SM-A245N, Android 16, Chrome 153, 90Hz. CDP rAF 20초 플레이 평균 89fps, p95 11.2ms, Last Hurrah 중 약 88fps, 랭킹 제출 200 1회. 장시간, 토스 WebView, 실제 광고 SDK는 미검증 |
 | NAS 배포와 캐시 헤더 | PASS | RECHECKED | 2026-09-24 04:45 KST | `b71ba31` | CURRENT | `.htaccess`에 html, js, mjs, wasm, json `Cache-Control: no-cache`. 이전 캐시 파일이 섞여 skwasm이 "function signature mismatch"로 멈추던 문제를 폰에서 재현 뒤 해결 |
+| PLAN-005 Step 4, 5 analyze / test / wasm | PASS | RECHECKED | 2026-09-24 05:30 KST | `f2a26ae` | CURRENT | `flutter analyze lib test` 0건, 전체 392 tests PASS, `--wasm` 릴리즈 빌드 exit 0 |
+| PLAN-005 Step 4, 5 로컬 웹 + 실제 백엔드 | PASS | RECHECKED | 2026-09-24 05:40 KST | `f2a26ae` | CURRENT | `s10_plan005b.js` 20/20(두 사용자 같은 시작 보드, 같은 이동 4번 뒤 같은 보드와 점수, 지난주 기록 제외 순위, 레벨 전체 기간, 도전 스테이지 판정과 클리어, `daily_key`, `challenge` 이벤트). 회귀 `s8_plan005.js` 14/14, `s4_live.js` 26/26. HUD 스크린샷 확인 |
+| 주간 랭킹 SQL과 익명 사용자 정리 | PASS | RECHECKED | 2026-09-24 05:35 KST | 마이그레이션 4개 원격 적용 | CURRENT | PGlite 주간 27/27, 회귀 60/60, 강제 generic 계획에서 time 조회 주간 인덱스 버퍼 4. 익명 정리는 원격 트랜잭션 안에서 가짜 사용자 5명으로 확인 후 되돌림. advisor는 기존 익명 로그인 경고만 |
+| Android NAS PLAN-005 Step 4, 5 | PARTIAL | RECHECKED | 2026-09-24 05:50 KST | NAS `223303e` | CURRENT | 폰 시작 보드가 데스크톱과 같음, 20초 평균 89.3~89.6fps, p95 11.2ms, 주간 제출 200 1회, 도전 스테이지 상태 정상. 같은 탭 재로드 뒤 skwasm 멈춤(ISSUE-007, 기존 문제) 확인 |
 
 ## Next
-1. PLAN-005 Step 4(일일 동일 보드, 주간 순위)와 Step 5(레벨 도전 스테이지) 워커 결과 검토, 독립 검수, main 병합, 주간 순위 마이그레이션 원격 적용, 로컬 웹과 실제 백엔드 검증, NAS 배포
-2. PLAN-005 Step 2: 아이템과 이어하기 이벤트 연결, 플레이테스트 기록 양식. D7(시간 보상 T1)은 사용자 플레이 판단 필요
-3. PLAN-006 남은 항목: 익명 사용자 정리(관리 API), Supabase 요금제와 일시정지 정책
+1. PLAN-005 Step 2: 아이템과 이어하기 이벤트 연결. 플레이테스트 기록(양식 준비됨)과 D7(시간 보상 T1)은 사용자 플레이 판단 필요
+2. ISSUE-007(PLAN-001): 멀티스레드 skwasm 같은 탭 재로드 멈춤. 권장 순서는 Flutter 업그레이드 뒤 재현 확인, 그래도 나면 Flutter 이슈 보고. 임시 대안(격리 헤더 제거)은 FPS가 절반이라 적용하지 않았다
+3. PLAN-006: Supabase 요금제 결정(Free는 활동이 적으면 일시 중지)
 4. 구조 개편 뒤: 앱인토스 QR 확인(토스 앱이 있는 폰 필요), Play와 App Store용 Google AdMob 연결(ADR-003 개정). 웹(NAS)은 테스트 전용이라 광고 없음
 5. 출시 값(운영 광고 그룹, Apple ID, URL)이 오면 TASK-004. PLAN-003 영속 인벤토리는 코인 경제 전 단계로 Phase 6
 6. PLAN-001 장시간 모바일 웹 오디오/FPS 측정은 별도 승인 작업
@@ -173,4 +181,14 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 - 앱인토스: `.ait` 테스트 빌드를 올렸고(deploymentId `01a0cf90-3f74-7371-9055-43700af3daae`) QR 확인은 보류했다.
 - 검증: 위 표의 PLAN-005 1차 행들. 원격 시험 데이터는 모두 지웠다.
 - 이어서 Step 4(C1)와 Step 5(V1)를 Orca 워커 2개(`plan005b-daily`, `plan005b-challenge`)가 별도 워크트리에서 구현 중이다. 결정: D8은 앱인토스 공식 리더보드를 레벨 완료 수로 유지하고 주간 타임 순위는 Supabase가 맡는다. D9는 이동 제한 없이 4의 배수 레벨에 시간 제한 도전 목표(색 보석, 특수 보석 발동, 보석 수)를 섞는다.
+
+## PLAN-005 구조 개편 2차 (2026-09-24 05:55 KST, Orca 오케스트레이션)
+
+- Step 4(C1): 타임 모드는 KST 날짜 시드로 같은 날 같은 시작 보드와 난수 흐름을 쓴다(BR-053). 타임 랭킹은 KST 월요일 0시 기준 주간(BR-095)이며 기록은 지우지 않는다. D8은 앱인토스 리더보드를 레벨 완료 수로 유지. [PLAN-007](../plans/PLAN-007-daily-board-weekly-ranking.md)
+- Step 5(V1): 4의 배수 레벨은 색 보석, 특수 발동, 보석 수 목표로 클리어하는 도전 스테이지(BR-043). D9는 이동 제한 미혼합.
+- PLAN-006: 90일 비활성 익명 사용자 매일 정리(pg_cron, KST 04:20) 원격 적용.
+- 진행: Orca 워커 3개(구현 Opus high와 medium, 독립 검수 Opus high). 검수 P1(NoMoves 새 보드가 판 통계를 지움, 기존 타임 모드 결과 통계에도 영향)과 P2(PG17에서 주간 인덱스 미사용)를 고쳤고, P3는 코드 수정(색 목표 순환, Last Hurrah 난수 날짜 시드, 다시 하기 때 1위 재조회)과 명세 기록(비율 보상 없음, 무제한 재도전, 제출 시각 기준 주)으로 처리했다. QA 훅이 릴리즈에서 `?qaPerf=1`로 열리는 기존 패턴(P3-3)은 앱인토스 WebView에서 URL을 바꾸기 어려워 유지했다.
+- 배포와 정리: main `223303e` 푸시, NAS 배포, 워커 해제, 워크트리와 브랜치 정리, 원격 시험 데이터 0건.
+- 폰 검증 중 ISSUE-007을 찾았다. 같은 조건의 A/B로 `b71ba31`에서도 재현돼 이번 변경의 회귀가 아님을 확인했다.
+- 시험 데이터를 지운 직후 1시간 안에는 폰에 남은 옛 세션이 저장을 409로 거절받는다(지워진 사용자의 토큰이 아직 유효). 운영의 90일 정리는 토큰이 만료된 뒤라 새 가입으로 넘어간다. 폰 검증 전에는 `flutter.supabase_session`을 지운다.
 
