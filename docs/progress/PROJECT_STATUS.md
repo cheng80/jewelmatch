@@ -92,7 +92,8 @@ Phase 5 게임 방향 개편은 기획(제안) 단계다. 코드 변경 없음.
 5. STALE AIT를 현재 리비전으로 볼지는 별도 Task. 이관 완료 조건이 아님
 6. 출시 값이 오면 TASK-004. 식별 정책이 오면 PLAN-002를 READY
 7. 게임 방향 개편: D1~D10 결정 후 PLAN-005 Step 1a(하이퍼 큐브 교환)부터. 결정 전에는 특수 보석 규칙을 바꾸지 않는다
-8. Supabase: PLAN-006 Step 4(새 빌드 NAS 배포, 앱인토스 테스트 빌드와 WebView에서 `*.supabase.co` 호출 확인, `ranking.php` 폐기 시점). 보충 한도 도달 시 "광고 준비 중" 문구 개선 검토
+8. Supabase: PLAN-006 Step 4(새 빌드 NAS 배포, 앱인토스 테스트 빌드와 WebView에서 `*.supabase.co` 호출 확인, `ranking.php` 폐기 시점)
+9. 광고: 진행 순서는 구조 작업 먼저, 광고 나중(2026-09-24 사용자 결정, ADR-003 개정). 웹(NAS)은 테스트 전용이라 광고 없음. Play, App Store는 이후 Google AdMob
 
 - 합본 HUD 최종 진단(16:08 KST): 무손실 PNG의 추가 밝은 glyph 픽셀 0, 변한 픽셀은 confetti 색 합성으로 설명됐다. pause 150프레임 동안 game render/update 증가 0. 제품 소스 변경 없이 가설 기각. 근거: `_fx_orchestration/reports/T6_integrated_visual_fix.md`.
 

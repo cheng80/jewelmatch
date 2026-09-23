@@ -50,6 +50,7 @@ Updated: 2026-09-24 01:09 KST
 6. STALE AIT 재검증과 PLAN-001 실측은 이관 밖 별도 작업
 7. 게임 방향 개편: 사용자 결정(D1~D10) 후 PLAN-005 Step 1a부터. 결정 전 특수 보석 규칙 변경 금지
 8. Supabase: PLAN-006 Step 4(NAS 배포, 앱인토스 확인). 이 파일 하단 "Supabase 기반 구축 인계" 참고
+9. 광고는 구조 작업을 끝낸 뒤 손본다(ADR-003 개정). 웹(NAS)은 테스트 전용이라 광고를 넣지 않고, Play와 App Store는 이후 Google AdMob을 `AdService` 구현으로 붙인다. 그 전에는 광고 SDK를 추가하지 않는다
 
 ## Blocked
 - PLAN-002, TASK-004: 외부 값/정책

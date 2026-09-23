@@ -19,6 +19,7 @@
 ## Phase 4 — Release
 - [x] 스토어 문서 초안, 채널 define, 광고 정책, 앱인토스 테스트 빌드
 - [ ] 운영 광고 그룹, Apple ID, 개인정보/지원 URL, flavor/서명
+- [ ] Play, App Store 광고: Google AdMob(ADR-003 개정). 계획된 구조 작업(PLAN-006 배포, PLAN-005 코어) 뒤 진행. 웹(NAS)은 테스트 전용이라 광고 없음
 - [ ] 광고 일일 제한 서버 영속 (Supabase 원격 적용과 검수 완료, 새 빌드 배포 대기. PLAN-006)
 - [ ] Supabase 기반 구축: 랭킹 이전, 원격 설정, 이벤트 로그 (원격 프로젝트 `stone-match` 적용과 검수 완료, NAS와 앱인토스 배포 대기. ADR-009, PLAN-006)
 
