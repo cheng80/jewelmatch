@@ -18,6 +18,7 @@ import '../../vm/ranking_notifier.dart';
 import '../../widgets/lumina_buttons.dart';
 import '../../widgets/lumina_overlay_card.dart';
 import '../../widgets/overlay_motion.dart';
+import '../records_view.dart';
 
 part 'time_up_overlay_sections.dart';
 

@@ -10,6 +10,7 @@ import 'package:stonematch/game/match_board_game.dart';
 import 'package:stonematch/services/ranking_service.dart';
 import 'package:stonematch/utils/storage_helper.dart';
 import 'package:stonematch/views/overlays/pause_menu_overlay.dart';
+import 'package:stonematch/widgets/overlay_motion.dart';
 import 'package:stonematch/vm/ranking_notifier.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -126,6 +127,10 @@ void main() {
 
     expect(router.routeInformationProvider.value.uri.path, '/');
     expect(find.text('title'), findsOneWidget);
+    // 나가기에는 결과 화면이 없어 기록 알림을 짧은 배너로 보인다.
+    expect(find.byType(AdResultBanner), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.byType(AdResultBanner), findsNothing);
   });
 }
 

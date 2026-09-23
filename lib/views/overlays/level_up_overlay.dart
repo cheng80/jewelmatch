@@ -10,6 +10,7 @@ import '../../widgets/lumina_buttons.dart';
 import '../../widgets/lumina_overlay_card.dart';
 import '../../widgets/overlay_motion.dart';
 import 'pause_menu_buttons.dart';
+import '../records_view.dart';
 
 class LevelUpOverlay extends StatelessWidget {
   const LevelUpOverlay({super.key, required this.game});
@@ -56,6 +57,7 @@ class LevelUpOverlay extends StatelessWidget {
               ),
             ),
           ],
+          RecordsUpdateNotice(update: game.latestRecordsUpdate, maxLines: 1),
           const SizedBox(height: 10),
           _StageRewardSummary(game: game),
           const SizedBox(height: 10),

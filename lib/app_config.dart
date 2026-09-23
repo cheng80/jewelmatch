@@ -97,6 +97,9 @@ class StorageKeys {
 
   /// Supabase 익명 로그인 세션(JSON). 비밀값이 아니지만 사용자 식별에 쓰이므로 로그에 남기지 않는다.
   static const String supabaseSession = 'supabase_session';
+
+  /// 누적 랭크, 배지, 기록 화면용 로컬 기록(JSON). 안의 `v`로 형식 버전을 구분한다.
+  static const String playerRecords = 'player_records';
 }
 
 /// 인앱 리뷰: TitleView에서 일정 기간(일) 경과 후 requestReview 호출.
@@ -110,4 +113,5 @@ class RoutePaths {
   static const String title = '/';
   static const String game = '/game';
   static const String setting = '/setting';
+  static const String records = '/records';
 }

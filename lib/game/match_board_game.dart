@@ -11,6 +11,8 @@ import '../resources/sound_manager.dart';
 import '../services/event_logger.dart';
 import '../services/game_settings.dart';
 import '../services/ranking_service.dart';
+import '../services/records/player_records.dart';
+import '../services/records/records_store.dart';
 import 'components/board_juice_layer.dart';
 import 'components/match_board_renderer.dart';
 import 'components/match_game_hud.dart';
@@ -380,6 +382,37 @@ class MatchBoardGame extends FlameGame {
       if (startedAt != null)
         'duration_s': DateTime.now().difference(startedAt).inSeconds,
     });
+    commitRecords(level: progressionLevel);
+  }
+
+  /// 직전 결과 화면에 보일 랭크 상승과 배지 획득. 없으면 null.
+  RecordsUpdate? latestRecordsUpdate;
+  RoundRecord? _recordsApplied;
+  int? _recordsAppliedAttempt;
+  MatchBoardGameStats? _recordsAppliedStats;
+
+  /// 판(레벨 모드는 스테이지) 결과를 로컬 누적 기록에 반영한다.
+  /// 광고 이어하기 뒤 같은 스테이지가 다시 끝나면 앞서 반영한 몫을 뺀다.
+  void commitRecords({required int level}) {
+    final stats = board.stats..finishMove();
+    final round = RoundRecord.fromStats(
+      stats,
+      mode: gameMode,
+      score: board.score,
+      maxCombo: board.maxCombo,
+      level: level,
+    );
+    final update = RecordsStore.apply(
+      round.minus(
+        _recordsApplied,
+        sameScore: _recordsAppliedAttempt == _stageAttemptSerial,
+        sameStats: identical(_recordsAppliedStats, stats),
+      ),
+    );
+    _recordsApplied = round;
+    _recordsAppliedAttempt = _stageAttemptSerial;
+    _recordsAppliedStats = stats;
+    latestRecordsUpdate = update.isEmpty ? null : update;
   }
 
   Future<void> _warmInitialEffectPools() {

@@ -37,6 +37,7 @@ extension MatchBoardResolution on MatchBoardLogic {
         _hyperPairScoreBudget = scoreBudget - lastRemovalScore;
       }
       score += lastRemovalScore;
+      stats.recordMoveScore(lastRemovalScore);
 
       final raw =
           (timedModeBonusBaseUnits +
@@ -220,6 +221,7 @@ extension MatchBoardResolution on MatchBoardLogic {
     combo = 0;
     _hyperPairScoreBudget = null;
     _hyperPairTimeBudget = null;
+    stats.finishMove();
 
     state = 'idle';
     selected = null;

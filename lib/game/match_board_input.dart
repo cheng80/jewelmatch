@@ -56,6 +56,8 @@ extension MatchBoardInput on MatchBoardLogic {
       }
     }
     resolveSpecialSwap(removalSet, <MatchChainItem>[], 'hyper combo');
+    // 기록 배지 annihilator는 하이퍼끼리 교환(H2)만 센다.
+    stats.recordHyperSwap();
     for (final gem in [a, b]) {
       stats.recordSpecialActivated(GemKind.hyper);
       final event = specialEffectEventForItem(

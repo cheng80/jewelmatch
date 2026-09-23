@@ -13,6 +13,7 @@ import '../../services/ranking_service.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../../vm/ranking_notifier.dart';
 import '../../widgets/lumina_overlay_card.dart';
+import '../records_view.dart';
 import 'pause_menu_buttons.dart';
 
 /// 일시 정지 메뉴. 액션만 남기고 사운드 설정은 설정 화면으로 분리한다.
@@ -118,6 +119,10 @@ class PauseMenuOverlay extends ConsumerWidget {
               if (!context.mounted) return;
               ref.read(rankingProvider.notifier).reset();
               game.logRoundEnd('exit');
+              RecordsUpdateNotice.messages(
+                context,
+                game.latestRecordsUpdate,
+              ).take(1).forEach((line) => showAdSuccessFeedback(context, line));
               context.go(RoutePaths.title);
             },
           ),

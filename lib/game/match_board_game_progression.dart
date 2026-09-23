@@ -31,6 +31,7 @@ extension MatchBoardGameProgression on MatchBoardGame {
     });
     progressionNextBoardBonusKinds = _bonusKindsForNextLevel();
     _grantStageRewardsOnce();
+    commitRecords(level: levelUpToLevel);
     GameSettings.saveBestProgressionRecordIfBetter(
       level: levelUpToLevel,
       score: board.score,

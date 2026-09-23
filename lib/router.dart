@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'app_config.dart';
 import 'game/jewel_game_mode.dart';
 import 'views/game_view.dart';
+import 'views/records_view.dart';
 import 'views/setting_view.dart';
 import 'views/title_view.dart';
 
@@ -60,6 +61,22 @@ final GoRouter appRouter = GoRouter(
         return CustomTransitionPage(
           key: state.pageKey,
           child: const SettingView(),
+          transitionDuration: const Duration(milliseconds: 350),
+          transitionsBuilder: (context, animation, _, child) =>
+              MediaQuery.disableAnimationsOf(context)
+              ? child
+              : RepaintBoundary(
+                  child: FadeTransition(opacity: animation, child: child),
+                ),
+        );
+      },
+    ),
+    GoRoute(
+      path: RoutePaths.records,
+      pageBuilder: (context, state) {
+        return CustomTransitionPage(
+          key: state.pageKey,
+          child: const RecordsView(),
           transitionDuration: const Duration(milliseconds: 350),
           transitionsBuilder: (context, animation, _, child) =>
               MediaQuery.disableAnimationsOf(context)

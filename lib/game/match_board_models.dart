@@ -136,6 +136,13 @@ class MatchBoardGameStats {
   int specialGemsActivated = 0;
   final Map<GemKind, int> specialActivatedByKind = _emptyKindCounts();
 
+  /// 하이퍼끼리 교환(H2) 횟수. 누적 기록의 배지 판정에 쓴다.
+  int hyperSwaps = 0;
+
+  /// 입력 한 번(스왑, 탭, 아이템)이 연쇄 끝까지 낸 점수 중 최고값.
+  int bestMoveScore = 0;
+  int _moveScore = 0;
+
   int get removedSpecialGems => removedByKind.entries
       .where((entry) => entry.key != GemKind.normal)
       .fold(0, (total, entry) => total + entry.value);
@@ -157,6 +164,20 @@ class MatchBoardGameStats {
     if (kind == GemKind.normal) return;
     specialGemsCreated++;
     specialCreatedByKind[kind] = (specialCreatedByKind[kind] ?? 0) + 1;
+  }
+
+  void recordHyperSwap() {
+    hyperSwaps++;
+  }
+
+  void recordMoveScore(int score) {
+    _moveScore += score;
+  }
+
+  /// 보드가 멈추면 호출한다. 진행 중이던 한 수의 점수를 확정한다.
+  void finishMove() {
+    if (_moveScore > bestMoveScore) bestMoveScore = _moveScore;
+    _moveScore = 0;
   }
 
   void recordSpecialActivated(GemKind kind) {

@@ -163,6 +163,7 @@ void main() {
       expect(board.state, 'removing');
       expect(board.stats.validSwaps, 1);
       expect(targets, [GemKind.normal]);
+      expect(board.stats.hyperSwaps, 0);
       // 하이퍼는 (3,4)로, 교환한 보석은 (3,3)으로 옮겨진 뒤 제거된다.
       expect(board.getGem(3, 4)!.kind, GemKind.hyper);
       final removal = board.pendingRemovalSet!;
@@ -249,6 +250,8 @@ void main() {
     expect(board.trySwap(3, 3, 3, 4), isTrue);
 
     expect(targets, [GemKind.hyper]);
+    // 기록 배지(annihilator)용 H2 누적.
+    expect(board.stats.hyperSwaps, 1);
     expect(board.pendingRemovalSet, hasLength(64));
     // 판 위 다른 특수 보석은 연쇄 없이 제거만 된다.
     expect(board.stats.specialActivatedByKind[GemKind.hyper], 2);

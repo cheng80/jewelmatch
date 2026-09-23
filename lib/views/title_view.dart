@@ -146,6 +146,7 @@ const List<String> _titleAssetPaths = [
   AssetPaths.modeIconSettings,
   'assets/images/${AssetPaths.obsidianIconButtonFrame}',
   'assets/images/${AssetPaths.obsidianTutorialIcon}',
+  'assets/images/${AssetPaths.obsidianRankingCrownIcon}',
 ];
 
 class _TitleContent extends StatelessWidget {
@@ -199,6 +200,15 @@ class _TitleContent extends StatelessWidget {
                   onPressed: () {
                     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
                     context.push(RoutePaths.setting);
+                  },
+                ),
+                const SizedBox(width: 8),
+                TitleIconButton(
+                  iconAssetPath: AssetPaths.obsidianRankingCrownIcon,
+                  semanticLabel: context.tr('recordsTitle'),
+                  onPressed: () {
+                    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                    context.push(RoutePaths.records);
                   },
                 ),
                 const SizedBox(width: 8),

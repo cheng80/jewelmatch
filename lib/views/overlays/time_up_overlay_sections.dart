@@ -170,6 +170,7 @@ class _TimeUpResultPanel extends StatelessWidget {
           ),
           _CountUpScore(score: game.board.score, highlight: isNewRecord),
           if (isNewRecord) const _NewRecordBadge(),
+          RecordsUpdateNotice(update: game.latestRecordsUpdate),
           if (game.hasTimedClock) ...[
             const SizedBox(height: 12),
             _RankStatusSection(onRetry: onRetryRanking),
