@@ -2,7 +2,7 @@
 
 > 프로젝트 전체의 NOW. 다음 작업자 인계 문장은 HANDOFF.md에 둔다. 구현 상태와 검증 상태를 섞지 않는다.
 
-Updated: 2026-09-24 05:55 KST
+Updated: 2026-09-24 08:10 KST
 
 ## Current Phase
 Phase 3 — Stabilization (Phase 4 출시 값은 대기)
@@ -14,6 +14,7 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 - `PLAN-004` 보드 연출 보강 — IN_PROGRESS (F1, T1, T2, T3, T4a, T4b, T5, T6 통합 완료, T6 및 독립 리뷰 수정 완료, 합본 HUD 잔상 가설은 픽셀 진단으로 기각, 기존 confetti 겹침)
 - `PLAN-005` Bejeweled Blitz 계승 게임 방향 개편 — IN_PROGRESS (ADR-008 Accepted. Step 1a, 1b, 1c, 3, 4, 5 main 반영. Step 2 아이템과 이어하기 이벤트, 1d(D7 플레이테스트) 남음. D8, D9 권장안 결정)
 - `PLAN-007` 일일 동일 보드와 주간 순위 — DONE
+- `PLAN-008` 실험 기능 일괄 도입과 스위치 — DONE(채택 판단은 플레이테스트 뒤)
 - `PLAN-006` Supabase 기반 구축 — IN_PROGRESS (Step 1~3 완료, Step 4 NAS 배포 완료(`b71ba31`). 앱인토스 QR 확인은 사용자 결정으로 보류. 남은 것: 익명 사용자 정리 정책, Supabase 요금제와 일시정지 정책)
 
 ## Current Tasks
@@ -40,6 +41,7 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 - [x] TASK-005e Step 4 일일 동일 보드와 주간 순위(PLAN-007, `4435ecb`, 조회 계획 보강 `70cad69`, 원격 적용)
 - [x] TASK-005f Step 5 레벨 도전 스테이지(`87f50ca`, BR-043)
 - [x] TASK-005g 독립 검수 R3(P0 0, P1 1, P2 1, P3 7) 반영(`f2a26ae`, `70cad69`), 비활성 익명 사용자 정리(`cef0acc`)
+- [x] TASK-008a 실험 스위치(T1, Time 보석, Multiplier 보석, 7색, Last Hurrah 콤보) 구현, 검수 R4 반영, 원격 적용
 - [ ] TASK-001g ISSUE-007 멀티스레드 skwasm 같은 탭 재로드 멈춤 대응
 - [x] TASK-006a Supabase 스키마, 익명 로그인 게이트웨이, 랭킹 이전, 보충 광고 서버 확인, 이벤트 로거 구현과 테스트
 - [x] TASK-006b Supabase 원격 프로젝트 준비, 마이그레이션 적용, 원격 스모크, NAS 배포(`b71ba31`)
@@ -100,11 +102,13 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 | PLAN-005 Step 4, 5 로컬 웹 + 실제 백엔드 | PASS | RECHECKED | 2026-09-24 05:40 KST | `f2a26ae` | CURRENT | `s10_plan005b.js` 20/20(두 사용자 같은 시작 보드, 같은 이동 4번 뒤 같은 보드와 점수, 지난주 기록 제외 순위, 레벨 전체 기간, 도전 스테이지 판정과 클리어, `daily_key`, `challenge` 이벤트). 회귀 `s8_plan005.js` 14/14, `s4_live.js` 26/26. HUD 스크린샷 확인 |
 | 주간 랭킹 SQL과 익명 사용자 정리 | PASS | RECHECKED | 2026-09-24 05:35 KST | 마이그레이션 4개 원격 적용 | CURRENT | PGlite 주간 27/27, 회귀 60/60, 강제 generic 계획에서 time 조회 주간 인덱스 버퍼 4. 익명 정리는 원격 트랜잭션 안에서 가짜 사용자 5명으로 확인 후 되돌림. advisor는 기존 익명 로그인 경고만 |
 | Android NAS PLAN-005 Step 4, 5 | PARTIAL | RECHECKED | 2026-09-24 05:50 KST | NAS `223303e` | CURRENT | 폰 시작 보드가 데스크톱과 같음, 20초 평균 89.3~89.6fps, p95 11.2ms, 주간 제출 200 1회, 도전 스테이지 상태 정상. 같은 탭 재로드 뒤 skwasm 멈춤(ISSUE-007, 기존 문제) 확인. 최종 `2889d7e` 배포 뒤 새 Chrome에서 8/8(이번 회차 평균 76.3fps, p95 22.4ms로 앞선 89fps보다 낮아 발열이나 첫 로드 영향 가능성, 장시간 측정은 PLAN-001) |
+| PLAN-008 실험 스위치 analyze / test / wasm | PASS | RECHECKED | 2026-09-24 08:00 KST | `4ed725e` | CURRENT | `flutter analyze lib test` 0건, 전체 431 tests PASS, `--wasm` 빌드 exit 0. 스위치 꺼짐은 8c703a6과 날짜 3개 × 120 입력에서 보드, 점수, 시간이 바이트 단위로 같음(검수 R4) |
+| PLAN-008 로컬 웹 + 실제 백엔드 | PASS | RECHECKED | 2026-09-24 08:05 KST | `4ed725e` | CURRENT | `s15_plan008.js` 13/13(원격 조회와 캐시, Time +5초, 배율 ×2, exp 이벤트, URL 판 랭킹 제외, exp=none 기존 동작, 레벨 7색, 타임 6색). 회귀 s10 20/20, s8 14/14, s14 7/7. 배지와 7색 스크린샷 확인 |
 
 ## Next
 1. 사용자 플레이테스트: PLAN-005 하단 양식으로 기록하고 D7(시간 보상 T1)을 정한다. 구조 작업 중 코드로 남은 항목은 없다
 2. ISSUE-007(PLAN-001): 멀티스레드 skwasm 같은 탭 재로드 멈춤. 권장 순서는 Flutter 업그레이드 뒤 재현 확인, 그래도 나면 Flutter 이슈 보고. 임시 대안(격리 헤더 제거)은 FPS가 절반이라 적용하지 않았다
-3. PLAN-008 실험 기능 일괄 도입(사용자가 지금 플레이테스트를 못 해 후보를 모두 넣고 스위치로 나중에 판단). Supabase는 무료 요금제 유지(2026-09-24 사용자 결정)
+3. 플레이테스트 때 PLAN-008 스위치를 켜고 끄며 비교한다(원격은 모두 켜짐, `?exp=none`으로 기존 동작). Supabase는 무료 요금제 유지(2026-09-24 사용자 결정)
 4. 구조 개편 뒤: 앱인토스 QR 확인(토스 앱이 있는 폰 필요), Play와 App Store용 Google AdMob 연결(ADR-003 개정). 웹(NAS)은 테스트 전용이라 광고 없음
 5. 출시 값(운영 광고 그룹, Apple ID, URL)이 오면 TASK-004. PLAN-003 영속 인벤토리는 코인 경제 전 단계로 Phase 6
 6. PLAN-001 장시간 모바일 웹 오디오/FPS 측정은 별도 승인 작업
@@ -191,4 +195,12 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 - 배포와 정리: main `223303e` 푸시, NAS 배포, 워커 해제, 워크트리와 브랜치 정리, 원격 시험 데이터 0건.
 - 폰 검증 중 ISSUE-007을 찾았다. 같은 조건의 A/B로 `b71ba31`에서도 재현돼 이번 변경의 회귀가 아님을 확인했다.
 - 시험 데이터를 지운 직후 1시간 안에는 폰에 남은 옛 세션이 저장을 409로 거절받는다(지워진 사용자의 토큰이 아직 유효). 운영의 90일 정리는 토큰이 만료된 뒤라 새 가입으로 넘어간다. 폰 검증 전에는 `flutter.supabase_session`을 지운다.
+
+## PLAN-008 실험 기능 일괄 도입 (2026-09-24 08:10 KST, Orca 오케스트레이션)
+
+- 사용자가 지금은 플레이테스트를 할 수 없어 넣을 수 있는 후보를 모두 넣고 나중에 판단하기로 했다. Supabase는 무료 요금제 유지, 앱인토스는 뒤로.
+- 스위치 5개: T1 시간 보상, Time 보석, Multiplier 보석, 레벨 7색, Last Hurrah 콤보 배수. 코드 기본값은 꺼짐, 원격 `app_config.gameplay`는 모두 켬(7색은 레벨 10부터). 웹은 `?exp=`로 덮어쓰며 그 판은 랭킹에 올리지 않는다. [PLAN-008](../plans/PLAN-008-experiment-flags.md)
+- 그림: Time, Multiplier 배지는 imagegen 내장 도구로 기존 보석 시트를 참고해 만들었다(`assets/images/sprites/Gem_Badges.png`, 원본 `assets/design/gem_badges/`). 숫자는 코드로 그린다. 시계는 Material Icons(Apache 2.0)도 후보였으나 보석 질감과 맞추려고 생성 배지를 썼다. 7번째 색은 시트에 있던 흰 돌이다.
+- Orca 워커 3개(gems Opus high, config Opus medium, 검수 Opus high). 검수 P1 2건(7번째 색이 주황으로 그려짐, URL 실험 판 랭킹 반영)과 P2 1건(T1 범위)을 고쳤다. 7번째 색 문제는 검수 전에 브라우저 스크린샷으로도 찾았다.
+- 코인 보석은 코인 경제가 없어 제외했다.
 

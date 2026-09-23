@@ -106,6 +106,8 @@
 | ad_refill_claims | 보충 광고 지급 기록(KST claim_date, item) | authenticated 본인 조회, 본인 삽입 |
 | game_events | 이벤트 로그 | authenticated 본인 삽입만 |
 
+실험 스위치(PLAN-008, 원격 적용): `app_config` 키 `gameplay`(`GameplayFlags.toJson` 형식, 마이그레이션 `20260924180000_stone_match_gameplay_flags.sql`). 앱은 시작 때 로컬 캐시(`gameplay_flags`)를 먼저 적용하고 `GET /rest/v1/app_config?key=eq.gameplay&select=value`(anon, `SupabaseGateway.select`)를 백그라운드로 받아 다음 새 판부터 쓴다. 웹 `?exp=`는 항상 마지막에 덮어쓰고 캐시에 남지 않으며, 그렇게 시작한 판은 랭킹 제출을 건너뛴다. 원격 값은 앱 시작 때 한 번만 받는다. `BoardGem.bonus`(`GemBonus`)는 `GemKind`와 별개 속성이고, 배지는 `Gem_Badges.png`(256×128) 한 장에서 보석 atlas 제출 뒤 drawImageRect로 그린다. 보석 atlas는 종류 7 × 색 7로 굽는다. QA: `__jewelMatchDebugPlaceBonus(kind, row, col)`, 상태 `scoreMultiplier`, `bonusGems`, `dailyKey`, `boardSignature`.
+
 보존(원격 적용): `supabase/migrations/20260924090000_stone_match_retention.sql`이 pg_cron으로 매일 `game_events` 90일, `ad_refill_claims` 35일 지난 행을 지운다(KST 04:00, 04:10). 익명 사용자 정리(원격 적용, 2026-09-24): `20260924140000_stone_match_anon_cleanup.sql`의 `private.purge_inactive_anonymous_users(p_inactive_days default 90, p_dry_run default false)`가 KST 04:20에 돈다. 가입, 마지막 로그인, 세션 생성과 갱신이 모두 90일보다 오래된 익명 사용자만 지운다(30일 미만 값은 30일로 보정). Supabase 익명 로그인 공식 문서의 SQL과 pg_cron 방식이다. 랭킹 행은 이름과 점수가 남고, 이벤트와 보충 기록은 함께 지워진다. 지워진 사용자의 클라이언트는 토큰 갱신이 거절되면 새 익명 사용자로 가입한다. 정리 함수는 모두 `private` 스키마에 있고 클라이언트 역할은 실행할 수 없다.
 
 ### Entity: Settings

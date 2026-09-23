@@ -100,7 +100,7 @@
 - BR-020: 생성 우선순위는 교차(star) > 6+(supernova) > 5(hyper) > 4(bomb)
 - BR-021: 특수 보석은 색 매치 토큰이 아니다
 - BR-022: 특수 보석 스왑 조합은 hyper 교환(H1, H2)만 활성. non-hyper 조합은 비활성
-- BR-023: H2 한 번과 이어지는 연쇄의 점수 합은 10000점, 시간 보상 합은 3초를 넘지 않는다(`MatchBoardLogic.hyperPairScoreCap`, `hyperPairTimeCapSeconds`). H2 연쇄가 끝나기 전 안정 구역에서 둔 수도 같은 상한에 포함된다(상한은 보드가 멈출 때 풀린다). 하이퍼는 반환하지 않는다
+- BR-023: H2 한 번과 이어지는 연쇄의 점수 합은 10000점, 시간 보상 합은 3초를 넘지 않는다(`MatchBoardLogic.hyperPairScoreCap`, `hyperPairTimeCapSeconds`). H2 연쇄가 끝나기 전 안정 구역에서 둔 수도 같은 상한에 포함된다(상한은 보드가 멈출 때 풀린다). 하이퍼는 반환하지 않는다. Multiplier 배율(실험 스위치)은 한도 계산 전에 곱하고, Time 보석 시간도 3초 한도에 포함한다
 
 **실패 / 예외**
 - 보드 밖 좌표는 무시한다
@@ -2349,6 +2349,13 @@ Stone Match는 Bejeweled Blitz식 60초 점수 경쟁을 지금 방식으로 다
 - 후보: 3개 기본 매치 단독 단계는 0초, 4개 이상 매치, 특수 보석 생성이나 발동, 콤보 2 이상 단계에만 시간 보상. 수치는 플레이테스트로 정한다. 채택은 D7.
 - 후속 후보 T2: Lightning식 Time 보석(큰 한 수에서 생성, 매치해야 시간 획득). 새 보석 이미지가 필요해 T1 결과를 본 뒤 검토한다.
 
+- 실험 스위치 구현(2026-09-24, PLAN-008): 아래 후보들은 모두 코드에 들어 있고 `GameplayFlags` 스위치로만 켜진다. 기본값은 꺼짐(기존 동작)이고, Supabase `app_config.gameplay`나 웹 URL `?exp=`로 켜고 끈다. URL로 바꾼 판은 랭킹에 올리지 않는다. 판마다 `round_start`, `round_end`에 `exp`(예: `t1,tg,mg,c7:10`)가 남아 켠 판과 끈 판을 나눠 볼 수 있다. 채택 여부는 D7 플레이테스트로 정한다.
+  - T1(`time_reward_t1`, URL `t1`, 타임 모드): 3개짜리 매치 하나만 있는 콤보 1 단계(특수 생성과 발동 없음)는 시간 보상 0초. 떨어진 3개 매치 두 개가 함께 지워지는 단계와 그 밖의 단계는 BR-050 그대로. 프리즘 아이템이 만든 매치 단계도 같은 규칙을 따른다.
+  - T2 Time 보석(`time_gem`, URL `tg`, 타임 모드): 유저 스왑 한 수(연쇄 포함, 보드가 멈출 때까지)가 10개 이상 지우면 속성 없는 일반 보석 하나가 Time 보석이 된다(보드 난수, 보드 최대 2개). 어떤 이유로든 지우면 +5초(90초 상한, H2 흐름은 BR-023 3초 한도에 포함, Last Hurrah 중 0초). 특수 보석 재료가 되면 속성은 사라지고 시간은 준다. 스왑과 낙하, 운명 섞기에서는 속성이 보석을 따라가고, NoMoves 셔플과 새 보드는 개수를 새 보석으로 옮긴다. 그림은 `Gem_Badges.png`의 시계 배지와 "+5".
+  - Multiplier 보석(`multiplier_gem`, URL `mg`, 타임 모드, Blitz식): 판 점수 배율 m은 1에서 시작해 최대 8. 한 수가 12 + 4 × (m - 1)개 이상 지우고 보드에 Multiplier 보석이 없으면 생긴다(지우면 얻는 배율 ×(m + 1) 표시). 지우면 m + 1이고 그다음 제거 점수부터 BR-011 결과(특수 보너스 포함), 하이퍼, H2, Last Hurrah 보드 점수에 곱한다. Speed Bonus에는 곱하지 않는다. 같은 수에 Time 조건도 맞으면 Multiplier를 먼저 정하고 다른 보석에 Time을 붙인다. 코인 보상은 코인 경제가 없어 넣지 않았다.
+  - 7색(`seventh_color_from_level`, URL `c7:N`, 레벨 모드): 새 판(다음 레벨, 다시 하기)을 만들 때 레벨이 N 이상이면 보석 7색(시트의 흰 돌). NoMoves 새 보드는 같은 판이라 색 수 유지. 타임 모드와 무한 모드는 항상 6색(일일 보드 불변). 도전 스테이지 색 목표는 스위치와 무관하게 6색 기준이다.
+  - Last Hurrah 콤보 배수(`last_hurrah_combo_multiplier`, URL `nolhc`로 끔): 기본 켜짐(지금 동작).
+
 ### 6-6. 기록과 장기 목표 (R1)
 
 - 누적 랭크: 모든 모드의 판 점수를 누적해 랭크가 오른다(Bejeweled 3는 131단계). 단계 수와 곡선은 플레이테스트로 정한다. 시작값은 50단계, 랭크 n 도달 누적 점수 5000 × (n² − 1)(랭크 2는 15,000점, 랭크 10은 495,000점, 최고 랭크 50은 12,495,000점)이다. 타임 모드 평균 판 점수를 레벨 1 목표와 같은 약 7,500~8,000점으로 보고 첫 승급이 약 2판이 되게 했다. 조정은 `CumulativeRank.unit` 하나로 한다. 기존 `JewelRankProgression`은 판 안의 레벨 목표 계산용이므로 이름과 역할이 섞이지 않게 별도 모델로 둔다.
@@ -2437,6 +2444,7 @@ Stone Match는 Bejeweled Blitz식 60초 점수 경쟁을 지금 방식으로 다
 
 - 3.5차 내부 이벤트 로거를 먼저 만들고, 외부 SDK는 기존 "GA/Firebase 전환 기준"을 따른다.
 - 기존 필수 이벤트에 추가할 후보: `mode_start`(mode), `mode_end`(mode, score, duration, reason), `mode_retry`(mode), `hyper_swap`(target_kind), `speed_bonus_peak`(max_tier), `last_hurrah`(specials_count, score_added), `badge_earned`(badge, tier), `rank_up`(rank).
+- 실험 스위치(PLAN-008): `round_start`, `round_end`에 `exp`. 스위치가 켜진 타임 판의 `round_end`에 `time_gems`(Last Hurrah 중 지운 것 포함), `time_gem_seconds`(90초 상한과 H2 한도 뒤 실제 얻은 정수 초), `max_multiplier`. URL 실험 판의 랭킹은 `ranking_submit`(ok false, failure `experiment_url`)로 남는다.
 - 연결 완료(2026-09-24): `hyper_swap`(target_kind), `speed_bonus_peak`(max_tier 0~9, total_bonus, 타임 모드 round_end 직전 1회), `last_hurrah`(specials_count, score_added, 마무리가 실제로 돈 판만), `badge_earned`(badge, tier), `rank_up`(rank). round_end는 마무리 뒤 최종 점수로 한 번이며, 일시정지 다시 하기는 reason `restart`로 남는다. 타임 모드 `round_start`는 `daily_key`(YYYY-MM-DD)를, 도전 스테이지의 `level_clear`는 `challenge`(color, special, gems)를 함께 보낸다.
 - 플레이테스트 확인 항목(검수 R-11): H2 뒤 판 전체 리필처럼 연쇄가 3.5초 넘게 이어지면 Speed Bonus 체인이 끊길 수 있다. BR-052 정의와는 맞으므로 체감을 보고 창 길이나 정지 조건을 조정한다.
 - 볼 질문: 모드별 시작 비율, 타임 모드 연속 판 수, 다음 날 재방문, 무한 모드 사용 비율과 배너 노출, 레벨 모드 실패 지점과 이어하기 사용률.

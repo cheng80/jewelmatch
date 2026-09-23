@@ -3,7 +3,7 @@
 > 프로젝트의 큰 Phase/Milestone만 기록한다. 상세 구현 계획은 `../plans/PLAN-xxx.md`로 분리한다. 현재 Task는 `PROJECT_STATUS.md`에서 관리한다.
 
 작성 기준일: 2026-08-23
-갱신: 2026-09-24 05:55 KST (PLAN-005 Step 4, 5 반영, 앱인토스와 광고는 구조 개편 뒤)
+갱신: 2026-09-24 08:10 KST (PLAN-008 실험 스위치 반영, 앱인토스와 광고는 구조 개편 뒤)
 
 ## Phase 1 — Foundation
 - [x] Flutter+Flame 8×8 코어, 타이틀/게임/설정, 심플+타임, 웹 빌드
@@ -25,7 +25,7 @@
 
 ## Phase 5 — Gameplay Direction (ADR-008 Accepted, PLAN-005 IN_PROGRESS)
 - [ ] 방향 승인과 미결정 사항 D1~D10 결정 (D1~D6 승인, D8, D9 권장안 결정, D10 해당 없음, D7은 플레이테스트 뒤)
-- [ ] 두 타이머 모드 공통 60초 코어: 하이퍼 큐브 교환, Speed Bonus, Last Hurrah 완료. 시간 보상 조정(D7) 대기
+- [ ] 두 타이머 모드 공통 60초 코어: 하이퍼 큐브 교환, Speed Bonus, Last Hurrah 완료. 시간 보상 T1, Time 보석, Multiplier 보석은 스위치로 구현(PLAN-008), 채택은 D7 플레이테스트 뒤
 - [ ] 내부 이벤트 로거와 플레이테스트 기록
 - [x] 재화 없는 장기 목표: 누적 랭크, 배지, 기록 화면
 - [x] 타임 모드 경쟁 형식(일일 동일 보드, 주간 순위, PLAN-007), 레벨 모드 도전 스테이지(BR-043)

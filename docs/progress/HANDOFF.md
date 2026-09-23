@@ -2,9 +2,11 @@
 
 > 다음 작업자가 즉시 시작할 정보만 둔다. 프로젝트 전체 상태는 PROJECT_STATUS.md에 둔다.
 
-Updated: 2026-09-24 05:55 KST
+Updated: 2026-09-24 08:10 KST
 
 ## Current State
+2026-09-24 08:10: PLAN-008 실험 스위치(T1, Time 보석, Multiplier 보석, 레벨 7색, Last Hurrah 콤보)를 main에 넣고 원격 `app_config.gameplay`를 모두 켰다. 끄려면 대시보드에서 값을 바꾸거나 웹에서 `?exp=none`. URL 실험 판은 랭킹에 올리지 않는다. 검증 스크립트 `tmp/local-verify/s15_plan008.js`.
+
 2026-09-24 05:55: PLAN-005 Step 4(일일 동일 보드, 주간 순위, PLAN-007)와 Step 5(도전 스테이지)를 main `223303e`에 반영하고 NAS에 배포했다. Supabase 마이그레이션 3개(주간 랭킹, 조회 계획 보강, 익명 사용자 정리)를 원격에 적용했다. 워커와 워크트리는 정리했다. 이어서 아이템과 이어하기 이벤트도 연결했다. 남은 것은 D7 플레이테스트와 ISSUE-007(멀티스레드 skwasm 같은 탭 재로드 멈춤, 기존 문제)이다. 폰 검증 스크립트는 `tmp/local-verify/s11_android_p5b.js`, A/B는 `s12_ab.js`, `s13_fps.js`.
 
 2026-09-24 05:40: PLAN-005 1차(하이퍼 교환, Speed Bonus, Last Hurrah, 기록과 장기 목표)를 main `b71ba31`에 반영하고 NAS에 배포했다. 로컬 웹과 실제 백엔드, Android 폰 NAS 검증을 통과했다. 사용자 결정으로 앱 구조 개편 완료가 우선이고 앱인토스 QR 확인과 광고(AdMob)는 그 뒤다. Step 4(일일 동일 보드, 주간 순위)와 Step 5(레벨 도전 스테이지)는 Orca 워커(`plan005b-daily`, `plan005b-challenge`, run `run_588b87db9418`)가 구현 중이다. D8, D9는 권장안으로 정했다(PROJECT_STATUS 하단).
