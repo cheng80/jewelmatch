@@ -1,18 +1,6 @@
 part of 'match_game_hud.dart';
 
 extension _MatchGameHudButtonRenderer on MatchGameHud {
-  void _drawIconButtonFrame(Canvas canvas, Rect r) {
-    final image = _iconButtonFrameImage;
-    if (image == null) return;
-    final frameRect = r.inflate(r.width * 0.08);
-    canvas.drawImageRect(
-      image,
-      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
-      frameRect,
-      _hudImagePaint,
-    );
-  }
-
   /// 누른 버튼만 자기 중심으로 살짝 눌러 그린다. 히트 영역은 그대로다.
   ///
   /// `true`를 돌려주면 부른 쪽이 `canvas.restore()`를 해야 한다.
@@ -30,7 +18,12 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
     final r = _tutorialRect;
     final pressed = _pushPressScale(canvas, r);
     _drawIconButtonFrame(canvas, r);
-    _drawButtonIcon(canvas, r, _tutorialIconImage, sizeFactor: 0.58);
+    _drawButtonIcon(
+      canvas,
+      r,
+      _uiAtlas?[UiFrames.tutorialIcon],
+      sizeFactor: 0.58,
+    );
     if (pressed) canvas.restore();
   }
 
@@ -42,7 +35,7 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
     _drawButtonIcon(
       canvas,
       r,
-      _hintBulbIconImage,
+      _uiAtlas?[UiFrames.hintBulbIcon],
       sizeFactor: 0.62,
       offsetYFactor: 0.02,
     );
@@ -106,35 +99,18 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
     if (punched) canvas.restore();
   }
 
-  void _drawButtonIcon(
-    Canvas canvas,
-    Rect r,
-    ui.Image? image, {
-    required double sizeFactor,
-    double offsetYFactor = 0,
-  }) {
-    if (image == null) return;
-    final iconSize = r.width * sizeFactor;
-    final iconRect = Rect.fromCenter(
-      center: r.center.translate(0, r.width * offsetYFactor),
-      width: iconSize,
-      height: iconSize,
-    );
-    canvas.drawImageRect(
-      image,
-      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
-      iconRect,
-      _hudImagePaint,
-    );
-  }
-
   /// 랭킹 — 왕관 심볼 (힌트 전구와 구분).
   void _drawRankingButton(Canvas canvas) {
     final r = _rankingRect;
     if (r.isEmpty) return;
     final pressed = _pushPressScale(canvas, r);
     _drawIconButtonFrame(canvas, r);
-    _drawButtonIcon(canvas, r, _rankingCrownIconImage, sizeFactor: 0.6);
+    _drawButtonIcon(
+      canvas,
+      r,
+      _uiAtlas?[UiFrames.rankingCrownIcon],
+      sizeFactor: 0.6,
+    );
     if (pressed) canvas.restore();
   }
 
@@ -142,7 +118,7 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
     final r = _pauseRect;
     final pressed = _pushPressScale(canvas, r);
     _drawIconButtonFrame(canvas, r);
-    _drawButtonIcon(canvas, r, _pauseIconImage, sizeFactor: 0.70);
+    _drawButtonIcon(canvas, r, _uiAtlas?[UiFrames.pauseIcon], sizeFactor: 0.70);
     if (pressed) canvas.restore();
   }
 
@@ -316,7 +292,7 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
       width: iconSide,
       height: iconSide,
     );
-    _drawPrismGemSprite(canvas, iconRect, color);
+    _drawGemSprite(canvas, iconRect, color);
     x += iconSide + itemGap;
     rightText.paint(canvas, Offset(x, r.center.dy - rightText.height / 2));
   }
@@ -470,15 +446,16 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
       ).createShader(r);
     canvas.drawRRect(rr, basePaint);
 
-    final frame = _obsidianPanelFrameImage;
-    if (frame != null) {
-      canvas.drawImageNine(
+    final atlas = _uiAtlas;
+    final frame = atlas?[UiFrames.panelFrame];
+    if (atlas != null && frame != null) {
+      drawAtlasNine(
+        canvas,
+        atlas.image,
         frame,
-        const Rect.fromLTRB(58, 58, 334, 420),
+        UiFrames.panelFrameCenter,
         r,
-        Paint()
-          ..isAntiAlias = true
-          ..filterQuality = FilterQuality.high,
+        _panelNinePaint,
       );
       return;
     }
@@ -509,7 +486,7 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
     canvas.drawRRect(outer, outerPaint);
 
     final inset = r.deflate(math.max(3.0, r.height * 0.12));
-    _drawPrismGemSprite(canvas, inset, color);
+    _drawGemSprite(canvas, inset, color);
 
     final stroke = Paint()
       ..isAntiAlias = true
@@ -534,32 +511,6 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
         const Color(0xFF6FF7E8).withValues(alpha: 0.55),
       );
     }
-  }
-
-  void _drawPrismGemSprite(Canvas canvas, Rect r, int color) {
-    final image = _jewelSpriteSheetImage;
-    if (image == null) return;
-    final index =
-        MatchGameHud._gemSheetColByColor1based[(color - 1).clamp(
-          0,
-          MatchGameHud._gemSheetColByColor1based.length - 1,
-        )];
-    final src = Rect.fromLTWH(
-      index * MatchGameHud._gemFrameSize,
-      0,
-      MatchGameHud._gemFrameSize,
-      MatchGameHud._gemFrameSize,
-    );
-    final side = math.min(r.width, r.height) * 1.08;
-    final dst = Rect.fromCenter(center: r.center, width: side, height: side);
-    canvas.drawImageRect(
-      image,
-      src,
-      dst,
-      Paint()
-        ..isAntiAlias = true
-        ..filterQuality = FilterQuality.high,
-    );
   }
 
   void _drawItemTray(Canvas canvas) {
@@ -624,7 +575,7 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
         _itemUsePaint,
       );
     }
-    final icon = _itemIconImages[item];
+    final icon = _uiAtlas?[UiFrames.itemIcon(item)];
     if (icon != null) {
       final iconBounds = r.deflate(math.max(7.0, r.height * 0.18));
       final side = math.min(iconBounds.width, iconBounds.height);
@@ -633,12 +584,7 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
         width: side,
         height: side,
       );
-      canvas.drawImageRect(
-        icon,
-        Rect.fromLTWH(0, 0, icon.width.toDouble(), icon.height.toDouble()),
-        dst,
-        enabled ? _itemIconPaint : _itemIconDimPaint,
-      );
+      _drawUi(canvas, icon, dst, enabled ? null : _itemIconDimPaint);
       if (quantity != null) {
         _drawItemQuantityBadge(canvas, r, item, quantity);
       }

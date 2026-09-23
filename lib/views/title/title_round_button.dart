@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../resources/asset_paths.dart';
+import '../../resources/texture_atlas.dart';
+import '../../widgets/atlas_image.dart';
 import '../../widgets/overlay_motion.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 
@@ -9,14 +10,16 @@ class TitleRoundButton extends StatefulWidget {
   const TitleRoundButton({
     required this.label,
     required this.panelColor,
-    required this.iconAssetPath,
+    required this.iconFrame,
     required this.onPressed,
     super.key,
   });
 
   final String label;
   final Color panelColor;
-  final String iconAssetPath;
+
+  /// `UiFrames` 칸 이름.
+  final String iconFrame;
   final VoidCallback onPressed;
 
   @override
@@ -54,30 +57,26 @@ class _TitleRoundButtonState extends State<TitleRoundButton> {
                     widget.panelColor.withValues(alpha: _panelOpacity),
                     BlendMode.modulate,
                   ),
-                  child: Image.asset(
-                    AssetPaths.modeButtonPanelBase,
+                  child: const AtlasImage(
+                    UiFrames.modeButtonPanelBase,
                     width: _width,
                     height: _height,
                     fit: BoxFit.fill,
-                    filterQuality: FilterQuality.high,
                   ),
                 ),
-                Image.asset(
-                  AssetPaths.modeButtonFrameFront,
+                const AtlasImage(
+                  UiFrames.modeButtonFrameFront,
                   width: _width,
                   height: _height,
                   fit: BoxFit.fill,
-                  filterQuality: FilterQuality.high,
                 ),
                 Positioned(
                   left: _iconLeft,
                   top: (_height - _iconSize) / 2,
-                  child: Image.asset(
-                    widget.iconAssetPath,
+                  child: AtlasImage(
+                    widget.iconFrame,
                     width: _iconSize,
                     height: _iconSize,
-                    fit: BoxFit.contain,
-                    filterQuality: FilterQuality.high,
                   ),
                 ),
                 Padding(

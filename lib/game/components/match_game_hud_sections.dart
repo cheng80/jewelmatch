@@ -33,12 +33,13 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
     canvas.save();
     canvas.clipRect(Rect.fromLTRB(minLeft, slotTop, bestRight, slotBottom));
     final labelLeft = bestLeft + (bestBlockW - labelRowW) / 2;
-    if (showsTopRanker && _rankingCrownIconImage != null) {
-      final image = _rankingCrownIconImage!;
+    final atlas = _uiAtlas;
+    final crown = atlas?[UiFrames.rankingCrownIcon];
+    if (showsTopRanker && atlas != null && crown != null) {
       final iconTop = bestTop + (_bestLabel.height - rankIconSize) / 2;
       canvas.drawImageRect(
-        image,
-        Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+        atlas.image,
+        crown,
         Rect.fromLTWH(labelLeft, iconTop, rankIconSize, rankIconSize),
         _hudImagePaint,
       );
@@ -92,7 +93,7 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
     final icon = challengeValue.height * 1.05;
     const gap = 4.0;
     final left = cx - (icon + gap + challengeValue.width) / 2;
-    _drawPrismGemSprite(
+    _drawGemSprite(
       canvas,
       Rect.fromLTWH(left, top + (challengeValue.height - icon) / 2, icon, icon),
       color,

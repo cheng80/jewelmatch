@@ -1,8 +1,9 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
-import '../../resources/asset_paths.dart';
+import '../../resources/texture_atlas.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
+import '../../widgets/atlas_image.dart';
 
 class PauseMenuActionButton extends StatelessWidget {
   const PauseMenuActionButton({
@@ -40,20 +41,18 @@ class PauseMenuActionButton extends StatelessWidget {
               children: [
                 ColorFiltered(
                   colorFilter: ColorFilter.mode(panelColor, BlendMode.modulate),
-                  child: Image.asset(
-                    AssetPaths.normalButtonTintBg,
+                  child: const AtlasImage(
+                    UiFrames.normalButtonTintBg,
                     height: _height,
                     width: double.infinity,
                     fit: BoxFit.fill,
-                    filterQuality: FilterQuality.high,
                   ),
                 ),
-                Image.asset(
-                  AssetPaths.normalButtonFrontFrame,
+                const AtlasImage(
+                  UiFrames.normalButtonFrontFrame,
                   height: _height,
                   width: double.infinity,
                   fit: BoxFit.fill,
-                  filterQuality: FilterQuality.high,
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -120,13 +119,7 @@ class PauseMenuSettingsButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return PauseMenuIconButton(
       tooltip: context.tr('settings'),
-      icon: Image.asset(
-        AssetPaths.modeIconSettings,
-        width: 34,
-        height: 34,
-        fit: BoxFit.contain,
-        filterQuality: FilterQuality.high,
-      ),
+      icon: const AtlasImage(UiFrames.modeIconSettings, width: 34, height: 34),
       onPressed: onPressed,
     );
   }
@@ -166,9 +159,6 @@ class PauseMenuIconButton extends StatelessWidget {
     required this.tooltip,
   });
 
-  static const String _iconFrameAsset =
-      'assets/images/${AssetPaths.obsidianIconButtonFrame}';
-
   final Widget icon;
   final VoidCallback onPressed;
   final String tooltip;
@@ -189,12 +179,10 @@ class PauseMenuIconButton extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                Image.asset(
-                  _iconFrameAsset,
+                const AtlasImage(
+                  UiFrames.iconButtonFrame,
                   width: 74,
                   height: 74,
-                  fit: BoxFit.contain,
-                  filterQuality: FilterQuality.high,
                 ),
                 icon,
               ],

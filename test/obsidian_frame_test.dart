@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:stonematch/resources/asset_paths.dart';
+import 'package:stonematch/resources/texture_atlas.dart';
 import 'package:stonematch/views/title/title_round_button.dart';
 import 'package:stonematch/widgets/obsidian_frame.dart';
 
@@ -38,7 +38,7 @@ void main() {
             child: TitleRoundButton(
               label: '무한',
               panelColor: TitleButtonPalette.teal,
-              iconAssetPath: AssetPaths.modeIconSimple,
+              iconFrame: UiFrames.modeIconSimple,
               onPressed: () {},
             ),
           ),

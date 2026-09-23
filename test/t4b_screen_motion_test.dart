@@ -19,7 +19,7 @@ import 'package:stonematch/game/item_kind.dart';
 import 'package:stonematch/game/jewel_game_mode.dart';
 import 'package:stonematch/game/match_board_game.dart';
 import 'package:stonematch/game/stage_reward.dart';
-import 'package:stonematch/resources/asset_paths.dart';
+import 'package:stonematch/resources/texture_atlas.dart';
 import 'package:stonematch/services/game_settings.dart';
 import 'package:stonematch/services/ranking_service.dart';
 import 'package:stonematch/utils/storage_helper.dart';
@@ -28,6 +28,7 @@ import 'package:stonematch/views/overlays/level_celebration_overlay.dart';
 import 'package:stonematch/views/overlays/level_up_overlay.dart';
 import 'package:stonematch/views/overlays/stage_inventory_overlay.dart';
 import 'package:stonematch/views/overlays/time_up_overlay.dart';
+import 'package:stonematch/widgets/atlas_image.dart';
 import 'package:stonematch/vm/ranking_notifier.dart';
 import 'package:stonematch/widgets/overlay_motion.dart';
 import 'package:stonematch/widgets/ranking_list_popup.dart';
@@ -87,12 +88,8 @@ Future<void> _mount(
   }
 }
 
-Finder itemImage(String path) => find.byWidgetPredicate(
-  (w) =>
-      w is Image &&
-      w.image is AssetImage &&
-      (w.image as AssetImage).assetName == 'assets/images/$path',
-);
+Finder itemImage(String frame) =>
+    find.byWidgetPredicate((w) => w is AtlasImage && w.frame == frame);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -201,7 +198,7 @@ void main() {
         await tester.tap(
           find
               .ancestor(
-                of: itemImage(AssetPaths.itemIconRuneHammer),
+                of: itemImage(UiFrames.itemRuneHammer),
                 matching: find.byType(GestureDetector),
               )
               .first,
@@ -225,7 +222,7 @@ void main() {
           expect(scales.any((w) => w.scale.value > 1), isTrue);
         }
         await tester.pumpAndSettle();
-        expect(itemImage(AssetPaths.itemIconRuneHammer), findsNWidgets(2));
+        expect(itemImage(UiFrames.itemRuneHammer), findsNWidgets(2));
         expect(tester.takeException(), isNull);
       },
     );
@@ -305,7 +302,7 @@ void main() {
       await tester.tap(
         find
             .ancestor(
-              of: itemImage(AssetPaths.itemIconThorHammer),
+              of: itemImage(UiFrames.itemThorHammer),
               matching: find.byType(GestureDetector),
             )
             .first,
@@ -342,7 +339,7 @@ void main() {
     await tester.tap(
       find
           .ancestor(
-            of: itemImage(AssetPaths.itemIconThorHammer),
+            of: itemImage(UiFrames.itemThorHammer),
             matching: find.byType(GestureDetector),
           )
           .first,
@@ -384,7 +381,7 @@ void main() {
       await tester.tap(
         find
             .ancestor(
-              of: itemImage(AssetPaths.itemIconThorHammer),
+              of: itemImage(UiFrames.itemThorHammer),
               matching: find.byType(GestureDetector),
             )
             .first,

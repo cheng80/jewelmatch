@@ -3,13 +3,13 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
-import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:intl/intl.dart';
 
 import '../../resources/asset_paths.dart';
 import '../../resources/sound_manager.dart';
+import '../../resources/texture_atlas.dart';
 import '../../services/game_settings.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../item_kind.dart';
@@ -18,6 +18,7 @@ import '../match_board_logic.dart';
 import '../stage_challenge.dart';
 import 'baked_hud_glow_atlas.dart';
 
+part 'match_game_hud_atlas.dart';
 part 'match_game_hud_buttons.dart';
 part 'match_game_hud_input.dart';
 part 'match_game_hud_interactions.dart';
@@ -189,6 +190,9 @@ class MatchGameHud extends PositionComponent
     ..filterQuality = FilterQuality.high;
   final Paint _hintBadgePaint = Paint()..isAntiAlias = true;
 
+  /// 나인패치 조각. `drawImageNine`처럼 안티앨리어스 없이 선형 필터로 그린다.
+  final Paint _panelNinePaint = Paint()..filterQuality = FilterQuality.low;
+
   /// 남은 힌트가 0일 때의 가라앉은 배지 색.
   final Paint _hintBadgeZeroPaint = Paint()
     ..isAntiAlias = true
@@ -256,9 +260,6 @@ class MatchGameHud extends PositionComponent
     ..color = const Color(0x8F0B0908);
   final Map<ItemKind, TextPainter> _itemLabelPainters = {};
   final Map<ItemKind, int> _itemLabelStates = {};
-  final Paint _itemIconPaint = Paint()
-    ..isAntiAlias = true
-    ..filterQuality = FilterQuality.high;
   final Paint _itemIconDimPaint = Paint()
     ..isAntiAlias = true
     ..filterQuality = FilterQuality.high
@@ -278,26 +279,12 @@ class MatchGameHud extends PositionComponent
   /// 수량 배지는 슬롯마다 매 프레임 그려진다. 레이아웃이 바뀔 때만 다시 만든다.
   final Map<ItemKind, Paint> _qtyBadgeFillPaints = {};
   final Map<int, TextPainter> _qtyBadgePainters = {};
-  ui.Image? _iconButtonFrameImage;
-  ui.Image? _hintBulbIconImage;
-  ui.Image? _tutorialIconImage;
-  ui.Image? _pauseIconImage;
-  ui.Image? _rankingCrownIconImage;
-  ui.Image? _jewelSpriteSheetImage;
-  ui.Image? _obsidianPanelFrameImage;
-  final Map<ItemKind, ui.Image> _itemIconImages = {};
+
+  /// 버튼 프레임, 아이콘, 나인패치 패널은 ui_atlas 한 장, 보석 아이콘은 보드 텍스처에서 자른다.
+  TextureAtlas? _uiAtlas;
+  TextureAtlas? _gemAtlas;
 
   final _fmt = NumberFormat.decimalPattern();
-  static const Map<ItemKind, String> _phaseOneItemIconPaths = {
-    ItemKind.runeHammer: AssetPaths.itemIconRuneHammer,
-    ItemKind.ancientBomb: AssetPaths.itemIconAncientBomb,
-    ItemKind.thorHammer: AssetPaths.itemIconThorHammer,
-    ItemKind.hyperCube: AssetPaths.itemIconHyperCube,
-    ItemKind.prismTransform: AssetPaths.itemIconPrismTransform,
-    ItemKind.fateShuffle: AssetPaths.itemIconFateShuffle,
-    ItemKind.timeSlip: AssetPaths.itemIconTimeSlip,
-    ItemKind.hintPlus: AssetPaths.itemIconHintPlus,
-  };
 
   static const List<String> _fallbackFonts = [
     'PingFang SC',
@@ -306,7 +293,6 @@ class MatchGameHud extends PositionComponent
   ];
 
   static const List<int> _gemSheetColByColor1based = [0, 6, 3, 2, 4, 5, 1];
-  static const double _gemFrameSize = 128;
   TextStyle _ts({
     required double size,
     Color? color,
@@ -338,28 +324,11 @@ class MatchGameHud extends PositionComponent
   @override
   Future<void> onLoad() async {
     priority = 20;
-    _iconButtonFrameImage = await Flame.images.load(
-      AssetPaths.obsidianIconButtonFrame,
+    _uiAtlas = await TextureAtlas.load(
+      AssetPaths.uiAtlas,
+      AssetPaths.uiAtlasManifest,
     );
-    _hintBulbIconImage = await Flame.images.load(
-      AssetPaths.obsidianHintBulbIcon,
-    );
-    _tutorialIconImage = await Flame.images.load(
-      AssetPaths.obsidianTutorialIcon,
-    );
-    _pauseIconImage = await Flame.images.load(AssetPaths.obsidianPauseIcon);
-    _rankingCrownIconImage = await Flame.images.load(
-      AssetPaths.obsidianRankingCrownIcon,
-    );
-    _jewelSpriteSheetImage = await Flame.images.load(
-      AssetPaths.jewelSpriteSheet,
-    );
-    _obsidianPanelFrameImage = await Flame.images.load(
-      AssetPaths.obsidianPanelFrameFlame,
-    );
-    for (final entry in _phaseOneItemIconPaths.entries) {
-      _itemIconImages[entry.key] = await Flame.images.load(entry.value);
-    }
+    _gemAtlas = await TextureAtlas.loadGems();
     _layout();
     _hudGlows.mount();
   }

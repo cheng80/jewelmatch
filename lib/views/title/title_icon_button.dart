@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../resources/asset_paths.dart';
+import '../../resources/texture_atlas.dart';
+import '../../widgets/atlas_image.dart';
 
 class TitleIconButton extends StatelessWidget {
   const TitleIconButton({
-    required this.iconAssetPath,
+    required this.iconFrame,
     required this.semanticLabel,
     required this.onPressed,
     this.iconSizeFactor = 0.58,
@@ -13,17 +14,11 @@ class TitleIconButton extends StatelessWidget {
 
   static const double size = 54;
 
-  final String iconAssetPath;
+  /// `UiFrames` 칸 이름.
+  final String iconFrame;
   final String semanticLabel;
   final VoidCallback onPressed;
   final double iconSizeFactor;
-
-  String get _frameAssetPath =>
-      'assets/images/${AssetPaths.obsidianIconButtonFrame}';
-
-  String get _iconAssetPath => iconAssetPath.startsWith('assets/')
-      ? iconAssetPath
-      : 'assets/images/$iconAssetPath';
 
   @override
   Widget build(BuildContext context) {
@@ -41,19 +36,15 @@ class TitleIconButton extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                Image.asset(
-                  _frameAssetPath,
+                const AtlasImage(
+                  UiFrames.iconButtonFrame,
                   width: size,
                   height: size,
-                  fit: BoxFit.contain,
-                  filterQuality: FilterQuality.high,
                 ),
-                Image.asset(
-                  _iconAssetPath,
+                AtlasImage(
+                  iconFrame,
                   width: size * iconSizeFactor,
                   height: size * iconSizeFactor,
-                  fit: BoxFit.contain,
-                  filterQuality: FilterQuality.high,
                 ),
               ],
             ),

@@ -10,8 +10,10 @@ import '../../game/item_kind.dart';
 import '../../game/match_board_game.dart';
 import '../../resources/asset_paths.dart';
 import '../../resources/sound_manager.dart';
+import '../../resources/texture_atlas.dart';
 import '../../services/event_logger.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
+import '../../widgets/atlas_image.dart';
 import '../../widgets/lumina_overlay_card.dart';
 import '../../widgets/overlay_motion.dart';
 
@@ -750,11 +752,7 @@ class _ItemIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Opacity(
       opacity: disabled ? 0.32 : 1,
-      child: Image.asset(
-        _itemIconAsset(item),
-        fit: BoxFit.contain,
-        filterQuality: FilterQuality.high,
-      ),
+      child: AtlasImage(UiFrames.itemIcon(item)),
     );
   }
 }
@@ -786,15 +784,3 @@ class _QuantityBadge extends StatelessWidget {
     );
   }
 }
-
-String _itemIconAsset(ItemKind item) => switch (item) {
-  ItemKind.runeHammer => 'assets/images/${AssetPaths.itemIconRuneHammer}',
-  ItemKind.ancientBomb => 'assets/images/${AssetPaths.itemIconAncientBomb}',
-  ItemKind.thorHammer => 'assets/images/${AssetPaths.itemIconThorHammer}',
-  ItemKind.hyperCube => 'assets/images/${AssetPaths.itemIconHyperCube}',
-  ItemKind.prismTransform =>
-    'assets/images/${AssetPaths.itemIconPrismTransform}',
-  ItemKind.fateShuffle => 'assets/images/${AssetPaths.itemIconFateShuffle}',
-  ItemKind.timeSlip => 'assets/images/${AssetPaths.itemIconTimeSlip}',
-  ItemKind.hintPlus => 'assets/images/${AssetPaths.itemIconHintPlus}',
-};

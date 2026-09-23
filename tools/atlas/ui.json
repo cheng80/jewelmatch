@@ -1,0 +1,208 @@
+{
+ "output": "assets/images/ui/ui_atlas.webp",
+ "manifest": "assets/images/ui/ui_atlas.json",
+ "padding": 2,
+ "maxWidth": 2048,
+ "sources": [
+  {
+   "name": "obsidian_hint_bulb_icon",
+   "file": "assets/design/legacy/ui/obsidian_hint_bulb_icon.png",
+   "rect": [
+    0,
+    0,
+    160,
+    160
+   ]
+  },
+  {
+   "name": "obsidian_icon_button_frame",
+   "file": "assets/design/legacy/ui/obsidian_icon_button_frame.png",
+   "rect": [
+    0,
+    0,
+    192,
+    192
+   ]
+  },
+  {
+   "name": "obsidian_panel_frame",
+   "file": "assets/design/legacy/ui/obsidian_panel_frame.png",
+   "rect": [
+    0,
+    0,
+    392,
+    478
+   ]
+  },
+  {
+   "name": "obsidian_pause_icon",
+   "file": "assets/design/legacy/ui/obsidian_pause_icon.png",
+   "rect": [
+    0,
+    0,
+    160,
+    160
+   ]
+  },
+  {
+   "name": "obsidian_ranking_crown_icon",
+   "file": "assets/design/legacy/ui/obsidian_ranking_crown_icon.png",
+   "rect": [
+    0,
+    0,
+    160,
+    160
+   ]
+  },
+  {
+   "name": "obsidian_tutorial_icon",
+   "file": "assets/design/legacy/ui/obsidian_tutorial_icon.png",
+   "rect": [
+    0,
+    0,
+    160,
+    160
+   ]
+  },
+  {
+   "name": "ancient_bomb",
+   "file": "assets/design/legacy/ui/item_icons/ancient_bomb.png",
+   "rect": [
+    0,
+    0,
+    256,
+    256
+   ]
+  },
+  {
+   "name": "fate_shuffle",
+   "file": "assets/design/legacy/ui/item_icons/fate_shuffle.png",
+   "rect": [
+    0,
+    0,
+    256,
+    256
+   ]
+  },
+  {
+   "name": "hint_plus",
+   "file": "assets/design/legacy/ui/item_icons/hint_plus.png",
+   "rect": [
+    0,
+    0,
+    256,
+    256
+   ]
+  },
+  {
+   "name": "hyper_cube",
+   "file": "assets/design/legacy/ui/item_icons/hyper_cube.png",
+   "rect": [
+    0,
+    0,
+    256,
+    256
+   ]
+  },
+  {
+   "name": "prism_transform",
+   "file": "assets/design/legacy/ui/item_icons/prism_transform.png",
+   "rect": [
+    0,
+    0,
+    256,
+    256
+   ]
+  },
+  {
+   "name": "rune_hammer",
+   "file": "assets/design/legacy/ui/item_icons/rune_hammer.png",
+   "rect": [
+    0,
+    0,
+    256,
+    256
+   ]
+  },
+  {
+   "name": "thor_hammer",
+   "file": "assets/design/legacy/ui/item_icons/thor_hammer.png",
+   "rect": [
+    0,
+    0,
+    256,
+    256
+   ]
+  },
+  {
+   "name": "time_slip",
+   "file": "assets/design/legacy/ui/item_icons/time_slip.png",
+   "rect": [
+    0,
+    0,
+    256,
+    256
+   ]
+  },
+  {
+   "name": "mode_icon_inventory_256",
+   "file": "assets/design/legacy/ui/mode_icons/mode_icon_inventory_256.png",
+   "rect": [
+    0,
+    0,
+    256,
+    256
+   ]
+  },
+  {
+   "name": "mode_icon_progression_256",
+   "file": "assets/design/legacy/ui/mode_icons/mode_icon_progression_256.png",
+   "rect": [
+    0,
+    0,
+    256,
+    256
+   ]
+  },
+  {
+   "name": "mode_icon_ranking_crown_256",
+   "file": "assets/design/legacy/ui/mode_icons/mode_icon_ranking_crown_256.png",
+   "rect": [
+    0,
+    0,
+    256,
+    256
+   ]
+  },
+  {
+   "name": "mode_icon_settings_gear_256",
+   "file": "assets/design/legacy/ui/mode_icons/mode_icon_settings_gear_256.png",
+   "rect": [
+    0,
+    0,
+    256,
+    256
+   ]
+  },
+  {
+   "name": "mode_icon_simple_infinity_256",
+   "file": "assets/design/legacy/ui/mode_icons/mode_icon_simple_infinity_256.png",
+   "rect": [
+    0,
+    0,
+    256,
+    256
+   ]
+  },
+  {
+   "name": "mode_icon_timed_hourglass_256",
+   "file": "assets/design/legacy/ui/mode_icons/mode_icon_timed_hourglass_256.png",
+   "rect": [
+    0,
+    0,
+    256,
+    256
+   ]
+  }
+ ]
+}

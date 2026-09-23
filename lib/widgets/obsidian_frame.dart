@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../resources/asset_paths.dart';
+import '../resources/texture_atlas.dart';
+import 'atlas_image.dart';
 import '../theme/jewel_candy_lumina_theme.dart';
 import 'obsidian_button_styles.dart';
 
@@ -39,21 +40,19 @@ class ObsidianFrame extends StatelessWidget {
           color:
               backgroundColor ??
               JewelCandyLuminaTheme.surfaceContainer.withValues(alpha: 0.94),
-          image: const DecorationImage(
-            image: AssetImage(AssetPaths.obsidianPanelFrame),
-            fit: BoxFit.fill,
-            centerSlice: Rect.fromLTRB(58, 58, 334, 420),
-            filterQuality: FilterQuality.high,
-          ),
         ),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minWidth: minFrameSize,
-            minHeight: minFrameSize,
-          ),
-          child: Material(
-            type: MaterialType.transparency,
-            child: Padding(padding: padding, child: child),
+        child: AtlasNineBox(
+          frame: UiFrames.panelFrame,
+          center: UiFrames.panelFrameCenter,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: minFrameSize,
+              minHeight: minFrameSize,
+            ),
+            child: Material(
+              type: MaterialType.transparency,
+              child: Padding(padding: padding, child: child),
+            ),
           ),
         ),
       ),

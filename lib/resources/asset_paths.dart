@@ -57,60 +57,17 @@ class AssetPaths {
   static const String ancientRuinsSpaceBackgroundFlame =
       'backgrounds/ancient_ruins_space_bg.png';
 
-  /// Obsidian Rune Temple 나인패치 프레임.
-  static const String obsidianPanelFrame =
-      'assets/images/ui/obsidian_panel_frame.png';
-
-  /// Obsidian Rune Temple 나인패치 프레임. Flame image cache용.
-  static const String obsidianPanelFrameFlame = 'ui/obsidian_panel_frame.png';
-
-  /// Obsidian Rune Temple 원형 아이콘 버튼 프레임.
-  static const String obsidianIconButtonFrame =
-      'ui/obsidian_icon_button_frame.png';
-
-  /// 힌트 버튼용 금속 전구 아이콘.
-  static const String obsidianHintBulbIcon = 'ui/obsidian_hint_bulb_icon.png';
-
-  /// 튜토리얼 버튼용 금속 안내 아이콘.
-  static const String obsidianTutorialIcon = 'ui/obsidian_tutorial_icon.png';
-
-  /// 일시정지 버튼용 금속 pause 아이콘.
-  static const String obsidianPauseIcon = 'ui/obsidian_pause_icon.png';
-
-  /// 랭킹 버튼용 금속 왕관 아이콘.
-  static const String obsidianRankingCrownIcon =
-      'ui/obsidian_ranking_crown_icon.png';
-
-  static const String itemIconRuneHammer = 'ui/item_icons/rune_hammer.png';
-  static const String itemIconAncientBomb = 'ui/item_icons/ancient_bomb.png';
-  static const String itemIconThorHammer = 'ui/item_icons/thor_hammer.png';
-  static const String itemIconHyperCube = 'ui/item_icons/hyper_cube.png';
-  static const String itemIconPrismTransform =
-      'ui/item_icons/prism_transform.png';
-  static const String itemIconFateShuffle = 'ui/item_icons/fate_shuffle.png';
-  static const String itemIconTimeSlip = 'ui/item_icons/time_slip.png';
-  static const String itemIconHintPlus = 'ui/item_icons/hint_plus.png';
+  /// HUD와 UI 위젯의 작은 이미지(버튼 프레임, 아이콘, 나인패치 패널) 아틀라스. Flame 기준 경로.
+  /// 칸 이름은 `UiFrames`. 원본은 assets/design/legacy/ui/, 설정은 tools/atlas/ui.json.
+  static const String uiAtlas = 'ui/ui_atlas.webp';
+  static const String uiAtlasManifest = 'assets/images/ui/ui_atlas.json';
 
   static const String stoneMatchTitle =
       'assets/images/ui/stone_match_title.png';
-  static const String modeButtonPanelBase =
-      'assets/images/ui/mode_buttons/mode_button_panel_base.png';
-  static const String modeButtonFrameFront =
-      'assets/images/ui/mode_buttons/mode_button_frame_front.png';
-  static const String normalButtonTintBg =
-      'assets/images/ui/normal_buttons/normal_button_tint_bg.png';
-  static const String normalButtonFrontFrame =
-      'assets/images/ui/normal_buttons/normal_button_front_frame.png';
-  static const String modeIconSimple =
-      'assets/images/ui/mode_icons/mode_icon_simple_infinity_256.png';
-  static const String modeIconProgression =
-      'assets/images/ui/mode_icons/mode_icon_progression_256.png';
-  static const String modeIconTimed =
-      'assets/images/ui/mode_icons/mode_icon_timed_hourglass_256.png';
-  static const String modeIconSettings =
-      'assets/images/ui/mode_icons/mode_icon_settings_gear_256.png';
-  static const String modeIconRanking =
-      'assets/images/ui/mode_icons/mode_icon_ranking_crown_256.png';
-  static const String modeIconInventory =
-      'assets/images/ui/mode_icons/mode_icon_inventory_256.png';
+
+  /// 타이틀과 일시정지 메뉴의 큰 버튼 판 아틀라스. 2048 한 장에 작은 UI와 함께 들어가지 않아 따로 둔다.
+  /// 설정은 tools/atlas/ui_buttons.json.
+  static const String uiButtonsAtlas = 'ui/ui_buttons_atlas.webp';
+  static const String uiButtonsAtlasManifest =
+      'assets/images/ui/ui_buttons_atlas.json';
 }

@@ -10,6 +10,7 @@ import '../app_config.dart' show RoutePaths;
 import '../game/daily_seed.dart';
 import '../game/jewel_game_mode.dart';
 import '../resources/asset_paths.dart';
+import '../resources/texture_atlas.dart';
 import '../resources/sound_manager.dart';
 import '../services/game_settings.dart';
 import '../widgets/phone_frame_scaffold.dart';
@@ -74,8 +75,8 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
     await Future.wait([
-      for (final path in _titleAssetPaths)
-        precacheImage(AssetImage(path), context),
+      precacheImage(const AssetImage(AssetPaths.stoneMatchTitle), context),
+      TextureAtlas.precacheUi(),
     ]);
     if (!mounted) return;
     setState(() => _ready = true);
@@ -136,20 +137,6 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
   }
 }
 
-const List<String> _titleAssetPaths = [
-  AssetPaths.stoneMatchTitle,
-  AssetPaths.modeButtonPanelBase,
-  AssetPaths.modeButtonFrameFront,
-  AssetPaths.modeIconSimple,
-  AssetPaths.modeIconProgression,
-  AssetPaths.modeIconTimed,
-  AssetPaths.modeIconRanking,
-  AssetPaths.modeIconSettings,
-  'assets/images/${AssetPaths.obsidianIconButtonFrame}',
-  'assets/images/${AssetPaths.obsidianTutorialIcon}',
-  'assets/images/${AssetPaths.obsidianRankingCrownIcon}',
-];
-
 class _TitleContent extends StatelessWidget {
   const _TitleContent({required this.onShowNameDialog, this.packageInfo});
 
@@ -196,7 +183,7 @@ class _TitleContent extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 TitleIconButton(
-                  iconAssetPath: AssetPaths.modeIconSettings,
+                  iconFrame: UiFrames.modeIconSettings,
                   semanticLabel: context.tr('settings'),
                   onPressed: () {
                     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
@@ -205,7 +192,7 @@ class _TitleContent extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 TitleIconButton(
-                  iconAssetPath: AssetPaths.obsidianRankingCrownIcon,
+                  iconFrame: UiFrames.rankingCrownIcon,
                   semanticLabel: context.tr('recordsTitle'),
                   onPressed: () {
                     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
@@ -214,7 +201,7 @@ class _TitleContent extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 TitleIconButton(
-                  iconAssetPath: AssetPaths.obsidianTutorialIcon,
+                  iconFrame: UiFrames.tutorialIcon,
                   semanticLabel: context.tr('howToPlayTitle'),
                   onPressed: () {
                     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
@@ -231,7 +218,7 @@ class _TitleContent extends StatelessWidget {
           child: TitleRoundButton(
             label: context.tr('modeSimple'),
             panelColor: TitleButtonPalette.teal,
-            iconAssetPath: AssetPaths.modeIconSimple,
+            iconFrame: UiFrames.modeIconSimple,
             onPressed: () {
               SoundManager.playSfx(AssetPaths.sfxBtnSnd);
               context.go(_gameRoute('simple'));
@@ -244,7 +231,7 @@ class _TitleContent extends StatelessWidget {
           child: TitleRoundButton(
             label: context.tr('modeProgression'),
             panelColor: TitleButtonPalette.purple,
-            iconAssetPath: AssetPaths.modeIconProgression,
+            iconFrame: UiFrames.modeIconProgression,
             onPressed: () {
               SoundManager.playSfx(AssetPaths.sfxBtnSnd);
               onShowNameDialog('progression');
@@ -260,7 +247,7 @@ class _TitleContent extends StatelessWidget {
               TitleRoundButton(
                 label: context.tr('modeTimed'),
                 panelColor: TitleButtonPalette.brown,
-                iconAssetPath: AssetPaths.modeIconTimed,
+                iconFrame: UiFrames.modeIconTimed,
                 onPressed: () {
                   SoundManager.playSfx(AssetPaths.sfxBtnSnd);
                   onShowNameDialog('timed');
@@ -277,7 +264,7 @@ class _TitleContent extends StatelessWidget {
           child: TitleRoundButton(
             label: context.tr('rankingTitle'),
             panelColor: TitleButtonPalette.charcoal,
-            iconAssetPath: AssetPaths.modeIconRanking,
+            iconFrame: UiFrames.modeIconRanking,
             onPressed: () {
               SoundManager.playSfx(AssetPaths.sfxBtnSnd);
               showMotionDialog<void>(

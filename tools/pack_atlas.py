@@ -22,6 +22,9 @@ align(기본 1)은 칸 시작 좌표와 결과 크기를 이 값의 배수로 �
 밉맵 단계 log2(align)까지 칸 안쪽 텍셀이 원본 시트와 같게 평균된다(예: 16이면 1/16 축소까지).
 홀수 폭 단계가 생기면 밉맵 필터가 칸 경계를 넘으므로 결과 크기도 맞춘다.
 
+output이 .webp이면 무손실 WebP(exact)로 저장한다. 팔레트 PNG 원본을 RGBA PNG로 묶으면
+파일이 몇 배 커지는데, 무손실 WebP는 픽셀을 그대로 두고 크기를 줄인다.
+
 사용: python3 tools/pack_atlas.py 설정.json [--check]
 --check는 파일을 쓰지 않고 결과 크기와 칸 수만 출력한다.
 """
@@ -128,13 +131,17 @@ def main():
     for name, (x, y, img) in sorted(placements.items()):
         extrude(atlas, x, y, img, padding)
         frames[name] = {"x": x, "y": y, "w": img.width, "h": img.height}
-    atlas.save(config["output"], optimize=True)
+    if config["output"].endswith(".webp"):
+        atlas.save(config["output"], lossless=True, exact=True, method=6)
+    else:
+        atlas.save(config["output"], optimize=True)
     image_name = config["output"].split("/")[-1]
     manifest = {"image": image_name, "size": [width, height], "padding": padding, "frames": frames}
     with open(config["manifest"], "w", encoding="utf8") as f:
         json.dump(manifest, f, ensure_ascii=False, indent=1, sort_keys=True)
         f.write("\n")
-    # 원본 칸과 아틀라스 칸이 픽셀 단위로 같은지 확인한다.
+    # 저장한 파일을 다시 읽어 원본 칸과 아틀라스 칸이 픽셀 단위로 같은지 확인한다.
+    atlas = Image.open(config["output"]).convert("RGBA")
     for name, (x, y, img) in placements.items():
         if atlas.crop((x, y, x + img.width, y + img.height)).tobytes() != img.tobytes():
             raise SystemExit(f"{name} 픽셀 불일치")

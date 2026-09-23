@@ -1,0 +1,130 @@
+{
+ "frames": {
+  "ancient_bomb": {
+   "h": 256,
+   "w": 256,
+   "x": 398,
+   "y": 2
+  },
+  "fate_shuffle": {
+   "h": 256,
+   "w": 256,
+   "x": 658,
+   "y": 2
+  },
+  "hint_plus": {
+   "h": 256,
+   "w": 256,
+   "x": 918,
+   "y": 2
+  },
+  "hyper_cube": {
+   "h": 256,
+   "w": 256,
+   "x": 1178,
+   "y": 2
+  },
+  "mode_icon_inventory_256": {
+   "h": 256,
+   "w": 256,
+   "x": 1438,
+   "y": 2
+  },
+  "mode_icon_progression_256": {
+   "h": 256,
+   "w": 256,
+   "x": 1698,
+   "y": 2
+  },
+  "mode_icon_ranking_crown_256": {
+   "h": 256,
+   "w": 256,
+   "x": 2,
+   "y": 484
+  },
+  "mode_icon_settings_gear_256": {
+   "h": 256,
+   "w": 256,
+   "x": 262,
+   "y": 484
+  },
+  "mode_icon_simple_infinity_256": {
+   "h": 256,
+   "w": 256,
+   "x": 522,
+   "y": 484
+  },
+  "mode_icon_timed_hourglass_256": {
+   "h": 256,
+   "w": 256,
+   "x": 782,
+   "y": 484
+  },
+  "obsidian_hint_bulb_icon": {
+   "h": 160,
+   "w": 160,
+   "x": 458,
+   "y": 744
+  },
+  "obsidian_icon_button_frame": {
+   "h": 192,
+   "w": 192,
+   "x": 262,
+   "y": 744
+  },
+  "obsidian_panel_frame": {
+   "h": 478,
+   "w": 392,
+   "x": 2,
+   "y": 2
+  },
+  "obsidian_pause_icon": {
+   "h": 160,
+   "w": 160,
+   "x": 622,
+   "y": 744
+  },
+  "obsidian_ranking_crown_icon": {
+   "h": 160,
+   "w": 160,
+   "x": 786,
+   "y": 744
+  },
+  "obsidian_tutorial_icon": {
+   "h": 160,
+   "w": 160,
+   "x": 950,
+   "y": 744
+  },
+  "prism_transform": {
+   "h": 256,
+   "w": 256,
+   "x": 1042,
+   "y": 484
+  },
+  "rune_hammer": {
+   "h": 256,
+   "w": 256,
+   "x": 1302,
+   "y": 484
+  },
+  "thor_hammer": {
+   "h": 256,
+   "w": 256,
+   "x": 1562,
+   "y": 484
+  },
+  "time_slip": {
+   "h": 256,
+   "w": 256,
+   "x": 2,
+   "y": 744
+  }
+ },
+ "image": "ui_atlas.webp",
+ "padding": 2,
+ "size": [
+  2048,
+  1024
+ ]
+}

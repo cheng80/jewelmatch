@@ -1,0 +1,34 @@
+{
+ "frames": {
+  "mode_button_frame_front": {
+   "h": 547,
+   "w": 2006,
+   "x": 2,
+   "y": 2
+  },
+  "mode_button_panel_base": {
+   "h": 547,
+   "w": 2006,
+   "x": 2,
+   "y": 553
+  },
+  "normal_button_front_frame": {
+   "h": 466,
+   "w": 1522,
+   "x": 2,
+   "y": 1104
+  },
+  "normal_button_tint_bg": {
+   "h": 466,
+   "w": 1522,
+   "x": 2,
+   "y": 1574
+  }
+ },
+ "image": "ui_buttons_atlas.webp",
+ "padding": 2,
+ "size": [
+  2048,
+  2048
+ ]
+}

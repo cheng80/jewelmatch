@@ -1,0 +1,48 @@
+{
+ "output": "assets/images/ui/ui_buttons_atlas.webp",
+ "manifest": "assets/images/ui/ui_buttons_atlas.json",
+ "padding": 2,
+ "maxWidth": 2048,
+ "sources": [
+  {
+   "name": "mode_button_frame_front",
+   "file": "assets/design/legacy/ui/mode_buttons/mode_button_frame_front.png",
+   "rect": [
+    0,
+    0,
+    2006,
+    547
+   ]
+  },
+  {
+   "name": "mode_button_panel_base",
+   "file": "assets/design/legacy/ui/mode_buttons/mode_button_panel_base.png",
+   "rect": [
+    0,
+    0,
+    2006,
+    547
+   ]
+  },
+  {
+   "name": "normal_button_front_frame",
+   "file": "assets/design/legacy/ui/normal_buttons/normal_button_front_frame.png",
+   "rect": [
+    0,
+    0,
+    1522,
+    466
+   ]
+  },
+  {
+   "name": "normal_button_tint_bg",
+   "file": "assets/design/legacy/ui/normal_buttons/normal_button_tint_bg.png",
+   "rect": [
+    0,
+    0,
+    1522,
+    466
+   ]
+  }
+ ]
+}
