@@ -2,7 +2,7 @@
 
 > 프로젝트 전체의 NOW. 다음 작업자 인계 문장은 HANDOFF.md에 둔다. 구현 상태와 검증 상태를 섞지 않는다.
 
-Updated: 2026-09-24 08:10 KST
+Updated: 2026-09-24 09:40 KST
 
 ## Current Phase
 Phase 3 — Stabilization (Phase 4 출시 값은 대기)
@@ -42,6 +42,7 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 - [x] TASK-005f Step 5 레벨 도전 스테이지(`87f50ca`, BR-043)
 - [x] TASK-005g 독립 검수 R3(P0 0, P1 1, P2 1, P3 7) 반영(`f2a26ae`, `70cad69`), 비활성 익명 사용자 정리(`cef0acc`)
 - [x] TASK-008a 실험 스위치(T1, Time 보석, Multiplier 보석, 7색, Last Hurrah 콤보) 구현, 검수 R4 반영, 원격 적용
+- [x] TASK-009a 텍스처 아틀라스 통합: board_atlas, ui_atlas, ui_buttons_atlas(무손실 WebP), 쓰지 않던 레거시 시트 번들 제외(TECH_SPEC 3-1 텍스처 아틀라스)
 - [ ] TASK-001g ISSUE-007 멀티스레드 skwasm 같은 탭 재로드 멈춤 대응
 - [x] TASK-006a Supabase 스키마, 익명 로그인 게이트웨이, 랭킹 이전, 보충 광고 서버 확인, 이벤트 로거 구현과 테스트
 - [x] TASK-006b Supabase 원격 프로젝트 준비, 마이그레이션 적용, 원격 스모크, NAS 배포(`b71ba31`)
@@ -203,4 +204,11 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 - 그림: Time, Multiplier 배지는 imagegen 내장 도구로 기존 보석 시트를 참고해 만들었다(`assets/images/sprites/Gem_Badges.png`, 원본 `assets/design/gem_badges/`). 숫자는 코드로 그린다. 시계는 Material Icons(Apache 2.0)도 후보였으나 보석 질감과 맞추려고 생성 배지를 썼다. 7번째 색은 시트에 있던 흰 돌이다.
 - Orca 워커 3개(gems Opus high, config Opus medium, 검수 Opus high). 검수 P1 2건(7번째 색이 주황으로 그려짐, URL 실험 판 랭킹 반영)과 P2 1건(T1 범위)을 고쳤다. 7번째 색 문제는 검수 전에 브라우저 스크린샷으로도 찾았다.
 - 코인 보석은 코인 경제가 없어 제외했다.
+
+## 텍스처 아틀라스 통합 (2026-09-24 09:40 KST, Orca 오케스트레이션)
+
+- 사용자 요청: 쓰는 텍스처는 되도록 한 장으로 묶어 드로우콜을 줄이고 쓰지 않는 것은 뺀다.
+- 결과: 보드와 이펙트 30칸은 `board_atlas.webp`, UI 24장은 `ui_atlas.webp`와 `ui_buttons_atlas.webp`. 레거시 시트(Special_Area 3장, flame, supernova 오버레이 등)와 원본 PNG는 `assets/design/legacy/`로 옮겨 번들에서 뺐다. 번들에 남은 이미지는 아틀라스 3장과 타이틀, 스플래시, 배경뿐이다.
+- 수치는 TECH_SPEC 3-1 텍스처 아틀라스 절. 텍스처 수와 전환은 크게 줄었고, 보드 그리기 호출은 7회에서 5회. HUD는 작은 아이콘이 흐려지지 않게 호출을 묶지 않아 수는 그대로다(같은 텍스처라 GPU에서 합쳐짐).
+- 검증: analyze 0, 전체 437 tests, 작업 전 빌드와 스크린샷 픽셀 비교, 회귀 s15 13/13, s10 20/20, s8, s14 통과. 도구 `tools/pack_atlas.py`와 설정 `tools/atlas/*.json`.
 
