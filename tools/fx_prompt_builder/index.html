@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="단계별 선택으로 Flutter에서 쓸 수 있는 게임 이펙트 제작 프롬프트를 만드는 도구">
+<title>이펙트 프롬프트 빌더</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#panel">단계 화면으로 건너뛰기</a>
+<header class="top">
+  <div class="brand">
+    <h1>이펙트 프롬프트 빌더</h1>
+    <p>차례대로 고르면 Flutter(Dart)에서 쓸 수 있는 이펙트 제작 프롬프트가 완성됩니다.</p>
+  </div>
+  <div class="top-actions">
+    <button type="button" class="btn ghost" data-action="import">설정 불러오기</button>
+    <button type="button" class="btn ghost" data-action="reset">처음부터</button>
+  </div>
+</header>
+<main class="layout">
+  <nav class="rail" aria-label="단계"><ol id="steps"></ol></nav>
+  <section class="panel" id="panel" aria-labelledby="step-title"></section>
+  <aside class="side" aria-label="미리보기">
+    <div class="preview-card">
+      <div class="preview-head">
+        <h2>미리보기</h2>
+        <span class="phase-pill" id="phase-label" aria-live="off">대기</span>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="preview" role="img" aria-label="고른 이펙트의 움직임 미리보기. 누르면 다시 재생합니다."></canvas>
+      </div>
+      <div class="phasebar" aria-hidden="true">
+        <div class="phasebar-track" id="phasebar"><i class="tl-a"></i><i class="tl-h"></i><i class="tl-b"></i><i class="tl-g"></i></div>
+        <span class="playhead" id="playhead"></span>
+      </div>
+      <p class="legend small"><span class="lg-a">예고</span><span class="lg-h">정지</span><span class="lg-b">폭발</span><span class="lg-g">여운</span></p>
+      <div class="preview-controls">
+        <button type="button" class="btn small" data-action="replay">다시 재생</button>
+        <label class="toggle small"><input type="checkbox" id="slow"> 0.25배속</label>
+        <label class="toggle small"><input type="checkbox" id="auto"> 자동 반복</label>
+      </div>
+      <div class="tier-buttons" id="tier-buttons" role="group" aria-label="미리볼 등급"></div>
+      <p class="hold-hint" id="hold-hint" hidden>길게 누르기 방식입니다. 미리보기를 누르고 있으면 직접 충전하고, 손을 떼면 터집니다.</p>
+      <p class="preview-note">느낌을 잡기 위한 근사치입니다. 실제 이펙트는 프롬프트에 적힌 수치로 만들어집니다.</p>
+    </div>
+    <details class="live" id="live">
+      <summary>프롬프트 실시간 보기</summary>
+      <pre id="live-prompt"></pre>
+    </details>
+  </aside>
+</main>
+<dialog id="import-dialog" aria-labelledby="import-title">
+  <form method="dialog" class="dialog-body">
+    <h2 id="import-title">설정 불러오기</h2>
+    <p class="hint">이 도구에서 저장한 JSON 파일을 고르거나 내용을 붙여 넣으세요.</p>
+    <input type="file" id="import-file" accept="application/json,.json">
+    <label class="sr-only" for="import-text">설정 JSON</label>
+    <textarea id="import-text" rows="8" spellcheck="false" placeholder="{ &quot;v&quot;: 1, ... }"></textarea>
+    <div class="dialog-actions">
+      <button type="button" class="btn" data-action="import-close">닫기</button>
+      <button type="button" class="btn primary" data-action="import-apply">불러오기</button>
+    </div>
+  </form>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="data.js"></script>
+<script src="prompt.js"></script>
+<script src="preview.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

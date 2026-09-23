@@ -150,8 +150,10 @@ DONE은 구현뿐 아니라 필요한 검증과 문서 갱신까지 끝난 상�
 - 진행 랭킹은 현재 진입 레벨이 아니라 완료한 레벨 수다. 레벨 4 진입 상태는 3을 제출하고, 완료 레벨이 없는 레벨 1 상태는 0이며 제출하지 않는다.
 - 유효한 진행 기록은 TimeUp 진입 또는 일시정지 나가기에서 제출한다. 일시정지 나가기는 제출 완료를 기다린다. TimeUp 나가기는 진입 시 보낸 제출을 기다리지 않는다. 클라이언트 계약은 `tools/ranking_client_contract.md`를 본다.
 - 랭킹 서버 장애가 게임 진행이나 타이틀 복귀를 막아서는 안 된다.
-- `matchranking/ranking.php`는 Flutter 웹 빌드와 공모전 ZIP에 포함되지 않는다. 이 파일이 바뀌면 별도 NAS 업로드 필요 여부를 최종 보고에 명시하고, 업로드 뒤 원격 동작을 다시 확인한다.
-- 운영 랭킹에 유효한 시험 기록을 넣거나 데이터를 초기화하지 않는다. 초기화는 사용자 승인 뒤 백업, dry-run, 예상 건수 고정, 사후 조회 순서로 수행한다.
+- 2026-09-23부터 게임 내 랭킹 저장소는 Supabase다(ADR-009, PLAN-006). 스키마 변경은 `supabase/migrations/`에 새 마이그레이션으로 추가하고 원격 적용 뒤 보안 권고(advisors)를 확인한다. 적용한 마이그레이션 파일은 고치지 않는다.
+- Supabase secret/service_role 키는 클라이언트, 저장소, 문서, 로그에 두지 않는다. 공개용 키와 URL은 `config/supabase.json`(Git 제외)에만 둔다.
+- `matchranking/ranking.php`는 폐기 예정이며 Flutter 웹 빌드와 공모전 ZIP에 포함되지 않는다. 폐기 결정 전까지 NAS와 저장소에 남긴다.
+- 운영 랭킹에 유효한 시험 기록을 넣거나 데이터를 초기화하지 않는다. 원격 스모크 기록은 확인 직후 SQL로 지우고 건수를 기록한다. 초기화는 사용자 승인 뒤 백업, dry-run, 예상 건수 고정, 사후 조회 순서로 수행한다(TECH_SPEC API-004).
 - 게임 흐름은 `architecture/game_flow.md`, 초기화와 복원은 `tools/ranking_server.md`를 따른다.
 
 ## 4. Git, NAS 배포, 제출 ZIP
@@ -260,6 +262,16 @@ flutter run -d chrome
 
 Flutter 디버그 실행은 기능 확인용이다. FPS 비교 수치로 사용하지 않는다.
 
+### Supabase 연결 실행
+
+`config/supabase.example.json`을 `config/supabase.json`으로 복사하고 프로젝트 URL과 공개용 키를 넣는다. 이 파일은 Git에서 제외된다.
+
+```bash
+flutter run -d chrome --dart-define-from-file=config/supabase.json
+```
+
+파일 없이 실행하면 랭킹은 연결 불가로 표시되고, 보충 광고는 세션 로컬 제한만 쓰며, 이벤트는 보내지 않는다. `npm run dev:ads`는 파일이 있으면 자동으로 넣는다.
+
 ### 브라우저 모의 광고
 
 ```bash
@@ -292,11 +304,13 @@ flutter build web \
   --release \
   --base-href "/match/" \
   --wasm \
-  --no-web-resources-cdn
+  --no-web-resources-cdn \
+  --dart-define-from-file=config/supabase.json
 dart run tools/patch_flutter_web_deprecations.dart
 ```
 
 결과는 `build/web/`에 생성된다. `/match/` 빌드를 루트(`/`)에 배포하거나 그 반대로 배포하지 않는다.
+`tools/deploy_match_web.sh`는 `config/supabase.json`이 있으면 같은 옵션을 자동으로 넣고, 없으면 Supabase 기능이 꺼진 빌드라고 로그를 남긴다.
 
 ### NAS 자동 배포
 

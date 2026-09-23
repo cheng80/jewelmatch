@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
+import '../services/event_logger.dart';
 import '../services/game_settings.dart';
 import '../services/ranking_service.dart';
 import 'components/board_juice_layer.dart';
@@ -336,10 +337,31 @@ class MatchBoardGame extends FlameGame {
     }
     _effectPoolsReady = true;
     installMatchBoardQaBridge(this);
+    _logRoundStart();
 
     if (isTimedMode) {
       _fetchTop1();
     }
+  }
+
+  DateTime? _roundStartedAt;
+
+  void _logRoundStart() {
+    _roundStartedAt = DateTime.now();
+    EventLogger.instance.log('round_start', {'mode': gameMode.name});
+  }
+
+  /// 판 종료 이벤트. [reason]은 time_up 또는 exit.
+  void logRoundEnd(String reason) {
+    final startedAt = _roundStartedAt;
+    EventLogger.instance.log('round_end', {
+      'mode': gameMode.name,
+      'reason': reason,
+      'score': board.score,
+      if (isProgressionMode) 'level': progressionLevel,
+      if (startedAt != null)
+        'duration_s': DateTime.now().difference(startedAt).inSeconds,
+    });
   }
 
   Future<void> _warmInitialEffectPools() {

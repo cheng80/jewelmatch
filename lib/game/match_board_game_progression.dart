@@ -24,6 +24,11 @@ extension MatchBoardGameProgression on MatchBoardGame {
     final nextLevel = progressionLevel + 1;
     levelUpFromLevel = progressionLevel;
     levelUpToLevel = nextLevel;
+    EventLogger.instance.log('level_clear', {
+      'level': progressionLevel,
+      'score': board.score,
+      'max_combo': board.maxCombo,
+    });
     progressionNextBoardBonusKinds = _bonusKindsForNextLevel();
     _grantStageRewardsOnce();
     GameSettings.saveBestProgressionRecordIfBetter(

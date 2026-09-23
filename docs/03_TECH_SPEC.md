@@ -44,16 +44,16 @@
 - render()/update()에서 Paint, TextPainter, Vector2, 리스트, 문자열 키를 반복 생성하지 않는다
 - 임시 산출물은 tmp/ 하위
 
-주요 모듈: lib/game/match_board_*.dart, lib/ads/, lib/services/ranking_service.dart, lib/vm/
+주요 모듈: lib/game/match_board_*.dart, lib/ads/, lib/services/ranking_service.dart, lib/services/backend/(Supabase), lib/services/event_logger.dart, lib/vm/
 
 ## 3. 인증 / 권한 / 보안
 
-- 인증 방식: 플레이어 이름은 로컬 StorageKeys.playerName. 계정 없음
-- 권한 모델: 랭킹 제출은 이름+점수. 관리자 reset만 토큰
-- Secret 관리: MATCH_DEPLOY_TOKEN은 .env / NAS env. 문서·로그·URL에 넣지 않는다
-- 클라이언트 저장 금지 정보: 관리자 토큰, 키스토어 비밀번호, 토스 사용자 식별자, 광고 식별자
+- 인증 방식: Supabase 익명 로그인(ADR-009). 설치 또는 브라우저 저장소 단위 익명 사용자. 계정, 이메일, 토스 사용자 식별자 없음. 플레이어 이름은 로컬 StorageKeys.playerName이며 랭킹 제출 때만 서버에 간다
+- 권한 모델: public 스키마 전 테이블 RLS. 랭킹 조회는 anon, 제출과 보충 광고 기록, 이벤트 삽입은 익명 로그인 사용자 본인 행만. `user_id`는 anon/authenticated에게 공개 조회 권한이 없다(보충 기록의 본인 행 제외). 설정 쓰기와 랭킹 초기화는 대시보드 서비스 권한만
+- Secret 관리: Supabase secret/service_role 키는 클라이언트, 저장소, 문서에 두지 않는다. 공개용 키와 URL도 코드에 쓰지 않고 `config/supabase.json`(Git 제외)으로 넣는다. MATCH_DEPLOY_TOKEN은 .env / NAS env. 문서, 로그, URL에 넣지 않는다
+- 클라이언트 저장 금지 정보: 관리자 토큰, secret 키, 키스토어 비밀번호, 토스 사용자 식별자, 광고 식별자. 익명 세션 토큰은 로컬 저장하되 로그와 이벤트에 넣지 않는다
 - AppConfig.appStoreId는 출시 전 입력. 현재 빈 문자열
-- ranking.php CORS는 * . 운영 토큰은 헤더 X-Ranking-Admin-Token
+- 이전 NAS ranking.php는 CORS * 와 관리자 토큰 헤더(X-Ranking-Admin-Token) 방식이었다. 폐기 예정
 
 ## 4. 데이터 모델
 
@@ -93,6 +93,21 @@
 | score | int | >0 제출 | 타임=점수, 레벨=완료 레벨 |
 | ts | int? | epoch | |
 
+저장소: Supabase `ranking_entries`(id, user_id, mode, name, score, created_at). 클라이언트에는 name, score, ts(created_at epoch)만 돌아온다.
+`user_id`는 null 허용이고 `on delete set null`이다. 익명 사용자를 지워도 공개 랭킹 기록은 남는다. `ad_refill_claims`, `game_events`는 사용자와 함께 지워진다(cascade).
+이름 규칙: 1~20자, 앞뒤 공백 없음, 제어 문자와 보이지 않는 서식 문자, 방향 문자, 한글 채움 문자 금지(이모지와 문자 결합에 쓰는 ZWJ, ZWNJ는 허용), 보이는 문자가 하나도 없는 이름 금지. `submit_ranking`은 금지 문자를 지운 뒤 trim과 20자 절단을 한다. 입력은 있었는데 정리 뒤 보이는 문자가 남지 않으면 클라이언트 기본값과 같은 `GUEST`로 저장하고, 입력이 비어 있으면 거부한다. 체크 제약은 직접 삽입을 막는 마지막 방어다.
+
+### Entity: Supabase 테이블 (ADR-009)
+
+| 테이블 | 용도 | 클라이언트 권한 |
+|---|---|---|
+| app_config | key, value(jsonb) 원격 설정. 현재 `ranking.list_limit`=30, `ads.daily_refill_limit`=3 | anon/authenticated 조회(key, value) |
+| ranking_entries | 게임 내 랭킹 기록 | anon/authenticated 조회(user_id 제외), authenticated 본인 삽입 |
+| ad_refill_claims | 보충 광고 지급 기록(KST claim_date, item) | authenticated 본인 조회, 본인 삽입 |
+| game_events | 이벤트 로그 | authenticated 본인 삽입만 |
+
+보존(초안, 원격 미적용): `supabase/migrations/20260924090000_stone_match_retention.sql`이 pg_cron으로 매일 `game_events` 90일, `ad_refill_claims` 35일 지난 행을 지운다(KST 04:00, 04:10). 정리 함수는 `private` 스키마에 있고 클라이언트 역할은 실행할 수 없다. 익명 사용자 정리는 관리자 API로 따로 한다.
+
 ### Entity: Settings
 
 StorageKeys: bgm/sfx volume·mute, keepScreenOn, showFps, best scores by mode, playerName, review flags.
@@ -105,93 +120,117 @@ StorageKeys: bgm/sfx volume·mute, keepScreenOn, showFps, best scores by mode, p
 
 ## 5. API 계약
 
-Base: https://cheng80.myqnapcloud.com/matchranking/ranking.php
-관련: FR-009, BR-001, BR-002
+저장소: Supabase(ADR-009). 프로젝트 URL과 공개용 키는 `config/supabase.json`(Git 제외)에서 dart-define으로 넣는다. 스키마 정본은 `supabase/migrations/20260923142920_stone_match_init.sql`.
+호출: `SupabaseGateway`가 `POST {URL}/rest/v1/rpc/{함수}`와 `POST {URL}/auth/v1/...`을 부른다. 헤더 `apikey: <공개용 키>`, 로그인이 필요한 호출은 `Authorization: Bearer <익명 사용자 JWT>`.
+관련: FR-009, FR-010, BR-001, BR-002, BR-103
+2026-09-23 이전 NAS `ranking.php` 계약(아래 "이전 NAS API")은 새 빌드 배포 뒤 폐기 대상이다. NAS 기록은 이관하지 않는다.
+
+### API-000 익명 인증
+
+- 가입: `POST /auth/v1/signup` body `{"data":{}}` → `access_token`, `refresh_token`, `expires_in`/`expires_at`, `user.id`
+- 갱신: `POST /auth/v1/token?grant_type=refresh_token` body `{"refresh_token": "..."}`
+- 세션은 `StorageKeys.supabaseSession`(shared_preferences, 웹은 localStorage)에 저장한다. 만료 60초 전부터 갱신한다.
+- 만료 시각은 `expires_in`이 있으면 로컬 시각 기준으로 계산한다(기기 시계 차이 대응). 없으면 `expires_at`을 쓴다.
+- 인증 직전과 새 가입 직전에 저장소의 최신 세션을 다시 읽는다. 웹은 `SharedPreferences.reload()` 뒤 읽어 다른 탭이 회전한 refresh 토큰을 쓴다. 저장된 refresh 토큰이 메모리와 다르면 만료 전이면 바로 쓰고, 만료면 그 토큰으로 갱신한다.
+- 갱신이 네트워크 문제로 실패하면 새 사용자를 만들지 않는다. refresh 토큰이 거절될 때만 새로 가입한다.
+- 서버가 401을 주면 한 번만 갱신 후 다시 보낸다. 갱신 뒤에도 401이면 인증 대기로 넘긴다. 403은 권한 문제라 갱신하지 않고 `rejected`로 처리한다. 동시 인증 요청은 하나로 합친다.
+- 인증 실패 뒤 대기: 거절, 빈도 제한, 서버 오류는 60초부터 실패마다 2배, 상한 10분. 네트워크 실패는 10초 고정. 대기 중에는 요청 없이 바로 실패를 돌려준다. 성공하면 초기화하고, 대기 끝 시각이 지금보다 10분 넘게 미래면(시계 역행) 대기를 끝낸 것으로 본다.
+- 랭킹 제출 대기 상한은 Supabase 제출과 토스 리더보드 제출을 합쳐 8초다(BR-093). 넘기면 기존 실패 문구로 처리한다. 요청은 취소되지 않으므로 늦게 저장될 수 있다.
 
 ### API-001 목록
 
-GET ?action=list&mode=time|level
+RPC `get_ranking(p_mode text, p_limit integer default null)`, anon 호출(로그인 불필요)
 
 **Success**
-    { "ok": true, "mode": "time"|"level", "ranking": [ { "name", "score", "ts"? } ] }
+    [ { "name": "...", "score": 123, "ts": 1790000000 } ]
 
-상위 30. score 내림차순.
-
-**Errors**
-- ranking_load_failed
-- HTTP 404 → notFound
-- 기타 → unavailable
+- `p_limit`가 null이면 `app_config.ranking.list_limit`(기본 30), 1~100으로 제한
+- 정렬: score 내림차순, 같은 점수는 먼저 등록한 기록이 위
+- 클라이언트: `RankingService.fetchList(mode:)`
 
 ### API-002 1위
 
-GET ?action=top1&mode=time|level
-
-관련: FR-009, BR-092
-
-**Success**
-    { "ok": true, "mode": "...", "top1": { "name", "score", "ts"? } | null }
-
-클라이언트 HUD 왕관은 타임 모드만 호출한다. RankingService.fetchTop1() 기본 mode=time. 레벨 모드는 이 API를 HUD에 붙이지 않는다. 서버는 mode=level도 응답한다.
+`get_ranking(p_mode, 1)`의 첫 행. 빈 배열이면 null 성공.
+관련: BR-092. HUD 왕관은 타임 모드만 호출한다. `RankingService.fetchTop1()` 기본 mode=time.
 
 ### API-003 제출
 
-POST ?action=submit&mode=time|level
-    { "name": "...", "score": 12345, "mode": "time"|"level" }
+RPC `submit_ranking(p_mode text, p_name text, p_score integer)`, 익명 로그인 필요
 
 **Success**
-    { "ok": true, "mode": "...", "ranked": true|false, "rank": n?, "score": n, "message"? }
+    { "mode": "time"|"level", "ranked": true|false, "rank": n, "score": n }
 
-동일 이름 중복 허용. 30개 꽉 차고 최하위 이하면 ranked=false.
+- 동일 이름 다중 기록 허용(BR-090). 모든 기록을 저장하고 `rank <= list_limit`이면 ranked=true
+- 이름은 앞뒤 공백 제거 후 1~20자. score는 1 이상, 레벨 10,000 이하, 타임 1,000,000,000 이하
+- 사용자당 1분 10건 초과는 `ranking_rate_limited`(P0001)로 거절
+- 클라이언트는 score<=0이면 호출하지 않는다(BR-091)
 
-**Errors**
-- 400 name and score required (빈 이름 또는 score<=0)
-- ranking_load_failed / ranking_save_failed
-- 클라이언트는 score<=0이면 호출하지 않는다
+**Errors (RankingFailure 매핑)**
+- 404(함수 없음) → notFound
+- 조회의 5xx, 제약 위반, 빈도 제한 → loadFailed / 제출의 같은 오류 → saveFailed
+- 미설정 빌드, 네트워크, 인증 실패, 잘못된 응답 → unavailable
 
-### API-004 관리자 초기화
+### API-004 운영 랭킹 초기화
 
-POST ?action=reset
-Header: X-Ranking-Admin-Token
-    { "mode": "time"|"level", "dryRun": true }
-    { "mode": "...", "expectedCount": N, "confirm": "RESET time"|"RESET level" }
+클라이언트 API가 아니다. Supabase 대시보드 SQL 편집기(서비스 권한)에서만 한다. 사용자 승인 뒤 다음 순서를 지킨다.
 
-**Errors**
-- ranking_reset_disabled, ranking_count_changed (409), ranking_save_failed
-
-클라이언트 게임 API가 아니다. 운영 초기화는 승인, 백업, dry-run, expectedCount 고정, 사후 list 확인 순서다. 토큰은 문서에 적지 않는다.
+1. 백업: `create table private.ranking_entries_backup_YYYYMMDD as select * from public.ranking_entries where mode = '<mode>';`
+2. dry-run: `select count(*) from public.ranking_entries where mode = '<mode>';` 결과를 예상 건수로 고정
+3. 삭제: 같은 트랜잭션에서 건수를 다시 확인하고 예상 건수와 같을 때만 `delete from public.ranking_entries where mode = '<mode>';`
+4. 사후 조회: `get_ranking` 빈 목록 확인, 백업 건수 기록
 
 ### API-005 Apps in Toss 레벨 리더보드
 
 JS bridge stoneMatchLeaderboard.submitLevelScore(score)
-관련 FR-009. 게임 내 목록은 API-001 유지.
+관련 FR-009. 게임 내 목록은 API-001(Supabase)을 쓴다.
+
+### API-006 보충 광고 하루 제한
+
+- RPC `ad_refill_status()` → `{ "daily_limit", "used_today", "remaining", "date" }`
+- RPC `claim_ad_refill(p_item text)` → 위 값 + `"granted": true|false`. 사용자별 advisory lock으로 동시 요청을 직렬화한다
+- 날짜는 KST(`Asia/Seoul`), 제한은 `app_config.ads.daily_refill_limit`(기본 3, 0~20)
+- 익명 로그인 필요. 실패하면 클라이언트는 세션 로컬 제한으로 판단한다
+
+### API-007 이벤트 로그
+
+- `POST /rest/v1/game_events`, `Prefer: return=minimal`, 행 배열. 익명 로그인 필요, 조회 권한 없음
+- 행: `session_id`(uuid), `name`(`^[a-z][a-z0-9_]{0,39}$`), `params`(객체, 2KB 이하), `app_version`(32자 이하), `channel`(16자 이하), `client_ts`
+- 사용자당 1분 300건 초과는 `game_events_rate_limited`로 거절
+- 현재 이벤트: `session_start`(platform), `round_start`(mode), `round_end`(mode, reason, score, level?, duration_s?), `level_clear`(level, score, max_combo), `stage_continue`(level), `ranking_submit`(mode, score, ok, ranked?, rank?, failure?), `ad_reward`(placement, result, granted, item?, level?)
+
+### 이전 NAS API (폐기 예정)
+
+Base: https://cheng80.myqnapcloud.com/matchranking/ranking.php. `?action=list|top1`(GET), `?action=submit`(POST `{name, score, mode}`), `?action=reset`(POST, 헤더 `X-Ranking-Admin-Token`). JSON 파일 두 개에 모드별 상위 30건만 저장했다. 2026-09-23 클라이언트 연결을 끊었다. 파일은 NAS 폐기 결정 전까지 저장소와 NAS에 남긴다.
 
 ## 6. 상태 관리 / 캐시 / 동기화
 
 - 상태 관리: Riverpod SettingsNotifier, RankingNotifier. 보드 상태는 Flame 객체
-- 로컬 저장: shared_preferences. 베스트 스코어 모드별
+- 로컬 저장: shared_preferences. 베스트 스코어 모드별, Supabase 익명 세션(StorageKeys.supabaseSession)
 - 캐시: PackageInfo 1회, 스프라이트 시트 preload, HUD Paint/TextPainter, 배경 Picture
 - 동기화 정책: 랭킹은 종료 시 제출. 재제출은 submitted=false일 때. 인벤토리 서버 동기화 없음
-- 광고 일일 제한: AdRewardPolicy 세션 메모리. 날짜가 바뀌면 refill count 리셋. 서버 미연결
+- 앱 시작: `BackendBootstrap.start()`를 기다리지 않고 호출해 익명 세션을 준비하고 `session_start`를 남긴다. 미설정 빌드는 아무것도 하지 않는다
+- 광고 일일 제한: StageInventory 오버레이가 열릴 때 `ad_refill_status`로 남은 횟수를 맞추고, 광고 완료 후 `claim_ad_refill`로 지급을 기록한다. 서버가 거절하면 지급하지 않고, 서버에 닿지 못하면 AdRewardPolicy 세션 메모리 제한(기본 3회, 날짜 바뀌면 리셋)으로 판단한다
 
 ## 7. 오류 / 로깅 / 관측
 
 - 공통 오류 모델: RankingFailure = notFound, loadFailed, saveFailed, unavailable
 - 사용자 표시 원칙: 번역 키 rankNotFound 등. 나가기 가능
 - 로그 정책: debugLog 기본 false. 웹 SFX는 window.stoneMatchSfx.getState()
-- 민감정보 제외: 토큰, 이름 외 PII, 광고 ID를 이벤트에 넣지 않는다
+- 민감정보 제외: 토큰, 이름 외 PII, 광고 ID를 이벤트에 넣지 않는다. EventLogger는 숫자, bool, 64자 이하 문자열 값만 12개까지 남긴다
 - FPS 패널: 현재/30초 AVG/LOW/GAP. 기본 꺼짐
-- 내부 분석 이벤트 이름(ad_offer_shown 등)은 정책에만 있고 SDK 미연결
+- 내부 이벤트: EventLogger가 Supabase `game_events`로 보낸다(API-007). 20건 또는 5초마다 묶어 보내고, 앱이 백그라운드로 갈 때 남은 이벤트를 보낸다. 네트워크, 서버, 인증 실패는 큐(최대 200건)에 되돌리고 제약 위반과 빈도 제한은 버린다. 외부 분석 SDK는 없다. 광고 정책의 ad_offer_shown 등 나머지 이름은 아직 연결하지 않았다
 
 ## 8. 테스트 / 배포
 
-- Unit: test/match_board_logic_test.dart, special_gem_combo_test.dart, stage_reward_test.dart, item_inventory_test.dart, ranking_service_test.dart, ad_reward_policy_test.dart, sound_manager_test.dart 등
+- Unit: test/match_board_logic_test.dart, special_gem_combo_test.dart, stage_reward_test.dart, item_inventory_test.dart, ranking_service_test.dart, supabase_gateway_test.dart, event_logger_test.dart, ad_reward_policy_test.dart, sound_manager_test.dart 등
 - Integration: 위젯 오버레이 테스트. 광범위 E2E 없음
-- 환경: STORE_CHANNEL=play|appstore|onestore|intoss, INTOSS_AD_MODE=disabled|mock|test|production, QA_SPECIAL_EFFECTS, QA_PERF_AUTORUN
+- 환경: STORE_CHANNEL=play|appstore|onestore|intoss, INTOSS_AD_MODE=disabled|mock|test|production, QA_SPECIAL_EFFECTS, QA_PERF_AUTORUN, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY(`--dart-define-from-file=config/supabase.json`, 예시는 `config/supabase.example.json`)
 - 배포:
-  - Web NAS: tools/deploy_match_web.sh, --base-href "/match/"
-  - Apps in Toss: npm run build:intoss:test / build:intoss
+  - Web NAS: tools/deploy_match_web.sh, --base-href "/match/". `config/supabase.json`이 있으면 자동으로 넣고, 없으면 Supabase 기능이 꺼진 빌드라고 로그를 남긴다
+  - Apps in Toss: npm run build:intoss:test(config 있으면 포함) / build:intoss(config 필수)
   - Android AAB/APK, iOS IPA: flutter build appbundle / ipa, STORE_CHANNEL define
-- 롤백: NAS는 이전 정적 빌드 복원. 랭킹 reset은 파일 백업 수동 복원
+  - Supabase 스키마: `supabase/migrations/`를 원격 프로젝트에 적용. 적용 뒤 보안 권고(advisors) 확인
+- 롤백: NAS는 이전 정적 빌드 복원. 랭킹 초기화 복원은 API-004의 백업 테이블에서 다시 넣는다
 - ranking.php는 웹 게임 산출물에 넣지 않는다
 
 채널 구현 상태: ADR-005. flavor/Apple ID는 미완.

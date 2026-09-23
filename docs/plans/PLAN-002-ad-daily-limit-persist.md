@@ -3,11 +3,13 @@
 ## Metadata
 - Plan ID: `PLAN-002`
 - Title: refill 3회를 세션 메모리에서 채널 사용자+서버 날짜로 이동
-- Status: `DRAFT`
+- Status: `IN_PROGRESS` (2026-09-23 PLAN-006에서 Supabase 익명 사용자 기준으로 구현, 원격 적용 대기)
 - Related Requirement: `FR-010`, `BR-103`
 - Related ADR: `ADR-003`
 - Owner:
 - Updated: 2026-08-23
+
+2026-09-23 갱신: 사용자 식별은 Supabase 익명 로그인으로 정했다(ADR-009). 토스 사용자 식별자는 쓰지 않는다. 서버 날짜는 KST, 제한은 `app_config.ads.daily_refill_limit`. 구현과 검증 상세는 PLAN-006과 TECH_SPEC API-006을 따른다. 익명 사용자는 저장소 삭제나 재설치로 바뀌므로 그때는 제한이 새로 시작된다.
 
 ## 1. 목표
 아이템 보충 광고 3회 제한이 앱 재시작과 날짜 경계에서 유지된다. 측정 이벤트에 광고 식별자가 없다.

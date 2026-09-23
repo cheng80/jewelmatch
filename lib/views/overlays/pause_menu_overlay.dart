@@ -117,6 +117,7 @@ class PauseMenuOverlay extends ConsumerWidget {
               }
               if (!context.mounted) return;
               ref.read(rankingProvider.notifier).reset();
+              game.logRoundEnd('exit');
               context.go(RoutePaths.title);
             },
           ),

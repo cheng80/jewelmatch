@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
+import '../ads/ad_refill_limit_backend.dart';
 import '../ads/ad_reward_policy.dart';
 import '../ads/ad_service.dart';
 import '../ads/ad_service_factory.dart';
@@ -92,7 +93,9 @@ class _GameViewState extends State<GameView> {
     super.initState();
     _ownsAdService = widget.adService == null;
     _adService = widget.adService ?? createAdService();
-    _adRewardPolicy = widget.adRewardPolicy ?? AdRewardPolicy();
+    _adRewardPolicy =
+        widget.adRewardPolicy ??
+        AdRewardPolicy(backend: SupabaseAdRefillLimitBackend.fromEnvironment());
     if (widget.gameMode == JewelGameMode.progression) {
       unawaited(_adService.preloadRewarded());
     }

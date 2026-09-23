@@ -1,0 +1,140 @@
+# PLAN-005 Bejeweled Blitz 계승 게임 방향 개편
+
+## Metadata
+- Plan ID: `PLAN-005`
+- Title: 60초 점수 경쟁 중심 게임 방향 개편(공통 코어, 장기 목표, 경쟁 형식)
+- Status: `DRAFT`
+- Related Requirement: `FR-001`, `FR-002`, `FR-003`, `FR-004`, `FR-005`, `FR-006`, `FR-009`, `FR-012`
+- Related ADR: `ADR-008`(Proposed), `ADR-001`, `ADR-002`, `ADR-006`, `ADR-007`
+- Owner:
+- Updated: 2026-09-23
+
+기획 본문, 근거, 수치 시작값, 미결정 사항(D1~D10)은 [01_PRODUCT_SPEC.md](../01_PRODUCT_SPEC.md)의 "게임 방향 기획" 절이 정본이다. 이 PLAN은 구현 순서와 변경 범위만 다룬다.
+
+## 1. 목표
+두 타이머 모드가 공유하는 60초 판에 실력 표현 장치를 넣고, 재화 없이 오래 할 이유(누적 랭크, 배지, 기록)를 만든 뒤, 타임 모드를 실력 경쟁 모드로 키운다. 레벨 모드는 진행과 수익, 무한 모드는 휴식 모드로 역할을 정리한다.
+
+## 2. 범위
+### 포함
+- Step 1: 공통 60초 코어(하이퍼 큐브 교환 H1~H3, Speed Bonus, Last Hurrah, 시간 보상 T1)
+- Step 2: 내부 이벤트 로거와 플레이테스트 기록
+- Step 3: 로컬 누적 랭크, 배지, 기록 화면, 무한 모드 연결
+- Step 4: 타임 모드 경쟁 형식(일일 동일 보드, 주간 순위). 시작할 때 서버 포함 별도 PLAN으로 분리
+- Step 5: 레벨 모드 규칙 변형 스테이지
+
+### 제외
+- 사가형 장애물 레벨, 생명, 대기 시간, 모드별 횟수 제한, 기간제 부스트
+- 특수 보석 매치 발동(M1). 탭 발동 유지
+- 특수 보석끼리의 교환 조합(Bejeweled Stars식). `match_board_special_combos.dart`의 bomb+bomb, bomb+star, star+star 코드는 계속 연결하지 않는다
+- Blazing Speed. FPS 측정 전 보류
+- 코인과 인앱 결제 구현. PLAN-003, PLAN-002 이후 별도 PLAN
+- 외부 분석 SDK. 기존 "GA/Firebase 전환 기준"을 따른다
+
+## 3. 현재 상태 / 전제
+- 기존 구현(2026-09-23 코드 확인):
+  - 스왑 조합 차단: `lib/game/match_board_input.dart`의 `_triggerSpecialSwapImpl`이 항상 `false`를 돌려준다. `_trySwapImpl`이 일반 스왑 전에 이 함수를 먼저 부른다. 하이퍼 교환은 이 한 곳에서 연결할 수 있다.
+  - 탭 발동: 같은 파일의 칸 선택 처리에서 특수 보석 칸을 누르면 즉시 `triggerSpecialCell`을 호출한다. H1을 넣으려면 하이퍼 칸에서 시작한 드래그나 두 번째 칸 선택을 교환으로, 단순 탭을 발동으로 구분해야 한다.
+  - 연쇄 큐: `lib/game/match_board_specials.dart`는 효과 범위의 `hyper`를 연쇄 큐에서 뺀다(`includeHyper` 조건). `hyper` 발동은 `triggerColor`를 받는 경로가 이미 있다.
+  - 힌트와 NoMoves: `lib/game/match_board_logic.dart`의 `getAllValidMoves`와 `hasAnyValidMove`. `lib/game/match_board_resolution.dart`가 이동이 없으면 `onNoMoves`를 부른다.
+  - 시간 보상: `match_board_resolution.dart`의 제거 처리. 상수는 `lib/game/match_board_game_mode_rules.dart`(60초, 상한 90초, 배율 0.6, 기본 1, 콤보당 1).
+  - TimeUp: `lib/game/match_board_game_timing.dart`의 `_triggerTimeUpImpl`이 `timeUp`을 켜고 `TimeUp` 오버레이를 연다. 랭킹 제출은 `lib/views/overlays/time_up_overlay.dart`(진입 시)와 `pause_menu_overlay.dart`(나가기 대기)에서 `lib/vm/ranking_notifier.dart`를 거친다.
+  - 레벨 시작 특수 보석: `lib/game/jewel_rank_progression.dart`의 `JewelProgressionBonus.kindsForNextLevel`.
+  - 한 판 통계: `lib/game/match_board_models.dart`의 `MatchBoardGameStats`. 색별 제거 통계는 없다.
+  - 분석: GA4, Firebase Analytics, 내부 이벤트 로거 모두 없다.
+- 제약사항: 미출시라 외부 지표가 없다. 모바일 웹 FPS 검증(PLAN-001)이 미완이다. 토스 사용자 식별 정책이 없다(PLAN-002).
+- 반드시 유지할 계약: BR-001, BR-002, BR-100~BR-103, ADR-003 광고 위치 3개, ADR-004(Web Audio로 되돌리지 않음), Riverpod codegen 금지, 실시간 HUD는 Flame 구성요소 우선, 사용자 문구 중간점 금지, ranking.php는 웹 빌드와 제출 ZIP에 넣지 않음.
+
+## 4. 구현 계획
+### Step 0 — 결정 게이트
+- [ ] D1 ADR-008 승인. 승인되면 Status를 Accepted로 바꾸고 ROADMAP Phase 5를 진행 상태로 표시
+- [ ] Step 1a 전: D2(하이퍼 규칙 범위), D3(H2 반환과 상한), D4(탭 유지) 결정. ADR-001에 개정 절을 추가하거나 새 ADR로 대체
+- [ ] Step 1b 전: D5(Speed Bonus 적용 모드와 점수 결합)
+- [ ] Step 1c 전: D6(Last Hurrah 적용 모드, 레벨 클리어 인정, 제출 시점). ADR-007 개정
+- [ ] Step 4 전: D8(앱인토스 공식 리더보드 대상), D10(기존 타임 기록 처리)
+- [ ] Step 5 전: D9(레벨 규칙 변형과 이동 제한 혼합)
+
+### Step 1 — 공통 60초 코어
+#### 1a. 하이퍼 큐브 교환(H1~H3)
+- [ ] 입력: 하이퍼 칸의 단순 탭은 발동, 하이퍼에서 인접 칸으로의 드래그나 두 칸 선택은 교환으로 분기. 기존 F1 입력 회귀 테스트(`t2_f1_input_regression_test`, `t2_pointer_flow_test`) 유지
+- [ ] `_triggerSpecialSwapImpl`에 하이퍼 경로만 연결. H1은 일반 보석 색 제거, 특수 보석 대상은 그 특수 보석 발동과 그 색 제거. non-hyper 조합은 계속 `false`
+- [ ] H2 하이퍼끼리 교환: 판 전체 제거, D3에 따른 점수와 시간 상한
+- [ ] H3: 효과 범위에 든 `hyper`를 원인 특수 보석 색으로 큐에 넣는다
+- [ ] 하이퍼 탭 색 선택 기준(D2, 시작안: 가장 많은 색)
+- [ ] 힌트와 NoMoves: 하이퍼 교환을 유효 이동으로 볼지, 힌트 후보로 보여 줄지 D2와 함께 결정하고 반영
+- [ ] 아이템 `hyperCube`(BR-072)와 효과 표시가 겹치지 않는지 확인
+- [ ] 테스트: `special_gem_combo_test`의 "스왑해도 발동하지 않음" 기대를 하이퍼에 한해 바꾸고 non-hyper 조합 비활성은 유지. `match_board_logic_test`에 H1, H2, H3, 색 선택, NoMoves 케이스 추가
+- [ ] 문서: FR-002, BR-020~BR-022, FR-006, 특수 보석 룰 5, 7, 8, 11절, 게임 방법 오버레이 문구(5개 언어, FR-012), ADR-001
+
+#### 1b. Speed Bonus
+- [ ] 규칙 모델: 유저 스왑 기준 빠른 매치 카운트, 간격 창, 단계(+200~+1000), 초기화 조건. 순수 로직으로 분리해 단위 테스트
+- [ ] 점수 결합(D5 시작안: BR-011 결과와 별도 가산, 콤보 배수 미적용)
+- [ ] HUD: Flame 구성요소로 단계 표시. 기존 HUD 롤업, 시간 보너스 표시와 겹치지 않게 배치
+- [ ] 효과음: 기존 콤보 피치 규칙과 충돌 여부 확인
+- [ ] 문서: FR-005(적용 모드에 따라 FR-004), 새 BR, 02_UI_UX HUD 절
+
+#### 1c. Last Hurrah
+- [ ] TimeUp 흐름에 마무리 단계 추가: 입력 잠금, 남은 특수 보석을 위쪽 행부터 왼쪽에서 오른쪽 순서로 발동, `hyper`는 무작위 남은 색, 연쇄 완료 후 점수 확정
+- [ ] 시간 보상 없음. 점수 콤보 배수 적용 여부는 플레이테스트로 결정
+- [ ] 연출 길이 상한, reduced motion은 즉시 계산
+- [ ] 랭킹 제출을 마무리 완료 후로 이동. 일시정지 나가기 대기 규칙(BR-093)과 TimeUp 나가기 비대기 규칙 재정의
+- [ ] 테스트: `time_up_overlay_test`, 흐름 테스트에 마무리 단계, 제출 시점, reduced motion 케이스
+- [ ] 문서: ADR-007, BR-093, FR-005, 02_UI_UX TimeUp 절
+
+#### 1d. 시간 보상 T1
+- [ ] Step 2 플레이테스트 결과로 채택 여부(D7) 결정
+- [ ] 채택 시 `match_board_resolution.dart` 보상 조건과 상수 변경, BR-050과 특수 보석 룰 10절 갱신
+
+### Step 2 — 내부 이벤트 로거와 플레이테스트
+- [x] 로거 어댑터: 2026-09-23 `EventLogger`로 구현하고 Supabase `game_events`에 보낸다(PLAN-006, ADR-009). 게임 코드는 SDK를 직접 부르지 않는다
+- [ ] 기존 필수 이벤트(아이템 플랜 3.5차)와 Product Spec 8-3 추가 이벤트 연결
+- [ ] 개인 식별 정보 미기록, 임시 sessionId만 사용
+- [ ] Product Spec 8-2 플레이테스트 항목을 매 단계 뒤 기록. 결과는 이 PLAN 하단 "플레이테스트 기록"에 남긴다
+
+### Step 3 — 기록과 장기 목표(R1)
+- [ ] 로컬 저장 모델(누적 점수, 랭크, 배지 진행, 모드별 최고 기록)과 StorageKeys. PLAN-003 저장 방식과 통일
+- [ ] 누적 랭크 곡선과 단계 수(플레이테스트로 결정). `JewelRankProgression`과 분리된 모델
+- [ ] 배지 후보와 4등급 기준(Product Spec 6-6)
+- [ ] 기록 화면(타이틀 진입). 02_UI_UX에 새 SCREEN 추가
+- [ ] 무한 모드 판 점수를 누적 랭크에 반영
+- [ ] 테스트: 저장과 로드, 배지 판정, 랭크 경계
+
+### Step 4 — 타임 모드 경쟁 형식(C1)
+- [ ] 시작 시 서버 변경(기간 구분, 날짜 시드)을 포함한 별도 PLAN 작성
+- [ ] 날짜 시드 보드와 리필 순서 재현 테스트
+- [ ] 운영 랭킹 초기화가 필요하면 승인, 백업, dry-run, 예상 건수, 사후 조회 절차
+
+### Step 5 — 레벨 모드 규칙 변형(V1)
+- [ ] D9 결정 후 스테이지 규칙 데이터 구조, 목표 HUD, 이동 카운터, 색별 제거 통계
+- [ ] BR-040, ADR-006과 목표 관계 정리
+
+## 5. 예상 변경 범위
+- 파일/모듈: `lib/game/match_board_input.dart`, `match_board_specials.dart`, `match_board_resolution.dart`, `match_board_logic.dart`, `match_board_game_timing.dart`, `match_board_game_mode_rules.dart`, `match_board_models.dart`, `lib/game/components/` HUD, `lib/views/overlays/time_up_overlay.dart`, `pause_menu_overlay.dart`, `how_to_play/`, `lib/vm/ranking_notifier.dart`, 번역 파일, 새 기록 및 로거 모듈
+- DB/API 영향: Step 1~3 없음(로컬). Step 4에서 랭킹 API 변경
+- UI 영향: HUD Speed Bonus 표시, Last Hurrah 연출, 기록 화면, 배지 알림, 게임 방법 안내
+- 배포/마이그레이션 영향: 타임 랭킹 점수 규모 변화(D10). 로컬 저장 신규 키
+
+## 6. 검증 계획
+- [ ] Unit test: 단계별 규칙 로직(H1~H3, Speed Bonus, Last Hurrah 순서와 점수, 시간 보상, 배지 판정)
+- [ ] 회귀: `flutter analyze`, 전체 `flutter test`, 웹 릴리즈 빌드
+- [ ] 성능: H2 판 전체 제거와 Last Hurrah 연쇄의 FPS를 PLAN-001 방식으로 전후 비교
+- [ ] 수동: Product Spec 8-2 플레이테스트 항목
+- [ ] 관련 Acceptance Criteria 갱신 확인
+
+## 7. 위험 / 미해결 사항
+- 점수 인플레이션과 랭킹 공정성: H2, Speed Bonus, Last Hurrah가 겹치면 점수 규모가 크게 바뀐다. 상한과 기존 기록 처리가 필요하다
+- 모바일 웹 FPS: 연쇄 발동과 판 전체 제거가 PLAN-001의 미해결 문제를 악화시킬 수 있다
+- 입력 오작동: 하이퍼 칸에서 탭과 드래그 구분이 모바일 터치에서 헷갈릴 수 있다
+- 규칙 복잡도: 탭 발동과 하이퍼 교환이 공존한다. 튜토리얼 보강이 필요하다
+- 레벨 목표 밸런스: 공통 코어가 레벨 모드 점수도 올린다(BR-040, ADR-006)
+- 지표 부재: 출시 전 판단은 내부 플레이테스트에 기댄다
+
+## 8. 완료 조건
+- [ ] 계획한 단계 구현 완료
+- [ ] 필요한 테스트/검증 완료
+- [ ] 기준 문서 변경사항 반영(Product Spec FR/BR 이관, UI_UX, TECH_SPEC)
+- [ ] PROJECT_STATUS 갱신
+- [ ] HANDOFF 갱신
+- [ ] ADR-008 Accepted, ADR-001과 ADR-007 개정
+
+## 플레이테스트 기록
+아직 없음.

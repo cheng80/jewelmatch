@@ -11,6 +11,7 @@ import '../../ads/ad_service.dart';
 import '../../game/match_board_game.dart';
 import '../../resources/asset_paths.dart';
 import '../../resources/sound_manager.dart';
+import '../../services/event_logger.dart';
 import '../../services/ranking_service.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../../vm/ranking_notifier.dart';
@@ -163,6 +164,12 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
       widget.game.stageAttemptId,
       result,
     );
+    EventLogger.instance.log('ad_reward', {
+      'placement': 'continue_stage',
+      'result': result.name,
+      'granted': granted,
+      'level': widget.game.progressionLevel,
+    });
     if (granted) {
       ref.read(rankingProvider.notifier).reset();
       showAdSuccessFeedback(context, context.tr('continueGame'));

@@ -31,10 +31,10 @@
 
 - 코인 경제와 인앱 결제 (아이템 플랜 5~6차)
 - 영속 PlayerInventory와 타이틀 인벤토리 진입 (3차 미완)
-- 특수 보석 스왑 조합 (Bejeweled식 Flame+Star 등)
+- 특수 보석끼리의 스왑 조합 (Bejeweled Stars식 Flame+Star 등). 하이퍼 큐브 교환은 하단 "게임 방향 기획"에서 재검토 중이며 결정 전까지 비활성 유지
 - 강제 전면 광고
 - 계정 시스템, 소셜 친구, 실시간 멀티플레이
-- 외부 GA/Firebase 분석 SDK
+- 외부 GA/Firebase 분석 SDK (2026-09-23 확인: GA4, Firebase Analytics 미연동. 내부 이벤트는 Supabase `game_events`로 보낸다. ADR-009)
 
 ## 3. 사용자 유형
 
@@ -255,8 +255,10 @@
 - 타이틀 랭킹 팝업에서 타임/레벨 목록 조회. 상위 30
 - 인게임 HUD 왕관과 top1 fetch, HUD 랭킹 버튼은 타임 모드만
 - 타임: 점수, 레벨: 완료 레벨 수
-- Apps in Toss는 레벨 기록만 공식 리더보드에도 제출하고, 게임 내 목록은 기존 서버를 유지한다
+- Apps in Toss는 레벨 기록만 공식 리더보드에도 제출하고, 게임 내 목록은 Supabase 랭킹을 쓴다
 - 제출 실패 시 TimeUp에서 재제출 가능
+- 저장소는 Supabase다(ADR-009). 제출은 설치 또는 브라우저 단위 익명 사용자로 하고 이름, 점수만 공개한다. 모든 기록을 저장하고 상위 30(원격 설정 `ranking.list_limit`)을 보여 준다
+- 2026-09-23 저장소 이전 때 NAS 기록은 가져오지 않고 새로 시작한다(사용자 결정)
 
 **조건 / 비즈니스 규칙**
 - BR-001, BR-002
@@ -264,9 +266,11 @@
 - BR-091: score <= 0 이면 제출하지 않는다
 - BR-092: HUD 랭킹/top1은 타임 전용. 레벨 모드는 타이틀 목록만
 - BR-093: Pause 나가기는 제출 await. TimeUp 나가기는 진입 시 fire-and-forget 제출 후 대기 없이 타이틀
+- BR-094: 서버는 이름 1~20자, 점수 상한(레벨 10,000, 타임 1,000,000,000), 사용자당 분당 10건만 검증한다. 치트 방지 장치가 아니다
 
 **실패 / 예외**
 - 서버 없음/로드 실패/저장 실패는 유형별 메시지만 보여 준다. 플레이와 나가기는 막지 않는다
+- Supabase 연결 값 없이 만든 빌드는 연결 불가 메시지를 보인다
 
 **Acceptance Criteria**
 - [x] 목록/1위/제출이 동작한다
@@ -286,7 +290,7 @@
 - BR-100: 강제 전면 광고 없음
 - BR-101: rewarded 완료에서만 보상. 로드/클릭/닫힘은 보상 아님
 - BR-102: 광고 중 입력/타이머/BGM/SFX 정지, 종료 후 복구
-- BR-103: 일일 3회 제한은 현재 세션 로컬. 서버 영속은 미연결
+- BR-103: 일일 제한(기본 3회, 원격 설정 `ads.daily_refill_limit`)은 Supabase에서 KST 날짜와 익명 사용자 기준으로 센다. 인벤토리를 열 때 남은 횟수를 서버 값으로 맞추고, 광고 완료 후 서버가 기록을 거절하면 지급하지 않는다. 서버에 닿지 못하면 세션 로컬 제한으로 판단한다. 저장소 삭제나 재설치로 익명 사용자가 바뀌면 제한도 새로 시작한다
 
 **실패 / 예외**
 - 로드 실패, 미지원, 중도 종료는 보상 없음. 기존 상태 유지
@@ -294,7 +298,7 @@
 **Acceptance Criteria**
 - [x] 세 위치만 존재한다
 - [x] 이어가기/보충이 rewarded 완료에서만 지급된다
-- [ ] 일일 제한 서버 영속화 (미구현)
+- [ ] 일일 제한 서버 영속화 (코드 구현, Supabase 원격 적용과 확인 대기. PLAN-006)
 
 상세: ADR-003, FR-010
 
@@ -349,10 +353,12 @@
 ### Later
 
 - 3차 영속 인벤토리와 타이틀 진입
-- 광고 일일 제한 서버 영속, 측정 이벤트 연결
+- 광고 일일 제한 서버 영속, 측정 이벤트 연결 (Supabase로 코드 구현, 원격 적용 대기. PLAN-006)
 - 코인 경제, 인앱 결제
 - 스토어 채널 flavor, Apple ID, 개인정보/지원 URL
 - Apps in Toss iPhone 장시간 FPS/오디오 회귀
+- 게임 방향 개편: Bejeweled Blitz식 60초 점수 경쟁 중심, 모드 역할 분담, 재화 없는 장기 목표 우선. 상태는 제안(Proposed). 본문은 이 파일 하단 "게임 방향 기획", 결정은 ADR-008, 구현 단계는 PLAN-005
+- 내부 이벤트 로거(아이템 플랜 3.5차). 미구현
 
 ## 8. 릴리스 기준
 
@@ -669,6 +675,21 @@ raw <= 0이면 보상 없음
 | Hyper + Hyper | 보드 전체 제거 | 현재 플레이 규칙에서는 비활성화 |
 
 새 조합 효과를 다시 추가하려면 먼저 이 문서를 갱신하고, `match_board_input.dart`, `match_board_special_combos.dart`, `match_board_specials.dart`, 관련 테스트를 함께 수정한다.
+
+### 11-1. 2026-09-23 원문 대조 정정
+
+PopCap 공식 자료(Bejeweled 3 Strategy Guide 2010, Bejeweled 3 Nintendo DS 매뉴얼 2011)와 Fandom 문서를 대조한 결과, 위 표의 "Bejeweled 참고 문서" 열에 적힌 스왑 조합(Flame+Flame, Flame+Star, Hyper+Flame, Hyper+Star, Star+Star)은 Bejeweled 3가 아니라 Bejeweled Stars(2016) 규칙이다. 현재 Stone Match 동작은 바뀌지 않는다. 비교 기준만 정정한다.
+
+| 규칙 | Bejeweled 3 원본 | 근거 | Stone Match 현재 |
+|------|------------------|------|------------------|
+| Flame, Star, Supernova 발동 | 같은 색 매치에 포함되면 터진다. Flame은 자신과 주변 8칸, Star는 상하좌우 줄 | 공략집 4쪽 "When matched, Flame gems explode", DS 매뉴얼 9쪽 "match them like normal gems" | 탭으로만 발동. 색 매치 토큰이 아님(BR-021) |
+| Hypercube 사용 | 옆 보석과 교환하면 그 보석 색을 보드에서 전부 지운다 | 공략집 4쪽 "Use them to match any adjacent gem, regardless of color", DS 매뉴얼 9쪽 "Swap this with any gem" | 교환 불가. 탭하면 보드에 남은 색 중 하나를 코드가 고른다 |
+| Hypercube + Hypercube | 교환 가능. 판 전체 제거(효과는 위키 근거). Classic에서는 Hypercube 2개 반환 | 공략집 26쪽 Elite 배지 "Annihilator: matching one Hypercube to another" | 비활성 |
+| 폭발에 휘말린 Hypercube | 폭발을 일으킨 보석의 색을 전부 지운다(Blitz 이후) | Fandom Hypercube 문서 | 제거만 되고 발동하지 않음 |
+| Supernova 효과 | 공략집은 효과를 공개하지 않음. 위키 기준 3×3 + 행 + 열 | 공략집 4쪽, Fandom Supernova Gem | 3×3 + 행 + 열 |
+| 특수 보석끼리의 교환 조합 | 없음 | Fandom Flame Gem, Star Gem, Hypercube의 "In Bejeweled Stars" 절 | 비활성 |
+
+이 정정으로 ADR-001의 "스왑 조합 비활성"은 Bejeweled 3 원형과 오히려 가깝고, "탭 발동"은 원형과 다르다는 점이 확인됐다. 개편 논의는 하단 "게임 방향 기획"을 본다.
 
 ## 12. 테스트 기준
 
@@ -1065,6 +1086,8 @@ Stone Match의 하단 아이템 슬롯, 인벤토리, 스테이지 종료 보상
 ## 웹 테스트 이벤트 로깅
 
 2.5차에서는 GA/Firebase를 붙이기 전에 내부 이벤트 로거를 먼저 둔다. 목표는 외부 SDK 선택이 아니라 “무엇을 측정할지”를 고정하는 것이다.
+
+구현 상태(2026-09-23): 로거는 `lib/services/event_logger.dart`(EventLogger)로 구현했고 Supabase `game_events`에 보낸다(ADR-009, TECH_SPEC API-007). 연결한 이벤트는 `session_start`, `round_start`, `round_end`, `level_clear`, `stage_continue`, `ranking_submit`, `ad_reward`다. 아래 표의 아이템과 광고 mock 이벤트는 아직 연결하지 않았다. GA4와 Firebase Analytics는 연동하지 않았다. 게임 방향 개편에 필요한 추가 이벤트는 하단 "게임 방향 기획" 8절에 둔다.
 
 ### 원칙
 
@@ -1874,7 +1897,9 @@ Stone Match는 8×8 보드에서 같은 보석을 맞추고 콤보를 이어가�
 
 [개인정보 및 데이터]
 - 게임 설정과 기록은 기기에 저장됩니다.
-- 랭킹 기능을 사용할 경우 플레이어 이름과 점수가 랭킹 서버로 전송될 수 있습니다.
+- 랭킹 기능을 사용하면 플레이어 이름과 점수가 익명 식별자와 함께 서버(Supabase, 서울 지역)에 저장되고 다른 플레이어에게 이름과 점수가 공개됩니다.
+- 게임 개선을 위해 판 시작과 종료, 점수, 광고 시청 결과 같은 익명 플레이 기록이 서버에 저장됩니다. 이름, 연락처, 기기 광고 식별자는 이 기록에 포함하지 않습니다.
+- 광고 시청 중 광고 제공자가 수집하는 정보는 각 플랫폼의 광고 정책을 따릅니다.
 - 자세한 내용은 개인정보처리방침을 확인해 주세요.
 ```
 
@@ -1898,7 +1923,9 @@ Stone Match is a casual match-3 puzzle game played on an 8x8 board.
 
 [Privacy and Data]
 - Game settings and local records are stored on your device.
-- If ranking is enabled, player name and score may be sent to the ranking server.
+- If you use ranking, your player name and score are stored on our server (Supabase, Seoul region) with an anonymous ID, and the name and score are visible to other players.
+- To improve the game, anonymous play records such as round start and end, score, and ad results are stored on the server. They do not include your name, contact details, or device advertising ID.
+- Information collected by the ad provider while an ad plays follows each platform's ad policy.
 - Please review the privacy policy for details.
 ```
 
@@ -1934,7 +1961,8 @@ Stone Match는 같은 보석을 맞추고 콤보를 이어가는 캐주얼 매�
 
 개인정보 및 데이터
 - 설정과 로컬 기록은 기기에 저장됩니다.
-- 랭킹 기능 사용 시 플레이어 이름과 점수가 서버로 전송될 수 있습니다.
+- 랭킹 기능 사용 시 플레이어 이름과 점수가 익명 식별자와 함께 서버(Supabase, 서울 지역)에 저장되며 다른 플레이어에게 공개됩니다.
+- 게임 개선을 위한 익명 플레이 기록(판 시작과 종료, 점수, 광고 결과)이 서버에 저장됩니다.
 ```
 
 ### Description EN
@@ -1952,7 +1980,8 @@ Key features
 
 Privacy and data
 - Settings and local records are stored on your device.
-- If ranking is enabled, player name and score may be sent to the ranking server.
+- If you use ranking, your player name and score are stored on our server (Supabase, Seoul region) with an anonymous ID and are visible to other players.
+- Anonymous play records (round start and end, score, ad results) are stored to improve the game.
 ```
 
 ### Keywords
@@ -2135,3 +2164,262 @@ Stone Match 스토어 등록용 스크린샷 카피 초안이다. 실제 이미�
 - 선택 보석, 인접 스왑 후보, 무효 드래그 대상에는 광륜 피드백을 표시하고 새 선택에는 기존 버튼 효과음을 사용한다. 노무브와 셔플은 각각 보드 테두리 피드백을 보여 주며 점수와 통계를 바꾸지 않는다.
 - 화면 전환과 오버레이 모션은 접근성 설정에서 줄일 수 있다. 줄인 모션에서는 결과의 시각 상태를 즉시 읽을 수 있어도 타임업 제출과 재시작 버튼 활성 시점은 기존 1900ms 계약을 유지한다. 레벨 축하의 reduced motion 경로는 파티클 없이 즉시 완료한다.
 - 광고 보상 판정, 랭킹 제출 시점, 저장값과 표시값의 구분은 기존 계약을 유지한다. 2026-09-20 15:53 KST 합본은 F1~T6 적용과 독립 리뷰 수정까지 완료됐다.
+
+
+---
+
+# 게임 방향 기획
+
+원문 제목 키: 신규 기획 (2026-09-23 작성). 상태: 제안(Proposed), 코드 미반영.
+결정 기록: [ADR-008](decisions/ADR-008-game-direction-blitz-modernized.md). 구현 단계: [PLAN-005](plans/PLAN-005-blitz-modernized-direction.md).
+
+## 0. 문서 상태와 읽는 법
+
+- 이 절은 현재 동작이 아니라 앞으로의 방향이다. 현재 규칙의 정본은 위 FR/BR과 "특수 보석 룰" 절이다.
+- 여기 적은 변경은 ADR-008이 Accepted가 되고 PLAN-005의 해당 단계가 구현될 때 위 FR/BR로 옮긴다. 옮기기 전까지 이 절의 수치는 시작값 후보다.
+- 근거 등급 표기:
+  - [1차] PopCap 공식 자료(Bejeweled 3 Strategy Guide 2010, Bejeweled 3 Nintendo DS 매뉴얼 2011)
+  - [공식] 운영사 도움말(Dream Games, Playrix, King)
+  - [위키] Bejeweled Fandom(커뮤니티 편집)
+  - [커뮤니티] Reddit 스레드. 추천 수가 작고 불만 글이 많이 올라오므로 여론 전체로 보지 않는다
+  - [시장] 검색 요약으로 확인한 업계 기사. 원문 대조가 약하다
+  - [추론] 위 자료와 현재 코드 구조에서 나온 판단
+- 미결정 사항은 9절의 D1~D10으로 관리한다.
+
+## 1. 배경과 문제
+
+- Stone Match는 Bejeweled 3 계열 생성 규칙(4일렬 bomb, T/L star, 5일렬 hyper, 6개 이상 supernova) 위에 탭 발동과 스왑 조합 비활성(ADR-001)을 얹었다.
+- 출발점은 "Bejeweled 룰은 매치 3의 근본이지만 요즘 유행하는 방식과 차이가 있다"는 문제 제기다. 요즘 사가형을 따라갈지, Bejeweled의 강점을 살릴지 두 방향을 조사했다.
+- 현재 세 모드는 비슷한 무게로 공존한다. 레벨 모드와 타임 모드는 같은 60초 판을 쓴다(FR-004, FR-005). 아이템, 클리어 보상, 보상형 광고 2곳(continueStage, refillItem), 앱인토스 공식 리더보드는 모두 레벨 모드에 묶여 있다. 무한 모드에는 배너 광고가 있다.
+- 한 판 안에서 실력을 드러내는 장치(속도 보상, 마무리 보너스)와 판을 넘어서 남는 장기 목표(누적 랭크, 배지)가 없다.
+- 미출시라 외부 사용 지표가 없다. 분석 도구도 없다(8절). 이 기획의 판단은 조사와 내부 플레이테스트에 기댄다.
+
+## 2. 조사 요약
+
+### 2-1. 요즘 사가형 매치 3
+
+| 항목 | 내용 | 근거 |
+|---|---|---|
+| 특수 보석 생성 | Royal Match: 4일렬 Rocket(줄 제거), 2×2 Propeller(무작위 대상 추적), T/L TNT(반경 2), 5일렬 Light Ball(색 제거). Candy Crush: 4일렬 줄무늬, T/L 포장 사탕, 5일렬 컬러 폭탄 | [공식] |
+| 발동 | Royal Match는 특수 보석을 탭하거나 옆 칸과 교환해 발동 | [공식] |
+| 교환 조합 | Rocket+Rocket 십자, Rocket+TNT 3줄 3열, TNT+TNT 대형 폭발, Light Ball+특수 보석은 가장 많은 색을 그 특수 보석으로 바꿔 발동, Light Ball+Light Ball 판 전체 제거 | [공식] |
+| 레벨 구조 | 이동 횟수 제한, 시작 전 목표 제시(색 보석 수집, 오브젝트 제거), 장애물은 옆 매치나 특수 보석으로 제거. 점수보다 목표 | [공식] |
+| 난이도 | 일반, Hard, Super Hard 표시. 계산식 비공개 | [공식] |
+| 연승 보상 | Butler's Gift: 레벨 32부터, 연승 단계마다 시작 특수 보석 증가, 지거나 나가면 초기화, 추가 이동으로 이겨도 유지 | [공식] |
+| 경제 | Royal Match가 Candy Crush보다 무료 보상이 많고, 받은 보상 중 실제 사용 비율은 낮았다는 분석 | 분석 글 |
+| 불만 | "한 수 차이로 지게 조작됐다"는 인식, 마지막 수에서 닿지 않는 곳에 생기는 특수 보석, 연속 고난도 레벨, 부스터 무용론, 기간제 부스터 만료, 좌절 순간의 광고와 추가 이동 제안 | [커뮤니티] |
+
+시장 상황 [시장]: 2025년 상반기 매치 3 매출 약 27억 달러 중 Royal Match(약 7억 8800만 달러)와 Candy Crush(약 6억 200만 달러)가 약 51.5%. 같은 기간 장르 다운로드 17% 감소, 신작 213개 중 월매출 10만 달러 이상은 3개. 앱스토어 인앱결제 기준 수치라 토스 미니앱과 웹에 그대로 적용되는지는 모른다.
+
+### 2-2. Bejeweled 3 원본 [1차]
+
+- 특수 보석(공략집 4쪽): Flame은 4일렬로 생성, "When matched" 자신과 주변 8칸 제거. Star는 T/L로 생성, 매치하면 상하좌우 줄 제거. Hypercube는 5일렬로 생성, "match any adjacent gem, regardless of color"로 그 색 전부 제거. Supernova는 6일렬로 생성, 효과는 공개하지 않음.
+- DS 매뉴얼 9쪽: "Create special gems like these, then match them like normal gems." Hypercube는 "Swap this with any gem for chain-reaction action!"
+- 모드(공략집 5쪽, DS 매뉴얼 7쪽, 10~13쪽): 기본 4개(Classic, Zen, Lightning, Quest)와 각 기본 모드의 목표로 열리는 비밀 모드 4개(Poker: Classic 레벨 5, Butterflies: Zen 레벨 5, Diamond Mine: Quest 첫 유물, Ice Storm: Lightning 100,000점).
+- Classic(공략집 6~7쪽): 시간 제한 없는 턴제, 움직일 수 없으면 종료. 위에서 아래로 플레이하면 오래 버티고, 아래쪽 매치는 연쇄와 특수 보석을 잘 만든다. Hypercube는 가장 많은 색에 쓰거나 막힐 때까지 아끼는 "best safety net".
+- Lightning(공략집 10~11쪽): 60초, Time gem을 매치하면 5초 또는 10초 추가, 잘하면 계속 이어진다. Speed Bonus를 유지하면 Blazing Speed("every matched gem acts as a Flame gem"). 특수 보석은 모아 두지 말고 바로 터뜨릴 것. 배율이 오를 때마다 남은 Time gem이 특수 보석으로 바뀐다. "Big moves create Time gems."
+- Zen(공략집 14~15쪽): 전략 없는 휴식 모드, 옵션은 최소한으로.
+- Quest(공략집 18~21쪽, DS 매뉴얼 11쪽): 5단계 × 미니 퀘스트 8개, 단계마다 4개 이상 완료해야 다음 단계. "Clear 120 gems in 20 moves", Alchemy(이동 수 제한으로 보드를 금으로), Balance, Stratamax(이동 수 제한, 연쇄 활용), Buried Treasure와 Sandstorm(시간 제한), Time Bomb, Wall Blast. Bejeweled 3에도 이동 횟수 제한 목표 스테이지가 있었다.
+- 장기 목표(공략집 4쪽, 24~26쪽, DS 매뉴얼 14쪽): 누적 점수로 오르는 131단계 랭크(Novice~Elder Bejewelian), 배지 15종 × 4등급 + Elite 5종 = 65개, 기록 화면(최고 한 수, 최장 연쇄, 최고 배율 등). 재화 없이 장기 목표를 만든 구조다.
+
+### 2-3. Bejeweled Blitz와 Lightning 세부 [위키]
+
+| 항목 | 내용 |
+|---|---|
+| Speed Bonus | 3초 안에 3번 매치하면 시작. 매치 기본값에 +200, 다음 +300, 최대 +1000. 끊기면 초기화. Bejeweled 3에서는 Lightning 전용 |
+| Ignition Meter와 Blazing Speed | Speed Bonus가 +1000에 도달한 뒤 빠른 매치 15번으로 게이지가 차면 약 7초간 모든 매치가 Flame처럼 3×3 폭발(Hypercube 제외) |
+| Last Hurrah | 게임 종료 때 남은 특수 보석과 부스트를 터뜨린다. 이때 Hypercube는 무작위 색을 지운다. Lightning에서는 남은 Time gem도 모으지만 시간은 더하지 않는다 |
+| Lightning 시간 구조 | 시작 60초. Time gem(+5, +10)은 저장 탱크(최대 60초)에 쌓인다. 제한 시간이 0이 되면 탱크 시간을 쓰고 점수 배율이 1 오른다. Lightning 기본 점수는 Classic의 5배(매치 1회 250점) |
+| Multiplier Gem(Blitz) | 한 수에 12개 이상 지우면 ×2 보석, 이후 16개 이상마다 다음 배율(최대 ×8). 판이 끝나면 획득한 배율마다 코인 100 |
+| Classic 점수 | 레벨이 오를 때마다 점수 배율 0.5씩 증가 |
+| Zen | 끝나지 않고 움직임이 막히지 않는다. 호흡 안내, 환경음, 문구 옵션 |
+| Blitz 경제(초기) | 플레이 중 Coin Gem으로 코인 획득. 부스트는 최대 3개 구매, 하나가 3판 유지. Rare Gem은 15,000~120,000코인 |
+| Blitz 경제(2018 이후) | 코인, Shard, Diamond, Gold Bar 4종 재화. 부스트 무료화와 11단계 업그레이드. 코인으로 10초 추가(Encore), 모바일은 광고 시청으로 코인. 매칭 대회 Blitz Champions, 일일 도전, Daily Spin, 주간 순위표 |
+| Bejeweled Classic(모바일판 Bejeweled 3) | 광고, 모드별 무료 횟수와 24시간 대기, 모드 유료 해금, 광고 시청 또는 팩 구매로 부스트 |
+
+### 2-4. 커뮤니티 반응 [커뮤니티]
+
+- Bejeweled Classic: 광고, 무료 5회 후 모드 구매(전 모드 가격이 Steam판 Bejeweled 3보다 비싸다는 지적), "광고가 뒤덮여 지웠다", "광고 제거를 살 수 없다", 24시간 대기를 없앤 수정본 공개 글.
+- Bejeweled Stars(이동 횟수 사가): "복사본의 복사본", "후반은 운에 달렸다", "재화를 쓰지 않으면 Bejeweled 3보다 나은 점이 없다".
+- 좋아하는 점: Classic의 모드 다양성, Blitz의 속도, "색을 의식하지 않고 엄청난 속도로 할 수 있는" 색 가독성, Zen에서도 올라가는 점수가 보이는 것.
+- r/gamedesign: Bejeweled의 몰입은 효과음과 시각 효과에서 나온다. 점수와 콤보만 있으면 진행감이 없어 지루하다. RPG식 메타는 중간층 게이머에게 맞고 청중이 작아진다. 난이도는 색 수, 방해 칸 비율, 보드 모양, 시간 또는 이동 제한으로 조절한다.
+- Royal Match와 Candy Crush 불만은 2-1 표에 있다.
+
+### 2-5. 출처
+
+- [공식] Royal Match: 특수 보석 생성 https://dreamgames.helpshift.com/hc/en/3-royal-match/faq/6-creating-and-using-the-power-ups/?p=web , 조합 https://dreamgames.helpshift.com/hc/pl/3-royal-match/faq/7-power-up-combinations/ , 레벨 https://dreamgames.helpshift.com/hc/en/3-royal-match/faq/4-how-can-i-play-the-levels/ , 난이도 https://dreamgames.helpshift.com/hc/en/3-royal-match/faq/9-level-is-too-hard-1661775375/ , Butler's Gift https://dreamgames.helpshift.com/hc/en/3-royal-match/faq/78-what-is-butler-s-gift/
+- [공식] Homescapes 조합 https://playrix.helpshift.com/hc/en/14-homescapes/faq/16363-what-power-up-combinations-are-available-in-the-game/ , Candy Crush 특수 사탕 https://candycrush.zendesk.com/hc/en-us/articles/211939685-Creating-and-combining-Special-Candies
+- 분석 글: https://blog.liquidandgrit.com/royal-matchs-economy-is-more-generous-and-less-costly-than-candy-crush-saga-s-744f43389104 , https://www.mobilegamescope.com/deconstructions/royal-match-level-tension
+- [시장] https://games.gg/news/state-of-casual-games-in-h1-2025/
+- [1차] Bejeweled 3 Strategy Guide(PopCap, 2010, BEJ3-10-00714) 2~26쪽, Bejeweled 3 Nintendo DS 매뉴얼(PopCap, 2011) 4~14쪽. 원본 PDF는 저작권 자료라 저장소에 넣지 않았다
+- [위키] https://bejeweled.fandom.com/wiki/ 의 Flame_Gem, Star_Gem, Hypercube, Supernova_Gem, Speed_Bonus, Blazing_Speed, Ignition_Meter, Last_Hurrah, Lightning, Time_Gem, Zen, Classic, Multiplier_Gem, Score_Multiplier, Bejeweled_Blitz, Boost, Rare_Gem, Bejeweled_Stars
+- [커뮤니티] r/Bejeweled 1lmm79f, 1uz12q7, 1w6kr6j, 1w9o7ds, opxvf1, ossvyl, 1mfobaf, 1vsnnmb. r/gamedesign 4zmvd6, ll1mlu, 4spfzf. r/RoyalMatch 1mjqmln, 1mn0awe, 1qa6weh, 1gf6e6o. r/candycrush 1sifxz5, 1h0jq6b, 1urnlds, 1myv7rv (https://www.reddit.com/r/{서브레딧}/comments/{ID}/)
+
+## 3. 방향 결정 (제안)
+
+Stone Match는 Bejeweled Blitz식 60초 점수 경쟁을 지금 방식으로 다시 만든다. Bejeweled 3의 구조를 통째로 복원하지 않고, 요즘 사가형도 따라가지 않는다.
+
+- 사가형을 따라가지 않는 이유: 사람이 설계한 레벨 수천 개와 라이브 운영이 전제다. 상위 2개 게임이 장르 매출의 절반가량을 가져가는 시장에서 무작위 보드 엔진과 작은 팀으로 이길 수 없다. Bejeweled Stars가 같은 시도를 했고 평가가 낮았다.
+- 원 구조를 복원하지 않는 이유: Bejeweled 3는 한 번 사면 끝인 PC 패키지용 구조다. 모드 8개와 비밀 모드 해금, 숨긴 보석 효과는 짧게 들어오는 무료 모바일 사용자에게 맞지 않는다. 그대로 옮긴 Bejeweled Classic이 가장 많은 불만을 받았다.
+- Blitz를 계승하는 이유: Blitz는 소셜 플랫폼에서 1분 점수 경쟁과 친구 순위표로 성공했고, 이후 모바일로 옮겨 매칭 대회와 일일 도전으로 형식을 유지했다. Stone Match는 토스 미니앱, 60초 모드, 랭킹, 무작위 보드 엔진을 이미 갖고 있다.
+
+## 4. 가져올 것, 바꿀 것, 버릴 것
+
+| 구분 | 항목 | 이유 | 관련 |
+|---|---|---|---|
+| 가져올 것 | 하이퍼 큐브 교환(6-1) | Bejeweled 3와 Royal Match 모두 교환으로 색 제거 보석을 쓴다. 시대와 무관하게 통한다 | ADR-001, BR-022 |
+| 가져올 것 | Speed Bonus(6-3), Last Hurrah(6-4), 큰 한 수 중심 시간 보상(6-5) | 한 판 안의 실력 표현. 재화와 무관하고 랭킹 모드에 맞다 | BR-011, BR-050, ADR-007 |
+| 가져올 것 | 누적 랭크, 배지, 기록 화면(6-6) | 재화 없는 장기 목표. 로컬 저장만 필요 | PLAN-003 |
+| 가져올 것 | 색 가독성과 효과음, 시각 효과 | 커뮤니티가 꼽은 Bejeweled의 강점 | PLAN-004 |
+| 요즘 방식으로 바꿀 것 | 특수 보석 발동은 탭 유지(6-2) | 원형은 매치 발동이지만 요즘 모바일은 탭 발동을 쓴다 | ADR-001 |
+| 요즘 방식으로 바꿀 것 | 일일 동일 보드, 주간 순위 초기화(6-7) | 짧은 판과 공정한 경쟁. Blitz도 주간 순위표를 썼다 | FR-009 |
+| 요즘 방식으로 바꿀 것 | 모든 효과를 보여 주는 튜토리얼 | 숨긴 보석 효과는 지금 사용자에게 맞지 않는다 | FR-012 |
+| 버릴 것 | 모드 8개, 비밀 모드 해금 | 선택지 과다, 해금 조건이 진입을 막는다 | |
+| 버릴 것 | 사가형 장애물 레벨, 생명, 대기 시간, 모드별 횟수 제한, 기간제 부스트 | 비용이 크고 커뮤니티 불만이 집중된 부분 | |
+| 버릴 것 | 여러 종류의 재화 | Blitz 후기 4종 재화는 복잡도만 키웠다 | 7절 |
+
+## 5. 모드 역할
+
+| 모드 | 역할 | 들어갈 것 | 들어가지 않을 것 |
+|---|---|---|---|
+| 두 타이머 모드 공통 | 60초 판의 손맛 | 하이퍼 큐브 교환, Speed Bonus, Last Hurrah, 시간 보상 조정 | |
+| 타임 모드 | 게임의 얼굴, 실력 경쟁 | 점수 랭킹, 일일 동일 보드, 주간 순위 | 구매 아이템, 광고로 시간 추가 |
+| 레벨 모드 | 진행과 수익 | 레벨 진행, 아이템, 클리어 보상, 보상형 광고, 이후 재화 사용처, 규칙 변형 스테이지(6-8) | |
+| 무한 모드 | 휴식(Zen) | 무제한 힌트, 자동 힌트, 배너, 장기 목표 연결(6-9) | 랭킹, 타이머 |
+
+- 두 타이머 모드가 같은 60초 판을 쓰므로 공통 코어 개선이 두 모드와 기존 수익 구조를 함께 강화한다.
+- 타임 모드의 공정성과 레벨 모드의 수익화를 모드 단위로 분리한다. 실력으로 겨루는 곳과 돈이나 광고로 도움을 받는 곳을 섞지 않는다.
+- 무한 모드 유지 근거: 시간 제한 없는 유일한 모드다(빼면 모든 모드에 타이머가 붙는다). Bejeweled는 시리즈 내내 시간 제한 없는 모드를 뒀다. 같은 엔진이라 유지 비용이 거의 없다. 배너 광고 위치(ADR-003), 스토어 문구, 디버그 QA 패널과 FPS 측정 경로가 무한 모드에 걸려 있다.
+- 무한 모드 제거 재검토 조건: 출시 후 이벤트 기록에서 무한 모드 사용 비율과 배너 수익이 모두 낮게 확인될 때. 수치 기준은 출시 후 정한다.
+
+## 6. 규칙 변경 후보
+
+### 6-1. 하이퍼 큐브 교환 (H1~H3)
+
+- H1 일반 보석 교환: `hyper`를 인접한 일반 보석과 교환하면 교환한 보석의 색을 가진 일반 보석을 보드에서 모두 제거한다. `hyper`도 제거된다. 교환은 매치 없이도 유효 스왑으로 처리하고 무효 스왑 복귀를 하지 않는다. [1차]
+- H2 하이퍼끼리 교환: 두 `hyper`를 교환하면 보드 전체를 제거한다. [1차 존재, 위키 효과] 반환 여부(Bejeweled 3 Classic은 2개 반환)와 점수, 시간 상한은 D3.
+- H3 폭발에 휘말린 하이퍼: `bomb`, `star`, `supernova` 효과 범위에 든 `hyper`는 폭발을 일으킨 특수 보석의 색을 가진 일반 보석을 모두 제거한다. 현재는 제거만 되고 발동하지 않는다. [위키]
+- H1과 특수 보석 교환: `hyper`를 `bomb`, `star`, `supernova`와 교환하는 경우 Bejeweled 3 원문에 정의가 없다. 시작안은 교환 대상 특수 보석을 발동하고, H3처럼 그 특수 보석 색을 지운다. Bejeweled Stars식 변환(그 색 전부를 특수 보석으로 바꿔 발동)은 채택하지 않는다.
+- 탭 발동 유지: `hyper`를 탭하면 지금처럼 코드가 색을 고른다. 시작안은 "보드에 가장 많은 색"으로 바꾼다(공략집의 "color with the most gems" 조언과 같은 결과). D2에서 확정.
+- 영향 규칙: BR-022(스왑 조합 비활성), FR-002, 힌트 후보(FR-006은 일반 매치 스왑만), NoMoves 판정(하이퍼가 있으면 항상 유효 이동이 있게 된다), 아이템 `hyperCube`(BR-072)와 효과 중복.
+- 점수: `hyper` 발동 보너스 1200을 유지하고 BR-011을 그대로 적용하는 것이 시작안이다. H2의 판 전체 제거는 한 번에 최대 64칸이므로 타임 모드 점수와 시간 보상 상한이 필요하다.
+
+### 6-2. 특수 보석 매치 발동 (M1)
+
+- Bejeweled 3 원형은 특수 보석을 같은 색 매치에 포함시켜 터뜨린다. [1차]
+- 채택하지 않는 것이 권장안이다. 탭 발동은 Royal Match 등 요즘 모바일 방식이고, 현재 BR-021, 힌트, NoMoves, 특수 효과 부하(PLAN-001) 구조를 유지할 수 있다.
+- 탭 유지 확정은 D4.
+
+### 6-3. Speed Bonus (S1)
+
+- 시작값 [위키]: 빠른 매치가 3번 이어지면 시작한다. 이후 빠른 매치마다 +200점부터 100점씩 올라 최대 +1000점. 빠른 매치가 끊기면 0으로 돌아간다.
+- Stone Match 정의 후보: "빠른 매치"는 유저 스왑 기준으로 센다(연쇄 단계는 세지 않는다). 직전 유효 스왑과의 간격 창은 플레이테스트로 정한다. 스왑 안착 0.12초와 제거, 낙하 연출 시간을 고려해 Blitz의 3초보다 길 수 있다.
+- 점수 결합 후보: Speed Bonus 점수는 BR-011 결과와 별도로 더하고 콤보 배수는 적용하지 않는다(점수 인플레이션 억제). 확정은 D5와 함께.
+- Blazing Speed: 매치마다 3×3 폭발 연출이 나가 모바일 웹 FPS(PLAN-001)에 가장 부담이 크다. FPS 측정 전까지 보류한다.
+- 적용 모드: 타임 모드만 또는 두 타이머 모드. 레벨 모드에 넣으면 목표 점수(BR-040, ADR-006)가 쉬워지므로 재조정이 필요하다. D5.
+
+### 6-4. Last Hurrah (L1)
+
+- 동작 시작안 [위키 참고]: 제한 시간이 0이 되면 입력을 잠그고, 보드에 남은 특수 보석을 위쪽 행부터 왼쪽에서 오른쪽 순서로 하나씩 발동한다. `hyper`는 보드에 남은 무작위 색을 지운다. 연쇄 해소가 끝나면 최종 점수를 확정하고 TimeUp 결과와 랭킹 제출로 넘어간다.
+- 시간 보상은 주지 않는다. 점수는 BR-011을 적용하되 콤보 배수 적용 여부는 플레이테스트로 정한다(Blitz 후기 버전은 연쇄 배수를 제한했다).
+- 연출 길이 상한과 reduced motion 경로(즉시 계산 후 결과 표시)를 둔다.
+- 영향 계약: ADR-007과 BR-093의 "TimeUp 진입 시 제출", reduced motion의 1900ms 버튼 활성 계약. 제출은 Last Hurrah 완료 후로 옮겨야 한다.
+- 적용 모드: 타임 모드 우선. 레벨 모드에서 Last Hurrah로 목표를 넘기면 클리어로 인정할지는 D6.
+
+### 6-5. 시간 보상 조정 (T1)
+
+- 현재(BR-050, `match_board_resolution.dart`): 제거 단계마다 `round((1 + max(0, combo - 1)) × 0.6)`초, 최소 1초. 콤보 1과 2는 1초, 3과 4는 2초, 5는 3초. 3개 기본 매치 한 번에도 1초를 준다. 상한 90초.
+- Bejeweled 3는 시간을 큰 한 수에만 준다("Big moves create Time gems"). [1차]
+- 후보: 3개 기본 매치 단독 단계는 0초, 4개 이상 매치, 특수 보석 생성이나 발동, 콤보 2 이상 단계에만 시간 보상. 수치는 플레이테스트로 정한다. 채택은 D7.
+- 후속 후보 T2: Lightning식 Time 보석(큰 한 수에서 생성, 매치해야 시간 획득). 새 보석 이미지가 필요해 T1 결과를 본 뒤 검토한다.
+
+### 6-6. 기록과 장기 목표 (R1)
+
+- 누적 랭크: 모든 모드의 판 점수를 누적해 랭크가 오른다(Bejeweled 3는 131단계). 단계 수와 곡선은 플레이테스트로 정한다. 기존 `JewelRankProgression`은 판 안의 레벨 목표 계산용이므로 이름과 역할이 섞이지 않게 별도 모델로 둔다.
+- 배지: 등급 4단계(Bejeweled 3와 같은 구조). 후보는 기존 `MatchBoardGameStats`로 셀 수 있는 것부터 고른다. 종류별 특수 보석 누적 생성(bomb, star, hyper, supernova), 최대 콤보, 타임 모드 점수 구간, 레벨 모드 도달 레벨, 하이퍼끼리 교환(H2 채택 시), supernova 첫 생성.
+- 기록 화면: 모드별 최고 점수, 최고 한 수(유저 스왑 한 번의 최고 점수), 최장 연쇄, 누적 제거 보석, 종류별 특수 보석 누적.
+- 저장: 로컬 저장만 쓴다. 서버와 토스 사용자 식별(PLAN-002)이 필요 없다. 저장 키 설계는 PLAN-003의 영속 저장과 함께 정한다.
+- 비밀 모드 해금은 가져오지 않는다. 대신 배지 달성 알림으로 목표를 보여 준다.
+
+### 6-7. 타임 모드 경쟁 형식 (C1)
+
+- 일일 동일 보드: 날짜 기준 시드로 모두가 같은 시작 보드와 같은 리필 순서를 받는다. 운 요소를 줄여 점수 비교를 공정하게 한다.
+- 주간 순위 초기화: 매주 순위를 새로 시작해 신규 사용자도 상위권을 노릴 수 있게 한다.
+- 서버 변경(랭킹 API의 기간 구분, 시드 제공)과 랭킹 정책(BR-090 동일 이름 다중 기록 등)이 필요하다. 앱인토스 공식 리더보드는 미니앱당 하나이므로 대상 결정(D8)과 함께 본다.
+- 운영 랭킹 초기화는 기존 절차(승인, 백업, dry-run, 예상 건수, 사후 조회)를 따른다.
+
+### 6-8. 레벨 모드 규칙 변형 스테이지 (V1)
+
+- Bejeweled 3 Quest처럼, 일정 간격으로 규칙이 다른 도전 스테이지를 섞는다. 사가형 장애물 대신 기존 시스템만으로 변화를 준다.
+- 후보: 이동 N번 안에 보석 M개 제거("Clear 120 gems in 20 moves"), 특정 색 보석 N개 제거, 특수 보석 N개 발동, 특정 종류 특수 보석만으로 목표 점수.
+- 필요 사항: 목표 표시 HUD, 이동 횟수 카운터, 색별 제거 통계(현재 `removedByKind`는 종류별이고 색별은 없다), BR-040 목표 점수와의 관계.
+- 이동 횟수 제한 스테이지를 섞을지와 간격은 D9. 섞더라도 생명, 대기, 좌절 순간의 광고 강조는 넣지 않는다.
+
+### 6-9. 무한 모드 (Z1)
+
+- 유지한다. 끝나지 않는 편안함(막히면 셔플), 무제한 힌트, 5초 유휴 자동 힌트, 배너를 유지한다.
+- 판 점수를 누적 랭크(6-6)에 쌓고 최고 점수를 계속 보여 준다. 커뮤니티에서 Zen에서도 올라가는 점수가 보여야 편하다는 반응이 있었다.
+- Classic식 종료(움직일 수 없으면 끝)는 무한 모드의 편안함을 없애므로 채택하지 않는다. 필요하면 별도 변형으로 검토한다.
+
+### 6-10. 이미 있는 연관 기능
+
+- 레벨 모드는 이미 다음 레벨 시작 보드에 특수 보석을 준다(`JewelProgressionBonus.kindsForNextLevel`: `bomb`은 항상, `maxCombo` 3 이상이면 `star`, 5 이상이거나 5의 배수 레벨이면 `hyper`). Royal Match 연승 보상과 비슷한 역할이므로 새 연승 시스템을 따로 만들지 않고 이 기능을 확장하는 방향으로 본다.
+
+## 7. 재화와 광고 원칙
+
+- 순서: 재화 없는 장기 목표(6-6) → 내부 이벤트 로거(8절) → 영속 인벤토리(PLAN-003) → 코인 1종. 인앱 결제는 기존 아이템 플랜의 도입 판단 지표를 따른다.
+- 금지:
+  - 생명, 대기 시간, 모드별 플레이 횟수 제한
+  - 기간제 아이템과 기간제 부스트
+  - 강제 전면 광고(BR-100 유지)
+  - 랭킹 모드(타임 모드, 일일 보드)에서 구매 아이템과 광고 보상 사용
+  - 여러 종류의 재화
+- 코인 1차안: 실력으로 번다(레벨 클리어 보상, 아이템 플랜 5차 초안의 20코인과 보너스. 보드 코인 보석은 추가 검토). 사용처는 레벨 모드 아이템(5차 초안 가격 30~120). 인앱 코인 팩은 인앱 결제 단계에서 검토한다.
+- 광고: 위치 3개(continueStage, refillItem, infiniteBanner) 유지(ADR-003). Encore식 시간 추가는 랭킹 판에 넣지 않는다. "결과 보상 2배" 같은 새 위치는 조사 근거가 없어 후보로만 둔다.
+- 전제: 광고로 재화를 주려면 일일 제한 영속화가 먼저다. 2026-09-23 Supabase로 코드를 구현했고 원격 적용을 기다린다(PLAN-006). 익명 사용자 기준이라 저장소 삭제나 재설치로는 제한이 새로 시작된다(BR-103).
+
+## 8. 지표와 판단 방식
+
+### 8-1. 현재 상태 (2026-09-23 확인)
+
+- 미출시라 외부 사용 지표가 없다.
+- GA4, Firebase Analytics 미연동: `pubspec.yaml` 의존성에 분석 SDK가 없다. `web/index.html`은 `stone_match_sfx.js`와 `flutter_bootstrap.js`만 불러온다. `google-services.json`, `GoogleService-Info.plist`가 없다. Git 전체 이력에서 `gtag`, `googletagmanager`, `firebase_analytics` 추가 기록이 없다.
+- 내부 이벤트 로거: 2026-09-23 같은 날 EventLogger와 Supabase `game_events`로 구현했다(PLAN-006). 원격 프로젝트 적용 전이라 아직 수집되는 데이터는 없다.
+- 확인 범위는 저장소다. NAS에 배포된 서버 파일을 따로 열어 보지는 않았다.
+
+### 8-2. 출시 전 판단: 내부 플레이테스트
+
+수치 기준 없이 아래 항목을 테스터 관찰과 로컬 로그로 본다. 결과는 PLAN-005에 기록한다.
+
+- 규칙 이해: 설명 없이 하이퍼 큐브 교환과 탭 발동의 차이를 이해하는가. 튜토리얼 보강이 필요한가.
+- 다시 하기: 타임 모드 한 판 뒤 바로 다시 하는가.
+- 실력 체감: Speed Bonus 구간을 의도적으로 노리는가. 점수 차이가 운보다 실력에서 나온다고 느끼는가.
+- 마무리: Last Hurrah가 결과 화면 전에 지루하지 않은가(연출 길이).
+- 모드 선택: 처음 들어온 테스터가 어느 모드를 고르는가.
+- 성능: PLAN-001 기준 FPS와 긴 프레임.
+
+### 8-3. 출시 후: 이벤트 로깅
+
+- 3.5차 내부 이벤트 로거를 먼저 만들고, 외부 SDK는 기존 "GA/Firebase 전환 기준"을 따른다.
+- 기존 필수 이벤트에 추가할 후보: `mode_start`(mode), `mode_end`(mode, score, duration, reason), `mode_retry`(mode), `hyper_swap`(target_kind), `speed_bonus_peak`(max_tier), `last_hurrah`(specials_count, score_added), `badge_earned`(badge, tier), `rank_up`(rank).
+- 볼 질문: 모드별 시작 비율, 타임 모드 연속 판 수, 다음 날 재방문, 무한 모드 사용 비율과 배너 노출, 레벨 모드 실패 지점과 이어하기 사용률.
+
+## 9. 미결정 사항 (NEEDS-DECISION)
+
+| ID | 결정 | 권장안 | 영향 문서 |
+|---|---|---|---|
+| D1 | ADR-008 방향 승인 | 승인 | ADR-008, ROADMAP |
+| D2 | 하이퍼 큐브 규칙 H1, H2, H3 채택 범위와 탭 시 색 선택 기준 | 셋 다 채택, 탭은 가장 많은 색 | ADR-001, FR-002, BR-022, FR-006 |
+| D3 | H2 판 전체 제거 후 하이퍼 반환 여부, 점수와 시간 상한 | 반환 없음, 상한 설정 | FR-002, BR-011, BR-050 |
+| D4 | 특수 보석 탭 발동 유지(매치 발동 M1 미채택) | 탭 유지 | ADR-001, BR-021 |
+| D5 | Speed Bonus 적용 모드와 점수 결합 방식 | 타임 모드 먼저, 콤보 배수 미적용 | BR-011, BR-040, ADR-006 |
+| D6 | Last Hurrah 적용 모드, 레벨 모드 클리어 인정, 제출 시점 | 타임 모드 먼저, 완료 후 제출 | ADR-007, BR-093 |
+| D7 | 시간 보상 T1 채택 여부와 기준 | 플레이테스트 후 결정 | BR-050 |
+| D8 | 앱인토스 공식 리더보드 대상(레벨 완료 수 유지, 타임 점수로 변경) | 일일 보드와 주간 순위 설계 때 함께 결정 | FR-009, ADR-002, 스토어 메타 |
+| D9 | 레벨 모드 규칙 변형 스테이지와 이동 제한 스테이지 혼합 여부, 간격 | 공통 코어 뒤에 검토 | FR-004, BR-040 |
+| D10 | 타임 랭킹 점수 규모 변화 시 기존 기록 처리 | Speed Bonus와 Last Hurrah 반영 시점에 결정 | FR-009, 운영 초기화 절차 |
+
+## 10. 기존 문서 정정
+
+- 특수 보석 룰 11절의 "Bejeweled 참고 문서" 조합은 Bejeweled Stars 규칙이다. 11-1절에 원문 대조 표를 추가했다.
+- Non-Goals의 "Bejeweled식 Flame+Star"를 "Bejeweled Stars식"으로 고쳤다.

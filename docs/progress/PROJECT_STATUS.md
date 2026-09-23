@@ -2,15 +2,18 @@
 
 > 프로젝트 전체의 NOW. 다음 작업자 인계 문장은 HANDOFF.md에 둔다. 구현 상태와 검증 상태를 섞지 않는다.
 
-Updated: 2026-09-20 22:44 KST
+Updated: 2026-09-24 00:34 KST
 
 ## Current Phase
 Phase 3 — Stabilization (Phase 4 출시 값은 대기)
+Phase 5 게임 방향 개편은 기획(제안) 단계다. 코드 변경 없음.
 이관 단계: 대체 가능(REPLACEABLE). 2026-08-23 표준 팩만으로 대체 가능성 점검 12항 통과. 정본은 docs/. 이전 문서는 archive/docs/. 릴리즈 준비와 분리.
 
 ## Active Plan
 - `PLAN-001` 모바일 웹 오디오/FPS 회귀 — IN_PROGRESS
 - `PLAN-004` 보드 연출 보강 — IN_PROGRESS (F1, T1, T2, T3, T4a, T4b, T5, T6 통합 완료, T6 및 독립 리뷰 수정 완료, 합본 HUD 잔상 가설은 픽셀 진단으로 기각, 기존 confetti 겹침)
+- `PLAN-005` Bejeweled Blitz 계승 게임 방향 개편 — DRAFT (ADR-008 Proposed, D1~D10 결정 대기)
+- `PLAN-006` Supabase 기반 구축 — IN_PROGRESS (Step 1 로컬 구현과 독립 검수 수정 완료, 보존 마이그레이션과 개인정보 초안 작성, Step 2 원격 적용은 Supabase 연결 대기)
 
 ## Current Tasks
 - [x] TASK-001a HTML Audio 4슬롯/경로/unlock/웹 BGM replay
@@ -29,6 +32,10 @@ Phase 3 — Stabilization (Phase 4 출시 값은 대기)
 - [x] TASK-004h 기본 매칭 파편/콤보 별빛의 중력과 위쪽 편향 제거, 방사형 감속/소멸로 조정. 후속 확산1.4배, 수명65%, 유휴 반짝임2/3, 광택 스윕80%/반복10초 (main 반영)
 - [ ] TASK-004d 모바일 실기기 FPS 전후 비교, 장시간 WebView와 실제 광고 SDK 확인
 - [x] TASK-MIG-001 F1~T6 합본 analyze / test / web build 과거 통과 기록 보존. E2 데스크톱 검증은 완료, 실기기 스모크는 미실행
+- [x] TASK-005a 게임 방향 조사와 기획 문서화: Product Spec "게임 방향 기획" 절, ADR-008(Proposed), PLAN-005(DRAFT), ROADMAP Phase 5, 특수 보석 룰 11-1절 원문 대조 정정
+- [ ] TASK-005b 미결정 사항 D1~D10 결정 (사용자). D1, D2, D4가 PLAN-005 Step 1a의 선행 조건
+- [x] TASK-006a Supabase 스키마, 익명 로그인 게이트웨이, 랭킹 이전, 보충 광고 서버 확인, 이벤트 로거 구현과 테스트
+- [ ] TASK-006b Supabase 원격 프로젝트 준비, 마이그레이션 적용, 원격 스모크 (Codex Supabase 앱 연결 대기)
 
 ## Completed
 - Phase 1 Foundation, Phase 2 Core Features
@@ -38,12 +45,14 @@ Phase 3 — Stabilization (Phase 4 출시 값은 대기)
 
 ## Blocked / Known Issues
 - PLAN-002: 토스 사용자 식별과 서버 저장 정책 없음
+- PLAN-006: Codex Supabase 앱 연결 계정에서 대상 조직이 보이지 않음(조직 목록 빈 값, 권한 오류). 로컬 CLI 미로그인
 - TASK-004: Apple ID, 개인정보 URL, INTOSS 운영 광고 그룹은 제품 외부 결정
 - ISSUE-001: 모바일 웹 오디오 끊김 이력, 장시간 카운터 없음 → PLAN-001
 - ISSUE-002: 앱인토스 iPhone FPS 급락, GC 단정 금지 → PLAN-001
-- ISSUE-003: refill 3회 세션 로컬 → PLAN-002
+- ISSUE-003: refill 3회 세션 로컬 → Supabase 익명 사용자 기준으로 코드 구현, 원격 적용 대기(PLAN-006)
 - ISSUE-004: RunInventory 비영속 → PLAN-003 (2차 범위로는 허용)
 - ISSUE-005: 빈 App Store ID
+- ISSUE-006: 미출시로 외부 사용 지표 없음. GA4, Firebase Analytics 미연동. 내부 이벤트 로거는 Supabase로 코드 구현했으나 원격 적용 전이라 수집 데이터 없음 → PLAN-006, PLAN-005 Step 2
 
 ## Implementation Status
 - 주요 기능: 3모드 매치-3, 특수 보석 탭 발동, 레벨 런 인벤토리 2차, 선택형 광고, 랭킹, 다국어. F1, T1, T2, T3, T4a, T4b, T5 연출 통합 상태. hyper/supernova 레이어 후속 E2는 main `c3b64dd`에 반영했고 병합 후 데스크톱 검증을 통과했다. 버전 1.0.0+1
@@ -70,6 +79,10 @@ Phase 3 — Stabilization (Phase 4 출시 값은 대기)
 | E2 hyper/supernova layer integration | PASS | HISTORICAL | 2026-09-20 19:54 KST | main `c3b64dd` (후속 문서 갱신만 추가) | STALE | `verify_main_after_E2_merge.txt`: main 병합 후 analyze exit=0, 전체 279 tests PASS, Web release build exit=0. 병합 전 독립 78회귀+픽셀4회귀와 실제 보드 캡처도 확인. 실기기 미검증 |
 | 매칭 파편 방사형 소멸 | PASS | HISTORICAL | 2026-09-20 20:24 KST | main `9137895` + 미커밋 파편 수정 | STALE | `tmp/match-radial-fx/analyze.log`: analyze exit0, `test.log`: 전체 279 tests PASS. 웹 릴리즈 재빌드와 새 브라우저 캡처는 미실행 |
 | 매칭 속도/반짝임/광택 스윕 튜닝 | PASS | RECHECKED | 2026-09-20 21:06 KST | 이 문서를 포함한 main 튜닝 커밋과 동일 제품 코드 | CURRENT | `/Users/cheng80/orca/workspaces/jewelmatch/_fx_orchestration/reports/verify_main_tuning_before_commit.txt`: analyze exit0, 전체279tests PASS, Web release build exit0. 앞선 debug hot reload와 화면 유지 확인. 실기기 미검증 |
+| 게임 방향 기획 문서화 | PASS | RECHECKED | 2026-09-23 23:17 KST | 문서만 변경, 제품 코드 `b6a949e`와 동일 | CURRENT | 문서 전용 변경. 변경 문서 8개의 상대 링크 전수 확인(깨진 링크 0), 추가 줄 중간점 0, `git diff --check` 통과. 코드 테스트 대상 아님 |
+| Supabase 1단계 analyze / test / wasm build | PASS | RECHECKED | 2026-09-23 23:40 KST | `b6a949e` + 미커밋 PLAN-006 변경 | CURRENT | analyze 0건, 전체 300 tests PASS, `flutter build web --release --wasm`(가짜 연결 값) exit 0. 원격 Supabase 미적용이라 실제 서버 동작은 미검증 |
+| Supabase 검수 수정 analyze / test / wasm / SQL | PASS | RECHECKED | 2026-09-24 00:30 KST | `b6a949e` + 미커밋 PLAN-006 변경 | CURRENT | `flutter analyze lib test` 0건, 전체 310 tests PASS, `--wasm` 릴리즈 빌드 exit 0. PGlite 하네스 58건, 20건, 보존 OK(`tmp/orca-plan006/`). 전체 `flutter analyze`는 `tmp/fx-prompt-builder`의 기존 info 1건만 보고. 원격, 브라우저 두 탭 미검증 |
+| Supabase 원격 스모크 / RLS | NOT_RUN | NONE | UNKNOWN | UNKNOWN | UNKNOWN | Supabase 연결 대기(PLAN-006 Step 3) |
 
 ## Next
 1. 이번 NAS 미러링 검증은 사용자 요청으로 종료했다. 기존 Android/iPhone 측정 결과와 한계를 보존하며, 추가 프로파일링은 진행하지 않는다. 개발 서버와 미러링/계측 프로세스는 종료 상태다. Claude 인계 예약도 취소 상태를 유지한다
@@ -78,6 +91,8 @@ Phase 3 — Stabilization (Phase 4 출시 값은 대기)
 4. PLAN-001 장시간 측정은 원문부터 INCOMPLETE. 별도 승인 작업이지 이관 공백 메우기가 아님
 5. STALE AIT를 현재 리비전으로 볼지는 별도 Task. 이관 완료 조건이 아님
 6. 출시 값이 오면 TASK-004. 식별 정책이 오면 PLAN-002를 READY
+7. 게임 방향 개편: D1~D10 결정 후 PLAN-005 Step 1a(하이퍼 큐브 교환)부터. 결정 전에는 특수 보석 규칙을 바꾸지 않는다
+8. Supabase: Codex Supabase 앱이 대상 조직을 보면 PLAN-006 Step 2~3(프로젝트, 마이그레이션 2개, 익명 로그인, 공개용 키, 원격 스모크, pg_cron 확인). 2026-09-24 00:10 KST 재확인에서도 조직과 프로젝트 목록이 비어 있다
 
 - 합본 HUD 최종 진단(16:08 KST): 무손실 PNG의 추가 밝은 glyph 픽셀 0, 변한 픽셀은 confetti 색 합성으로 설명됐다. pause 150프레임 동안 game render/update 증가 0. 제품 소스 변경 없이 가설 기각. 근거: `_fx_orchestration/reports/T6_integrated_visual_fix.md`.
 
@@ -106,3 +121,37 @@ Phase 3 — Stabilization (Phase 4 출시 값은 대기)
 
 - 사용자 결정으로 미러링 검증을 마감하고 추가 Instruments/CPU/GPU 프로파일링을 진행하지 않는다. 앞선 정밀 분석 재개와 미러링 유무 비교 제안은 이번 작업의 후속 실행 대상에서 제외한다.
 - 기존 FPS 수치와 미검증 범위는 그대로 남긴다. 검증 종료를 전체 성능 검증 통과로 바꾸지 않는다. 실행 중인 iPhone 미러링, scrcpy, Instruments, xctrace 프로세스가 없음을 확인했다.
+
+
+## 게임 방향 기획 정리 (2026-09-23 23:10 KST)
+
+- 사용자 요청으로 게임 방향 조사 결과를 기획 문서로 정리했다. 조사 범위는 요즘 사가형 공식 도움말, Bejeweled 3 원문 PDF 2종(PopCap 공략집 2010, DS 매뉴얼 2011), Fandom 문서 21개, Reddit 스레드다. 제품 코드, 테스트, 배포 변경은 없다.
+- 제안 방향: Bejeweled Blitz식 60초 점수 경쟁을 지금 방식으로 다시 만든다. 타임 모드는 얼굴과 실력 경쟁, 레벨 모드는 진행과 수익, 무한 모드는 휴식 모드로 유지한다. 재화보다 재화 없는 장기 목표(누적 랭크, 배지, 기록)를 먼저 넣는다. 특수 보석 탭 발동은 유지한다.
+- 산출물: [Product Spec 게임 방향 기획](../01_PRODUCT_SPEC.md), [ADR-008](../decisions/ADR-008-game-direction-blitz-modernized.md)(Proposed), [PLAN-005](../plans/PLAN-005-blitz-modernized-direction.md)(DRAFT), ROADMAP Phase 5 추가와 Economy의 Phase 6 이동, docs/AGENTS.md 제품 계약 1줄, README 문서 구조의 PLAN-004와 PLAN-005 누락 보완.
+- 원문 대조로 특수 보석 룰 11절의 비교 대상 오류를 정정했다. 기존 표의 스왑 조합은 Bejeweled 3가 아니라 Bejeweled Stars 규칙이다. 현재 동작은 바뀌지 않는다.
+- GA4 확인: 미연동. `pubspec.yaml`에 분석 SDK가 없고, `web/index.html`에 GA 태그가 없으며, Firebase 설정 파일과 Git 이력상 추가 기록도 없다. 내부 이벤트 로거도 미구현이다. NAS 배포 서버 파일은 따로 열어 보지 않았다.
+- 조사 원자료(Fandom 수집본, Reddit 수집본, PDF 페이지 렌더링, 요약)는 `tmp/bejeweled-research/`에 있고 Git 추적 대상이 아니다. 원본 PDF는 저작권 자료라 저장소에 넣지 않았다.
+- 커밋과 푸시는 하지 않았다.
+
+
+## Supabase 기반 구축 1단계 (2026-09-23 23:47 KST)
+
+- 사용자 요청으로 랭킹, 원격 설정, 보충 광고 하루 제한, 이벤트 로그를 Supabase로 옮기는 코드를 구현했다. 결정은 [ADR-009](../decisions/ADR-009-supabase-backend.md), 절차는 [PLAN-006](../plans/PLAN-006-supabase-backend.md).
+- 사용자 결정: 랭킹을 Supabase로 옮기고 NAS 기록은 유지하지 않는다. Supabase 연결은 Codex의 Supabase 앱을 대상 조직 권한으로 다시 연결하는 방식으로 한다.
+- 구현: 익명 로그인 REST 게이트웨이, 랭킹 서비스 교체(공개 API와 실패 유형 유지), 보충 광고 서버 확인과 세션 로컬 대체, EventLogger와 이벤트 7종 연결, 마이그레이션 SQL(테이블 4개, RPC 5개, 빈도 제한 트리거 2개, 전 테이블 RLS), `config/supabase.json`(Git 제외) 빌드 연결, NAS 배포 스크립트와 앱인토스 빌드 스크립트 반영.
+- 검증: `flutter analyze` 0건, 전체 `flutter test` 300건 통과, `--wasm` 릴리즈 웹 빌드 통과(가짜 연결 값, 출력은 `tmp/supabase-wasm-check/`). 배포 스크립트 `bash -n` 통과.
+- 차단: Codex Supabase 앱 연결 계정에서 조직 목록이 비어 있고 대상 조직은 권한 오류다. 로컬 CLI는 로그인하지 않았다. 원격 프로젝트 생성, 마이그레이션 적용, 익명 로그인 활성화, 원격 스모크는 연결 복구 뒤 진행한다.
+- 커밋과 배포는 하지 않았다. 현재 NAS와 앱인토스 배포본은 여전히 NAS 랭킹을 쓴다.
+
+## Supabase 검수, 보존, 개인정보 (2026-09-24 00:34 KST, Orca 오케스트레이션)
+
+- 원격 없이 할 수 있는 PLAN-006 항목을 Orca 워커로 나눠 처리했다. 워커 9개(Opus 5.5 high 검수 3회, Opus 구현 2회, Sonnet 5 medium 구현 4회), 모두 같은 작업 트리에서 파일 소유를 나눴다.
+- 독립 검수 결과 P0, P1은 없었다. P2 4건과 주요 P3를 두 차례 수정했다. 핵심은 웹 다중 탭 세션 충돌, 403 처리, 인증 실패 대기, 익명 사용자 삭제 시 랭킹 보존(`on delete set null`), anon 쓰기 RPC 권한 회수, 이름 문자 규칙이다. 순위 계산 비용과 점수 상한 강화는 실측 뒤로 보류했다.
+- 새 파일: `supabase/migrations/20260924090000_stone_match_retention.sql`(game_events 90일, ad_refill_claims 35일 pg_cron 정리 초안), `docs/release/PRIVACY_POLICY_DRAFT.md`(법률 검토 전 초안). PRODUCT_SPEC 스토어 문구 4블록을 Supabase 기준으로 바꿨다.
+- 검증: 위 표의 "Supabase 검수 수정" 행. 커밋, 원격 적용, 배포는 하지 않았다.
+
+## 이펙트 프롬프트 빌더 추가 (2026-09-24 00:05 KST)
+
+- 사용자 요청으로 X 글(픽셀 마법사 프롬프트)과 Claude 공유 대화(카드 공개 연출 반복 개선)를 분석해, 단계별 선택으로 Flutter용 이펙트 제작 프롬프트를 만드는 정적 웹 도구 `tools/fx_prompt_builder/`를 추가했다. 제품 코드, 테스트, 배포는 바뀌지 않았다.
+- 검증: 프롬프트 생성 1,260개 조합에서 빈 값과 중간점 없음. 헤드리스 Chromium으로 10단계 이동, 5개 스타일 미리보기 렌더링, 길게 누르기 충전, 복사, JSON 내보내기와 불러오기, 새로고침 후 유지, 390px 모바일 가로 넘침 0을 확인했고 페이지 오류는 0건이다. 프롬프트가 지시하는 Flutter와 Flame API는 점검용 Dart 파일로 `dart analyze` 오류 없이 확인했다.
+- 한계: 이 도구로 만든 프롬프트를 실제 AI에 넣어 Dart 이펙트를 생성하고 실행해 보는 끝단 확인은 하지 않았다. 점검 스크립트와 스크린샷은 `tmp/fx-prompt-builder/`(Git 제외)에 있다. 커밋하지 않았다.

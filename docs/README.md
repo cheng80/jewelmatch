@@ -25,11 +25,16 @@
     │   ├── PLAN_TEMPLATE.md
     │   ├── PLAN-001-mobile-web-audio-fps.md
     │   ├── PLAN-002-ad-daily-limit-persist.md
-    │   └── PLAN-003-persistent-inventory.md
+    │   ├── PLAN-003-persistent-inventory.md
+    │   ├── PLAN-004-board-juice.md
+    │   ├── PLAN-005-blitz-modernized-direction.md
+    │   └── PLAN-006-supabase-backend.md
     ├── progress/
     │   ├── ROADMAP.md
     │   ├── PROJECT_STATUS.md
     │   └── HANDOFF.md
+    ├── release/
+    │   └── PRIVACY_POLICY_DRAFT.md
     └── decisions/
         ├── ADR_TEMPLATE.md
         └── ADR-xxx.md
@@ -47,6 +52,7 @@
 | 지금 어디까지 왔고 현재 Task는 무엇인가? | [progress/PROJECT_STATUS.md](progress/PROJECT_STATUS.md) |
 | 다음 작업자가 무엇을 이어받는가? | [progress/HANDOFF.md](progress/HANDOFF.md) |
 | 왜 중요한 기술 결정을 했는가? | [decisions/](decisions/) |
+| 개인정보처리방침과 스토어 데이터 표기는? | [release/PRIVACY_POLICY_DRAFT.md](release/PRIVACY_POLICY_DRAFT.md) (법률 검토 전 초안) |
 | 기존 문서를 어떻게 이관하는가? | [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) |
 
 ## Roadmap → Plan → Task

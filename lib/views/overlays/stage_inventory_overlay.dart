@@ -10,6 +10,7 @@ import '../../game/item_kind.dart';
 import '../../game/match_board_game.dart';
 import '../../resources/asset_paths.dart';
 import '../../resources/sound_manager.dart';
+import '../../services/event_logger.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../../widgets/lumina_overlay_card.dart';
 import '../../widgets/overlay_motion.dart';
@@ -44,6 +45,12 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
     if (unlocked.isNotEmpty) {
       _selectedLoadoutSlot = unlocked.first;
     }
+    unawaited(_syncRefillStatus());
+  }
+
+  Future<void> _syncRefillStatus() async {
+    await widget.adRewardPolicy.syncRefillStatus();
+    if (mounted) setState(() {});
   }
 
   Future<void> _refillWithAd() async {
@@ -61,19 +68,27 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
     });
     final result = await widget.adService.showRewarded(AdPlacement.refillItem);
     if (!mounted) return;
-    final granted = widget.adRewardPolicy.grantRefill(
+    final granted = await widget.adRewardPolicy.grantRefillVerified(
       widget.game.runInventory,
       item,
       result,
     );
+    EventLogger.instance.log('ad_reward', {
+      'placement': 'refill_item',
+      'result': result.name,
+      'granted': granted,
+      'item': item.name,
+    });
+    // 서버 확인 중 오버레이가 닫혀도 배경음과 다음 광고 준비는 이어 간다.
     SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
+    unawaited(widget.adService.preloadRewarded());
+    if (!mounted) return;
     setState(() {
       _showingAd = false;
       _selectedRefillItem = granted ? null : item;
       _adGranted = granted;
       _adMessage = context.tr(granted ? 'adItemGranted' : 'adRewardNotGranted');
     });
-    unawaited(widget.adService.preloadRewarded());
   }
 
   @override

@@ -2,9 +2,15 @@
 
 > 다음 작업자가 즉시 시작할 정보만 둔다. 프로젝트 전체 상태는 PROJECT_STATUS.md에 둔다.
 
-Updated: 2026-09-20 22:44 KST
+Updated: 2026-09-24 00:34 KST
 
 ## Current State
+2026-09-24: PLAN-006 로컬 코드의 독립 검수와 두 차례 수정, 보존 마이그레이션 초안, 개인정보처리방침 초안을 마쳤다. 원격 적용은 여전히 Supabase 연결 대기다.
+
+2026-09-23: Supabase 기반 구축(PLAN-006) 1단계 코드와 스키마를 구현했다. 원격 프로젝트 적용은 Codex Supabase 앱 연결 대기다. 아래 게임 방향 기획 상태도 그대로 유효하다.
+
+2026-09-23: 게임 방향 개편을 기획 문서로 정리했다(ADR-008 Proposed, PLAN-005 DRAFT, Product Spec "게임 방향 기획" 절). 사용자 결정 D1~D10 대기 중이며 제품 코드는 바뀌지 않았다. 아래 기존 상태는 그대로 유효하다.
+
 이번 NAS 미러링 검증은 사용자 요청으로 종료했다. Android/iPhone 측정 결과와 한계는 보고서에 보존했고 QA 원시자료는 정리했다. 추가 프로파일링과 미러링 유무 비교를 자동으로 재개하지 않는다.
 
 최신 추가 변경: 중력을 제거한 매칭 파편의 초기 속도를 1.4배, 수명을 65%로 조정했다. 보석 위 유휴 반짝임 밝기는 2/3, 대각선 광택 스윕 속도는 80%다(한 칸 0.9초, 반복 10초). 최종 튜닝은 main에 반영하며 같은 제품 코드에서 analyze, 전체279tests, Web release build가 모두 통과했다. 개발 서버는 사용자 요청으로 정상 종료했고 8080 포트 리스너가 없음을 확인했다. 추가 실행 중인 구현/검증 프로세스는 없다.
@@ -40,6 +46,8 @@ Updated: 2026-09-20 22:44 KST
 4. PLAN-001 실기기 장시간 측정 (원문부터 INCOMPLETE. 별도 승인 작업)
 5. 이전 문서는 archive/docs/에 있음. 삭제 여부는 별도 결정
 6. STALE AIT 재검증과 PLAN-001 실측은 이관 밖 별도 작업
+7. 게임 방향 개편: 사용자 결정(D1~D10) 후 PLAN-005 Step 1a부터. 결정 전 특수 보석 규칙 변경 금지
+8. Supabase: 연결 복구 후 PLAN-006 Step 2~3. 이 파일 하단 "Supabase 기반 구축 인계" 참고
 
 ## Blocked
 - PLAN-002, TASK-004: 외부 값/정책
@@ -49,6 +57,8 @@ Updated: 2026-09-20 22:44 KST
 - ISSUE-003: 광고 3회 세션 로컬
 - ISSUE-004: 인벤토리 비영속 (2차 허용)
 - ISSUE-005: 빈 App Store ID
+- ISSUE-006: 외부 지표 없음(미출시), GA4와 Firebase와 내부 로거 미연동. PLAN-005 Step 2
+- PLAN-006: Supabase 원격 미적용. `config/supabase.json` 없는 빌드는 랭킹 연결 불가
 
 ## Changed Contracts
 - PLAN-004: `ParticleBurst`/`ParticlePool` 삭제, `BoardJuiceLayer`로 대체. `hasActiveVisualEffects`는 유휴 반짝임을 포함하지 않음. HUD 점수는 롤업 표시값이고 저장/랭킹은 `board.score` 그대로. F1~T6 통합과 T2 입력 회귀 및 독립 리뷰 P2 수정 완료
@@ -98,6 +108,8 @@ Updated: 2026-09-20 22:44 KST
 4. plans/PLAN-001-mobile-web-audio-fps.md
 5. decisions/ADR-004-web-html-audio-sfx.md
 6. 01_PRODUCT_SPEC.md 의 FR-003, FR-010
+7. 게임 방향 작업 시: decisions/ADR-008-game-direction-blitz-modernized.md, plans/PLAN-005-blitz-modernized-direction.md, 01_PRODUCT_SPEC.md 의 "게임 방향 기획" 절
+8. Supabase 작업 시: decisions/ADR-009-supabase-backend.md, plans/PLAN-006-supabase-backend.md, 03_TECH_SPEC.md 5절
 
 ## Resume Commands
 이 팩만 보고 실행한다. 비밀은 넣지 않는다.
@@ -111,10 +123,11 @@ Updated: 2026-09-20 22:44 KST
 - STALE 배포 증거를 현재 리비전에서 재검증할지는 이관 밖 결정
 - 21:20 KST Claude 재인계 예약은 사용자 요청으로 PAUSED 처리했다. 인계 프롬프트 전송 없음.
 - PLAN-002 식별 저장 정책
+- 게임 방향 개편 미결정 사항 D1~D10 (Product Spec "게임 방향 기획" 9절)
 
 ## Constraints / Do Not Change
 - BR-001, BR-002
-- 특수 보석 탭 발동, 스왑 조합 비활성
+- 특수 보석 탭 발동, 스왑 조합 비활성 (ADR-008 Accepted와 D2, D4 결정 전까지 유지)
 - 강제 전면 광고 없음
 - ranking.php를 웹 빌드/제출 ZIP에 넣지 않음
 - Riverpod codegen 금지
@@ -168,3 +181,32 @@ Updated: 2026-09-20 22:44 KST
 
 - 사용자가 미러링 검증을 종료하고 추가 프로파일링을 하지 않기로 했다. 위 과거 항목의 Instruments 재개, 원시 추적 재수집, 미러링 유무 비교를 자동으로 이어서 실행하지 않는다.
 - 기존 Android/iPhone 측정 수치와 한계만 보존한다. 전체 성능 검증을 통과한 것으로 해석하지 않는다. iPhone 미러링, scrcpy, Instruments, xctrace 프로세스는 모두 실행 중이지 않다. 제품 코드/배포 변경 없음.
+
+
+## 게임 방향 기획 정리 (2026-09-23 23:10 KST)
+
+- 게임 방향 개편은 제안 단계다. 본문은 [Product Spec 게임 방향 기획](../01_PRODUCT_SPEC.md) 절, 결정은 [ADR-008](../decisions/ADR-008-game-direction-blitz-modernized.md)(Proposed), 구현 단계는 [PLAN-005](../plans/PLAN-005-blitz-modernized-direction.md)(DRAFT)다.
+- 다음 작업자는 사용자 결정(D1~D10) 없이 특수 보석 규칙, TimeUp 제출 시점, 랭킹 정책을 바꾸지 않는다. 결정이 오면 PLAN-005 Step 0 게이트를 체크하고 Step 1a(하이퍼 큐브 교환)부터 시작한다.
+- 하이퍼 교환의 코드 진입점은 `lib/game/match_board_input.dart`의 `_triggerSpecialSwapImpl`(현재 항상 false)과 같은 파일의 특수 보석 탭 분기, 연쇄 큐는 `match_board_specials.dart`의 `includeHyper` 조건이다.
+- 외부 지표는 미출시라 없고 분석 도구도 없다(ISSUE-006). 출시 전 판단은 Product Spec 8-2 플레이테스트 항목으로 하고 결과를 PLAN-005 하단에 기록한다.
+- 조사 원자료는 `tmp/bejeweled-research/`(Git 미추적)에 있다. 원본 PDF는 저장소에 넣지 않는다.
+- 제품 코드, 테스트, 배포 변경 없음. 커밋하지 않았다.
+
+
+## Supabase 기반 구축 인계 (2026-09-23 23:47 KST)
+
+- PLAN-006 Step 1(로컬 준비)은 끝났고 Step 2(원격 프로젝트)는 Supabase 연결 대기다. 연결되면 `list_organizations`로 대상 조직(대시보드 URL의 org id)을 확인하고, 프로젝트 `stone-match`를 서울 지역에 만들기 전에 비용을 조회한다. 비용이 있으면 사용자 확인을 받는다.
+- 마이그레이션은 `20260923142920_stone_match_init.sql`, `20260924090000_stone_match_retention.sql` 순서로 그대로 적용한다. 적용 뒤 `get_advisors`, 익명 로그인 활성화(이메일 가입은 끔), 공개용 키로 `config/supabase.json` 작성, PLAN-006 Step 3 스모크와 RLS 음성 확인, `cron.job` 2건 확인 순서다. 스모크 랭킹 기록은 확인 직후 지운다.
+- 원격 확인 추가 항목: anon의 `has_function_privilege`가 `get_ranking`만 true인지, 403과 401 상태 코드 매핑, 익명 가입 빈도 제한 값. 브라우저 두 탭에서 사용자 ID가 유지되는지.
+- 검수 기록과 PGlite 하네스는 `tmp/orca-plan006/`(Git 제외)에 있다. `review/`, `recheck/`, `recheck2/` 보고서와 `pglite/run_fixed.mjs`, `recheck/sql_recheck_fixed.mjs`, `retention/test.mjs`로 SQL을 다시 확인할 수 있다.
+- 개인정보처리방침은 `docs/release/PRIVACY_POLICY_DRAFT.md` 초안이다. 문의처, 광고 SDK 수집 항목, 보관 기간, 국외 이전 해석은 [확정 필요]다.
+- `config/supabase.json` 없이 만든 빌드는 랭킹이 연결 불가로 표시된다. 운영 앱인토스 빌드(`npm run build:intoss`)는 파일이 없으면 실패한다. 공모전 ZIP 스킬은 아직 config를 넣지 않는다.
+- NAS `ranking.php`는 새 빌드 배포 전까지 기존 배포본이 계속 쓴다. 폐기 시점은 사용자 결정 대기.
+- 제품 코드와 문서는 미커밋 상태다. 앞선 게임 방향 기획 문서 변경도 함께 미커밋이다.
+
+## 이펙트 프롬프트 빌더 인계 (2026-09-24 00:05 KST)
+
+- `tools/fx_prompt_builder/index.html`을 브라우저로 열어 쓴다. 구조와 참고 출처는 같은 폴더 `README.md`.
+- 수치를 바꾸려면 `data.js`의 `FX.derive` 표(강도별 입자 수, 섬광, 흔들림)와 `prompt.js`의 구성 요소 문구를 함께 고친다. 미리보기(`preview.js`)도 같은 값을 읽는다.
+- 재검증: `node tmp/fx-prompt-builder/smoke.js`(조합 생성), `node tmp/fx-prompt-builder/e2e.js`(브라우저, `playwright-core`와 사용자 캐시의 헤드리스 Chromium 필요).
+- 다른 세션의 Supabase 작업 파일과 겹치지 않는다. 미커밋 상태다.

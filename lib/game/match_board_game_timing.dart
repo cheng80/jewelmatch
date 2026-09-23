@@ -51,6 +51,7 @@ extension MatchBoardGameTiming on MatchBoardGame {
     final score = _scoreForBestSave();
     _saveBestRecordIfBetter(score);
     _lastSavedScore = score;
+    logRoundEnd('time_up');
     pauseEngine();
     overlays.add('TimeUp');
     SoundManager.playSfx(AssetPaths.sfxTimeUp);

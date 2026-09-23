@@ -32,6 +32,7 @@ Required env:
 Flow:
   1. Remove stale build/web, match/, and match.zip.
   2. flutter build web --release --base-href "/match/" --wasm --no-web-resources-cdn
+     (config/supabase.json이 있으면 --dart-define-from-file로 Supabase 연결 값을 넣는다)
   3. Patch Flutter web deprecated Intl checks.
   4. Copy build/web/* into local match/ and add Wasm isolation headers.
   5. Create match.zip and upload it to NAS deploy PHP.
@@ -178,7 +179,15 @@ log_info "removed build/web, match/, and match.zip"
 
 log_step 3 "Flutter 웹 릴리즈 빌드"
 log_info "base href: $BASE_HREF"
-flutter build web --release --base-href "$BASE_HREF" --wasm --no-web-resources-cdn
+SUPABASE_DEFINE_ARGS=()
+if [[ -f "$ROOT_DIR/config/supabase.json" ]]; then
+  SUPABASE_DEFINE_ARGS=(--dart-define-from-file=config/supabase.json)
+  log_info "supabase: config/supabase.json"
+else
+  log_info "supabase: config/supabase.json 없음. 랭킹, 광고 제한 확인, 이벤트 기록이 꺼진 빌드다"
+fi
+flutter build web --release --base-href "$BASE_HREF" --wasm --no-web-resources-cdn \
+  ${SUPABASE_DEFINE_ARGS[@]+"${SUPABASE_DEFINE_ARGS[@]}"}
 
 if [[ ! -f "$ROOT_DIR/build/web/index.html" ]]; then
   fail "Flutter build completed but build/web/index.html was not created."

@@ -62,6 +62,7 @@ extension MatchBoardGameFlow on MatchBoardGame {
 
   void _restartRoundImpl() {
     _stageAttemptSerial += 1;
+    _logRoundStart();
     overlays.remove('TimeUp');
     overlays.remove('PauseMenu');
     overlays.remove('NoMoves');
@@ -106,6 +107,7 @@ extension MatchBoardGameFlow on MatchBoardGame {
 
   bool _continueStageAfterAdImpl() {
     if (!isProgressionMode || !timeUp) return false;
+    EventLogger.instance.log('stage_continue', {'level': progressionLevel});
     overlays.remove('TimeUp');
     overlays.remove('GameStats');
     timeUp = false;
