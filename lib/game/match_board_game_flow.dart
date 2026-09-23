@@ -9,9 +9,15 @@ extension MatchBoardGameFlow on MatchBoardGame {
   }) {
     // 타임 모드는 판 시작 시각의 KST 날짜 시드를 쓴다. 판 도중 자정이 지나도 유지한다.
     if (newRound && isTimedMode) {
-      board.startDailyBoard(DailySeed.keyFor(DateTime.now()));
+      final key = DailySeed.keyFor(DateTime.now());
+      board.startDailyBoard(key);
+      // Last Hurrah 하이퍼 색도 같은 날 같은 입력이면 같게 나오도록 보드 난수와 분리된 날짜 난수를 쓴다.
+      lastHurrahRandom = DailyRandom(
+        DailySeed.seedFor(key) ^ MatchBoardGame.lastHurrahSeedSalt,
+      );
     }
-    board.generateFreshBoard(introKind: introKind);
+    // NoMoves 새 보드(newRound false)는 판 통계를 유지한다. 도전 스테이지 진행도와 결과 통계가 이어진다.
+    board.generateFreshBoard(introKind: introKind, resetStats: newRound);
     if (introKind == BoardFillIntroKind.roundStart) {
       board.introFillPaused = pauseIntroUntilRelease;
       _playStartSfxWhenBoardReady();
@@ -115,6 +121,10 @@ extension MatchBoardGameFlow on MatchBoardGame {
     resumeEngine();
     isPlaying = true;
     SoundManager.playBgm(AssetPaths.bgmMain);
+    // 게임 화면을 켜 둔 채 주가 바뀌어도 새 판에서는 이번 주 1위를 다시 보여 준다.
+    if (isTimedMode) {
+      _fetchTop1();
+    }
   }
 
   bool _continueStageAfterAdImpl() {

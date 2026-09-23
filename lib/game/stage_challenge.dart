@@ -48,7 +48,8 @@ class StageChallenge {
         return StageChallenge(
           kind: StageChallengeKind.color,
           target: min(colorBase + colorPerStep * k, colorMax),
-          color: (k - 1) % colorCount + 1,
+          // 색 목표 순번(k = 1, 4, 7, ...)마다 다음 색으로 돈다.
+          color: ((k - 1) ~/ 3) % colorCount + 1,
         );
       case 2:
         return StageChallenge(

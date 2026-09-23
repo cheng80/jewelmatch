@@ -19,6 +19,7 @@ import 'components/match_board_renderer.dart';
 import 'components/match_game_hud.dart';
 import 'components/special_effect_pool.dart';
 import 'components/speed_bonus_badge.dart';
+import 'daily_seed.dart' show DailyRandom;
 import 'item_inventory.dart';
 import 'item_kind.dart';
 import 'jewel_game_mode.dart';
@@ -133,7 +134,11 @@ class MatchBoardGame extends FlameGame {
   bool get lastHurrahActive => _lastHurrah != null;
 
   /// Last Hurrah 하이퍼 색 난수. 테스트와 재현을 위해 시드를 바꿀 수 있다.
+  /// 타임 모드는 판 시작 때 날짜 시드에서 만든 난수로 바뀐다(BR-053).
   Random lastHurrahRandom = Random();
+
+  /// 날짜 시드에서 Last Hurrah 난수를 보드 난수와 다르게 뽑기 위한 값.
+  static const int lastHurrahSeedSalt = 0x5bd1e995;
 
   final BoardJuiceLayer _juiceLayer = BoardJuiceLayer();
   late final SpecialEffectPool _specialEffectPool;

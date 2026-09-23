@@ -41,16 +41,70 @@ void main() {
       final l16 = StageChallenge.forLevel(16)!; // k=4
       expect(l16.kind, StageChallengeKind.color);
       expect(l16.target, 35);
-      expect(l16.color, 4);
+      expect(l16.color, 2);
     });
 
     test('targets are capped and colors wrap deterministically', () {
       expect(StageChallenge.forLevel(4 * 100)!.target, 60); // k=100 color
       expect(StageChallenge.forLevel(4 * 101)!.target, 10); // k=101 special
       expect(StageChallenge.forLevel(4 * 102)!.target, 200); // k=102 gems
-      // k=7 → (7 - 1) % 6 + 1 = 1
-      expect(StageChallenge.forLevel(28)!.color, 1);
-      expect(StageChallenge.forLevel(28, colorCount: 5)!.color, 2);
+      // k=7 → ((7 - 1) ~/ 3) % 6 + 1 = 3
+      expect(StageChallenge.forLevel(28)!.color, 3);
+      expect(StageChallenge.forLevel(28, colorCount: 5)!.color, 3);
+      // k=16 → 5 % 5 + 1 = 1
+      expect(StageChallenge.forLevel(64, colorCount: 5)!.color, 1);
+    });
+
+    test('color challenges cycle through every color', () {
+      final colors = <int>[];
+      for (var level = 4; level <= 4 * 18; level += 4) {
+        final c = StageChallenge.forLevel(level);
+        if (c?.kind == StageChallengeKind.color) colors.add(c!.color!);
+      }
+      expect(colors, [1, 2, 3, 4, 5, 6]);
+    });
+  });
+
+  group('NoMoves during a challenge stage', () {
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      await StorageHelper.init();
+      await StorageHelper.erase();
+      GameSettings.sfxMuted = true;
+    });
+
+    MatchBoardGame progressionGame(int level) {
+      final game = MatchBoardGame(gameMode: JewelGameMode.progression);
+      for (final name in ['IntroBlock', 'LevelCelebration', 'NoMoves']) {
+        game.overlays.addEntry(name, (_, _) => const SizedBox());
+      }
+      game.progressionLevel = level;
+      game.board.introFillInProgress = false;
+      game.board.state = 'idle';
+      game.isPlaying = true;
+      return game;
+    }
+
+    // 검수 R3 P1-1: NoMoves 새 보드가 판 통계를 지워 진행도가 0이 되던 문제.
+    test('new board keeps challenge progress', () {
+      final game = progressionGame(12); // 보석 105개
+      for (var i = 0; i < 100; i++) {
+        game.board.stats.recordGemRemoved(GemKind.normal, 1);
+      }
+      expect(game.stageChallenge!.progress(game.board.stats), 100);
+      game.overlays.add('NoMoves');
+      game.newBoard();
+      expect(game.stageChallenge!.progress(game.board.stats), 100);
+    });
+
+    test('shuffle keeps challenge progress', () {
+      final game = progressionGame(12);
+      for (var i = 0; i < 100; i++) {
+        game.board.stats.recordGemRemoved(GemKind.normal, 1);
+      }
+      game.overlays.add('NoMoves');
+      game.shuffleBoard();
+      expect(game.stageChallenge!.progress(game.board.stats), 100);
     });
   });
 
