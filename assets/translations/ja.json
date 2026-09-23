@@ -125,7 +125,7 @@
   "howToPlaySpecialStarTitle": "スタージェム",
   "howToPlaySpecialStarDesc": "縦横1列を十字に消します。",
   "howToPlaySpecialHyperTitle": "ハイパージェム",
-  "howToPlaySpecialHyperDesc": "隣のジェムと入れ替えると同じ色をすべて消します。",
+  "howToPlaySpecialHyperDesc": "タップすると最も多い色のジェムをすべて消します。隣のジェムと入れ替えるとその色を消し、ハイパージェム同士なら盤面全体を消します。",
   "howToPlaySpecialSupernovaTitle": "スーパーノヴァ",
   "howToPlaySpecialSupernovaDesc": "3x3爆発と縦横ライン消去を同時に発動します。",
   "howToPlaySpecialMakeTitle": "🧪 生成例",

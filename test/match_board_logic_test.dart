@@ -149,15 +149,169 @@ void main() {
     expect(board.consumeSpecialEffectEvents(), isEmpty);
   });
 
-  test('hyper gem does not trigger by swapping with a normal gem', () {
+  test(
+    'H1 hyper swapped with a normal gem clears that color without return',
+    () {
+      final board = _filledBoard();
+      final targets = <GemKind>[];
+      board.onHyperSwap = targets.add;
+      board.setGem(3, 3, board.createGem(3, 3, 0, GemKind.hyper));
+      board.setGem(3, 4, board.createGem(3, 4, 5, GemKind.normal));
+
+      expect(board.trySwap(3, 3, 3, 4), isTrue);
+
+      expect(board.state, 'removing');
+      expect(board.stats.validSwaps, 1);
+      expect(targets, [GemKind.normal]);
+      // 하이퍼는 (3,4)로, 교환한 보석은 (3,3)으로 옮겨진 뒤 제거된다.
+      expect(board.getGem(3, 4)!.kind, GemKind.hyper);
+      final removal = board.pendingRemovalSet!;
+      for (var row = 0; row < 8; row++) {
+        for (var col = 0; col < 8; col++) {
+          final gem = board.getGem(row, col)!;
+          final expected = gem.kind == GemKind.hyper || gem.color == 5;
+          expect(
+            removal.containsKey('$row:$col'),
+            expected,
+            reason: '$row:$col',
+          );
+        }
+      }
+      final event = board.consumeSpecialEffectEvents().single;
+      expect(event.effectKind, GemKind.hyper);
+      expect(event.triggerColor, 5);
+    },
+  );
+
+  test('H1 hyper swapped with a bomb fires the bomb and clears its color', () {
+    final board = _filledBoard();
+    final targets = <GemKind>[];
+    board.onHyperSwap = targets.add;
+    board.setGem(3, 3, board.createGem(3, 3, 0, GemKind.hyper));
+    board.setGem(3, 4, board.createGem(3, 4, 4, GemKind.bomb));
+
+    expect(board.trySwap(3, 4, 3, 3), isTrue);
+
+    expect(targets, [GemKind.bomb]);
+    final removal = board.pendingRemovalSet!;
+    // 교환 뒤 bomb은 (3,3)에서 3x3을 터뜨린다.
+    for (var row = 2; row <= 4; row++) {
+      for (var col = 2; col <= 4; col++) {
+        expect(removal, containsPair('$row:$col', true));
+      }
+    }
+    for (var row = 0; row < 8; row++) {
+      for (var col = 0; col < 8; col++) {
+        final gem = board.getGem(row, col)!;
+        if (gem.kind == GemKind.normal && gem.color == 4) {
+          expect(removal, containsPair('$row:$col', true));
+        }
+      }
+    }
+    // Bejeweled Stars식 변환은 없다: 새 bomb이 생기지 않는다.
+    var bombs = 0;
+    for (var row = 0; row < 8; row++) {
+      for (var col = 0; col < 8; col++) {
+        if (board.getGem(row, col)!.kind == GemKind.bomb) bombs++;
+      }
+    }
+    expect(bombs, 1);
+    expect(board.stats.specialActivatedByKind[GemKind.hyper], 1);
+    expect(board.stats.specialActivatedByKind[GemKind.bomb], 1);
+  });
+
+  test('H2 hyper pair clears the board with capped score and time', () {
+    final bonuses = <int>[];
+    final board = MatchBoardLogic(
+      rows: 8,
+      cols: 8,
+      timedModeTimeRewardScale: 5,
+      onTimedModeTimeBonus: bonuses.add,
+    );
+    for (var row = 0; row < 8; row++) {
+      for (var col = 0; col < 8; col++) {
+        final color = (row + col) % 6 + 1;
+        board.setGem(
+          row,
+          col,
+          board.createGem(row, col, color, GemKind.normal),
+        );
+      }
+    }
+    final targets = <GemKind>[];
+    board.onHyperSwap = targets.add;
+    board.setGem(3, 3, board.createGem(3, 3, 0, GemKind.hyper));
+    board.setGem(3, 4, board.createGem(3, 4, 0, GemKind.hyper));
+    for (var col = 0; col < 4; col++) {
+      board.setGem(0, col, board.createGem(0, col, 2, GemKind.supernova));
+    }
+
+    expect(board.trySwap(3, 3, 3, 4), isTrue);
+
+    expect(targets, [GemKind.hyper]);
+    expect(board.pendingRemovalSet, hasLength(64));
+    // 판 위 다른 특수 보석은 연쇄 없이 제거만 된다.
+    expect(board.stats.specialActivatedByKind[GemKind.hyper], 2);
+    expect(board.stats.specialActivatedByKind[GemKind.supernova] ?? 0, 0);
+    expect(
+      board.consumeSpecialEffectEvents().map((event) => event.effectKind),
+      [GemKind.hyper, GemKind.hyper],
+    );
+
+    board.advanceResolutionStep();
+    // 제한 없는 값은 (3150 + 2400 + 8000) = 13550점, 5초다.
+    expect(board.score, MatchBoardLogic.hyperPairScoreCap);
+    expect(bonuses, [MatchBoardLogic.hyperPairTimeCapSeconds]);
+    // 판이 모두 비고 하이퍼를 돌려주지 않는다.
+    for (var row = 0; row < 8; row++) {
+      for (var col = 0; col < 8; col++) {
+        expect(board.getGem(row, col), isNull);
+      }
+    }
+
+    var guard = 0;
+    while (board.state != 'idle' && guard++ < 200) {
+      board.advanceResolutionStep();
+    }
+    expect(board.state, 'idle');
+    expect(board.score, MatchBoardLogic.hyperPairScoreCap);
+    expect(
+      bonuses.fold<int>(0, (a, b) => a + b),
+      MatchBoardLogic.hyperPairTimeCapSeconds,
+    );
+  });
+
+  test('score cap ends with the hyper pair flow', () {
     final board = _filledBoard();
     board.setGem(3, 3, board.createGem(3, 3, 0, GemKind.hyper));
-    board.setGem(3, 4, board.createGem(3, 4, 5, GemKind.normal));
+    board.setGem(3, 4, board.createGem(3, 4, 0, GemKind.hyper));
+    expect(board.trySwap(3, 3, 3, 4), isTrue);
+    var guard = 0;
+    while (board.state != 'idle' && guard++ < 200) {
+      board.advanceResolutionStep();
+    }
+    final before = board.score;
+    board.setGem(0, 0, board.createGem(0, 0, 3, GemKind.supernova));
+    for (var i = 0; i < 6; i++) {
+      board.setGem(1, i, board.createGem(1, i, 0, GemKind.supernova));
+    }
+    expect(board.triggerSpecialCell(0, 0), isTrue);
+    board.advanceResolutionStep();
+    expect(
+      board.score - before,
+      greaterThan(MatchBoardLogic.hyperPairScoreCap),
+    );
+  });
 
-    final swapped = board.trySwap(3, 3, 3, 4);
+  test('hyper swap never falls back to invalid swap return', () {
+    var invalid = 0;
+    final board = _filledBoard(onInvalidSwap: () => invalid++);
+    board.setGem(0, 0, board.createGem(0, 0, 0, GemKind.hyper));
 
-    expect(swapped, isFalse);
-    expect(board.consumeSpecialEffectEvents(), isEmpty);
+    expect(board.trySwap(0, 0, 1, 0), isTrue);
+
+    expect(invalid, 0);
+    expect(board.state, 'removing');
   });
 
   test('hint candidates exclude adjacent non-hyper special combos', () {
@@ -197,7 +351,7 @@ void main() {
     expect(board.consumeSpecialEffectEvents().single.effectKind, GemKind.bomb);
   });
 
-  test('special chain activation skips hyper gems inside the blast', () {
+  test('H3 hyper inside a blast fires with the cause special color', () {
     final board = _filledBoard();
     board.setGem(3, 3, board.createGem(3, 3, 2, GemKind.bomb));
     board.setGem(3, 4, board.createGem(3, 4, 4, GemKind.star));
@@ -205,21 +359,162 @@ void main() {
 
     expect(board.triggerSpecialCell(3, 3), isTrue);
 
-    expect(board.pendingRemovalSet, containsPair('3:4', true));
-    expect(board.pendingRemovalSet, containsPair('4:4', true));
-    for (var col = 0; col < 8; col++) {
-      expect(board.pendingRemovalSet, containsPair('3:$col', true));
-    }
+    final removal = board.pendingRemovalSet!;
+    expect(removal, containsPair('4:4', true));
     for (var row = 0; row < 8; row++) {
-      expect(board.pendingRemovalSet, containsPair('$row:4', true));
+      for (var col = 0; col < 8; col++) {
+        final gem = board.getGem(row, col)!;
+        if (gem.kind == GemKind.normal && gem.color == 2) {
+          expect(removal, containsPair('$row:$col', true));
+        }
+      }
     }
     expect(board.stats.specialActivatedByKind[GemKind.bomb], 1);
     expect(board.stats.specialActivatedByKind[GemKind.star], 1);
-    expect(board.stats.specialActivatedByKind[GemKind.hyper] ?? 0, 0);
-    expect(
-      board.consumeSpecialEffectEvents().map((event) => event.effectKind),
-      [GemKind.bomb, GemKind.star],
+    expect(board.stats.specialActivatedByKind[GemKind.hyper], 1);
+    final events = board.consumeSpecialEffectEvents();
+    expect(events.map((event) => event.effectKind), [
+      GemKind.bomb,
+      GemKind.star,
+      GemKind.hyper,
+    ]);
+    expect(events.last.triggerColor, 2);
+  });
+
+  test('H3 uses the chained special own color', () {
+    final board = _filledBoard();
+    board.setGem(3, 3, board.createGem(3, 3, 2, GemKind.bomb));
+    board.setGem(3, 4, board.createGem(3, 4, 4, GemKind.star));
+    board.setGem(0, 4, board.createGem(0, 4, 0, GemKind.hyper));
+
+    expect(board.triggerSpecialCell(3, 3), isTrue);
+
+    final hyper = board.consumeSpecialEffectEvents().singleWhere(
+      (event) => event.effectKind == GemKind.hyper,
     );
+    expect(hyper.triggerColor, 4);
+  });
+
+  test('hyper tap color is the most common normal color, ties go low', () {
+    final board = MatchBoardLogic(rows: 8, cols: 8);
+    for (var row = 0; row < 8; row++) {
+      for (var col = 0; col < 8; col++) {
+        final color = (row * 8 + col) % 4 + 1;
+        board.setGem(
+          row,
+          col,
+          board.createGem(row, col, color, GemKind.normal),
+        );
+      }
+    }
+    expect(board.pickExistingColor(), 1);
+    board.getGem(0, 0)!.color = 3;
+    expect(board.pickExistingColor(), 3);
+
+    final filled = _filledBoard();
+    filled.setGem(0, 0, filled.createGem(0, 0, 0, GemKind.hyper));
+    expect(filled.triggerSpecialCell(0, 0), isTrue);
+    expect(
+      filled.consumeSpecialEffectEvents().single.affectedCells,
+      hasLength(12),
+    );
+    for (final key in filled.pendingRemovalSet!.keys) {
+      final parts = key.split(':').map(int.parse).toList();
+      final gem = filled.getGem(parts[0], parts[1])!;
+      expect(gem.kind == GemKind.hyper || gem.color == 2, isTrue, reason: key);
+    }
+  });
+
+  test('hyper swap counts as a valid move so NoMoves does not fire', () {
+    var noMoves = 0;
+    final board = MatchBoardLogic(rows: 8, cols: 8, onNoMoves: () => noMoves++);
+    for (var row = 0; row < 8; row++) {
+      for (var col = 0; col < 8; col++) {
+        final color = (row + col) % 6 + 1;
+        board.setGem(
+          row,
+          col,
+          board.createGem(row, col, color, GemKind.normal),
+        );
+      }
+    }
+    expect(board.hasAnyValidMove(), isFalse);
+    board.finishResolutionFlow();
+    expect(noMoves, 1);
+
+    board.setGem(5, 5, board.createGem(5, 5, 0, GemKind.hyper));
+    expect(board.hasAnyValidMove(), isTrue);
+    board.finishResolutionFlow();
+    expect(noMoves, 1);
+  });
+
+  test('hint prefers normal match swaps over hyper swaps', () {
+    final board = _stableZoneMatchBoard();
+    board.setGem(0, 7, board.createGem(0, 7, 0, GemKind.hyper));
+    for (var i = 0; i < 20; i++) {
+      expect(board.showHint(), isTrue);
+      expect(
+        board.getGem(board.hintCellA!.x, board.hintCellA!.y)!.kind,
+        GemKind.normal,
+      );
+      expect(
+        board.getGem(board.hintCellB!.x, board.hintCellB!.y)!.kind,
+        GemKind.normal,
+      );
+    }
+
+    final stuck = _filledBoard();
+    stuck.setGem(0, 7, stuck.createGem(0, 7, 0, GemKind.hyper));
+    expect(stuck.showHint(), isTrue);
+    final cells = [stuck.hintCellA!, stuck.hintCellB!];
+    expect(cells, contains(const Point(0, 7)));
+  });
+
+  test('hyper press waits for release; drag or adjacent pick swaps', () {
+    final board = _filledBoard();
+    board.setGeometry(x: 0, y: 0, tile: 10);
+    board.setGem(3, 3, board.createGem(3, 3, 0, GemKind.hyper));
+
+    board.handleTap(35, 35);
+    expect(board.state, 'idle');
+    expect(board.selected, const Point(3, 3));
+    expect(board.confirmPendingHyperTap(), isTrue);
+    expect(board.state, 'removing');
+
+    final swipe = _filledBoard();
+    swipe.setGeometry(x: 0, y: 0, tile: 10);
+    swipe.setGem(3, 3, swipe.createGem(3, 3, 0, GemKind.hyper));
+    swipe.handleTap(35, 35);
+    expect(swipe.trySwap(3, 3, 3, 4), isTrue);
+    expect(swipe.confirmPendingHyperTap(), isFalse);
+    expect(swipe.stats.specialActivatedByKind[GemKind.hyper], 1);
+
+    final picked = _filledBoard();
+    picked.setGeometry(x: 0, y: 0, tile: 10);
+    picked.setGem(3, 3, picked.createGem(3, 3, 0, GemKind.hyper));
+    picked.handleTap(35, 35);
+    picked.handleTap(45, 35);
+    expect(picked.state, 'removing');
+    expect(picked.stats.validSwaps, 1);
+
+    final normalFirst = _filledBoard();
+    normalFirst.setGeometry(x: 0, y: 0, tile: 10);
+    normalFirst.setGem(3, 3, normalFirst.createGem(3, 3, 0, GemKind.hyper));
+    normalFirst.handleTap(45, 35);
+    normalFirst.handleTap(35, 35);
+    expect(normalFirst.state, 'removing');
+    expect(normalFirst.stats.validSwaps, 1);
+    expect(normalFirst.confirmPendingHyperTap(), isFalse);
+  });
+
+  test('ending a drag cancels a pending hyper tap', () {
+    final board = _filledBoard();
+    board.setGeometry(x: 0, y: 0, tile: 10);
+    board.setGem(3, 3, board.createGem(3, 3, 0, GemKind.hyper));
+    board.handleTap(35, 35);
+    board.endInvalidDragFeedback();
+    expect(board.confirmPendingHyperTap(), isFalse);
+    expect(board.state, 'idle');
   });
 
   test('tapping a hyper gem removes only normal gems of the picked color', () {

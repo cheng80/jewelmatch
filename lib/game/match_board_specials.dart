@@ -134,6 +134,16 @@ List<SpecialEffectEvent> activateSpecialsForBoard({
 
     final affectedKeys = <String, bool>{};
     final affectedCells = <Point<int>>[];
+    // H3: bomb, star, supernova 범위의 hyper는 원인 특수 보석 색으로 발동한다.
+    final catchesHyper =
+        item.kind == GemKind.bomb ||
+        item.kind == GemKind.star ||
+        item.kind == GemKind.supernova;
+    final causeGem = getGem(item.row, item.col);
+    final causeColor =
+        causeGem != null && causeGem.kind == item.kind && causeGem.color > 0
+        ? causeGem.color
+        : item.triggerColor;
     void markAffected(int row, int col, int? triggerColor) {
       if (!_isInside(rows, cols, row, col)) return;
       final affectedKey = specialCellKey(row, col);
@@ -152,6 +162,16 @@ List<SpecialEffectEvent> activateSpecialsForBoard({
         col: col,
         triggerColor: triggerColor,
       );
+      if (catchesHyper) {
+        enqueueTriggeredSpecialForBoard(
+          queue: queue,
+          queued: queued,
+          getGem: getGem,
+          row: row,
+          col: col,
+          triggerColor: causeColor,
+        );
+      }
     }
 
     if (item.kind == GemKind.row) {

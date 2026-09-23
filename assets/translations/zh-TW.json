@@ -125,7 +125,7 @@
   "howToPlaySpecialStarTitle": "星星寶石",
   "howToPlaySpecialStarDesc": "以十字形清除整行和整列。",
   "howToPlaySpecialHyperTitle": "超能寶石",
-  "howToPlaySpecialHyperDesc": "與相鄰寶石交換時會清除該顏色的所有寶石。",
+  "howToPlaySpecialHyperDesc": "點擊會清除數量最多的顏色。與相鄰寶石交換會清除該顏色，兩個超能寶石交換會清空整個棋盤。",
   "howToPlaySpecialSupernovaTitle": "超新星寶石",
   "howToPlaySpecialSupernovaDesc": "同時觸發3x3爆破和橫縱整線清除。",
   "howToPlaySpecialMakeTitle": "🧪 生成範例",

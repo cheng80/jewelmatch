@@ -31,6 +31,11 @@ extension MatchBoardResolution on MatchBoardLogic {
           max(0, removed - 3) * MatchBoardLogic.scoreExtraPerGem;
       final comboBonus = max(1, combo);
       lastRemovalScore = ((base + specialBonus) * comboBonus).round();
+      final scoreBudget = _hyperPairScoreBudget;
+      if (scoreBudget != null) {
+        lastRemovalScore = min(lastRemovalScore, scoreBudget);
+        _hyperPairScoreBudget = scoreBudget - lastRemovalScore;
+      }
       score += lastRemovalScore;
 
       final raw =
@@ -44,7 +49,12 @@ extension MatchBoardResolution on MatchBoardLogic {
         if (bonusSec < 1) {
           bonusSec = 1;
         }
-        onTimedModeTimeBonus!(bonusSec);
+        final timeBudget = _hyperPairTimeBudget;
+        if (timeBudget != null) {
+          bonusSec = min(bonusSec, timeBudget);
+          _hyperPairTimeBudget = timeBudget - bonusSec;
+        }
+        if (bonusSec > 0) onTimedModeTimeBonus!(bonusSec);
       }
 
       if (onGemsRemoved != null && removedCells.isNotEmpty) {
@@ -109,6 +119,8 @@ extension MatchBoardResolution on MatchBoardLogic {
   }
 
   void _resolveMatchCascadeImpl(MoveInfo moveInfo) {
+    _hyperPairScoreBudget = null;
+    _hyperPairTimeBudget = null;
     pendingMoveInfo = moveInfo;
     combo = 0;
     pendingResultLabel = null;
@@ -206,6 +218,8 @@ extension MatchBoardResolution on MatchBoardLogic {
     pendingMoveInfo = null;
     pendingRemovalSet = null;
     combo = 0;
+    _hyperPairScoreBudget = null;
+    _hyperPairTimeBudget = null;
 
     state = 'idle';
     selected = null;
@@ -222,6 +236,8 @@ extension MatchBoardResolution on MatchBoardLogic {
     String label,
   ) {
     removalJuicePattern = MatchJuicePattern.normal;
+    _hyperPairScoreBudget = null;
+    _hyperPairTimeBudget = null;
     combo = 1;
     lastCombo = 1;
     if (maxCombo < 1) {

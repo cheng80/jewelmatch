@@ -42,7 +42,7 @@ void main() {
     );
   });
 
-  test('hyper inside another special range is removed without chaining', () {
+  test('hyper inside another special range chains with the cause color', () {
     final board = _filledBoard();
     board.setGem(3, 3, board.createGem(3, 3, 2, GemKind.bomb));
     board.setGem(3, 4, board.createGem(3, 4, 0, GemKind.hyper));
@@ -52,8 +52,27 @@ void main() {
     expect(activated, isTrue);
     expect(board.pendingRemovalSet, containsPair('3:4', true));
     expect(board.stats.specialActivatedByKind[GemKind.bomb], 1);
-    expect(board.stats.specialActivatedByKind[GemKind.hyper] ?? 0, 0);
-    expect(board.consumeSpecialEffectEvents(), hasLength(1));
+    expect(board.stats.specialActivatedByKind[GemKind.hyper], 1);
+    final events = board.consumeSpecialEffectEvents();
+    expect(events, hasLength(2));
+    expect(events.last.triggerColor, 2);
+  });
+
+  test('hyper swaps are the only special swap path', () {
+    for (final kind in [
+      GemKind.normal,
+      GemKind.bomb,
+      GemKind.star,
+      GemKind.supernova,
+      GemKind.hyper,
+    ]) {
+      final board = _filledBoard();
+      board.setGem(3, 3, board.createGem(3, 3, 0, GemKind.hyper));
+      board.setGem(3, 4, board.createGem(3, 4, 3, kind));
+
+      expect(board.trySwap(3, 3, 3, 4), isTrue, reason: kind.name);
+      expect(board.state, 'removing', reason: kind.name);
+    }
   });
 }
 

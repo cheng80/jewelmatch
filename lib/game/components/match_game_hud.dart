@@ -795,6 +795,9 @@ class MatchGameHud extends PositionComponent
   void onTapDown(TapDownEvent event) => _handleTapDown(event);
 
   @override
+  void onTapUp(TapUpEvent event) => game.handleBoardTapUp();
+
+  @override
   void onDragStart(DragStartEvent event) {
     super.onDragStart(event);
     _handleDragStart(event);

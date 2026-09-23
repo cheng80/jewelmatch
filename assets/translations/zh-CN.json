@@ -125,7 +125,7 @@
   "howToPlaySpecialStarTitle": "星星宝石",
   "howToPlaySpecialStarDesc": "以十字形清除整行和整列。",
   "howToPlaySpecialHyperTitle": "超能宝石",
-  "howToPlaySpecialHyperDesc": "与相邻宝石交换时会清除该颜色的所有宝石。",
+  "howToPlaySpecialHyperDesc": "点击会清除数量最多的颜色。与相邻宝石交换会清除该颜色，两个超能宝石交换会清空整个棋盘。",
   "howToPlaySpecialSupernovaTitle": "超新星宝石",
   "howToPlaySpecialSupernovaDesc": "同时触发3x3爆破和横纵整线清除。",
   "howToPlaySpecialMakeTitle": "🧪 生成示例",

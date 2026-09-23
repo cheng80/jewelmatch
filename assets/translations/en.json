@@ -125,7 +125,7 @@
   "howToPlaySpecialStarTitle": "Star Gem",
   "howToPlaySpecialStarDesc": "Clears its full row and column in a cross.",
   "howToPlaySpecialHyperTitle": "Hyper Gem",
-  "howToPlaySpecialHyperDesc": "Swap it with a gem to clear every gem of that color.",
+  "howToPlaySpecialHyperDesc": "Tap it to clear the most common color. Swap it with a gem to clear that color, or swap two Hyper Gems to clear the whole board.",
   "howToPlaySpecialSupernovaTitle": "Supernova Gem",
   "howToPlaySpecialSupernovaDesc": "Combines a 3x3 blast with row and column clearing.",
   "howToPlaySpecialMakeTitle": "🧪 Creation Examples",

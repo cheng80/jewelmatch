@@ -74,6 +74,9 @@ class MatchBoardLogic {
   MatchJuicePattern removalJuicePattern = MatchJuicePattern.normal;
   void Function(List<SpecialSpawn> spawns)? onSpecialsBorn;
 
+  /// 하이퍼 교환 성공 알림. [targetKind]는 하이퍼와 바꾼 보석 종류다.
+  void Function(GemKind targetKind)? onHyperSwap;
+
   double boardX = 0;
   double boardY = 0;
   double tileSize = 56;
@@ -134,6 +137,13 @@ class MatchBoardLogic {
   double _invalidDragReturnStartX = 0;
   double _invalidDragReturnStartY = 0;
   double _invalidDragReturnElapsed = 0;
+
+  /// 하이퍼 칸을 눌렀지만 아직 떼지 않은 칸. 떼면 발동, 교환이면 취소된다.
+  Point<int>? _pendingHyperTap;
+
+  /// H2 흐름에서 남은 점수와 시간 보상 한도. null이면 상한 없음.
+  int? _hyperPairScoreBudget;
+  int? _hyperPairTimeBudget;
 
   /// 풀에서 꺼내거나 새로 생성한 BoardGem을 반환한다.
   BoardGem _acquireGem({
@@ -215,6 +225,10 @@ class MatchBoardLogic {
   static const int scoreBase = 100;
   static const int scoreExtraPerGem = 50;
 
+  /// H2(하이퍼끼리 교환) 한 번과 이어지는 연쇄로 얻는 점수와 시간 보상 상한(D3).
+  static const int hyperPairScoreCap = 10000;
+  static const int hyperPairTimeCapSeconds = 3;
+
   /// 표시용 팔레트 (Love2D `palette`와 동일 계열).
   static const List<Color> palette = [
     Color(0xFFE65A68),
@@ -252,6 +266,9 @@ class MatchBoardLogic {
 
   void resetCells() {
     _clearInvalidDragFeedback();
+    _pendingHyperTap = null;
+    _hyperPairScoreBudget = null;
+    _hyperPairTimeBudget = null;
     for (final row in cells) {
       for (final gem in row) {
         if (gem != null) _releaseGem(gem);
@@ -401,18 +418,27 @@ class MatchBoardLogic {
     applySpecialSpawnInfo(spawns: spawns, getGem: getGem);
   }
 
-  int? pickExistingColor() {
-    final colors = <int>[];
+  /// 하이퍼 탭 색: 보드에 가장 많은 일반 보석 색. 동률이면 작은 색 번호.
+  /// [excluding]에 든 칸(이미 제거 예정)은 세지 않는다.
+  int? pickExistingColor([Map<String, bool>? excluding]) {
+    final counts = <int, int>{};
     for (var r = 0; r < rows; r++) {
       for (var c = 0; c < cols; c++) {
         final gem = getGem(r, c);
-        if (gem != null && gem.kind == GemKind.normal) {
-          colors.add(gem.color);
-        }
+        if (gem == null || gem.kind != GemKind.normal) continue;
+        if (excluding?.containsKey(_cellKey(r, c)) ?? false) continue;
+        counts[gem.color] = (counts[gem.color] ?? 0) + 1;
       }
     }
-    if (colors.isEmpty) return null;
-    return colors[_random.nextInt(colors.length)];
+    int? best;
+    for (final entry in counts.entries) {
+      if (best == null ||
+          entry.value > counts[best]! ||
+          (entry.value == counts[best]! && entry.key < best)) {
+        best = entry.key;
+      }
+    }
+    return best;
   }
 
   bool _isSpecial(GemKind k) => isSpecialGemKind(k);
@@ -462,7 +488,7 @@ class MatchBoardLogic {
       removalSet: removalSet,
       queue: queue,
       getGem: getGem,
-      pickExistingColor: pickExistingColor,
+      pickExistingColor: () => pickExistingColor(removalSet),
       rows: rows,
       cols: cols,
       onSpecialActivated: stats.recordSpecialActivated,
@@ -474,6 +500,11 @@ class MatchBoardLogic {
 
   bool triggerSpecialCell(int row, int col) =>
       _triggerSpecialCellImpl(row, col);
+
+  /// 포인터를 뗄 때 호출. 누르고 있던 하이퍼가 교환되지 않았으면 발동한다.
+  bool confirmPendingHyperTap() => _confirmPendingHyperTapImpl();
+
+  void cancelPendingHyperTap() => _pendingHyperTap = null;
 
   /// 입력과 드래그 피드백이 공유하는 기존 상태/안정구역 허용 판정.
   bool canTrySwapNow(int ar, int ac, int br, int bc) =>

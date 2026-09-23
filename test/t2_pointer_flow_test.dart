@@ -153,4 +153,39 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(milliseconds: 50));
   });
+
+  testWidgets('real pointer tap on hyper fires on release, drag swaps', (
+    tester,
+  ) async {
+    final game = await mount(tester);
+    fill(game.board);
+    game.board.setGem(3, 3, game.board.createGem(3, 3, 0, GemKind.hyper));
+    final origin =
+        game.board.cellToPixel(3, 3) +
+        Offset(game.board.tileSize / 2, game.board.tileSize / 2);
+
+    final press = await tester.startGesture(origin);
+    await tester.pump();
+    expect(game.board.state, 'idle');
+    await press.up();
+    await tester.pump();
+    expect(game.board.state, 'removing');
+    expect(game.board.stats.specialActivatedByKind[GemKind.hyper], 1);
+    expect(game.board.stats.validSwaps, 0);
+
+    fill(game.board);
+    game.board.pendingRemovalSet = null;
+    game.board.setGem(3, 3, game.board.createGem(3, 3, 0, GemKind.hyper));
+    final drag = await tester.startGesture(origin);
+    await drag.moveBy(const Offset(30, 0));
+    await drag.moveBy(const Offset(15, 0));
+    await tester.pump();
+    await drag.up();
+    await tester.pump();
+    expect(game.board.state, 'removing');
+    expect(game.board.stats.validSwaps, 1);
+    expect(game.board.getGem(3, 4)!.kind, GemKind.hyper);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(milliseconds: 50));
+  });
 }

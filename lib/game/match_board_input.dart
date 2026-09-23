@@ -1,9 +1,85 @@
 part of 'match_board_logic.dart';
 
 extension MatchBoardInput on MatchBoardLogic {
+  /// 하이퍼 교환(H1, H2)만 연결한다. non-hyper 특수 보석 조합은 계속 비활성이다.
   bool _triggerSpecialSwapImpl(int ar, int ac, int br, int bc) {
-    // 특수 보석은 스왑 콤보가 아니라 해당 보석 탭으로만 발동한다.
-    return false;
+    final a = getGem(ar, ac);
+    final b = getGem(br, bc);
+    if (a == null || b == null) return false;
+    if (a.kind != GemKind.hyper && b.kind != GemKind.hyper) return false;
+    final hyper = a.kind == GemKind.hyper ? a : b;
+    final target = identical(hyper, a) ? b : a;
+
+    _pendingHyperTap = null;
+    selected = null;
+    swapCells(ar, ac, br, bc);
+    if (target.kind == GemKind.hyper) {
+      _triggerHyperPair(hyper, target);
+    } else {
+      // H1: 교환한 보석의 색을 지운다. 특수 보석이면 그 보석도 발동한다.
+      final color = target.color > 0 ? target.color : pickExistingColor();
+      final removalSet = <String, bool>{
+        _cellKey(hyper.row, hyper.col): true,
+        _cellKey(target.row, target.col): true,
+      };
+      final queue = <MatchChainItem>[
+        MatchChainItem(
+          row: hyper.row,
+          col: hyper.col,
+          kind: GemKind.hyper,
+          triggerColor: color,
+        ),
+        if (target.kind != GemKind.normal)
+          MatchChainItem(
+            row: target.row,
+            col: target.col,
+            kind: target.kind,
+            triggerColor: color,
+          ),
+      ];
+      resolveSpecialSwap(removalSet, queue, 'hyper swap');
+    }
+    onHyperSwap?.call(target.kind);
+    return true;
+  }
+
+  /// H2: 보드 전체 제거. 남은 특수 보석은 연쇄 없이 제거만 하고 하이퍼는 돌려주지 않는다.
+  /// 이 흐름이 끝날 때까지 점수와 시간 보상은 상한 안에서만 준다.
+  void _triggerHyperPair(BoardGem a, BoardGem b) {
+    final removalSet = <String, bool>{};
+    final allCells = <Point<int>>[];
+    for (var row = 0; row < rows; row++) {
+      for (var col = 0; col < cols; col++) {
+        if (getGem(row, col) == null) continue;
+        removalSet[_cellKey(row, col)] = true;
+        allCells.add(Point(row, col));
+      }
+    }
+    resolveSpecialSwap(removalSet, <MatchChainItem>[], 'hyper combo');
+    for (final gem in [a, b]) {
+      stats.recordSpecialActivated(GemKind.hyper);
+      final event = specialEffectEventForItem(
+        MatchChainItem(
+          row: gem.row,
+          col: gem.col,
+          kind: GemKind.hyper,
+          triggerColor: null,
+        ),
+        allCells,
+      );
+      if (event != null) _specialEffectEvents.add(event);
+    }
+    _hyperPairScoreBudget = MatchBoardLogic.hyperPairScoreCap;
+    _hyperPairTimeBudget = MatchBoardLogic.hyperPairTimeCapSeconds;
+  }
+
+  /// 하이퍼 칸 누름을 뗄 때 호출한다. 그사이 교환이나 드래그가 없었으면 발동한다.
+  bool _confirmPendingHyperTapImpl() {
+    final pending = _pendingHyperTap;
+    _pendingHyperTap = null;
+    if (pending == null) return false;
+    if (getGem(pending.x, pending.y)?.kind != GemKind.hyper) return false;
+    return triggerSpecialCell(pending.x, pending.y);
   }
 
   bool _triggerSpecialCellImpl(int row, int col) {
@@ -23,6 +99,7 @@ extension MatchBoardInput on MatchBoardLogic {
       ),
     ];
     selected = null;
+    _pendingHyperTap = null;
     resolveSpecialSwap(removalSet, queue, _specialTapLabel(gem.kind));
     return true;
   }
@@ -41,6 +118,7 @@ extension MatchBoardInput on MatchBoardLogic {
 
   bool _trySwapImpl(int ar, int ac, int br, int bc) {
     clearHint();
+    _pendingHyperTap = null;
     if (!_canTrySwapNow(ar, ac, br, bc)) return false;
     if (!isInside(ar, ac) || !isInside(br, bc)) return false;
     if (!areAdjacent(ar, ac, br, bc)) return false;
@@ -149,7 +227,7 @@ extension MatchBoardInput on MatchBoardLogic {
 
   bool _showHintImpl() {
     if (state != 'idle' || inputLocked) return false;
-    final moves = getAllValidMoves();
+    final moves = _hintCandidateMoves();
     if (moves.isEmpty) return false;
     final signature = _hintMoveSignature(moves);
     if (_hintMovesSignature != signature) {
@@ -181,7 +259,40 @@ extension MatchBoardInput on MatchBoardLogic {
     return buffer.toString();
   }
 
-  List<ValidMovePair> _getAllValidMovesImpl() {
+  /// 힌트는 일반 매치 스왑을 우선하고, 없을 때만 하이퍼 교환을 보여 준다.
+  List<ValidMovePair> _hintCandidateMoves() {
+    final moves = _normalSwapMoves();
+    return moves.isNotEmpty ? moves : _hyperSwapMoves();
+  }
+
+  /// NoMoves 판정용 전체 유효 이동. 하이퍼 교환은 매치 없이도 유효하다.
+  List<ValidMovePair> _getAllValidMovesImpl() => [
+    ..._normalSwapMoves(),
+    ..._hyperSwapMoves(),
+  ];
+
+  List<ValidMovePair> _hyperSwapMoves() {
+    final moves = <ValidMovePair>[];
+    for (var row = 0; row < rows; row++) {
+      for (var col = 0; col < cols; col++) {
+        for (final (dr, dc) in const [(0, 1), (1, 0)]) {
+          final gemA = getGem(row, col);
+          final gemB = getGem(row + dr, col + dc);
+          if (gemA == null || gemB == null) continue;
+          if (gemA.kind != GemKind.hyper && gemB.kind != GemKind.hyper) {
+            continue;
+          }
+          moves.add(
+            ValidMovePair(a: Point(row, col), b: Point(row + dr, col + dc)),
+          );
+        }
+      }
+    }
+    return moves;
+  }
+
+  /// 하이퍼가 낀 칸 쌍은 교환 시 하이퍼 경로를 타므로 여기서 뺀다.
+  List<ValidMovePair> _normalSwapMoves() {
     final moves = <ValidMovePair>[];
     for (var row = 0; row < rows; row++) {
       for (var col = 0; col < cols; col++) {
@@ -195,6 +306,9 @@ extension MatchBoardInput on MatchBoardLogic {
           final gemA = getGem(row, col);
           final gemB = getGem(or, oc);
           if (gemA == null || gemB == null) continue;
+          if (gemA.kind == GemKind.hyper || gemB.kind == GemKind.hyper) {
+            continue;
+          }
 
           swapCells(row, col, or, oc);
           final matchA = findMatchesAt(or, oc);
@@ -242,6 +356,27 @@ extension MatchBoardInput on MatchBoardLogic {
     }
 
     final gem = getGem(row, col);
+    final previous = selected;
+    final pendingHyper = _pendingHyperTap;
+    _pendingHyperTap = null;
+    if (gem != null && gem.kind == GemKind.hyper) {
+      if (previous != null &&
+          areAdjacent(previous.x, previous.y, row, col) &&
+          getGem(previous.x, previous.y) != null) {
+        // 두 칸 선택 교환: 먼저 고른 칸과 하이퍼를 바꾼다.
+        selected = null;
+        trySwap(previous.x, previous.y, row, col);
+        return;
+      }
+      if (pendingHyper?.x == row && pendingHyper?.y == col) {
+        triggerSpecialCell(row, col);
+        return;
+      }
+      // 누름만으로는 발동하지 않는다. 떼면 발동, 드래그나 인접 칸 선택이면 교환.
+      selected = Point(row, col);
+      _pendingHyperTap = Point(row, col);
+      return;
+    }
     if (gem != null && isSpecialGemKind(gem.kind)) {
       triggerSpecialCell(row, col);
       return;
@@ -319,6 +454,7 @@ extension MatchBoardInput on MatchBoardLogic {
   }
 
   void _endInvalidDragFeedbackImpl() {
+    _pendingHyperTap = null;
     swapPreviewCell = null;
     idleHintElapsed = 0;
     final gem = _invalidDragGem;

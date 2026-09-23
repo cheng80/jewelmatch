@@ -85,6 +85,8 @@ class MatchBoardGame extends FlameGame {
     };
     speedBonus = SpeedBonus(enabled: isTimedMode);
     if (isTimedMode) board.onValidSwapBonus = _onSpeedBonusSwap;
+    board.onHyperSwap = (kind) =>
+        EventLogger.instance.log('hyper_swap', {'target_kind': kind.name});
     if (hasTimedClock) {
       timeRemaining = roundSecondsForMode;
       _lastFlooredSecondForTimeTic = timeRemaining.floor();
@@ -578,6 +580,15 @@ class MatchBoardGame extends FlameGame {
       return;
     }
     board.handleTap(x, y);
+  }
+
+  /// 보드 누름을 뗄 때. 누른 하이퍼가 교환되지 않았으면 탭 발동한다.
+  void handleBoardTapUp() {
+    if (!isPlaying || timeUp || activeTargetItem != null) {
+      board.cancelPendingHyperTap();
+      return;
+    }
+    board.confirmPendingHyperTap();
   }
 
   /// 스와이프 입력: 시작 좌표(px)에서 [dr]/[dc] 방향으로 1칸 스왑 시도.
