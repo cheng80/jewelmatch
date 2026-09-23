@@ -3,7 +3,7 @@
 ## Metadata
 - Plan ID: `PLAN-005`
 - Title: 60초 점수 경쟁 중심 게임 방향 개편(공통 코어, 장기 목표, 경쟁 형식)
-- Status: `DRAFT`
+- Status: `IN_PROGRESS` (2026-09-24 D1~D6 권장안 승인, Step 1a, 1b, 3 착수)
 - Related Requirement: `FR-001`, `FR-002`, `FR-003`, `FR-004`, `FR-005`, `FR-006`, `FR-009`, `FR-012`
 - Related ADR: `ADR-008`(Proposed), `ADR-001`, `ADR-002`, `ADR-006`, `ADR-007`
 - Owner:
@@ -46,11 +46,11 @@
 
 ## 4. 구현 계획
 ### Step 0 — 결정 게이트
-- [ ] D1 ADR-008 승인. 승인되면 Status를 Accepted로 바꾸고 ROADMAP Phase 5를 진행 상태로 표시
-- [ ] Step 1a 전: D2(하이퍼 규칙 범위), D3(H2 반환과 상한), D4(탭 유지) 결정. ADR-001에 개정 절을 추가하거나 새 ADR로 대체
-- [ ] Step 1b 전: D5(Speed Bonus 적용 모드와 점수 결합)
-- [ ] Step 1c 전: D6(Last Hurrah 적용 모드, 레벨 클리어 인정, 제출 시점). ADR-007 개정
-- [ ] Step 4 전: D8(앱인토스 공식 리더보드 대상), D10(기존 타임 기록 처리)
+- [x] D1 ADR-008 승인(2026-09-24, Accepted). ROADMAP Phase 5 진행 중
+- [x] D2 H1, H2, H3 모두 채택, 탭 발동 색은 가장 많은 색. D3 H2 반환 없음, 점수와 시간 상한. D4 탭 유지. ADR-001 개정 절
+- [x] D5 Speed Bonus는 타임 모드만, BR-011과 별도 가산, 콤보 배수 미적용
+- [x] D6 Last Hurrah는 타임 모드만, 끝난 뒤 제출. 레벨 모드는 해당 없음. ADR-007 개정 절
+- [ ] Step 4 전: D8(앱인토스 공식 리더보드 대상). D10(기존 타임 기록 처리)은 Supabase 랭킹에 실사용 기록이 없어 해당 없음(2026-09-24)
 - [ ] Step 5 전: D9(레벨 규칙 변형과 이동 제한 혼합)
 
 ### Step 1 — 공통 60초 코어

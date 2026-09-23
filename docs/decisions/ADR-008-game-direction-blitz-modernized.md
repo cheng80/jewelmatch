@@ -1,6 +1,6 @@
 # ADR-008 — 게임 방향: Bejeweled Blitz식 60초 점수 경쟁을 지금 방식으로 다시 만든다
 
-- Status: Proposed
+- Status: Accepted (2026-09-24 사용자 승인, D1~D6 권장안 채택)
 - Date: 2026-09-23
 
 ## Context

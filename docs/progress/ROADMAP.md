@@ -23,8 +23,8 @@
 - [ ] 광고 일일 제한 서버 영속 (Supabase 원격 적용과 검수 완료, 새 빌드 배포 대기. PLAN-006)
 - [ ] Supabase 기반 구축: 랭킹 이전, 원격 설정, 이벤트 로그 (원격 프로젝트 `stone-match` 적용과 검수 완료, NAS와 앱인토스 배포 대기. ADR-009, PLAN-006)
 
-## Phase 5 — Gameplay Direction (제안: ADR-008 Proposed, PLAN-005 DRAFT)
-- [ ] 방향 승인과 미결정 사항 D1~D10 결정
+## Phase 5 — Gameplay Direction (ADR-008 Accepted, PLAN-005 IN_PROGRESS)
+- [ ] 방향 승인과 미결정 사항 D1~D10 결정 (D1~D6 승인, D7은 플레이테스트 뒤, D8, D9는 해당 단계 전)
 - [ ] 두 타이머 모드 공통 60초 코어: 하이퍼 큐브 교환, Speed Bonus, Last Hurrah, 시간 보상 조정
 - [ ] 내부 이벤트 로거와 플레이테스트 기록
 - [ ] 재화 없는 장기 목표: 누적 랭크, 배지, 기록 화면

@@ -22,5 +22,10 @@
 - 후속 영향: 레벨 HUD 랭킹을 붙이려면 fetchTop1(mode=level)과 표시 단위를 따로 정한다
 
 ## Related
+
+## 개정 2026-09-24 — Last Hurrah 뒤 제출 (ADR-008, PLAN-005 1c)
+
+사용자 승인(D6 권장안)으로 타임 모드는 시간이 0이 되면 Last Hurrah(남은 특수 보석 순차 발동)를 먼저 끝내고 최종 점수를 확정한 뒤 TimeUp 결과로 넘어간다. 제출은 그 TimeUp 진입 시점에 한다. "TimeUp 진입 시 제출, 나가기는 기다리지 않음, 일시정지 나가기만 await"는 유지한다. 레벨 모드는 Last Hurrah가 없어 기존과 같다. 세부 흐름(연출 상한, reduced motion 즉시 계산, 마무리 중 일시정지 처리)은 PLAN-005 1c와 TECH_SPEC에 둔다.
+
 - FR-009, BR-001, BR-092, BR-093
 - 03_TECH_SPEC.md API-002, API-003, BR-092, BR-093
