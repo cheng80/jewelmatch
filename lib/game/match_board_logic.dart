@@ -41,6 +41,7 @@ class MatchBoardLogic {
 
   final int rows;
   final int cols;
+
   /// 이 판의 보석 색 수. 기본 6이며 7색 실험(GameplayFlags.seventhColorFromLevel)이 켜진 레벨에서는 새 보드를 만들기 전에 7로 바꾼다.
   int colorCount;
   final void Function()? onNoMoves;
@@ -145,6 +146,43 @@ class MatchBoardLogic {
 
   /// 이 판에 적용한 실험 기능 스위치. 판 시작 때 [GameplayFlags.current]를 받아 판 도중에는 바꾸지 않는다.
   GameplayFlags flags = const GameplayFlags();
+
+  /// 타임 모드 판이면 true. T1, Time 보석, Multiplier 보석은 이 값과 [flags]가 모두 켜져야 동작한다.
+  bool timedModeRules = false;
+
+  /// 판 점수 배율 m. Multiplier 보석을 지우면 1씩 오르고 그 뒤 보드 점수에 곱한다.
+  /// Speed Bonus에는 곱하지 않는다. 새 판에서 1로 돌아간다.
+  int scoreMultiplier = 1;
+  static const int maxScoreMultiplier = 8;
+
+  /// Time 보석 한 개가 주는 시간(초)과 보드 위 최대 개수, 생성에 필요한 한 수 제거 수.
+  static const int timeGemBonusSeconds = 5;
+  static const int maxTimeGems = 2;
+  static const int timeGemMoveThreshold = 10;
+
+  /// Multiplier 보석 생성 임계값: 12 + 4 × (m - 1).
+  static const int multiplierMoveBase = 12;
+  static const int multiplierMoveStep = 4;
+
+  /// 직전 시간 보상 콜백 값 중 Time 보석 몫(초). 콜백 안에서만 읽는다.
+  int lastTimeGemSeconds = 0;
+
+  bool get timeRewardT1Active => timedModeRules && flags.timeRewardT1;
+  bool get timeGemActive => timedModeRules && flags.timeGem;
+  bool get multiplierGemActive => timedModeRules && flags.multiplierGem;
+  int get multiplierMoveThreshold =>
+      multiplierMoveBase + multiplierMoveStep * (scoreMultiplier - 1);
+
+  /// 유저 스왑으로 시작한 한 수(연쇄 포함)가 지운 보석 수. 보드가 멈추면 속성 보석 생성을 판정한다.
+  bool _swapMoveActive = false;
+  int _swapMoveRemoved = 0;
+
+  /// 이번 제거 단계가 3개짜리 일반 매치만으로 이루어졌는지(T1). 제거 때 한 번 읽고 지운다.
+  bool _plainThreeStep = false;
+
+  /// 특수 보석 재료로 쓰여 속성이 사라진 보석. 다음 제거 단계에서 지운 것으로 센다.
+  int _pendingTimeGems = 0;
+  int _pendingMultiplierGems = 0;
 
   /// 일일 보드 판을 시작한다. 이후 보드 난수는 그 날 시드에서만 나온다.
   void startDailyBoard(String key) {
@@ -539,9 +577,36 @@ class MatchBoardLogic {
   bool trySwap(int ar, int ac, int br, int bc) {
     final swapped = _trySwapImpl(ar, ac, br, bc);
     // Speed Bonus: 유효 스왑 확정 직후 한 곳. BR-011, 콤보 배수와 별도로 더한다.
-    if (swapped) score += onValidSwapBonus?.call() ?? 0;
+    if (swapped) {
+      score += onValidSwapBonus?.call() ?? 0;
+      _swapMoveActive = true;
+    }
     return swapped;
   }
+
+  /// round_end에 붙이는 속성 보석 값. 스위치가 켜진 타임 모드 판만 넣는다.
+  Map<String, Object?> get bonusGemEventParams => {
+    if (timeGemActive) ...{
+      'time_gems': stats.timeGemsCollected,
+      'time_gem_seconds': stats.timeGemSeconds,
+    },
+    if (multiplierGemActive) 'max_multiplier': stats.maxMultiplier,
+  };
+
+  int countBonusGems(GemBonus bonus) {
+    var count = 0;
+    for (final row in cells) {
+      for (final gem in row) {
+        if (gem != null && gem.bonus == bonus) count++;
+      }
+    }
+    return count;
+  }
+
+  /// 속성 없는 일반 보석 하나를 보드 난수로 골라 [bonus]를 붙인다. 후보가 없으면 false.
+  /// 스위치가 꺼진 판에서는 부르지 않아 보드 난수 흐름이 그대로다.
+  bool placeBonusGem(GemBonus bonus, {bool pop = true}) =>
+      _placeBonusGemImpl(bonus, pop: pop);
 
   bool hasAnyValidMove() => getAllValidMoves().isNotEmpty;
 

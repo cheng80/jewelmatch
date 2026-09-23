@@ -15,6 +15,10 @@ enum GemKind { normal, row, col, bomb, star, hyper, supernova }
 /// 제거 수가 아닌 원래 매치 모양. 특수 생성으로 한 칸을 남겨도 유지한다.
 enum MatchJuicePattern { normal, four, five, sixPlus, cross }
 
+/// 일반 보석에 붙는 타임 모드 실험 속성(GameplayFlags.timeGem, multiplierGem).
+/// 보석 객체에 붙어 스왑, 낙하, 셔플을 따라간다. 한 보석에 하나만 붙는다.
+enum GemBonus { none, time, multiplier }
+
 /// 단일 보석 인스턴스 (논리 격자 + 화면 보간 좌표).
 /// 오브젝트 풀링을 위해 [reset]으로 필드를 재설정할 수 있다.
 class BoardGem {
@@ -39,6 +43,9 @@ class BoardGem {
   double y;
   double targetX;
   double targetY;
+
+  /// 타임 모드 실험 속성. 특수 보석이 되면 사라진다.
+  GemBonus bonus = GemBonus.none;
 
   /// 렌더 전용 연출 타이머(초). 음수면 비활성. 규칙 판정에는 쓰지 않는다.
   /// [landT]: 낙하 착지 스쿼시, [popT]: 특수 보석 탄생 팝.
@@ -73,6 +80,7 @@ class BoardGem {
     this.y = y;
     this.targetX = targetX;
     this.targetY = targetY;
+    bonus = GemBonus.none;
     landT = -1;
     popT = -1;
     airborne = false;
@@ -141,6 +149,13 @@ class MatchBoardGameStats {
 
   /// 하이퍼끼리 교환(H2) 횟수. 누적 기록의 배지 판정에 쓴다.
   int hyperSwaps = 0;
+
+  /// 지운 Time 보석 수와 그 보석이 실제로 더한 시간(초). 스위치가 꺼진 판은 0.
+  int timeGemsCollected = 0;
+  int timeGemSeconds = 0;
+
+  /// 이 판에서 도달한 점수 배율(Multiplier 보석). 스위치가 꺼진 판은 1.
+  int maxMultiplier = 1;
 
   /// 입력 한 번(스왑, 탭, 아이템)이 연쇄 끝까지 낸 점수 중 최고값.
   /// Speed Bonus는 보드 플레이 점수가 아니라서 넣지 않는다.

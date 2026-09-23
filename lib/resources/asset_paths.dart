@@ -77,6 +77,9 @@ class AssetPaths {
   /// 별 보석용 독립 오버레이.
   static const String starOverlay = 'sprites/star_overlay.png';
 
+  /// 타임 모드 실험 속성 배지 256×128. 열 0 시계(Time 보석), 열 1 배율 판(Multiplier 보석).
+  static const String gemBadges = 'sprites/Gem_Badges.png';
+
   /// 레거시 초신성 보석용 독립 오버레이. 현재 메인 보드 렌더에서는 사용하지 않는다.
   static const String supernovaOverlay = 'sprites/supernova_overlay.png';
 

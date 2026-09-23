@@ -156,6 +156,11 @@ class MatchGameHud extends PositionComponent
 
   /// 시간 보너스로 늘어난 구간의 반짝임.
   final HudPunch _timeBonusPunch = HudPunch(1.6);
+
+  /// 점수 옆 판 점수 배율(×m). m이 2 이상일 때만 그린다.
+  int? _cachedMultiplier;
+  TextPainter? _multiplierValue;
+  final HudPunch _multiplierPunch = HudPunch(3.2);
   double _timeBonusFrom = 0;
   double _timeBonusTo = 0;
 
@@ -380,6 +385,7 @@ class MatchGameHud extends PositionComponent
     _cachedBestProgressionLevel = GameSettings.getBestMatchProgressionLevel();
     _cachedHudTextScale = g.hudTextScale;
     _cachedScore = null;
+    _cachedMultiplier = null;
     _cachedTimedSeconds = null;
     _cachedProgressionXp = null;
     _cachedDisplayedCombo = null;
@@ -776,6 +782,8 @@ class MatchGameHud extends PositionComponent
     'pressedRect': _pressedRect,
     'timeFill': _timeFillRatio,
     'timeBonus': _timeBonusPunch.value,
+    'multiplierText': _multiplierValue?.plainText,
+    'multiplierPunch': _multiplierPunch.value,
     'timeBonusFrom': _timeBonusFrom,
     'timeBonusTo': _timeBonusTo,
     'comboHeat': _comboHeat,
@@ -795,6 +803,8 @@ class MatchGameHud extends PositionComponent
     _pressTicker?.dispose();
     _pressTicker = null;
     _hudGlows.dispose();
+    _multiplierValue?.dispose();
+    _multiplierValue = null;
     super.onRemove();
   }
 

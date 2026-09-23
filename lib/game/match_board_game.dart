@@ -78,6 +78,7 @@ class MatchBoardGame extends FlameGame {
       onInvalidSwap: _playInvalidSwapSfx,
     );
     board.idleHintsEnabled = gameMode == JewelGameMode.simple;
+    board.timedModeRules = isTimedMode;
     board.onIntroFillComplete = (BoardFillIntroKind kind) {
       overlays.remove('IntroBlock');
       _markRoundStartIntroComplete(kind);
@@ -409,6 +410,7 @@ class MatchBoardGame extends FlameGame {
       'reason': reason,
       if (board.flags.tag.isNotEmpty) 'exp': board.flags.tag,
       'score': board.score,
+      ...board.bonusGemEventParams,
       if (isProgressionMode) 'level': progressionLevel,
       if (startedAt != null)
         'duration_s': DateTime.now().difference(startedAt).inSeconds,

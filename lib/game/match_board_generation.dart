@@ -60,10 +60,29 @@ extension MatchBoardGeneration on MatchBoardLogic {
     BoardFillIntroKind introKind = BoardFillIntroKind.roundStart,
     bool resetStats = true,
   }) {
+    // 판 도중 새 보드(NoMoves)는 속성 보석 수를 새 보드로 옮긴다. 새 판은 배율과 한 수 집계를 비운다.
+    final carriedBonuses = <GemBonus>[];
     if (resetStats) {
       stats = MatchBoardGameStats();
+      scoreMultiplier = 1;
+      _swapMoveActive = false;
+      _swapMoveRemoved = 0;
+    } else {
+      for (final row in cells) {
+        for (final gem in row) {
+          if (gem != null && gem.bonus != GemBonus.none) {
+            carriedBonuses.add(gem.bonus);
+          }
+        }
+      }
     }
+    _plainThreeStep = false;
+    _pendingTimeGems = 0;
+    _pendingMultiplierGems = 0;
     _fillBoardWithRandomValidLayout();
+    for (final bonus in carriedBonuses) {
+      placeBonusGem(bonus, pop: false);
+    }
     if (withIntroFill) {
       prepareIntroFill(kind: introKind);
     } else {
@@ -92,23 +111,26 @@ extension MatchBoardGeneration on MatchBoardLogic {
     if (inputLocked || state != 'idle') return false;
 
     final ordinaryCells = <Point<int>>[];
-    final ordinaryColors = <int>[];
+    // 속성은 색과 함께 섞여 보석을 따라간다. 섞는 횟수와 난수 소비는 색만 섞을 때와 같다.
+    final ordinaryGems = <(int, GemBonus)>[];
     for (var r = 0; r < rows; r++) {
       for (var c = 0; c < cols; c++) {
         final gem = getGem(r, c);
         if (gem == null || gem.kind != GemKind.normal) continue;
         ordinaryCells.add(Point(r, c));
-        ordinaryColors.add(gem.color);
+        ordinaryGems.add((gem.color, gem.bonus));
       }
     }
     if (ordinaryCells.length < 2) return false;
 
-    final originalColors = <int>[...ordinaryColors];
+    final originalGems = <(int, GemBonus)>[...ordinaryGems];
     for (var attempt = 0; attempt < 80; attempt++) {
-      ordinaryColors.shuffle(_random);
+      ordinaryGems.shuffle(_random);
       for (var i = 0; i < ordinaryCells.length; i++) {
         final cell = ordinaryCells[i];
-        getGem(cell.x, cell.y)?.color = ordinaryColors[i];
+        getGem(cell.x, cell.y)
+          ?..color = ordinaryGems[i].$1
+          ..bonus = ordinaryGems[i].$2;
       }
       if (!hasMatches() && hasAnyValidMove()) {
         selected = null;
@@ -121,7 +143,9 @@ extension MatchBoardGeneration on MatchBoardLogic {
 
     for (var i = 0; i < ordinaryCells.length; i++) {
       final cell = ordinaryCells[i];
-      getGem(cell.x, cell.y)?.color = originalColors[i];
+      getGem(cell.x, cell.y)
+        ?..color = originalGems[i].$1
+        ..bonus = originalGems[i].$2;
     }
     return false;
   }

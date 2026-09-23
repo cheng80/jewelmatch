@@ -5,6 +5,12 @@ extension MatchBoardResolution on MatchBoardLogic {
     var removed = 0;
     var hasSpecial = false;
     var specialBonus = 0;
+    var timeGems = _pendingTimeGems;
+    var multiplierGems = _pendingMultiplierGems;
+    _pendingTimeGems = 0;
+    _pendingMultiplierGems = 0;
+    final plainThree = _plainThreeStep;
+    _plainThreeStep = false;
     final removedCells = <({int row, int col, int color})>[];
     for (final key in removalSet.keys) {
       final parts = key.split(':');
@@ -15,6 +21,8 @@ extension MatchBoardResolution on MatchBoardLogic {
       if (gem != null) {
         removed++;
         stats.recordGemRemoved(gem.kind, gem.color);
+        if (gem.bonus == GemBonus.time) timeGems++;
+        if (gem.bonus == GemBonus.multiplier) multiplierGems++;
         if (_isSpecial(gem.kind)) {
           hasSpecial = true;
           specialBonus += _specialActivationScoreBonus(gem.kind);
@@ -25,12 +33,18 @@ extension MatchBoardResolution on MatchBoardLogic {
       }
     }
 
+    if (_swapMoveActive) _swapMoveRemoved += removed;
+    stats.timeGemsCollected += timeGems;
+
     if (removed > 0) {
       final base =
           MatchBoardLogic.scoreBase +
           max(0, removed - 3) * MatchBoardLogic.scoreExtraPerGem;
       final comboBonus = comboScoreMultiplier ? max(1, combo) : 1;
-      lastRemovalScore = ((base + specialBonus) * comboBonus).round();
+      // 배율은 이 단계까지 모은 m. 이 단계에서 지운 Multiplier 보석은 다음 점수부터 곱한다.
+      lastRemovalScore =
+          ((base + specialBonus) * comboBonus).round() * scoreMultiplier;
+      // H2 상한(BR-023)은 배율을 곱한 뒤의 값에 건다.
       final scoreBudget = _hyperPairScoreBudget;
       if (scoreBudget != null) {
         lastRemovalScore = min(lastRemovalScore, scoreBudget);
@@ -38,24 +52,35 @@ extension MatchBoardResolution on MatchBoardLogic {
       }
       score += lastRemovalScore;
       stats.recordMoveScore(lastRemovalScore);
+      if (multiplierGems > 0) {
+        scoreMultiplier = min(
+          MatchBoardLogic.maxScoreMultiplier,
+          scoreMultiplier + multiplierGems,
+        );
+        stats.maxMultiplier = max(stats.maxMultiplier, scoreMultiplier);
+      }
 
       final raw =
           (timedModeBonusBaseUnits +
               max(0, combo - 1) * timedModeBonusPerComboTierUnits) *
           timedModeTimeRewardScale;
+      // T1: 3개짜리 일반 매치만인 콤보 1 단계는 기본 시간 보상이 없다.
+      final t1Zero = timeRewardT1Active && plainThree && combo == 1;
       // 타임 보상: 정수 초만. raw>0인데 반올림이 0이 되면 최소 1초(보상 0초 금지).
-      // raw<=0(예: 배율 0)이면 콜백 없음 — 의도적 무보상.
-      if (onTimedModeTimeBonus != null && raw > 0) {
-        var bonusSec = raw.round();
-        if (bonusSec < 1) {
-          bonusSec = 1;
-        }
+      // raw<=0(예: 배율 0)이면 기본 보상 없음 — 의도적 무보상.
+      var bonusSec = raw > 0 && !t1Zero ? max(1, raw.round()) : 0;
+      final gemSec = timeGems * MatchBoardLogic.timeGemBonusSeconds;
+      bonusSec += gemSec;
+      if (onTimedModeTimeBonus != null && bonusSec > 0) {
         final timeBudget = _hyperPairTimeBudget;
         if (timeBudget != null) {
           bonusSec = min(bonusSec, timeBudget);
           _hyperPairTimeBudget = timeBudget - bonusSec;
         }
+        // 상한에 걸리면 Time 보석 몫부터 센다.
+        lastTimeGemSeconds = min(gemSec, bonusSec);
         if (bonusSec > 0) onTimedModeTimeBonus!(bonusSec);
+        lastTimeGemSeconds = 0;
       }
 
       if (onGemsRemoved != null && removedCells.isNotEmpty) {
@@ -175,6 +200,11 @@ extension MatchBoardResolution on MatchBoardLogic {
         : MatchJuicePattern.normal;
     var removalSet = buildRemovalSet(matchData, spawns);
     final queue = buildSpecialQueue(removalSet);
+    _plainThreeStep =
+        spawns.isEmpty &&
+        queue.isEmpty &&
+        matchData.groups.every((g) => g.length == 3);
+    _consumeSpawnMaterialBonuses(spawns);
 
     for (final spawn in spawns) {
       stats.recordSpecialCreated(spawn.kind);
@@ -213,6 +243,48 @@ extension MatchBoardResolution on MatchBoardLogic {
     }
   }
 
+  /// 특수 보석 재료가 된 속성 보석은 속성을 잃고 지운 것으로 센다.
+  void _consumeSpawnMaterialBonuses(List<SpecialSpawn> spawns) {
+    for (final spawn in spawns) {
+      final gem = getGem(spawn.row, spawn.col);
+      if (gem == null) continue;
+      if (gem.bonus == GemBonus.time) _pendingTimeGems++;
+      if (gem.bonus == GemBonus.multiplier) _pendingMultiplierGems++;
+      gem.bonus = GemBonus.none;
+    }
+  }
+
+  /// 유저 스왑 한 수가 끝나면 Multiplier를 먼저 정하고 다른 보석에 Time을 붙인다.
+  void _placeBonusGemsAfterMove(int removed) {
+    if (multiplierGemActive &&
+        scoreMultiplier < MatchBoardLogic.maxScoreMultiplier &&
+        removed >= multiplierMoveThreshold &&
+        countBonusGems(GemBonus.multiplier) == 0) {
+      placeBonusGem(GemBonus.multiplier);
+    }
+    if (timeGemActive &&
+        removed >= MatchBoardLogic.timeGemMoveThreshold &&
+        countBonusGems(GemBonus.time) < MatchBoardLogic.maxTimeGems) {
+      placeBonusGem(GemBonus.time);
+    }
+  }
+
+  bool _placeBonusGemImpl(GemBonus bonus, {required bool pop}) {
+    final candidates = <BoardGem>[
+      for (final row in cells)
+        for (final gem in row)
+          if (gem != null &&
+              gem.kind == GemKind.normal &&
+              gem.bonus == GemBonus.none)
+            gem,
+    ];
+    if (candidates.isEmpty) return false;
+    final gem = candidates[_random.nextInt(candidates.length)];
+    gem.bonus = bonus;
+    if (pop) gem.popT = 0;
+    return true;
+  }
+
   void _finishResolutionFlowImpl() {
     if (pendingResultLabel != null) {
       lastActionText = pendingResultLabel!;
@@ -229,6 +301,12 @@ extension MatchBoardResolution on MatchBoardLogic {
     _hyperPairScoreBudget = null;
     _hyperPairTimeBudget = null;
     stats.finishMove();
+    if (_swapMoveActive) {
+      final removed = _swapMoveRemoved;
+      _swapMoveActive = false;
+      _swapMoveRemoved = 0;
+      _placeBonusGemsAfterMove(removed);
+    }
 
     state = 'idle';
     selected = null;

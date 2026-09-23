@@ -117,6 +117,11 @@ extension MatchBoardGameTiming on MatchBoardGame {
     }
     final applied = min(seconds.toDouble(), room);
     timeRemaining += applied;
+    // Time 보석 몫은 90초 상한에 잘린 뒤의 실제 값으로 센다.
+    board.stats.timeGemSeconds += min(
+      board.lastTimeGemSeconds,
+      applied.floor(),
+    );
     if (_effectPoolsReady) _juiceLayer.onTimeBonus(applied);
   }
 

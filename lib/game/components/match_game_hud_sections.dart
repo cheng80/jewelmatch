@@ -68,6 +68,17 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
     }
     final valueTop = scoreY + _scoreLabel.height + 4;
     _paintPunched(canvas, _scoreValue, cx, valueTop, scale);
+    final multiplier = _multiplierValue;
+    if (multiplier != null) {
+      final left = cx + _scoreValue.width * scale / 2 + 6;
+      _paintPunched(
+        canvas,
+        multiplier,
+        left + multiplier.width / 2,
+        valueTop + (_scoreValue.height - multiplier.height) / 2,
+        1 + 0.3 * _multiplierPunch.eased,
+      );
+    }
     final challengeValue = _challengeValue;
     final challenge = _challenge;
     if (challengeValue == null || challenge == null) return;

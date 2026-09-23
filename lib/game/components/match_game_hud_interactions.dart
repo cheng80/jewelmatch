@@ -32,6 +32,8 @@ extension _MatchGameHudInteractions on MatchGameHud {
     _goalPunch.tick(dt);
     _hintBadgePunch.tick(dt);
     _timeBonusPunch.tick(dt);
+    _multiplierPunch.tick(dt);
+    _updateMultiplierValue();
     if (!(_pressTicker?.isActive ?? false)) _pressPunch.tick(dt);
     _itemUsePunch.tick(dt);
     if (!_pressPunch.isActive) _pressedRect = null;
@@ -83,6 +85,40 @@ extension _MatchGameHudInteractions on MatchGameHud {
     if (_cachedDisplayedCombo != displayedCombo ||
         _cachedMaxCombo != maxCombo) {
       _rebuildComboPainters();
+    }
+  }
+
+  /// 배율이 바뀔 때만 글자를 다시 만든다. 오를 때 가벼운 팝, reduced motion은 팝 없음.
+  void _updateMultiplierValue() {
+    final m = game.board.scoreMultiplier;
+    final previous = _cachedMultiplier;
+    if (previous == m) return;
+    _cachedMultiplier = m;
+    _multiplierValue?.dispose();
+    _multiplierValue = m < 2
+        ? null
+        : (TextPainter(
+            text: TextSpan(
+              text: '×$m',
+              style: _ts(
+                size: 22 * game.hudTextScale,
+                color: JewelCandyLuminaTheme.tertiaryGold,
+                weight: FontWeight.w900,
+                shadows: _hudLegibilityShadows(),
+              ),
+            ),
+            textDirection: ui.TextDirection.ltr,
+          )..layout());
+    if (m < 2) {
+      _multiplierPunch.value = 0;
+    } else if (previous != null &&
+        m > previous &&
+        !WidgetsBinding
+            .instance
+            .platformDispatcher
+            .accessibilityFeatures
+            .disableAnimations) {
+      _multiplierPunch.trigger();
     }
   }
 

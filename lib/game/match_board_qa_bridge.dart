@@ -1,4 +1,5 @@
 import 'match_board_game.dart';
+import 'match_board_logic.dart';
 
 export 'match_board_qa_bridge_stub.dart'
     if (dart.library.js_interop) 'match_board_qa_bridge_web.dart';
@@ -133,6 +134,29 @@ extension MatchBoardSimulationHints on MatchBoardGame {
 
 typedef SimulationGameState = Map<String, Object?>;
 
+extension MatchBoardSimulationBonus on MatchBoardGame {
+  /// QA 전용: 일반 보석 한 칸에 Time 또는 Multiplier 속성을 붙인다. [kind]는 'time' | 'multiplier'.
+  bool debugPlaceBonus(String kind, int row, int col) {
+    final bonus = switch (kind) {
+      'time' => GemBonus.time,
+      'multiplier' => GemBonus.multiplier,
+      _ => null,
+    };
+    if (bonus == null ||
+        !isPlaying ||
+        timeUp ||
+        board.inputLocked ||
+        board.introFillInProgress ||
+        board.state != 'idle') {
+      return false;
+    }
+    final gem = board.getGem(row, col);
+    if (gem == null || gem.kind != GemKind.normal) return false;
+    gem.bonus = bonus;
+    return true;
+  }
+}
+
 extension MatchBoardSimulationState on MatchBoardGame {
   /// QA 전용: 칸마다 색 번호와 종류 첫 글자. 빈 칸은 '.'. 일일 보드 재현 확인에 쓴다.
   String _readBoardSignature() {
@@ -168,6 +192,11 @@ extension MatchBoardSimulationState on MatchBoardGame {
     return {
       'mode': gameMode.queryParam,
       'score': board.score,
+      'scoreMultiplier': board.scoreMultiplier,
+      'bonusGems': {
+        'time': board.countBonusGems(GemBonus.time),
+        'multiplier': board.countBonusGems(GemBonus.multiplier),
+      },
       'level': progressionLevel,
       'targetScore': progressionTargetScore,
       'challenge': _readChallengeState(),

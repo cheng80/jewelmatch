@@ -13,6 +13,7 @@ import '../match_board_logic.dart';
 
 part 'match_board_chrome_renderer.dart';
 part 'match_board_gem_atlas.dart';
+part 'match_board_gem_bonus_renderer.dart';
 part 'match_board_gem_overlay_renderer.dart';
 part 'match_board_procedural_renderer.dart';
 
@@ -43,6 +44,12 @@ class MatchBoardRenderer extends PositionComponent
   @visibleForTesting
   bool get hasGemAtlas => _gemBatch.image != null;
   ui.Image? _jewelImage;
+
+  /// Time, Multiplier 보석 배지 한 장 시트. 없으면 배지를 그리지 않는다.
+  ui.Image? _badgeImage;
+  final Paint _badgePaint = Paint()..filterQuality = FilterQuality.medium;
+  final Map<String, TextPainter> _badgeLabels = {};
+  double _badgeLabelTileSize = 0;
 
   static const double _cellCornerRatio = 0.04;
   static const double _removalMinAlpha = 0.08;
@@ -191,6 +198,11 @@ class MatchBoardRenderer extends PositionComponent
         _specialSprites[kind] = null;
       }
     }
+    try {
+      _badgeImage = await Flame.images.load(AssetPaths.gemBadges);
+    } catch (_) {
+      _badgeImage = null;
+    }
     for (final entry in _overlayAssetPaths.entries) {
       try {
         final img = await Flame.images.load(entry.value);
@@ -233,6 +245,7 @@ class MatchBoardRenderer extends PositionComponent
       }
     }
     _compositedOverlaySprites.clear();
+    _disposeBadgeLabels();
     super.onRemove();
   }
 
@@ -367,6 +380,7 @@ class MatchBoardRenderer extends PositionComponent
     }
 
     _gemBatch.flush(canvas);
+    _drawBonusBadges(canvas, ts, skip: activeDragGem);
     _drawHintWhitePulse(canvas, bx, by, ts);
 
     final sel = logic.selected;
@@ -385,6 +399,7 @@ class MatchBoardRenderer extends PositionComponent
     if (activeDragGem != null) {
       _drawGem(canvas, activeDragGem, ts);
       _gemBatch.flush(canvas);
+      _drawBonusBadge(canvas, activeDragGem, ts);
     }
 
     if (needsBoardClip) {

@@ -89,6 +89,16 @@ void installMatchBoardQaBridge(MatchBoardGame game) {
     }).toJS,
   );
   web.window.setProperty(
+    '__jewelMatchDebugPlaceBonus'.toJS,
+    ((JSString kind, JSNumber row, JSNumber col) {
+      final game = _installedGame;
+      if (game == null) return false.toJS;
+      return game
+          .debugPlaceBonus(kind.toDart, row.toDartInt, col.toDartInt)
+          .toJS;
+    }).toJS,
+  );
+  web.window.setProperty(
     '__jewelMatchDebugSetTimeRemaining'.toJS,
     ((JSNumber seconds) {
       final currentGame = _installedGame;
@@ -166,6 +176,10 @@ void uninstallMatchBoardQaBridge(MatchBoardGame game) {
   );
   web.window.setProperty(
     '__jewelMatchDebugPlaceSpecial'.toJS,
+    ((JSString _, JSNumber _, JSNumber _) => false.toJS).toJS,
+  );
+  web.window.setProperty(
+    '__jewelMatchDebugPlaceBonus'.toJS,
     ((JSString _, JSNumber _, JSNumber _) => false.toJS).toJS,
   );
   web.window.setProperty(
