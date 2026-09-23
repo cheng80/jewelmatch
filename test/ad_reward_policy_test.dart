@@ -126,13 +126,13 @@ void serverRefillTests() {
       final policy = AdRewardPolicy(backend: backend);
       final inventory = RunInventory();
 
-      final granted = await policy.grantRefillVerified(
+      final outcome = await policy.grantRefillVerified(
         inventory,
         ItemKind.runeHammer,
         RewardedAdResult.rewarded,
       );
 
-      expect(granted, isTrue);
+      expect(outcome, RefillGrantOutcome.granted);
       expect(inventory.quantityOf(ItemKind.runeHammer), 1);
       expect(policy.remainingRefillsToday, 1);
       expect(backend.claimed, [ItemKind.runeHammer]);
@@ -148,13 +148,13 @@ void serverRefillTests() {
       final policy = AdRewardPolicy(backend: backend);
       final inventory = RunInventory();
 
-      final granted = await policy.grantRefillVerified(
+      final outcome = await policy.grantRefillVerified(
         inventory,
         ItemKind.runeHammer,
         RewardedAdResult.rewarded,
       );
 
-      expect(granted, isFalse);
+      expect(outcome, RefillGrantOutcome.limitReached);
       expect(inventory.quantityOf(ItemKind.runeHammer), 0);
       expect(policy.remainingRefillsToday, 0);
     });
@@ -164,13 +164,13 @@ void serverRefillTests() {
       final policy = AdRewardPolicy(backend: backend);
       final inventory = RunInventory();
 
-      final granted = await policy.grantRefillVerified(
+      final outcome = await policy.grantRefillVerified(
         inventory,
         ItemKind.ancientBomb,
         RewardedAdResult.rewarded,
       );
 
-      expect(granted, isTrue);
+      expect(outcome, RefillGrantOutcome.granted);
       expect(policy.remainingRefillsToday, 2);
     });
 
@@ -178,14 +178,51 @@ void serverRefillTests() {
       final backend = _FakeRefillBackend();
       final policy = AdRewardPolicy(backend: backend);
 
-      final granted = await policy.grantRefillVerified(
+      final outcome = await policy.grantRefillVerified(
         RunInventory(),
         ItemKind.ancientBomb,
         RewardedAdResult.dismissed,
       );
 
-      expect(granted, isFalse);
+      expect(outcome, RefillGrantOutcome.adNotCompleted);
       expect(backend.claimed, isEmpty);
+    });
+
+    test('로컬 기준으로 오늘 한도를 다 썼으면 서버를 부르지 않고 한도 결과를 준다', () async {
+      final backend = _FakeRefillBackend()
+        ..statusResult = const AdRefillStatus(dailyLimit: 3, remaining: 0);
+      final policy = AdRewardPolicy(backend: backend);
+      await policy.syncRefillStatus();
+
+      final outcome = await policy.grantRefillVerified(
+        RunInventory(),
+        ItemKind.ancientBomb,
+        RewardedAdResult.rewarded,
+      );
+
+      expect(policy.isRefillLimitReached, isTrue);
+      expect(outcome, RefillGrantOutcome.limitReached);
+      expect(backend.claimed, isEmpty);
+    });
+
+    test('서버가 한도 외의 이유로 거절하면 거절 결과를 준다', () async {
+      final backend = _FakeRefillBackend()
+        ..claimResult = const AdRefillStatus(
+          dailyLimit: 3,
+          remaining: 2,
+          granted: false,
+        );
+      final policy = AdRewardPolicy(backend: backend);
+      final inventory = RunInventory();
+
+      final outcome = await policy.grantRefillVerified(
+        inventory,
+        ItemKind.ancientBomb,
+        RewardedAdResult.rewarded,
+      );
+
+      expect(outcome, RefillGrantOutcome.rejected);
+      expect(inventory.quantityOf(ItemKind.ancientBomb), 0);
     });
   });
 }

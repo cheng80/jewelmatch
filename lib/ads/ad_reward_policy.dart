@@ -3,6 +3,21 @@ import '../game/item_kind.dart';
 import 'ad_refill_limit_backend.dart';
 import 'ad_service.dart';
 
+/// 보충 광고 지급 결과. 화면 문구와 이벤트 기록이 거절 이유를 구분하는 데 쓴다.
+enum RefillGrantOutcome {
+  /// 아이템 1개를 지급했다.
+  granted,
+
+  /// 광고를 끝까지 보지 않았다.
+  adNotCompleted,
+
+  /// 오늘 보충 횟수를 모두 썼다(로컬 또는 서버 판정).
+  limitReached,
+
+  /// 그 밖의 이유로 지급하지 않았다(이미 가진 아이템, 서버 거절).
+  rejected,
+}
+
 class AdRewardPolicy {
   AdRewardPolicy({DateTime Function()? now, AdRefillLimitBackend? backend})
     : _now = now ?? DateTime.now,
@@ -24,6 +39,8 @@ class AdRewardPolicy {
     _resetRefillCountIfNeeded();
     return (_dailyRefillLimit - _refillCount).clamp(0, _dailyRefillLimit);
   }
+
+  bool get isRefillLimitReached => remainingRefillsToday <= 0;
 
   bool canContinueStage(String attemptId) =>
       !_continuedStageAttempts.contains(attemptId);
@@ -62,27 +79,34 @@ class AdRewardPolicy {
 
   /// 보상형 광고 완료 후 서버에 지급을 기록하고 결과에 따라 보충한다.
   /// 서버가 제한 초과라고 답하면 지급하지 않는다. 서버에 닿지 못하면 세션 로컬 제한으로 판단한다.
-  Future<bool> grantRefillVerified(
+  Future<RefillGrantOutcome> grantRefillVerified(
     RunInventory inventory,
     ItemKind item,
     RewardedAdResult result,
   ) async {
-    if (result != RewardedAdResult.rewarded || !canRefill(inventory, item)) {
-      return false;
+    if (result != RewardedAdResult.rewarded) {
+      return RefillGrantOutcome.adNotCompleted;
     }
+    if (isRefillLimitReached) return RefillGrantOutcome.limitReached;
+    if (!canRefill(inventory, item)) return RefillGrantOutcome.rejected;
     final backend = _backend;
     if (backend != null) {
       final status = await backend.claim(item);
       if (status != null) {
         _applyServerStatus(status);
-        if (status.granted != true || inventory.quantityOf(item) != 0) {
-          return false;
+        if (status.granted != true) {
+          return status.remaining <= 0
+              ? RefillGrantOutcome.limitReached
+              : RefillGrantOutcome.rejected;
         }
+        if (inventory.quantityOf(item) != 0) return RefillGrantOutcome.rejected;
         inventory.add(item);
-        return true;
+        return RefillGrantOutcome.granted;
       }
     }
-    return grantRefill(inventory, item, result);
+    return grantRefill(inventory, item, result)
+        ? RefillGrantOutcome.granted
+        : RefillGrantOutcome.rejected;
   }
 
   void _applyServerStatus(AdRefillStatus status) {

@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stonematch/ads/ad_refill_limit_backend.dart';
 import 'package:stonematch/ads/ad_reward_policy.dart';
 import 'package:stonematch/ads/ad_service.dart';
 import 'package:stonematch/ads/fake_ad_service.dart';
@@ -274,6 +275,90 @@ void main() {
       }
     });
   }
+
+  testWidgets(
+    'refill limit shows reached label, disabled button and reset hint',
+    (tester) async {
+      final game = _ScreenGame(JewelGameMode.progression);
+      final ads = FakeAdService();
+      final policy = AdRewardPolicy();
+      final spent = RunInventory();
+      for (final item in [
+        ItemKind.hyperCube,
+        ItemKind.prismTransform,
+        ItemKind.fateShuffle,
+      ]) {
+        policy.grantRefill(spent, item, RewardedAdResult.rewarded);
+      }
+      expect(policy.isRefillLimitReached, isTrue);
+      unawaited(ads.preloadRewarded());
+      await tester.pump(const Duration(milliseconds: 120));
+      await _mount(
+        tester,
+        StageInventoryOverlay(
+          game: game,
+          adService: ads,
+          adRewardPolicy: policy,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find
+            .ancestor(
+              of: itemImage(AssetPaths.itemIconThorHammer),
+              matching: find.byType(GestureDetector),
+            )
+            .first,
+      );
+      await tester.pumpAndSettle();
+      final label = find.text('오늘 횟수를 모두 사용했습니다');
+      expect(label, findsOneWidget);
+      expect(find.text('광고 준비 중'), findsNothing);
+      final button = tester.widget<OutlinedButton>(
+        find.ancestor(of: label, matching: find.byType(OutlinedButton)),
+      );
+      expect(button.onPressed, isNull);
+      expect(find.text('내일 0시(한국 시간)에 3회로 다시 채워집니다'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      ads.dispose();
+    },
+  );
+
+  testWidgets('server limit after a completed ad shows the limit message', (
+    tester,
+  ) async {
+    final game = _ScreenGame(JewelGameMode.progression);
+    final ads = FakeAdService();
+    final backend = _LimitRefillBackend();
+    final policy = AdRewardPolicy(backend: backend);
+    unawaited(ads.preloadRewarded());
+    await tester.pump(const Duration(milliseconds: 120));
+    await _mount(
+      tester,
+      StageInventoryOverlay(game: game, adService: ads, adRewardPolicy: policy),
+    );
+    await tester.pumpAndSettle();
+    expect(policy.remainingRefillsToday, 1);
+    await tester.tap(
+      find
+          .ancestor(
+            of: itemImage(AssetPaths.itemIconThorHammer),
+            matching: find.byType(GestureDetector),
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('광고 보고 1개 받기'));
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pumpAndSettle();
+    final banner = tester.widget<AdResultBanner>(find.byType(AdResultBanner));
+    expect(banner.success, isFalse);
+    expect(banner.message, '오늘 횟수를 모두 사용했습니다');
+    expect(game.runInventory.quantityOf(ItemKind.thorHammer), 0);
+    expect(backend.claims, 1);
+    expect(tester.takeException(), isNull);
+    ads.dispose();
+  });
 
   for (final result in [
     RewardedAdResult.rewarded,
@@ -568,4 +653,19 @@ class _AssetLoader extends AssetLoader {
   Future<Map<String, dynamic>> load(String path, Locale locale) async =>
       jsonDecode(File('$path/ko.json').readAsStringSync())
           as Map<String, dynamic>;
+}
+
+/// 로컬은 1회 남았다고 보지만 서버는 지급 시점에 한도라고 거절하는 경우.
+class _LimitRefillBackend implements AdRefillLimitBackend {
+  int claims = 0;
+
+  @override
+  Future<AdRefillStatus?> status() async =>
+      const AdRefillStatus(dailyLimit: 3, remaining: 1);
+
+  @override
+  Future<AdRefillStatus?> claim(ItemKind item) async {
+    claims++;
+    return const AdRefillStatus(dailyLimit: 3, remaining: 0, granted: false);
+  }
 }

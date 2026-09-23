@@ -68,15 +68,17 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
     });
     final result = await widget.adService.showRewarded(AdPlacement.refillItem);
     if (!mounted) return;
-    final granted = await widget.adRewardPolicy.grantRefillVerified(
+    final outcome = await widget.adRewardPolicy.grantRefillVerified(
       widget.game.runInventory,
       item,
       result,
     );
+    final granted = outcome == RefillGrantOutcome.granted;
     EventLogger.instance.log('ad_reward', {
       'placement': 'refill_item',
       'result': result.name,
       'granted': granted,
+      'outcome': outcome.name,
       'item': item.name,
     });
     // 서버 확인 중 오버레이가 닫혀도 배경음과 다음 광고 준비는 이어 간다.
@@ -87,7 +89,12 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
       _showingAd = false;
       _selectedRefillItem = granted ? null : item;
       _adGranted = granted;
-      _adMessage = context.tr(granted ? 'adItemGranted' : 'adRewardNotGranted');
+      _adMessage = context.tr(switch (outcome) {
+        RefillGrantOutcome.granted => 'adItemGranted',
+        RefillGrantOutcome.adNotCompleted => 'adRewardNotGranted',
+        RefillGrantOutcome.limitReached => 'adRefillLimitReached',
+        RefillGrantOutcome.rejected => 'adRefillUnavailable',
+      });
     });
   }
 
@@ -157,9 +164,11 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
             AnimatedBuilder(
               animation: widget.adService,
               builder: (context, _) {
+                final limitReached = widget.adRewardPolicy.isRefillLimitReached;
                 final ready =
                     widget.adService.rewardedState == RewardedAdState.ready &&
                     !_showingAd &&
+                    !limitReached &&
                     widget.adRewardPolicy.canRefill(
                       game.runInventory,
                       _selectedRefillItem!,
@@ -172,6 +181,8 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
                     child: Text(
                       _showingAd
                           ? context.tr('adPlaying')
+                          : limitReached
+                          ? context.tr('adRefillLimitReached')
                           : ready
                           ? context.tr('watchAdGetItem')
                           : context.tr('adLoading'),
@@ -182,12 +193,20 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
             ),
             const SizedBox(height: 4),
             Text(
-              context.tr(
-                'adRefillRemaining',
-                namedArgs: {
-                  'count': '${widget.adRewardPolicy.remainingRefillsToday}',
-                },
-              ),
+              widget.adRewardPolicy.isRefillLimitReached
+                  ? context.tr(
+                      'adRefillResetHint',
+                      namedArgs: {
+                        'count': '${widget.adRewardPolicy.dailyRefillLimit}',
+                      },
+                    )
+                  : context.tr(
+                      'adRefillRemaining',
+                      namedArgs: {
+                        'count':
+                            '${widget.adRewardPolicy.remainingRefillsToday}',
+                      },
+                    ),
               style: TextStyle(
                 color: JewelCandyLuminaTheme.textMutedGold,
                 fontSize: 11,
