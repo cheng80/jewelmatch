@@ -144,6 +144,7 @@ extension MatchBoardSimulationState on MatchBoardGame {
       'stageInventoryActive': overlays.isActive('StageInventory'),
       'levelCelebrationActive': overlays.isActive('LevelCelebration'),
       'timeUp': timeUp,
+      'lastHurrahActive': lastHurrahActive,
       'timeRemaining': timeRemaining,
       'remainingHints': remainingHints,
       'hasLimitedHints': hasLimitedHints,

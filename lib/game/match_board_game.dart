@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:math' show min;
+import 'dart:math' show Random, min;
 
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
@@ -14,6 +14,7 @@ import '../services/ranking_service.dart';
 import '../services/records/player_records.dart';
 import '../services/records/records_store.dart';
 import 'components/board_juice_layer.dart';
+import 'components/last_hurrah_badge.dart';
 import 'components/match_board_renderer.dart';
 import 'components/match_game_hud.dart';
 import 'components/special_effect_pool.dart';
@@ -22,6 +23,7 @@ import 'item_inventory.dart';
 import 'item_kind.dart';
 import 'jewel_game_mode.dart';
 import 'jewel_rank_progression.dart';
+import 'last_hurrah.dart';
 import 'match_board_camera_shake.dart';
 import 'match_board_logic.dart';
 import 'match_board_qa_bridge.dart';
@@ -123,6 +125,15 @@ class MatchBoardGame extends FlameGame {
   /// 타임 모드만 켠다(D5). 레벨 모드와 무한 모드는 비활성.
   late final SpeedBonus speedBonus;
   final SpeedBonusBadge _speedBonusBadge = SpeedBonusBadge();
+  final LastHurrahBadge _lastHurrahBadge = LastHurrahBadge();
+
+  /// 진행 중인 Last Hurrah. 타임 모드에서 시간이 0이 된 뒤 결과 전까지만 있다.
+  LastHurrah? _lastHurrah;
+  bool get lastHurrahActive => _lastHurrah != null;
+
+  /// Last Hurrah 하이퍼 색 난수. 테스트와 재현을 위해 시드를 바꿀 수 있다.
+  Random lastHurrahRandom = Random();
+
   final BoardJuiceLayer _juiceLayer = BoardJuiceLayer();
   late final SpecialEffectPool _specialEffectPool;
   final MatchBoardCameraShake _boardShake = MatchBoardCameraShake();
@@ -343,7 +354,10 @@ class MatchBoardGame extends FlameGame {
     world.add(MatchBoardRenderer(logic: board));
 
     await world.add(_juiceLayer);
-    if (isTimedMode) await world.add(_speedBonusBadge);
+    if (isTimedMode) {
+      await world.add(_speedBonusBadge);
+      await world.add(_lastHurrahBadge);
+    }
     _specialEffectPool = SpecialEffectPool(world);
     if (kIsWeb) {
       await _warmInitialEffectPools();
@@ -559,6 +573,8 @@ class MatchBoardGame extends FlameGame {
         return;
       case AppLifecycleState.paused:
       case AppLifecycleState.hidden:
+        // 마무리 중 백그라운드: 남은 발동을 즉시 계산하고 결과로 간다.
+        _completeLastHurrah(instant: true);
         board.clearHint();
         super.lifecycleStateChange(state);
         SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
@@ -589,6 +605,7 @@ class MatchBoardGame extends FlameGame {
     _updateItemFeedback(dt);
 
     _updateTimedModeClock(dt);
+    _updateLastHurrah(dt);
     _updateProgressionMode();
     _saveBestScoreIfChanged();
     super.update(dt);

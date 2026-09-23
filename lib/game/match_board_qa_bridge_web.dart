@@ -205,6 +205,10 @@ JSObject _stateToJs(SimulationGameState state) {
   );
   object.setProperty('timeUp'.toJS, (state['timeUp'] as bool).toJS);
   object.setProperty(
+    'lastHurrahActive'.toJS,
+    (state['lastHurrahActive'] as bool).toJS,
+  );
+  object.setProperty(
     'timeRemaining'.toJS,
     (state['timeRemaining'] as double).toJS,
   );

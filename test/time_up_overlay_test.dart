@@ -106,6 +106,63 @@ void main() {
     expect(notifier.score, 1234);
     expect(find.byTooltip('랭킹 기록 다시 제출'), findsNothing);
   });
+
+  testWidgets(
+    'reduced motion keeps the 1900ms submit with the final score once',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      // Last Hurrah가 끝난 뒤에만 TimeUp이 열리므로 점수는 마무리 포함 최종값이다.
+      final game = MatchBoardGame(gameMode: JewelGameMode.timed)
+        ..board.score = 5678;
+      late _RetryRankingNotifier notifier;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            rankingProvider.overrideWith(
+              () => notifier = _RetryRankingNotifier(),
+            ),
+          ],
+          child: EasyLocalization(
+            supportedLocales: const [Locale('ko')],
+            path: 'assets/translations',
+            assetLoader: const _TestAssetLoader(),
+            fallbackLocale: const Locale('ko'),
+            startLocale: const Locale('ko'),
+            child: Builder(
+              builder: (context) => MaterialApp(
+                localizationsDelegates: context.localizationDelegates,
+                supportedLocales: context.supportedLocales,
+                locale: context.locale,
+                builder: (context, child) => MediaQuery(
+                  data: MediaQuery.of(
+                    context,
+                  ).copyWith(disableAnimations: true),
+                  child: child!,
+                ),
+                home: TimeUpOverlay(
+                  game: game,
+                  adService: FakeAdService(),
+                  adRewardPolicy: AdRewardPolicy(),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1800));
+      expect(notifier.calls, 0);
+
+      await tester.pump(const Duration(milliseconds: 150));
+      expect(notifier.calls, 1);
+      expect(notifier.score, 5678);
+
+      await tester.pump(const Duration(seconds: 2));
+      expect(notifier.calls, 1);
+    },
+  );
 }
 
 class _RetryRankingNotifier extends RankingNotifier {

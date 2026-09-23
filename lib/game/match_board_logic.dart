@@ -74,6 +74,9 @@ class MatchBoardLogic {
   MatchJuicePattern removalJuicePattern = MatchJuicePattern.normal;
   void Function(List<SpecialSpawn> spawns)? onSpecialsBorn;
 
+  /// 제거 점수에 콤보 배수(BR-011)를 곱할지. Last Hurrah가 플레이테스트 설정으로 바꾼다.
+  bool comboScoreMultiplier = true;
+
   /// 하이퍼 교환 성공 알림. [targetKind]는 하이퍼와 바꾼 보석 종류다.
   void Function(GemKind targetKind)? onHyperSwap;
 

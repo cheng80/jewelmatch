@@ -28,7 +28,7 @@ extension MatchBoardGameFlow on MatchBoardGame {
   }
 
   void _showNoMovesOverlayImpl() {
-    if (timeUp || overlays.isActive('NoMoves')) return;
+    if (timeUp || lastHurrahActive || overlays.isActive('NoMoves')) return;
     isPlaying = false;
     SoundManager.pauseBgm();
     pauseEngine();
@@ -73,6 +73,9 @@ extension MatchBoardGameFlow on MatchBoardGame {
     overlays.remove('StageInventory');
     overlays.remove('GameStats');
     timeUp = false;
+    _lastHurrah = null;
+    _lastHurrahBadge.hide();
+    board.comboScoreMultiplier = true;
     activeTargetItem = null;
     board.score = 0;
     board.lastCombo = 0;

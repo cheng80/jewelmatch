@@ -45,8 +45,54 @@ extension MatchBoardGameTiming on MatchBoardGame {
     }
   }
 
+  /// 시간 0. 타임 모드는 남은 특수 보석이 있으면 Last Hurrah를 먼저 끝낸다(D6).
+  /// 레벨 모드와 특수 보석이 없는 보드는 바로 판을 끝낸다.
   void _triggerTimeUpImpl() {
-    if (!hasTimedClock || timeUp) return;
+    if (!hasTimedClock || timeUp || lastHurrahActive) return;
+    if (!isTimedMode || !LastHurrah.hasSpecial(board)) {
+      _finalizeRound();
+      return;
+    }
+    isPlaying = false;
+    board
+      ..clearHint()
+      ..cancelPendingHyperTap()
+      ..selected = null;
+    _lastHurrah = LastHurrah(board, random: lastHurrahRandom);
+    final reducedMotion = WidgetsBinding
+        .instance
+        .platformDispatcher
+        .accessibilityFeatures
+        .disableAnimations;
+    if (reducedMotion) {
+      _completeLastHurrah(instant: true);
+      return;
+    }
+    if (_lastHurrahBadge.isMounted) _lastHurrahBadge.show();
+  }
+
+  void _updateLastHurrah(double dt) {
+    final run = _lastHurrah;
+    if (run == null) return;
+    run.update(dt);
+    if (run.done) _completeLastHurrah();
+  }
+
+  /// [instant]면 남은 발동을 연출 없이 계산한다(reduced motion, 백그라운드 전환).
+  void _completeLastHurrah({bool instant = false}) {
+    final run = _lastHurrah;
+    if (run == null) return;
+    if (instant) run.finishInstantly();
+    _lastHurrah = null;
+    _lastHurrahBadge.hide();
+    EventLogger.instance.log('last_hurrah', run.eventParams);
+    _finalizeRound();
+  }
+
+  /// 판 종료 확정 지점. 타임 모드는 Last Hurrah 뒤 최종 점수로 한 번 온다.
+  /// 기록 저장, round_end, TimeUp 결과(진입 시 랭킹 제출)가 여기서 시작한다.
+  void _finalizeRound() {
+    if (timeUp) return;
     timeUp = true;
     isPlaying = false;
     final score = _scoreForBestSave();
@@ -59,7 +105,8 @@ extension MatchBoardGameTiming on MatchBoardGame {
   }
 
   void _applyTimedModeTimeBonusImpl(int seconds) {
-    if (!hasTimedClock || timeUp || seconds <= 0) return;
+    // Last Hurrah 중에는 시간 보상이 없다.
+    if (!hasTimedClock || timeUp || lastHurrahActive || seconds <= 0) return;
     final room = maxTimeSecondsForMode - timeRemaining;
     if (room <= 0) {
       return;

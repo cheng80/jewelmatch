@@ -29,7 +29,7 @@ extension MatchBoardResolution on MatchBoardLogic {
       final base =
           MatchBoardLogic.scoreBase +
           max(0, removed - 3) * MatchBoardLogic.scoreExtraPerGem;
-      final comboBonus = max(1, combo);
+      final comboBonus = comboScoreMultiplier ? max(1, combo) : 1;
       lastRemovalScore = ((base + specialBonus) * comboBonus).round();
       final scoreBudget = _hyperPairScoreBudget;
       if (scoreBudget != null) {
