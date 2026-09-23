@@ -40,7 +40,7 @@ class AssetPaths {
 
   /// 보드 텍스처 한 장. 보석, 특수 보석, 배지, 범위 효과 레이어 칸이 모두 들어 있다.
   /// `tools/atlas/board.json`으로 다시 만든다. 칸 이름과 좌표는 [boardAtlasManifest].
-  static const String boardAtlas = 'sprites/board_atlas.png';
+  static const String boardAtlas = 'sprites/board_atlas.webp';
 
   /// [boardAtlas]의 칸 좌표. Flutter 번들 경로는 `assets/images/` 뒤에 붙인다.
   static const String boardAtlasManifest = 'sprites/board_atlas.json';

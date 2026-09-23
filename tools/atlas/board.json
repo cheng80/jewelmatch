@@ -1,5 +1,5 @@
 {
-  "output": "assets/images/sprites/board_atlas.png",
+  "output": "assets/images/sprites/board_atlas.webp",
   "manifest": "assets/images/sprites/board_atlas.json",
   "padding": 2,
   "maxWidth": 1400,

@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 /// Bomb 범위 효과를 이루는 레이어. 그리는 순서이기도 하다.
-/// [BombLayer.glow]만 구운 글로우이고 나머지는 `board_atlas.png`의 `bomb_0`~`bomb_4` 칸 순서다.
+/// [BombLayer.glow]만 구운 글로우이고 나머지는 `board_atlas.webp`의 `bomb_0`~`bomb_4` 칸 순서다.
 enum BombLayer { glow, ignition, ring, burst, swirl, ember }
 
 /// 레이어 하나가 쓰는 float 개수: scale, alpha, angle(라디안).

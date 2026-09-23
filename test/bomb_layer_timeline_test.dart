@@ -133,11 +133,16 @@ void main() {
               File('assets/images/sprites/board_atlas.json').readAsStringSync(),
             )
             as Map<String, dynamic>;
-    final png = File('assets/images/sprites/board_atlas.png').readAsBytesSync();
-    final header = ByteData.sublistView(png);
-    expect(png.sublist(1, 4), orderedEquals('PNG'.codeUnits));
-    final width = header.getUint32(16);
-    final height = header.getUint32(20);
+    // 무손실 WebP(VP8L): 'RIFF' 크기 'WEBP' 'VP8L' 청크크기 0x2f 다음 4바이트에 14비트씩 폭-1, 높이-1.
+    final webp = File(
+      'assets/images/sprites/board_atlas.webp',
+    ).readAsBytesSync();
+    expect(webp.sublist(0, 4), orderedEquals('RIFF'.codeUnits));
+    expect(webp.sublist(8, 16), orderedEquals('WEBPVP8L'.codeUnits));
+    expect(webp[20], 0x2f);
+    final bits = ByteData.sublistView(webp).getUint32(21, Endian.little);
+    final width = (bits & 0x3fff) + 1;
+    final height = ((bits >> 14) & 0x3fff) + 1;
     expect(manifest['size'], [width, height]);
     expect(width, lessThanOrEqualTo(2048));
     expect(height, lessThanOrEqualTo(2048));
