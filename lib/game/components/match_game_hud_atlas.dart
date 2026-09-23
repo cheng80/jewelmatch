@@ -33,7 +33,7 @@ extension _MatchGameHudAtlas on MatchGameHud {
     _drawUi(canvas, src, iconRect);
   }
 
-  /// 보석 아이콘. board_atlas의 `gem_<시트 열>` 칸(없으면 Jewel_Arcane 시트)에서 잘라 그린다.
+  /// 보석 아이콘. board_atlas의 `gem_<시트 열>` 칸에서 잘라 그린다.
   void _drawGemSprite(Canvas canvas, Rect r, int color) {
     final atlas = _gemAtlas;
     if (atlas == null) return;

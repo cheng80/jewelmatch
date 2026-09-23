@@ -90,22 +90,11 @@ class TextureAtlas {
     return null;
   }
 
-  // ponytail: board 트랙이 만드는 경로를 임시로 적었다. 병합 때 AssetPaths 상수로 맞춘다.
-  static const String _boardAtlas = 'sprites/board_atlas.png';
-  static const String _boardAtlasManifest =
-      'assets/images/sprites/board_atlas.json';
-
-  /// 보석 아이콘 `gem_0` ~ `gem_6`(시트 열 순서). board_atlas가 없으면 Jewel_Arcane 시트로 대체한다.
-  static Future<TextureAtlas?> loadGems() async {
-    final board = await load(_boardAtlas, _boardAtlasManifest);
-    if (board?['gem_0'] != null) return board;
-    try {
-      final sheet = await Flame.images.load(AssetPaths.jewelSpriteSheet);
-      return TextureAtlas.grid(sheet, prefix: 'gem_', cell: 128, count: 7);
-    } catch (_) {
-      return null;
-    }
-  }
+  /// 보석 아이콘 `gem_0` ~ `gem_6`(시트 열 순서). 보드와 같은 board_atlas 한 장을 쓴다.
+  static Future<TextureAtlas?> loadGems() => load(
+    AssetPaths.boardAtlas,
+    'assets/images/${AssetPaths.boardAtlasManifest}',
+  );
 }
 
 /// ui_atlas 칸 이름. 원본 파일 이름에서 `.png`를 뺀 것이다.

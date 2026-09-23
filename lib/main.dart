@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flame/flame.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,7 +10,6 @@ import 'app.dart';
 import 'app_config.dart';
 import 'game/components/board_atlas.dart';
 import 'game/components/special_effect_burst.dart';
-import 'resources/asset_paths.dart';
 import 'resources/sound_manager.dart';
 import 'services/backend/backend_bootstrap.dart';
 import 'services/game_settings.dart';
@@ -19,7 +17,6 @@ import 'services/gameplay_config_service.dart';
 import 'services/in_app_review_service.dart';
 import 'services/wakelock_service.dart';
 import 'utils/storage_helper.dart';
-import 'widgets/sprite_sheet_frame.dart';
 
 /// 앱 진입점.
 /// main()은 초기화와 실행만 담당하고, 앱 설정(테마, 라우팅)은 App 위젯에 위임한다.
@@ -66,9 +63,6 @@ Future<void> _preloadGameVisualAssets() {
     // 보드, 범위 효과, 게임 방법 화면이 같이 쓰는 한 장.
     BoardAtlas.load(),
     SpecialEffectBurst.preloadAreaEffectSprites(),
-    // HUD 프리즘 보석과 로딩 화면은 아직 원본 보석 시트를 쓴다.
-    Flame.images.load(AssetPaths.jewelSpriteSheet),
-    SpriteSheetFrame.precache('assets/images/${AssetPaths.jewelSpriteSheet}'),
   ]);
 }
 

@@ -135,7 +135,7 @@ void main() {
           .single;
       final juice = game.world.children.whereType<BoardJuiceLayer>().single;
       final atlases = _renderedAtlases(game);
-      final sharedJewel = Flame.images.fromCache(AssetPaths.jewelSpriteSheet);
+      final sharedJewel = Flame.images.fromCache(AssetPaths.boardAtlas);
       final disposeCounts = Map<ui.Image, int>.identity();
       final previousOnDispose = ui.Image.onDispose;
       ui.Image.onDispose = (image) {
@@ -192,10 +192,7 @@ void main() {
         }
       }
       expect(sharedJewel.debugDisposed, isFalse);
-      expect(
-        Flame.images.fromCache(AssetPaths.jewelSpriteSheet),
-        same(sharedJewel),
-      );
+      expect(Flame.images.fromCache(AssetPaths.boardAtlas), same(sharedJewel));
       // 보드 아틀라스도 공유 캐시 소유라 게임 퇴장으로 해제되지 않는다.
       expect(
         Flame.images.fromCache(AssetPaths.boardAtlas).debugDisposed,
@@ -209,17 +206,14 @@ void main() {
     (tester) async {
       final first = await _mountGame(tester);
       final oldAtlases = _renderedAtlases(first);
-      final sharedJewel = Flame.images.fromCache(AssetPaths.jewelSpriteSheet);
+      final sharedJewel = Flame.images.fromCache(AssetPaths.boardAtlas);
       first.isPlaying = false;
       await tester.pumpWidget(const SizedBox());
 
       final next = await _mountGame(tester);
       expect(next, isNot(same(first)));
       final newAtlases = _renderedAtlases(next);
-      expect(
-        Flame.images.fromCache(AssetPaths.jewelSpriteSheet),
-        same(sharedJewel),
-      );
+      expect(Flame.images.fromCache(AssetPaths.boardAtlas), same(sharedJewel));
       expect(sharedJewel.debugDisposed, isFalse);
       for (final name in oldAtlases.keys) {
         expect(oldAtlases[name]!.every((image) => image.debugDisposed), isTrue);

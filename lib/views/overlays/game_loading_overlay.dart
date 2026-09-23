@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../game/jewel_game_mode.dart';
-import '../../resources/asset_paths.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../../widgets/sprite_sheet_frame.dart';
 
@@ -140,10 +139,9 @@ class _GameLoadingOverlayState extends State<GameLoadingOverlay>
             ),
           ],
         ),
-        child: SpriteSheetFrame(
-          assetPath: 'assets/images/${AssetPaths.jewelSpriteSheet}',
-          frameIndex: frameIndex,
-          frameSize: 128,
+        // 보드와 같은 board_atlas 한 장에서 보석 칸(시트 열 순서)을 그린다.
+        child: BoardAtlasFrame(
+          'gem_$frameIndex',
           size: 46,
           opacity: pulse.clamp(0.45, 1.0),
         ),
