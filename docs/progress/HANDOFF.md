@@ -5,7 +5,7 @@
 Updated: 2026-09-24 05:55 KST
 
 ## Current State
-2026-09-24 05:55: PLAN-005 Step 4(일일 동일 보드, 주간 순위, PLAN-007)와 Step 5(도전 스테이지)를 main `223303e`에 반영하고 NAS에 배포했다. Supabase 마이그레이션 3개(주간 랭킹, 조회 계획 보강, 익명 사용자 정리)를 원격에 적용했다. 워커와 워크트리는 정리했다. 남은 것은 Step 2 아이템과 이어하기 이벤트, D7 플레이테스트, ISSUE-007(멀티스레드 skwasm 같은 탭 재로드 멈춤, 기존 문제)이다. 폰 검증 스크립트는 `tmp/local-verify/s11_android_p5b.js`, A/B는 `s12_ab.js`, `s13_fps.js`.
+2026-09-24 05:55: PLAN-005 Step 4(일일 동일 보드, 주간 순위, PLAN-007)와 Step 5(도전 스테이지)를 main `223303e`에 반영하고 NAS에 배포했다. Supabase 마이그레이션 3개(주간 랭킹, 조회 계획 보강, 익명 사용자 정리)를 원격에 적용했다. 워커와 워크트리는 정리했다. 이어서 아이템과 이어하기 이벤트도 연결했다. 남은 것은 D7 플레이테스트와 ISSUE-007(멀티스레드 skwasm 같은 탭 재로드 멈춤, 기존 문제)이다. 폰 검증 스크립트는 `tmp/local-verify/s11_android_p5b.js`, A/B는 `s12_ab.js`, `s13_fps.js`.
 
 2026-09-24 05:40: PLAN-005 1차(하이퍼 교환, Speed Bonus, Last Hurrah, 기록과 장기 목표)를 main `b71ba31`에 반영하고 NAS에 배포했다. 로컬 웹과 실제 백엔드, Android 폰 NAS 검증을 통과했다. 사용자 결정으로 앱 구조 개편 완료가 우선이고 앱인토스 QR 확인과 광고(AdMob)는 그 뒤다. Step 4(일일 동일 보드, 주간 순위)와 Step 5(레벨 도전 스테이지)는 Orca 워커(`plan005b-daily`, `plan005b-challenge`, run `run_588b87db9418`)가 구현 중이다. D8, D9는 권장안으로 정했다(PROJECT_STATUS 하단).
 
@@ -52,7 +52,7 @@ Updated: 2026-09-24 05:55 KST
 4. PLAN-001 실기기 장시간 측정 (원문부터 INCOMPLETE. 별도 승인 작업)
 5. 이전 문서는 archive/docs/에 있음. 삭제 여부는 별도 결정
 6. STALE AIT 재검증과 PLAN-001 실측은 이관 밖 별도 작업
-7. 게임 방향 개편: Step 2 아이템과 이어하기 이벤트. D7은 사용자 플레이 판단. ISSUE-007은 PLAN-001에서 다룬다
+7. 게임 방향 개편: 코드 작업 완료. D7과 플레이테스트 기록은 사용자 플레이 판단. ISSUE-007은 PLAN-001에서 다룬다
 8. Supabase: NAS 배포 완료. 앱인토스 QR 확인은 구조 개편 뒤. 원격 검증 뒤에는 시험 데이터를 지운다(game_events, ad_refill_claims, ranking_entries, 익명 auth.users)
 9. 광고는 구조 작업을 끝낸 뒤 손본다(ADR-003 개정). 웹(NAS)은 테스트 전용이라 광고를 넣지 않고, Play와 App Store는 이후 Google AdMob을 `AdService` 구현으로 붙인다. 그 전에는 광고 SDK를 추가하지 않는다
 

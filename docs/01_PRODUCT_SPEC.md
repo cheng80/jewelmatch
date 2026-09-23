@@ -1101,7 +1101,7 @@ Stone Match의 하단 아이템 슬롯, 인벤토리, 스테이지 종료 보상
 
 2.5차에서는 GA/Firebase를 붙이기 전에 내부 이벤트 로거를 먼저 둔다. 목표는 외부 SDK 선택이 아니라 “무엇을 측정할지”를 고정하는 것이다.
 
-구현 상태(2026-09-23): 로거는 `lib/services/event_logger.dart`(EventLogger)로 구현했고 Supabase `game_events`에 보낸다(ADR-009, TECH_SPEC API-007). 연결한 이벤트는 `session_start`, `round_start`, `round_end`, `level_clear`, `stage_continue`, `ranking_submit`, `ad_reward`다. 아래 표의 아이템과 광고 mock 이벤트는 아직 연결하지 않았다. GA4와 Firebase Analytics는 연동하지 않았다. 게임 방향 개편에 필요한 추가 이벤트는 하단 "게임 방향 기획" 8절에 둔다.
+구현 상태(2026-09-23): 로거는 `lib/services/event_logger.dart`(EventLogger)로 구현했고 Supabase `game_events`에 보낸다(ADR-009, TECH_SPEC API-007). 연결한 이벤트는 `session_start`, `round_start`, `round_end`, `level_clear`, `stage_continue`, `ranking_submit`, `ad_reward`와 2026-09-24에 추가한 `item_used`, `item_target_cancel`(item_kind, target_required, mode, level, time_left), `item_earned`(item_kind, quantity, reason, level), `item_equipped`(item_kind, slot_index), `continue_clicked`(mode, level, score)다. 아래 표의 `stage_start`, `stage_clear`, `stage_fail`은 각각 `round_start`, `level_clear`, `round_end`(reason time_up)가 같은 역할을 하므로 따로 만들지 않는다. `item_unequipped`는 슬롯 해제 기능이 없어 해당 없다. 광고 mock 클릭 이벤트는 결과까지 담는 `ad_reward`(placement, result)로 대신한다. GA4와 Firebase Analytics는 연동하지 않았다. 게임 방향 개편에 필요한 추가 이벤트는 하단 "게임 방향 기획" 8절에 둔다.
 
 ### 원칙
 

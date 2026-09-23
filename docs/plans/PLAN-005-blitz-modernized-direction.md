@@ -3,7 +3,7 @@
 ## Metadata
 - Plan ID: `PLAN-005`
 - Title: 60초 점수 경쟁 중심 게임 방향 개편(공통 코어, 장기 목표, 경쟁 형식)
-- Status: `IN_PROGRESS` (2026-09-24 Step 1a, 1b, 1c, 3, 4, 5 구현 완료. 남은 것: 1d 시간 보상(D7, 플레이테스트), Step 2 아이템과 이어하기 이벤트)
+- Status: `IN_PROGRESS` (2026-09-24 Step 1a, 1b, 1c, 2 이벤트, 3, 4, 5 구현 완료. 남은 것은 사용자 플레이가 필요한 1d 시간 보상(D7)과 플레이테스트 기록)
 - Related Requirement: `FR-001`, `FR-002`, `FR-003`, `FR-004`, `FR-005`, `FR-006`, `FR-009`, `FR-012`
 - Related ADR: `ADR-008`(Proposed), `ADR-001`, `ADR-002`, `ADR-006`, `ADR-007`
 - Owner:
@@ -92,7 +92,7 @@
 
 ### Step 2 — 내부 이벤트 로거와 플레이테스트
 - [x] 로거 어댑터: 2026-09-23 `EventLogger`로 구현하고 Supabase `game_events`에 보낸다(PLAN-006, ADR-009). 게임 코드는 SDK를 직접 부르지 않는다
-- [ ] 기존 필수 이벤트(아이템 플랜 3.5차)와 Product Spec 8-3 추가 이벤트 연결. 8-3 추가 이벤트와 `daily_key`, `challenge` 파라미터는 연결 완료. 아이템과 이어하기 클릭 이벤트는 남음
+- [x] 기존 필수 이벤트(아이템 플랜 3.5차)와 Product Spec 8-3 추가 이벤트 연결. 8-3 추가 이벤트와 `daily_key`, `challenge` 파라미터, 아이템과 이어하기 이벤트까지 연결 완료(2026-09-24, Playwright `s14_item_events.js` 7/7). 대응표는 Product Spec 웹 테스트 이벤트 로깅 절
 - [ ] 개인 식별 정보 미기록, 임시 sessionId만 사용
 - [ ] Product Spec 8-2 플레이테스트 항목을 매 단계 뒤 기록. 결과는 이 PLAN 하단 "플레이테스트 기록"에 남긴다(양식 준비 완료, 기록은 사용자 플레이 필요)
 

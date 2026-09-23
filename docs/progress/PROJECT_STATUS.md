@@ -6,7 +6,7 @@ Updated: 2026-09-24 05:55 KST
 
 ## Current Phase
 Phase 3 — Stabilization (Phase 4 출시 값은 대기)
-Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 반영했고 Step 4(일일 동일 보드, 주간 순위), Step 5(레벨 도전 스테이지)도 main에 반영하고 NAS에 배포했다(`223303e`). PLAN-005에 남은 것은 시간 보상 T1(D7, 플레이테스트)과 아이템, 이어하기 이벤트다. 2026-09-24 사용자 결정: 앱 구조 개편 완료가 우선이고 앱인토스 빌드 확인과 광고(AdMob)는 그 뒤로 미룬다.
+Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 반영했고 Step 4(일일 동일 보드, 주간 순위), Step 5(레벨 도전 스테이지)도 main에 반영하고 NAS에 배포했다(`223303e`). 이어서 아이템과 이어하기 이벤트도 연결했다. PLAN-005에 남은 것은 사용자 플레이가 필요한 시간 보상 T1(D7)과 플레이테스트 기록뿐이다. 2026-09-24 사용자 결정: 앱 구조 개편 완료가 우선이고 앱인토스 빌드 확인과 광고(AdMob)는 그 뒤로 미룬다.
 이관 단계: 대체 가능(REPLACEABLE). 2026-08-23 표준 팩만으로 대체 가능성 점검 12항 통과. 정본은 docs/. 이전 문서는 archive/docs/. 릴리즈 준비와 분리.
 
 ## Active Plan
@@ -36,7 +36,7 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 - [x] TASK-005a 게임 방향 조사와 기획 문서화: Product Spec "게임 방향 기획" 절, ADR-008(Proposed), PLAN-005(DRAFT), ROADMAP Phase 5, 특수 보석 룰 11-1절 원문 대조 정정
 - [x] TASK-005b D1~D6 권장안 승인(2026-09-24). D10 해당 없음. D8, D9는 막히면 권장안이라는 사용자 승인에 따라 권장안으로 결정. D7은 플레이테스트 대기
 - [x] TASK-005c Step 1a 하이퍼 교환 H1~H3(`f343fad`), 1b Speed Bonus(`936dfee`), 1c Last Hurrah(`a2d78d2`), Step 3 기록과 장기 목표(`baaff7c`), 통합 검수 R-1~R-10 수정(`f8a209d`, `b71ba31`)
-- [ ] TASK-005d Step 2 남은 이벤트(아이템, 이어하기) 연결과 플레이테스트 기록 양식
+- [x] TASK-005d Step 2 아이템, 이어하기 이벤트 연결(Playwright 7/7)과 플레이테스트 기록 양식. 기록 자체는 사용자 플레이 필요
 - [x] TASK-005e Step 4 일일 동일 보드와 주간 순위(PLAN-007, `4435ecb`, 조회 계획 보강 `70cad69`, 원격 적용)
 - [x] TASK-005f Step 5 레벨 도전 스테이지(`87f50ca`, BR-043)
 - [x] TASK-005g 독립 검수 R3(P0 0, P1 1, P2 1, P3 7) 반영(`f2a26ae`, `70cad69`), 비활성 익명 사용자 정리(`cef0acc`)
@@ -102,7 +102,7 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 | Android NAS PLAN-005 Step 4, 5 | PARTIAL | RECHECKED | 2026-09-24 05:50 KST | NAS `223303e` | CURRENT | 폰 시작 보드가 데스크톱과 같음, 20초 평균 89.3~89.6fps, p95 11.2ms, 주간 제출 200 1회, 도전 스테이지 상태 정상. 같은 탭 재로드 뒤 skwasm 멈춤(ISSUE-007, 기존 문제) 확인 |
 
 ## Next
-1. PLAN-005 Step 2: 아이템과 이어하기 이벤트 연결. 플레이테스트 기록(양식 준비됨)과 D7(시간 보상 T1)은 사용자 플레이 판단 필요
+1. 사용자 플레이테스트: PLAN-005 하단 양식으로 기록하고 D7(시간 보상 T1)을 정한다. 구조 작업 중 코드로 남은 항목은 없다
 2. ISSUE-007(PLAN-001): 멀티스레드 skwasm 같은 탭 재로드 멈춤. 권장 순서는 Flutter 업그레이드 뒤 재현 확인, 그래도 나면 Flutter 이슈 보고. 임시 대안(격리 헤더 제거)은 FPS가 절반이라 적용하지 않았다
 3. PLAN-006: Supabase 요금제 결정(Free는 활동이 적으면 일시 중지)
 4. 구조 개편 뒤: 앱인토스 QR 확인(토스 앱이 있는 폰 필요), Play와 App Store용 Google AdMob 연결(ADR-003 개정). 웹(NAS)은 테스트 전용이라 광고 없음
