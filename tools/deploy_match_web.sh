@@ -214,6 +214,13 @@ ErrorDocument 404 /match/index.html
   Header always set Cross-Origin-Opener-Policy "same-origin"
   Header always set Cross-Origin-Embedder-Policy "require-corp"
   Header always set Cross-Origin-Resource-Policy "same-origin"
+
+  # Flutter 웹 코드 파일은 이름에 해시가 없다. 재방문 브라우저가 이전 배포의 main.dart.mjs나
+  # main.dart.wasm을 캐시에서 꺼내 새 파일과 섞으면 Wasm이 멈춘다(2026-09-24 실기기 확인).
+  # 매번 서버에 확인하게 하고, 바뀌지 않았으면 304로 끝난다.
+  <FilesMatch "\.(html|js|mjs|wasm|json)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
 </IfModule>
 
 <IfModule mod_rewrite.c>
