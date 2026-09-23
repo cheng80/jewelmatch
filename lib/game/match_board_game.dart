@@ -15,6 +15,7 @@ import 'components/board_juice_layer.dart';
 import 'components/match_board_renderer.dart';
 import 'components/match_game_hud.dart';
 import 'components/special_effect_pool.dart';
+import 'components/speed_bonus_badge.dart';
 import 'item_inventory.dart';
 import 'item_kind.dart';
 import 'jewel_game_mode.dart';
@@ -23,6 +24,7 @@ import 'match_board_camera_shake.dart';
 import 'match_board_logic.dart';
 import 'match_board_qa_bridge.dart';
 import 'match_board_specials.dart';
+import 'speed_bonus.dart';
 import 'stage_reward.dart';
 
 part 'match_board_game_vfx.dart';
@@ -81,6 +83,8 @@ class MatchBoardGame extends FlameGame {
     board.onRemovalStarted = (cells) {
       if (_effectPoolsReady) _juiceLayer.onRemovalStarted(cells);
     };
+    speedBonus = SpeedBonus(enabled: isTimedMode);
+    if (isTimedMode) board.onValidSwapBonus = _onSpeedBonusSwap;
     if (hasTimedClock) {
       timeRemaining = roundSecondsForMode;
       _lastFlooredSecondForTimeTic = timeRemaining.floor();
@@ -111,6 +115,10 @@ class MatchBoardGame extends FlameGame {
   static const int progressionModeHintsPerStage = 1;
 
   late final MatchBoardLogic board;
+
+  /// 타임 모드만 켠다(D5). 레벨 모드와 무한 모드는 비활성.
+  late final SpeedBonus speedBonus;
+  final SpeedBonusBadge _speedBonusBadge = SpeedBonusBadge();
   final BoardJuiceLayer _juiceLayer = BoardJuiceLayer();
   late final SpecialEffectPool _specialEffectPool;
   final MatchBoardCameraShake _boardShake = MatchBoardCameraShake();
@@ -331,6 +339,7 @@ class MatchBoardGame extends FlameGame {
     world.add(MatchBoardRenderer(logic: board));
 
     await world.add(_juiceLayer);
+    if (isTimedMode) await world.add(_speedBonusBadge);
     _specialEffectPool = SpecialEffectPool(world);
     if (kIsWeb) {
       await _warmInitialEffectPools();
@@ -348,12 +357,19 @@ class MatchBoardGame extends FlameGame {
 
   void _logRoundStart() {
     _roundStartedAt = DateTime.now();
+    speedBonus.reset();
     EventLogger.instance.log('round_start', {'mode': gameMode.name});
   }
 
   /// 판 종료 이벤트. [reason]은 time_up 또는 exit.
   void logRoundEnd(String reason) {
     final startedAt = _roundStartedAt;
+    if (speedBonus.enabled) {
+      EventLogger.instance.log('speed_bonus_peak', {
+        'max_tier': speedBonus.peakTier,
+        'total_bonus': speedBonus.totalBonus,
+      });
+    }
     EventLogger.instance.log('round_end', {
       'mode': gameMode.name,
       'reason': reason,
@@ -541,6 +557,13 @@ class MatchBoardGame extends FlameGame {
     _updateProgressionMode();
     _saveBestScoreIfChanged();
     super.update(dt);
+  }
+
+  int _onSpeedBonusSwap() {
+    final bonus = speedBonus.onValidSwap();
+    // 효과음 없음: 스왑 직후 콤보 피치 효과음과 겹친다.
+    if (bonus > 0 && _speedBonusBadge.isMounted) _speedBonusBadge.show(bonus);
+    return bonus;
   }
 
   void handleBoardTap(double x, double y) {

@@ -11,6 +11,7 @@ extension MatchBoardGameTiming on MatchBoardGame {
       return;
     }
 
+    speedBonus.advance(dt);
     timeRemaining -= dt;
     final floored = timeRemaining.floor();
     if (timeRemaining > 0 &&

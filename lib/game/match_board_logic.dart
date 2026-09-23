@@ -68,6 +68,9 @@ class MatchBoardLogic {
   /// 제거 시작의 렌더 전용 알림. 점수 계산과 분리한다.
   void Function(Map<String, bool> cells)? onRemovalStarted;
 
+  /// 유효 스왑마다 한 번 호출해 그대로 더할 점수를 받는다(Speed Bonus).
+  int Function()? onValidSwapBonus;
+
   MatchJuicePattern removalJuicePattern = MatchJuicePattern.normal;
   void Function(List<SpecialSpawn> spawns)? onSpecialsBorn;
 
@@ -476,7 +479,12 @@ class MatchBoardLogic {
   bool canTrySwapNow(int ar, int ac, int br, int bc) =>
       _canTrySwapNow(ar, ac, br, bc);
 
-  bool trySwap(int ar, int ac, int br, int bc) => _trySwapImpl(ar, ac, br, bc);
+  bool trySwap(int ar, int ac, int br, int bc) {
+    final swapped = _trySwapImpl(ar, ac, br, bc);
+    // Speed Bonus: 유효 스왑 확정 직후 한 곳. BR-011, 콤보 배수와 별도로 더한다.
+    if (swapped) score += onValidSwapBonus?.call() ?? 0;
+    return swapped;
+  }
 
   bool hasAnyValidMove() => getAllValidMoves().isNotEmpty;
 
