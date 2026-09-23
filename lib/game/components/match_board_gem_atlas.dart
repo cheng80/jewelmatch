@@ -22,10 +22,14 @@ class _GemAtlasBatch {
 
   static const double cell = 64;
   static const int columns = 8;
-  static const int baseCount = 42; // 7종 × 기존 색상 6종, 폴백도 색 보존
+
+  /// 구워 두는 색 수. 7색 실험(흰 돌)까지 담는다. 6색 판은 7번째 칸을 쓰지 않을 뿐이다.
+  static const int gemColors = 7;
+  static final int baseCount =
+      GemKind.values.length * gemColors; // 종류 × 색, 폴백도 색 보존
   static const int shineFrames = 6;
-  static const int glowSlot = baseCount + 6 * shineFrames;
-  static const int slotCount = glowSlot + 1;
+  static final int glowSlot = baseCount + gemColors * shineFrames;
+  static final int slotCount = glowSlot + 1;
   ui.Image? image;
   final Float32List transforms;
   final Float32List sources;
@@ -108,9 +112,11 @@ extension _MatchBoardGemAtlas on MatchBoardRenderer {
     final shinePaint = Paint()..blendMode = BlendMode.srcATop;
     for (var slot = 0; slot < _GemAtlasBatch.glowSlot; slot++) {
       final shining = slot >= _GemAtlasBatch.baseCount;
-      final baseSlot = shining ? (slot - _GemAtlasBatch.baseCount) ~/ 6 : slot;
-      final kind = GemKind.values[baseSlot ~/ 6];
-      final color = baseSlot % 6 + 1;
+      final baseSlot = shining
+          ? (slot - _GemAtlasBatch.baseCount) ~/ _GemAtlasBatch.shineFrames
+          : slot;
+      final kind = GemKind.values[baseSlot ~/ _GemAtlasBatch.gemColors];
+      final color = baseSlot % _GemAtlasBatch.gemColors + 1;
       final gem = BoardGem(
         id: 0,
         color: color,
@@ -130,7 +136,8 @@ extension _MatchBoardGemAtlas on MatchBoardRenderer {
       if (shining) {
         // srcATop를 셀 안에만 그려 보석의 기존 알파로 마스킹한다.
         // 로딩 때 구우므로 런타임 레이어, blur, shader 생성이 없다.
-        final phase = (slot - _GemAtlasBatch.baseCount) % 6;
+        final phase =
+            (slot - _GemAtlasBatch.baseCount) % _GemAtlasBatch.shineFrames;
         final x = -cell * 0.7 + phase / 5 * cell * 1.7;
         shinePaint.shader = ui.Gradient.linear(
           Offset(x, 0),
@@ -169,7 +176,7 @@ extension _MatchBoardGemAtlas on MatchBoardRenderer {
   }
 
   int _atlasSlot(BoardGem gem) {
-    final color = gem.color.clamp(1, 6) - 1;
+    final color = gem.color.clamp(1, _GemAtlasBatch.gemColors) - 1;
     if (gem.kind == GemKind.normal &&
         logic.state == 'idle' &&
         !logic.inputLocked &&
@@ -180,11 +187,11 @@ extension _MatchBoardGemAtlas on MatchBoardRenderer {
       final phase = (_animTime * 0.8 + gem.row * 0.14 + gem.col * 0.11) % 8;
       if (phase < 0.72) {
         return _GemAtlasBatch.baseCount +
-            color * 6 +
-            (phase / 0.12).floor().clamp(0, 5);
+            color * _GemAtlasBatch.shineFrames +
+            (phase / 0.12).floor().clamp(0, _GemAtlasBatch.shineFrames - 1);
       }
     }
-    return gem.kind.index * 6 + color;
+    return gem.kind.index * _GemAtlasBatch.gemColors + color;
   }
 
   void _drawInteractionGlows(Canvas canvas, double ts) {

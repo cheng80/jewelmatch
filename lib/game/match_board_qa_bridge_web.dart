@@ -307,6 +307,14 @@ JSObject _stateToJs(SimulationGameState state) {
     (state['boardSignature'] as String).toJS,
   );
   object.setProperty(
+    'scoreMultiplier'.toJS,
+    (state['scoreMultiplier'] as int).toJS,
+  );
+  object.setProperty(
+    'bonusGems'.toJS,
+    _mapToJsObject(state['bonusGems'] as Map<String, Object?>),
+  );
+  object.setProperty(
     'boardGeometry'.toJS,
     _mapToJsObject(state['boardGeometry'] as Map<String, Object?>),
   );

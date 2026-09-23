@@ -9,6 +9,7 @@ import 'package:stonematch/game/match_board_logic.dart';
 class AtlasSpy implements ui.Canvas {
   ui.Image? image;
   final transforms = <double>[];
+  final sources = <double>[];
   final colors = <int>[];
   int calls = 0;
   @override
@@ -17,6 +18,7 @@ class AtlasSpy implements ui.Canvas {
       calls++;
       image = invocation.positionalArguments[0] as ui.Image;
       transforms.addAll(invocation.positionalArguments[1] as Float32List);
+      sources.addAll(invocation.positionalArguments[2] as Float32List);
       colors.addAll(invocation.positionalArguments[3] as Int32List);
       final paint = invocation.positionalArguments[6] as ui.Paint;
       expect(paint.colorFilter, isNull, reason: '색 보정은 atlas에 미리 굽는다');
@@ -184,7 +186,8 @@ void main() {
       final width = image.width;
       var changed = 0;
       for (var phase = 0; phase < 6; phase++) {
-        final slot = 42 + phase;
+        // 광택 칸은 기본 칸(종류 7 × 색 7 = 49) 뒤에서 시작한다. 색 1의 광택 6단계.
+        final slot = 49 + phase;
         final ox = slot % 8 * 64;
         final oy = slot ~/ 8 * 64;
         for (var y = 0; y < 64; y++) {
@@ -205,6 +208,34 @@ void main() {
       r.onRemove();
     },
   );
+
+  // 7색 실험: 7번째 색(흰 돌)이 6번째 색 칸으로 잘려 같은 그림이 되면 안 된다.
+  test('seven colors bake into seven distinct atlas cells', () async {
+    final game = MatchBoardGame();
+    final board = game.board..colorCount = 7;
+    board.setGeometry(x: 16, y: 16, tile: 48);
+    for (var r = 0; r < 8; r++) {
+      for (var c = 0; c < 8; c++) {
+        board.setGem(
+          r,
+          c,
+          board.createGem(r, c, (r * 8 + c) % 7 + 1, GemKind.normal),
+        );
+      }
+    }
+    final r = MatchBoardRenderer(logic: board)..game = game;
+    await r.onLoad();
+    r.onMount();
+    r.update(2);
+    final spy = AtlasSpy();
+    r.render(spy);
+    final cells = <String>{};
+    for (var i = 0; i + 3 < spy.sources.length; i += 4) {
+      cells.add('${spy.sources[i]},${spy.sources[i + 1]}');
+    }
+    expect(cells.length, greaterThanOrEqualTo(7));
+    r.onRemove();
+  });
 
   test(
     'atlas and chrome survive onRemove then onMount with same sources',

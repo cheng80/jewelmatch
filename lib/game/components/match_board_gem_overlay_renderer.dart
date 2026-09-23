@@ -103,7 +103,10 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
     if (gem.kind == GemKind.hyper) {
       return 1;
     }
-    final c = gem.color.clamp(1, 6);
+    final c = gem.color.clamp(
+      1,
+      MatchBoardRenderer._sheetColByColor1based.length,
+    );
     return MatchBoardRenderer._sheetColByColor1based[c - 1];
   }
 
@@ -118,7 +121,7 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
   Sprite? _compositedOverlaySpriteFor(BoardGem gem) {
     final sprites = _compositedOverlaySprites[gem.kind];
     if (sprites == null || sprites.isEmpty) return null;
-    final c = gem.color.clamp(1, 6);
+    final c = gem.color.clamp(1, sprites.length);
     return sprites[c - 1];
   }
 
