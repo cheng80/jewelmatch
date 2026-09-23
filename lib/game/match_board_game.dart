@@ -379,7 +379,7 @@ class MatchBoardGame extends FlameGame {
     EventLogger.instance.log('round_start', {'mode': gameMode.name});
   }
 
-  /// 판 종료 이벤트. [reason]은 time_up 또는 exit.
+  /// 판 종료 이벤트. [reason]은 time_up, exit, restart.
   void logRoundEnd(String reason) {
     final startedAt = _roundStartedAt;
     if (speedBonus.enabled) {

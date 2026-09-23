@@ -33,7 +33,10 @@ class LastHurrah {
 
   final MatchBoardLogic board;
   final Random _random;
-  final int scoreBefore;
+
+  /// 첫 발동 직전 점수. 시간 0 순간 진행 중이던 유저 연쇄 점수를 빼기 위해
+  /// 첫 발동 때 다시 잡는다.
+  int scoreBefore;
   int activations = 0;
   bool done = false;
   double _elapsed = 0;
@@ -123,6 +126,13 @@ class LastHurrah {
     final cell = nextSpecial(board);
     if (cell == null) return false;
     final gem = board.getGem(cell.x, cell.y)!;
+    if (activations == 0) {
+      scoreBefore = board.score;
+      // 유저 입력이 아닌 발동은 최고 한 수에 넣지 않는다(Spec 6-6).
+      board.stats
+        ..finishMove()
+        ..trackMoves = false;
+    }
     board.selected = null;
     board.resolveSpecialSwap(
       {'${cell.x}:${cell.y}': true},
@@ -145,5 +155,6 @@ class LastHurrah {
   void _finish() {
     done = true;
     board.comboScoreMultiplier = true;
+    board.stats.trackMoves = true;
   }
 }

@@ -61,6 +61,8 @@ extension MatchBoardGameFlow on MatchBoardGame {
   }
 
   void _restartRoundImpl() {
+    // 일시정지 다시 하기도 판 종료로 반영한다. TimeUp 뒤에는 이미 반영했다.
+    if (!timeUp) logRoundEnd('restart');
     _stageAttemptSerial += 1;
     _logRoundStart();
     overlays.remove('TimeUp');

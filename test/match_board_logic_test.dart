@@ -306,6 +306,34 @@ void main() {
     );
   });
 
+  // R-1: 한도는 보드가 idle로 끝날 때 풀린다. H2 연쇄 중 안정 구역 입력도 같은 한도다.
+  test('H2 cap survives a stable-zone tap during the H2 cascade', () {
+    final board = _filledBoard();
+    board.setGem(3, 3, board.createGem(3, 3, 0, GemKind.hyper));
+    board.setGem(3, 4, board.createGem(3, 4, 0, GemKind.hyper));
+    for (var col = 0; col < 4; col++) {
+      board.setGem(0, col, board.createGem(0, col, 2, GemKind.supernova));
+    }
+    expect(board.trySwap(3, 3, 3, 4), isTrue);
+    board.advanceResolutionStep();
+    expect(board.score, MatchBoardLogic.hyperPairScoreCap);
+
+    // H2 리필 뒤 'checking' 상태. 0행 0~2열이 남은 H2 연쇄 매치다.
+    _setRows(board, _rowsWithPendingMatch);
+    board.pendingRemovalSet = null;
+    board.state = 'checking';
+
+    // 안정 구역(맨 아래 행) 특수 보석 탭.
+    board.setGem(7, 7, board.createGem(7, 7, 3, GemKind.bomb));
+    expect(board.triggerSpecialCell(7, 7), isTrue);
+
+    var guard = 0;
+    while (board.state != 'idle' && guard++ < 200) {
+      board.advanceResolutionStep();
+    }
+    expect(board.score, MatchBoardLogic.hyperPairScoreCap);
+  });
+
   test('hyper swap never falls back to invalid swap return', () {
     var invalid = 0;
     final board = _filledBoard(onInvalidSwap: () => invalid++);
@@ -877,6 +905,18 @@ void _setRows(MatchBoardLogic board, List<List<int>> rows) {
 
 const _validMoveRows = [
   [1, 2, 1, 4, 5, 6, 1, 2],
+  [2, 1, 4, 5, 6, 1, 2, 3],
+  [3, 4, 3, 6, 1, 2, 3, 4],
+  [4, 3, 6, 1, 2, 3, 4, 5],
+  [5, 6, 1, 2, 3, 4, 5, 6],
+  [6, 1, 2, 3, 4, 5, 6, 1],
+  [1, 2, 3, 4, 5, 6, 1, 2],
+  [2, 3, 4, 5, 6, 1, 2, 3],
+];
+
+// 0행 0~2열만 [1, 1, 1] 매치.
+const _rowsWithPendingMatch = [
+  [1, 1, 1, 4, 5, 6, 1, 2],
   [2, 1, 4, 5, 6, 1, 2, 3],
   [3, 4, 3, 6, 1, 2, 3, 4],
   [4, 3, 6, 1, 2, 3, 4, 5],

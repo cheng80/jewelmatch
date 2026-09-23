@@ -222,6 +222,7 @@ extension _MatchGameHudInteractions on MatchGameHud {
       game.dismissHint();
       return;
     }
+    _boardTapPointerId = event.pointerId;
     game.handleBoardTap(event.canvasPosition.x, event.canvasPosition.y);
   }
 

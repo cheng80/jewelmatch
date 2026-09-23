@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -66,9 +67,13 @@ class RecordsStore {
 
   static void _save(PlayerRecords records) {
     try {
-      StorageHelper.write(
-        StorageKeys.playerRecords,
-        jsonEncode(records.toJson()),
+      unawaited(
+        StorageHelper.write(
+          StorageKeys.playerRecords,
+          jsonEncode(records.toJson()),
+        ).catchError((Object error) {
+          debugPrint('[Records] save failed: $error');
+        }),
       );
     } catch (error) {
       debugPrint('[Records] save failed: $error');

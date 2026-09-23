@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,6 +21,16 @@ void main() {
     await StorageHelper.init();
     GameSettings.sfxMuted = true;
     GameSettings.bgmMuted = true;
+    // restartRound가 BGM을 멈출 때 오디오 플러그인 채널을 부른다.
+    for (final name in [
+      'xyz.luan/audioplayers',
+      'xyz.luan/audioplayers.global',
+    ]) {
+      binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        MethodChannel(name),
+        (_) async => null,
+      );
+    }
   });
 
   group('LastHurrah rules', () {
@@ -82,6 +93,31 @@ void main() {
         'specials_count': run.activations,
         'score_added': board.score,
       });
+    });
+
+    // R-3: 유저 입력이 아닌 발동은 최고 한 수에 넣지 않는다.
+    test('Last Hurrah activations are not counted as a best move', () {
+      final board = _board();
+      _putSpecial(board, 2, 3, GemKind.bomb);
+
+      final run = LastHurrah(board, random: Random(1))..finishInstantly();
+
+      expect(board.score, greaterThan(0));
+      expect(board.stats.bestMoveScore, 0);
+      expect(board.stats.trackMoves, isTrue);
+      expect(run.done, isTrue);
+    });
+
+    // R-10: 시간 0 순간 진행 중이던 유저 연쇄 점수는 score_added에서 뺀다.
+    test('score_added starts at the first activation', () {
+      final board = _board();
+      _putSpecial(board, 2, 3, GemKind.bomb);
+      final run = LastHurrah(board, random: Random(1));
+      board.score += 500; // 시작 뒤 끝난 유저 연쇄
+      run.finishInstantly();
+
+      expect(run.scoreBefore, 500);
+      expect(run.eventParams['score_added'], board.score - 500);
     });
 
     test('hyper color is a seeded pick among colors left on board', () {
@@ -227,6 +263,30 @@ void main() {
       expect(game.timeUp, isTrue);
       expect(game.board.score, before);
       expect(game.board.getGem(2, 3)!.kind, GemKind.bomb);
+    });
+
+    // R-2: 일시정지 다시 하기도 판을 한 번 반영한다.
+    test('restarting an unfinished round commits it to records once', () {
+      final game = _timedGame();
+      game.board.score = 4200;
+      game.restartRound();
+      expect(RecordsStore.load().totalScore, 4200);
+
+      game.board.score = 1000;
+      game.restartRound();
+      expect(RecordsStore.load().totalScore, 5200);
+    });
+
+    test('restart after TimeUp does not commit again', () {
+      final game = _timedGame();
+      game.board.score = 3000;
+      game.timeRemaining = 0.01;
+      game.update(0.02);
+      expect(game.timeUp, isTrue);
+      expect(RecordsStore.load().totalScore, 3000);
+
+      game.restartRound();
+      expect(RecordsStore.load().totalScore, 3000);
     });
 
     test('restart clears an unfinished Last Hurrah', () {

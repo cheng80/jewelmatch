@@ -23,7 +23,8 @@ class RoundRecord {
     this.hyperSwaps = 0,
     this.maxCombo = 0,
     this.bestMoveScore = 0,
-  });
+    int? fullScore,
+  }) : fullScore = fullScore ?? score;
 
   factory RoundRecord.fromStats(
     MatchBoardGameStats stats, {
@@ -49,6 +50,9 @@ class RoundRecord {
 
   final JewelGameMode mode;
   final int score;
+
+  /// [minus]로 차감하지 않은 판 점수. 모드별 최고 점수에 쓴다.
+  final int fullScore;
   final int level;
   final int removedGems;
   final Map<GemKind, int> specialsCreated;
@@ -67,6 +71,7 @@ class RoundRecord {
     return RoundRecord(
       mode: mode,
       score: sameScore ? max(0, score - applied.score) : score,
+      fullScore: fullScore,
       level: level,
       removedGems: sameStats
           ? max(0, removedGems - applied.removedGems)
@@ -137,7 +142,7 @@ class PlayerRecords {
     }
     bestScoreByMode[round.mode] = max(
       bestScoreByMode[round.mode] ?? 0,
-      round.score,
+      round.fullScore,
     );
     for (final entry in round.specialsCreated.entries) {
       specialsCreated[entry.key] = specialCount(entry.key) + entry.value;

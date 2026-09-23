@@ -197,6 +197,19 @@ void main() {
     expect(records.bestLevel, 2);
   });
 
+  // R-6: 재반영 때 모드별 최고 점수는 차감 전 판 점수로 계산한다.
+  test('best score by mode uses the full stage score on re-commit', () async {
+    await _resetStorage();
+    final game = MatchBoardGame(gameMode: JewelGameMode.progression);
+    game.board.score = 6000;
+    game.commitRecords(level: 1);
+    game.board.score = 7500;
+    game.commitRecords(level: 2);
+    final records = RecordsStore.load();
+    expect(records.totalScore, 7500);
+    expect(records.bestScoreByMode[JewelGameMode.progression], 7500);
+  });
+
   group('MatchBoardGameStats move score', () {
     test('keeps the best finished move', () {
       final stats = MatchBoardGameStats()

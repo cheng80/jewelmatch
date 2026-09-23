@@ -68,6 +68,7 @@ extension MatchBoardGameTiming on MatchBoardGame {
       _completeLastHurrah(instant: true);
       return;
     }
+    _speedBonusBadge.hide();
     if (_lastHurrahBadge.isMounted) _lastHurrahBadge.show();
   }
 

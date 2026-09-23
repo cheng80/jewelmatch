@@ -140,8 +140,12 @@ class MatchBoardGameStats {
   int hyperSwaps = 0;
 
   /// 입력 한 번(스왑, 탭, 아이템)이 연쇄 끝까지 낸 점수 중 최고값.
+  /// Speed Bonus는 보드 플레이 점수가 아니라서 넣지 않는다.
   int bestMoveScore = 0;
   int _moveScore = 0;
+
+  /// false면 한 수 점수를 쌓지 않는다. Last Hurrah 자동 발동 동안 끈다.
+  bool trackMoves = true;
 
   int get removedSpecialGems => removedByKind.entries
       .where((entry) => entry.key != GemKind.normal)
@@ -171,11 +175,13 @@ class MatchBoardGameStats {
   }
 
   void recordMoveScore(int score) {
+    if (!trackMoves) return;
     _moveScore += score;
   }
 
   /// 보드가 멈추면 호출한다. 진행 중이던 한 수의 점수를 확정한다.
   void finishMove() {
+    if (!trackMoves) return;
     if (_moveScore > bestMoveScore) bestMoveScore = _moveScore;
     _moveScore = 0;
   }

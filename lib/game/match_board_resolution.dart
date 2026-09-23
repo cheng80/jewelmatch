@@ -120,12 +120,19 @@ extension MatchBoardResolution on MatchBoardLogic {
   }
 
   void _resolveMatchCascadeImpl(MoveInfo moveInfo) {
-    _hyperPairScoreBudget = null;
-    _hyperPairTimeBudget = null;
+    _clearHyperPairBudgetIfIdle();
     pendingMoveInfo = moveInfo;
     combo = 0;
     pendingResultLabel = null;
     _beginNextResolutionCycleImpl();
+  }
+
+  /// H2 한도(BR-023)는 보드가 idle로 끝날 때 풀린다. H2 연쇄 중 안정 구역에서 둔
+  /// 새 수도 같은 한도에 든다.
+  void _clearHyperPairBudgetIfIdle() {
+    if (state != 'idle') return;
+    _hyperPairScoreBudget = null;
+    _hyperPairTimeBudget = null;
   }
 
   void _startRemovalPhaseImpl(Map<String, bool> removalSet) {
@@ -238,8 +245,7 @@ extension MatchBoardResolution on MatchBoardLogic {
     String label,
   ) {
     removalJuicePattern = MatchJuicePattern.normal;
-    _hyperPairScoreBudget = null;
-    _hyperPairTimeBudget = null;
+    _clearHyperPairBudgetIfIdle();
     combo = 1;
     lastCombo = 1;
     if (maxCombo < 1) {

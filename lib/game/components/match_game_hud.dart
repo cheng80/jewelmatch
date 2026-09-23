@@ -133,6 +133,9 @@ class MatchGameHud extends PositionComponent
   Rect? _pressedRect;
   Ticker? _pressTicker;
 
+  /// 보드 칸을 누른 포인터. 하이퍼 대기는 이 포인터를 뗄 때만 확정한다.
+  int? _boardTapPointerId;
+
   // 타겟 선택 때와 실제 인벤토리 소모 때의 반응을 분리한다.
   final HudPunch _itemUsePunch = HudPunch(3.5);
   ItemKind? _usedItem;
@@ -795,7 +798,18 @@ class MatchGameHud extends PositionComponent
   void onTapDown(TapDownEvent event) => _handleTapDown(event);
 
   @override
-  void onTapUp(TapUpEvent event) => game.handleBoardTapUp();
+  void onTapUp(TapUpEvent event) {
+    if (event.pointerId != _boardTapPointerId) return;
+    _boardTapPointerId = null;
+    game.handleBoardTapUp();
+  }
+
+  @override
+  void onTapCancel(TapCancelEvent event) {
+    if (event.pointerId != _boardTapPointerId) return;
+    _boardTapPointerId = null;
+    game.board.cancelPendingHyperTap();
+  }
 
   @override
   void onDragStart(DragStartEvent event) {
@@ -819,5 +833,6 @@ class MatchGameHud extends PositionComponent
   void onDragCancel(DragCancelEvent event) {
     super.onDragCancel(event);
     _resetDrag();
+    game.board.cancelPendingHyperTap();
   }
 }

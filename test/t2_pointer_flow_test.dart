@@ -2,6 +2,9 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stonematch/game/components/last_hurrah_badge.dart';
+import 'package:stonematch/game/components/speed_bonus_badge.dart';
+import 'package:stonematch/game/jewel_game_mode.dart';
 import 'package:stonematch/game/match_board_game.dart';
 import 'package:stonematch/game/components/match_board_renderer.dart';
 import 'package:stonematch/game/match_board_logic.dart';
@@ -38,10 +41,13 @@ void main() {
     GameSettings.bgmMuted = true;
   });
 
-  Future<MatchBoardGame> mount(WidgetTester tester) async {
+  Future<MatchBoardGame> mount(
+    WidgetTester tester, {
+    JewelGameMode gameMode = JewelGameMode.simple,
+  }) async {
     await tester.binding.setSurfaceSize(const Size(468, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    final game = MatchBoardGame();
+    final game = MatchBoardGame(gameMode: gameMode);
     await tester.runAsync(() async {
       await tester.pumpWidget(
         MaterialApp(
@@ -50,6 +56,8 @@ void main() {
             overlayBuilderMap: {
               'IntroBlock': (_, _) => const SizedBox.shrink(),
               'PauseMenu': (_, _) => const SizedBox.shrink(),
+              'TimeUp': (_, _) => const SizedBox.shrink(),
+              'NoMoves': (_, _) => const SizedBox.shrink(),
             },
           ),
         ),
@@ -150,6 +158,61 @@ void main() {
     game.board.update(0.09);
     expect(gem.x, gem.targetX);
     expect(gem.bumpT, lessThan(0));
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(milliseconds: 50));
+  });
+
+  // R-5: 하이퍼 대기는 누른 포인터를 뗄 때만 확정하고, 취소 이벤트에서 지운다.
+  testWidgets('pending hyper ignores other pointers and clears on cancel', (
+    tester,
+  ) async {
+    final game = await mount(tester);
+    fill(game.board);
+    game.board.setGem(3, 3, game.board.createGem(3, 3, 0, GemKind.hyper));
+    final origin =
+        game.board.cellToPixel(3, 3) +
+        Offset(game.board.tileSize / 2, game.board.tileSize / 2);
+    final outside = Offset(origin.dx, game.board.boardY - 2);
+
+    final hold = await tester.startGesture(origin, pointer: 1);
+    await tester.pump();
+    final other = await tester.startGesture(outside, pointer: 2);
+    await other.up();
+    await tester.pump();
+    expect(game.board.state, 'idle');
+    await hold.up();
+    await tester.pump();
+    expect(game.board.state, 'removing');
+
+    fill(game.board);
+    game.board.pendingRemovalSet = null;
+    game.board.setGem(3, 3, game.board.createGem(3, 3, 0, GemKind.hyper));
+    final cancelled = await tester.startGesture(origin, pointer: 3);
+    await tester.pump();
+    await cancelled.cancel();
+    await tester.pump();
+    expect(game.board.confirmPendingHyperTap(), isFalse);
+    expect(game.board.state, 'idle');
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(milliseconds: 50));
+  });
+
+  // R-9: LAST HURRAH와 SPEED 배지는 같은 기준선이라 마무리 시작 때 SPEED를 숨긴다.
+  testWidgets('Last Hurrah hides the speed bonus badge', (tester) async {
+    final game = await mount(tester, gameMode: JewelGameMode.timed);
+    fill(game.board);
+    game.board.setGem(2, 3, game.board.createGem(2, 3, 4, GemKind.bomb));
+    final speed = game.world.children.whereType<SpeedBonusBadge>().single;
+    final lastHurrah = game.world.children.whereType<LastHurrahBadge>().single;
+    speed.show(400);
+    expect(speed.visible, isTrue);
+
+    game.timeRemaining = 0.01;
+    game.update(0.02);
+
+    expect(game.lastHurrahActive, isTrue);
+    expect(lastHurrah.visible, isTrue);
+    expect(speed.visible, isFalse);
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(milliseconds: 50));
   });

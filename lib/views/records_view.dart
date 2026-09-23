@@ -86,12 +86,19 @@ class RecordsUpdateNotice extends StatelessWidget {
 }
 
 /// 누적 랭크, 모드별 최고 기록, 배지를 보여 주는 기록 화면.
-class RecordsView extends StatelessWidget {
+class RecordsView extends StatefulWidget {
   const RecordsView({super.key});
 
   @override
+  State<RecordsView> createState() => _RecordsViewState();
+}
+
+class _RecordsViewState extends State<RecordsView> {
+  // 손상값 초기화 저장이 build마다 돌지 않도록 한 번만 읽는다.
+  late final PlayerRecords records = RecordsStore.load();
+
+  @override
   Widget build(BuildContext context) {
-    final records = RecordsStore.load();
     final scaffold = Scaffold(
       appBar: AppBar(title: Text(context.tr('recordsTitle'))),
       body: SafeArea(

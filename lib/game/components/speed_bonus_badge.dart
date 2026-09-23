@@ -49,6 +49,14 @@ class SpeedBonusBadge extends PositionComponent
         .disableAnimations;
   }
 
+  bool get visible => _painter != null;
+
+  /// LAST HURRAH 표시와 같은 기준선이라 그때는 숨긴다.
+  void hide() {
+    _painter?.dispose();
+    _painter = null;
+  }
+
   @override
   void update(double dt) {
     if (_painter == null) return;
