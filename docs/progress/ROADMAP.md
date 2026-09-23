@@ -3,7 +3,7 @@
 > 프로젝트의 큰 Phase/Milestone만 기록한다. 상세 구현 계획은 `../plans/PLAN-xxx.md`로 분리한다. 현재 Task는 `PROJECT_STATUS.md`에서 관리한다.
 
 작성 기준일: 2026-08-23
-갱신: 2026-09-23 (Phase 5 게임 방향 개편 추가, 기존 Economy는 Phase 6으로 이동)
+갱신: 2026-09-24 (Supabase 원격 적용과 검수 반영)
 
 ## Phase 1 — Foundation
 - [x] Flutter+Flame 8×8 코어, 타이틀/게임/설정, 심플+타임, 웹 빌드
@@ -19,8 +19,8 @@
 ## Phase 4 — Release
 - [x] 스토어 문서 초안, 채널 define, 광고 정책, 앱인토스 테스트 빌드
 - [ ] 운영 광고 그룹, Apple ID, 개인정보/지원 URL, flavor/서명
-- [ ] 광고 일일 제한 서버 영속 (Supabase 코드 구현, 원격 적용 대기. PLAN-006)
-- [ ] Supabase 기반 구축: 랭킹 이전, 원격 설정, 이벤트 로그 (ADR-009, PLAN-006)
+- [ ] 광고 일일 제한 서버 영속 (Supabase 원격 적용과 검수 완료, 새 빌드 배포 대기. PLAN-006)
+- [ ] Supabase 기반 구축: 랭킹 이전, 원격 설정, 이벤트 로그 (원격 프로젝트 `stone-match` 적용과 검수 완료, NAS와 앱인토스 배포 대기. ADR-009, PLAN-006)
 
 ## Phase 5 — Gameplay Direction (제안: ADR-008 Proposed, PLAN-005 DRAFT)
 - [ ] 방향 승인과 미결정 사항 D1~D10 결정
@@ -31,5 +31,5 @@
 
 ## Phase 6 — Economy
 - [ ] 영속 인벤토리
-- [ ] 내부 이벤트 로깅 (2026-09-23 Supabase로 기본 이벤트 구현. 원격 적용 대기. PLAN-006)
+- [ ] 내부 이벤트 로깅 (Supabase 기본 이벤트 7종 원격 적재 확인. 배포 대기. PLAN-006)
 - [ ] 코인 경제(코인 1종, 랭킹 모드와 분리), 인앱 결제 (지표 후)

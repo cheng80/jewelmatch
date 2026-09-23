@@ -3,7 +3,7 @@
 ## Metadata
 - Plan ID: `PLAN-002`
 - Title: refill 3회를 세션 메모리에서 채널 사용자+서버 날짜로 이동
-- Status: `IN_PROGRESS` (2026-09-23 PLAN-006에서 Supabase 익명 사용자 기준으로 구현, 원격 적용 대기)
+- Status: `IN_PROGRESS` (PLAN-006에서 Supabase 익명 사용자 기준으로 구현하고 2026-09-24 원격 적용과 검수 완료. 새 빌드 배포 뒤 DONE 처리. 아래 체크리스트는 PLAN-006 Step 1~3으로 대체됨)
 - Related Requirement: `FR-010`, `BR-103`
 - Related ADR: `ADR-003`
 - Owner:
