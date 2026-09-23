@@ -29,6 +29,11 @@
 | `stage_continue` | level |
 | `ranking_submit` | mode, score, ok, ranked, rank, failure |
 | `ad_reward` | placement, result, granted, outcome(보충 광고의 지급 결과), level 또는 item |
+| `hyper_swap` | target_kind |
+| `speed_bonus_peak` | max_tier, total_bonus |
+| `last_hurrah` | specials_count, score_added |
+| `badge_earned` | badge, tier |
+| `rank_up` | rank |
 
 이름, 이메일, 전화번호, 위치, 연락처, 기기 광고 식별자는 수집하지 않는다. 앱인토스 사용자 식별자도 사용하지 않는다. 플레이어 이름은 이용자가 직접 입력하며 랭킹에서 다른 이용자에게 공개된다. 실명이나 개인정보를 입력하지 않도록 안내한다.
 
@@ -105,6 +110,11 @@
 | `stage_continue` | level |
 | `ranking_submit` | mode, score, ok, ranked, rank, failure |
 | `ad_reward` | placement, result, granted, outcome (refill grant result), level or item |
+| `hyper_swap` | target_kind |
+| `speed_bonus_peak` | max_tier, total_bonus |
+| `last_hurrah` | specials_count, score_added |
+| `badge_earned` | badge, tier |
+| `rank_up` | rank |
 
 We do not collect your real name, email, phone number, location, contacts, or device advertising ID. We do not use Apps in Toss user identifiers. The player name is typed by you and is visible to other players in the ranking. Do not enter your real name or personal information.
 

@@ -200,7 +200,8 @@ JS bridge stoneMatchLeaderboard.submitLevelScore(score)
 - `POST /rest/v1/game_events`, `Prefer: return=minimal`, 행 배열. 익명 로그인 필요, 조회 권한 없음
 - 행: `session_id`(uuid), `name`(`^[a-z][a-z0-9_]{0,39}$`), `params`(객체, 2KB 이하), `app_version`(32자 이하), `channel`(16자 이하), `client_ts`
 - 사용자당 1분 300건 초과는 `game_events_rate_limited`로 거절
-- 현재 이벤트: `session_start`(platform), `round_start`(mode), `round_end`(mode, reason, score, level?, duration_s?), `level_clear`(level, score, max_combo), `stage_continue`(level), `ranking_submit`(mode, score, ok, ranked?, rank?, failure?), `ad_reward`(placement, result, granted, outcome?, item?, level?). `outcome`은 보충 광고만 기록하며 `granted`, `adNotCompleted`, `limitReached`, `rejected` 중 하나다(`AdRewardPolicy.grantRefillVerified`의 `RefillGrantOutcome`)
+- 게임 흐름(PLAN-005): `SpeedBonus`(lib/game/speed_bonus.dart)는 `MatchBoardLogic.trySwap`에서 가산한다. `LastHurrah`(lib/game/last_hurrah.dart)가 마무리 발동 시점과 상한을 정하고 보드 해소는 기존 `MatchBoardLogic.update`를 쓴다. 시간 0은 `_triggerTimeUpImpl`, 판 종료 확정은 `_finalizeRound()`. 보드 `comboScoreMultiplier`는 마무리 동안만 `LastHurrah.useComboMultiplier`를 따른다. QA 상태 `lastHurrahActive`, QA 훅 `__jewelMatchDebugPlaceSpecial(kind, row, col)`(qaPerf 전용).
+- 현재 이벤트: `session_start`(platform), `round_start`(mode), `round_end`(mode, reason, score, level?, duration_s?), `level_clear`(level, score, max_combo), `stage_continue`(level), `ranking_submit`(mode, score, ok, ranked?, rank?, failure?), `ad_reward`(placement, result, granted, outcome?, item?, level?). `outcome`은 보충 광고만 기록하며 `granted`, `adNotCompleted`, `limitReached`, `rejected` 중 하나다(`AdRewardPolicy.grantRefillVerified`의 `RefillGrantOutcome`). PLAN-005 추가: `hyper_swap`(target_kind), `speed_bonus_peak`(max_tier, total_bonus), `last_hurrah`(specials_count, score_added), `badge_earned`(badge, tier), `rank_up`(rank). round_end의 reason에 `restart`(일시정지 다시 하기)가 추가된다
 
 ### 이전 NAS API (2026-09-24 폐기, 기록용)
 

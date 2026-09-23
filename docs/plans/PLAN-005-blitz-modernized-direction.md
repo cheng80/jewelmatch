@@ -77,12 +77,14 @@
 - [x] 문서: FR-005(적용 모드에 따라 FR-004), 새 BR, 02_UI_UX HUD 절
 
 #### 1c. Last Hurrah
-- [ ] TimeUp 흐름에 마무리 단계 추가: 입력 잠금, 남은 특수 보석을 위쪽 행부터 왼쪽에서 오른쪽 순서로 발동, `hyper`는 무작위 남은 색, 연쇄 완료 후 점수 확정
-- [ ] 시간 보상 없음. 점수 콤보 배수 적용 여부는 플레이테스트로 결정
-- [ ] 연출 길이 상한, reduced motion은 즉시 계산
-- [ ] 랭킹 제출을 마무리 완료 후로 이동. 일시정지 나가기 대기 규칙(BR-093)과 TimeUp 나가기 비대기 규칙 재정의
-- [ ] 테스트: `time_up_overlay_test`, 흐름 테스트에 마무리 단계, 제출 시점, reduced motion 케이스
-- [ ] 문서: ADR-007, BR-093, FR-005, 02_UI_UX TimeUp 절
+구현(2026-09-24, `a2d78d2`): `lib/game/last_hurrah.dart`, Flame 표시, 판 종료 확정 `_finalizeRound()`, `last_hurrah` 이벤트, QA 필드 `lastHurrahActive`. 6초 상한, reduced motion과 백그라운드 즉시 계산, 레벨 모드 비적용. 콤보 배수 적용은 `LastHurrah.useComboMultiplier`로 플레이테스트 뒤 확정.
+
+- [x] TimeUp 흐름에 마무리 단계 추가: 입력 잠금, 남은 특수 보석을 위쪽 행부터 왼쪽에서 오른쪽 순서로 발동, `hyper`는 무작위 남은 색, 연쇄 완료 후 점수 확정
+- [x] 시간 보상 없음. 점수 콤보 배수 적용 여부는 플레이테스트로 결정
+- [x] 연출 길이 상한, reduced motion은 즉시 계산
+- [x] 랭킹 제출을 마무리 완료 후로 이동. 일시정지 나가기 대기 규칙(BR-093)과 TimeUp 나가기 비대기 규칙 재정의
+- [x] 테스트: `time_up_overlay_test`, 흐름 테스트에 마무리 단계, 제출 시점, reduced motion 케이스
+- [x] 문서: ADR-007, BR-093, FR-005, 02_UI_UX TimeUp 절
 
 #### 1d. 시간 보상 T1
 - [ ] Step 2 플레이테스트 결과로 채택 여부(D7) 결정

@@ -100,7 +100,7 @@
 - BR-020: 생성 우선순위는 교차(star) > 6+(supernova) > 5(hyper) > 4(bomb)
 - BR-021: 특수 보석은 색 매치 토큰이 아니다
 - BR-022: 특수 보석 스왑 조합은 hyper 교환(H1, H2)만 활성. non-hyper 조합은 비활성
-- BR-023: H2 한 번과 이어지는 연쇄의 점수 합은 10000점, 시간 보상 합은 3초를 넘지 않는다(`MatchBoardLogic.hyperPairScoreCap`, `hyperPairTimeCapSeconds`). 하이퍼는 반환하지 않는다
+- BR-023: H2 한 번과 이어지는 연쇄의 점수 합은 10000점, 시간 보상 합은 3초를 넘지 않는다(`MatchBoardLogic.hyperPairScoreCap`, `hyperPairTimeCapSeconds`). H2 연쇄가 끝나기 전 안정 구역에서 둔 수도 같은 상한에 포함된다(상한은 보드가 멈출 때 풀린다). 하이퍼는 반환하지 않는다
 
 **실패 / 예외**
 - 보드 밖 좌표는 무시한다
@@ -269,7 +269,7 @@
 - BR-090: 동일 이름 여러 기록 허용(아케이드)
 - BR-091: score <= 0 이면 제출하지 않는다
 - BR-092: HUD 랭킹/top1은 타임 전용. 레벨 모드는 타이틀 목록만
-- BR-093: Pause 나가기는 제출 await. TimeUp 나가기는 진입 시 fire-and-forget 제출 후 대기 없이 타이틀
+- BR-093: Pause 나가기는 제출 await. TimeUp 나가기는 진입 시 fire-and-forget 제출 후 대기 없이 타이틀(타임 모드는 Last Hurrah가 끝난 뒤 TimeUp에 진입한다)
 - BR-094: 서버는 이름 1~20자, 점수 상한(레벨 10,000, 타임 1,000,000,000), 사용자당 분당 10건만 검증한다. 치트 방지 장치가 아니다
 
 **실패 / 예외**
@@ -2327,11 +2327,11 @@ Stone Match는 Bejeweled Blitz식 60초 점수 경쟁을 지금 방식으로 다
 
 ### 6-4. Last Hurrah (L1)
 
-- 동작 시작안 [위키 참고]: 제한 시간이 0이 되면 입력을 잠그고, 보드에 남은 특수 보석을 위쪽 행부터 왼쪽에서 오른쪽 순서로 하나씩 발동한다. `hyper`는 보드에 남은 무작위 색을 지운다. 연쇄 해소가 끝나면 최종 점수를 확정하고 TimeUp 결과와 랭킹 제출로 넘어간다.
-- 시간 보상은 주지 않는다. 점수는 BR-011을 적용하되 콤보 배수 적용 여부는 플레이테스트로 정한다(Blitz 후기 버전은 연쇄 배수를 제한했다).
-- 연출 길이 상한과 reduced motion 경로(즉시 계산 후 결과 표시)를 둔다.
+- 동작(2026-09-24 구현, PLAN-005 1c): 타임 모드에서 시간이 0이 되면 입력(보드, 힌트, 아이템, 일시정지)을 잠그고 남은 특수 보석을 위쪽 행부터 왼쪽에서 오른쪽 순서로 하나씩 발동한다. 한 발동의 연쇄가 끝날 때마다 다시 찾으므로 연쇄로 생긴 특수 보석도 발동한다(최대 64회). `hyper`는 보드에 남은 일반 보석 색 중 무작위 색을 지운다. 남은 특수 보석이 없으면 바로 TimeUp이다.
+- 시간 보상과 Speed Bonus는 없다. 점수는 BR-011과 기존 연쇄 콤보 배수를 따른다(`LastHurrah.useComboMultiplier`, 플레이테스트로 조정. Blitz 후기 버전은 연쇄 배수를 제한했다). 마무리 발동 점수는 기록의 최고 한 수에 넣지 않는다.
+- 전체 연출은 6초 상한(첫 발동 전 0.4초 포함)이고 넘으면 남은 발동을 즉시 계산한다. reduced motion과 백그라운드 전환은 연출 없이 즉시 계산한다.
 - 영향 계약: ADR-007과 BR-093의 "TimeUp 진입 시 제출", reduced motion의 1900ms 버튼 활성 계약. 제출은 Last Hurrah 완료 후로 옮겨야 한다.
-- 적용 모드: 타임 모드 우선. 레벨 모드에서 Last Hurrah로 목표를 넘기면 클리어로 인정할지는 D6.
+- 적용 모드(D6 확정): 타임 모드만. 레벨 모드는 기존과 같다.
 
 ### 6-5. 시간 보상 조정 (T1)
 
@@ -2361,8 +2361,8 @@ Stone Match는 Bejeweled Blitz식 60초 점수 경쟁을 지금 방식으로 다
   | annihilator | 소멸자 | 하이퍼끼리 교환(H2) 누적 | 1 | 5 | 20 | 100 |
 
 - 기록 화면: 모드별 최고 점수, 최고 한 수(유저 스왑 한 번의 최고 점수), 최장 연쇄, 누적 제거 보석, 종류별 특수 보석 누적.
-  최고 한 수는 입력 한 번부터 보드가 멈출 때까지 얻은 점수다. 특수 보석 누적에는 bomb, star, hyper, supernova만 센다(row, col은 생성되지 않는다).
-- 저장: 로컬 저장만 쓴다. 서버와 토스 사용자 식별(PLAN-002)이 필요 없다. 키 `player_records` 하나에 JSON으로 두고 `v` 필드로 형식 버전을 구분한다. 손상된 값은 빈 기록으로 초기화한다.
+  최고 한 수는 입력 한 번부터 보드가 멈출 때까지 보드에서 얻은 점수다. Speed Bonus 가산과 Last Hurrah 자동 발동 점수는 넣지 않는다. 특수 보석 누적에는 bomb, star, hyper, supernova만 센다(row, col은 생성되지 않는다).
+- 저장: 로컬 저장만 쓴다. 서버와 토스 사용자 식별(PLAN-002)이 필요 없다. 키 `player_records` 하나에 JSON으로 두고 `v` 필드로 형식 버전을 구분한다. 손상된 값은 빈 기록으로 초기화한다. 판은 시간 종료, 레벨 클리어와 실패, 일시정지 나가기, 일시정지 다시 하기에서 한 번 반영한다. 앱 종료, 탭 닫기, 브라우저 뒤로 가기로 강제로 끝낸 판은 반영하지 않는다.
 - 비밀 모드 해금은 가져오지 않는다. 대신 배지 달성 알림으로 목표를 보여 준다.
 
 ### 6-7. 타임 모드 경쟁 형식 (C1)
@@ -2426,7 +2426,8 @@ Stone Match는 Bejeweled Blitz식 60초 점수 경쟁을 지금 방식으로 다
 
 - 3.5차 내부 이벤트 로거를 먼저 만들고, 외부 SDK는 기존 "GA/Firebase 전환 기준"을 따른다.
 - 기존 필수 이벤트에 추가할 후보: `mode_start`(mode), `mode_end`(mode, score, duration, reason), `mode_retry`(mode), `hyper_swap`(target_kind), `speed_bonus_peak`(max_tier), `last_hurrah`(specials_count, score_added), `badge_earned`(badge, tier), `rank_up`(rank).
-- 연결 완료(2026-09-24): `hyper_swap`(target_kind), `speed_bonus_peak`(max_tier 0~9, total_bonus, 타임 모드 round_end 직전 1회), `badge_earned`(badge, tier), `rank_up`(rank).
+- 연결 완료(2026-09-24): `hyper_swap`(target_kind), `speed_bonus_peak`(max_tier 0~9, total_bonus, 타임 모드 round_end 직전 1회), `last_hurrah`(specials_count, score_added, 마무리가 실제로 돈 판만), `badge_earned`(badge, tier), `rank_up`(rank). round_end는 마무리 뒤 최종 점수로 한 번이며, 일시정지 다시 하기는 reason `restart`로 남는다.
+- 플레이테스트 확인 항목(검수 R-11): H2 뒤 판 전체 리필처럼 연쇄가 3.5초 넘게 이어지면 Speed Bonus 체인이 끊길 수 있다. BR-052 정의와는 맞으므로 체감을 보고 창 길이나 정지 조건을 조정한다.
 - 볼 질문: 모드별 시작 비율, 타임 모드 연속 판 수, 다음 날 재방문, 무한 모드 사용 비율과 배너 노출, 레벨 모드 실패 지점과 이어하기 사용률.
 
 ## 9. 미결정 사항 (NEEDS-DECISION)
