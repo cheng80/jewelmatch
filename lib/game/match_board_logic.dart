@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import 'daily_seed.dart';
+import 'gameplay_flags.dart';
 import 'item_kind.dart';
 import 'match_board_matching.dart';
 import 'match_board_models.dart';
@@ -10,6 +11,7 @@ import 'match_board_spawn_classifier.dart';
 import 'match_board_specials.dart';
 
 export 'daily_seed.dart' show DailySeed;
+export 'gameplay_flags.dart';
 export 'match_board_models.dart';
 
 part 'match_board_resolution.dart';
@@ -139,6 +141,9 @@ class MatchBoardLogic {
 
   /// 일일 보드 판의 날짜 키(YYYY-MM-DD). 무작위 보드 판이면 null.
   String? dailyKey;
+
+  /// 이 판에 적용한 실험 기능 스위치. 판 시작 때 [GameplayFlags.current]를 받아 판 도중에는 바꾸지 않는다.
+  GameplayFlags flags = const GameplayFlags();
 
   /// 일일 보드 판을 시작한다. 이후 보드 난수는 그 날 시드에서만 나온다.
   void startDailyBoard(String key) {

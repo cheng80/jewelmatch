@@ -391,6 +391,7 @@ class MatchBoardGame extends FlameGame {
       'mode': gameMode.name,
       if (isTimedMode)
         'daily_key': board.dailyKey ?? DailySeed.keyFor(DateTime.now()),
+      if (board.flags.tag.isNotEmpty) 'exp': board.flags.tag,
     });
   }
 
@@ -406,6 +407,7 @@ class MatchBoardGame extends FlameGame {
     EventLogger.instance.log('round_end', {
       'mode': gameMode.name,
       'reason': reason,
+      if (board.flags.tag.isNotEmpty) 'exp': board.flags.tag,
       'score': board.score,
       if (isProgressionMode) 'level': progressionLevel,
       if (startedAt != null)

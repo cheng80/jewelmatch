@@ -7,6 +7,10 @@ extension MatchBoardGameFlow on MatchBoardGame {
     bool pauseIntroUntilRelease = false,
     bool newRound = true,
   }) {
+    // 실험 기능 스위치는 새 판(첫 보드, 다시 하기, 다음 레벨)에서만 다시 읽는다.
+    if (newRound) {
+      board.flags = GameplayFlags.current;
+    }
     // 타임 모드는 판 시작 시각의 KST 날짜 시드를 쓴다. 판 도중 자정이 지나도 유지한다.
     if (newRound && isTimedMode) {
       final key = DailySeed.keyFor(DateTime.now());
