@@ -99,7 +99,7 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 | PLAN-005 Step 4, 5 analyze / test / wasm | PASS | RECHECKED | 2026-09-24 05:30 KST | `f2a26ae` | CURRENT | `flutter analyze lib test` 0건, 전체 392 tests PASS, `--wasm` 릴리즈 빌드 exit 0 |
 | PLAN-005 Step 4, 5 로컬 웹 + 실제 백엔드 | PASS | RECHECKED | 2026-09-24 05:40 KST | `f2a26ae` | CURRENT | `s10_plan005b.js` 20/20(두 사용자 같은 시작 보드, 같은 이동 4번 뒤 같은 보드와 점수, 지난주 기록 제외 순위, 레벨 전체 기간, 도전 스테이지 판정과 클리어, `daily_key`, `challenge` 이벤트). 회귀 `s8_plan005.js` 14/14, `s4_live.js` 26/26. HUD 스크린샷 확인 |
 | 주간 랭킹 SQL과 익명 사용자 정리 | PASS | RECHECKED | 2026-09-24 05:35 KST | 마이그레이션 4개 원격 적용 | CURRENT | PGlite 주간 27/27, 회귀 60/60, 강제 generic 계획에서 time 조회 주간 인덱스 버퍼 4. 익명 정리는 원격 트랜잭션 안에서 가짜 사용자 5명으로 확인 후 되돌림. advisor는 기존 익명 로그인 경고만 |
-| Android NAS PLAN-005 Step 4, 5 | PARTIAL | RECHECKED | 2026-09-24 05:50 KST | NAS `223303e` | CURRENT | 폰 시작 보드가 데스크톱과 같음, 20초 평균 89.3~89.6fps, p95 11.2ms, 주간 제출 200 1회, 도전 스테이지 상태 정상. 같은 탭 재로드 뒤 skwasm 멈춤(ISSUE-007, 기존 문제) 확인 |
+| Android NAS PLAN-005 Step 4, 5 | PARTIAL | RECHECKED | 2026-09-24 05:50 KST | NAS `223303e` | CURRENT | 폰 시작 보드가 데스크톱과 같음, 20초 평균 89.3~89.6fps, p95 11.2ms, 주간 제출 200 1회, 도전 스테이지 상태 정상. 같은 탭 재로드 뒤 skwasm 멈춤(ISSUE-007, 기존 문제) 확인. 최종 `2889d7e` 배포 뒤 새 Chrome에서 8/8(이번 회차 평균 76.3fps, p95 22.4ms로 앞선 89fps보다 낮아 발열이나 첫 로드 영향 가능성, 장시간 측정은 PLAN-001) |
 
 ## Next
 1. 사용자 플레이테스트: PLAN-005 하단 양식으로 기록하고 D7(시간 보상 T1)을 정한다. 구조 작업 중 코드로 남은 항목은 없다
