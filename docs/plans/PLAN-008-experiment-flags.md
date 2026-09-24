@@ -20,7 +20,7 @@
 | `time_gem` / `tg` | Time 보석: 10개 이상 지운 수 뒤 생김, 지우면 +5초, 최대 2개 | 타임 | 6-5 후속 T2, Lightning |
 | `multiplier_gem` / `mg` | Multiplier 보석: 12 + 4 × (m - 1)개 이상 지운 수 뒤 생김, 지우면 점수 배율 +1(최대 ×8) | 타임 | 2-3 Blitz Multiplier Gem |
 | `seventh_color_from_level` / `c7:N` | 레벨 N부터 보석 7색(시트의 흰 돌) | 레벨 | r/gamedesign 난이도 조절 |
-| `last_hurrah_combo_multiplier` / `nolhc` | Last Hurrah 점수에 연쇄 콤보 배수 적용 여부 | 타임 | 6-4 |
+| `last_hurrah_combo_multiplier` / `lhc` | Last Hurrah 자연 연쇄 단계 점수에 콤보 배수 적용 여부(2026-09-24 권장안으로 기본 꺼짐) | 타임 | 6-4 |
 
 - 스위치 기반: `lib/game/gameplay_flags.dart`(`c1e75a3` 이전 `6aaa88c`). 판 시작 때 `board.flags`로 고정되고, `round_start`와 `round_end`에 `exp` 표시가 남아 켠 판과 끈 판을 나눠 볼 수 있다.
 - 그림: Time 보석과 Multiplier 보석 배지는 imagegen 내장 도구로 기존 보석 시트를 스타일 참고 삼아 만들었다(`assets/images/sprites/Gem_Badges.png`, 원본 `assets/design/gem_badges/`). 숫자는 코드로 그린다. 7번째 색은 기존 시트의 쓰지 않던 흰 돌을 쓴다.
@@ -31,8 +31,8 @@
 
 ## 3. 스위치 쓰는 법
 - 원격(모든 빌드): Supabase 대시보드 Table Editor `app_config`의 `gameplay` 값 JSON을 고친다. 앱은 다음 실행이나 다음 판부터 반영한다.
-- 웹 URL(NAS 테스트): `?exp=`로 원격 값 위에 덮어쓴다. 예: `/match/?exp=all`, `?exp=none`, `?exp=t1,-tg`, `?exp=c7:6`, `?exp=nolhc`.
-- 코드 기본값은 모두 꺼짐(기존 동작)이다. 2026-09-24 원격 값은 NAS 테스트에서 바로 보이도록 모두 켰다(`t1`, `tg`, `mg`, `c7:10`, Last Hurrah 콤보 켬). 끈 상태와 비교하려면 `?exp=none`, 하나만 끄려면 `?exp=-tg`처럼 쓴다. URL로 바꾼 판은 랭킹에 올라가지 않는다.
+- 웹 URL(NAS 테스트): `?exp=`로 원격 값 위에 덮어쓴다. 예: `/match/?exp=all`, `?exp=none`, `?exp=t1,-tg`, `?exp=c7:6`, `?exp=lhc`, `?exp=-lhc`(`nolhc`도 끔).
+- 코드 기본값은 모두 꺼짐이다. Last Hurrah 콤보는 2026-09-24 권장안 적용 때 기본값을 켜짐에서 꺼짐으로 바꿨고, `exp` 표시도 끈 판의 `nolhc` 대신 켠 판의 `lhc`로 바뀌었다. 2026-09-24 원격 값은 NAS 테스트에서 바로 보이도록 모두 켰다(`t1`, `tg`, `mg`, `c7:10`, Last Hurrah 콤보 켬). 원격 행의 명시값이 코드 기본값보다 우선하므로 권장안 기본으로 보려면 원격 `last_hurrah_combo_multiplier`를 false로 바꾸거나 `?exp=-lhc`를 쓴다. 끈 상태와 비교하려면 `?exp=none`, 하나만 끄려면 `?exp=-tg`처럼 쓴다. URL로 바꾼 판은 랭킹에 올라가지 않는다.
 
 ## 4. 구현 계획
 - [x] 스위치 모델, 판 고정, 이벤트 표시, 7색 매핑과 팔레트, 배지 이미지(총괄)
@@ -48,4 +48,3 @@
 - 주간 타임 랭킹에 스위치가 다른 판이 섞인다. 출시 전 최종 값을 정하면 한 주를 새로 시작하면 된다(기록 삭제 불필요).
 - Multiplier 보석은 점수 규모를 크게 바꾼다. 서버 점수 상한(10억)은 충분하다.
 - 판단 기준은 PLAN-005 플레이테스트 양식과 `game_events`의 `exp` 표시다.
-

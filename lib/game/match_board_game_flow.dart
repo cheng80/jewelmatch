@@ -97,7 +97,7 @@ extension MatchBoardGameFlow on MatchBoardGame {
     timeUp = false;
     _lastHurrah = null;
     _lastHurrahBadge.hide();
-    board.comboScoreMultiplier = true;
+    board.endLastHurrahRules();
     activeTargetItem = null;
     board.score = 0;
     board.lastCombo = 0;

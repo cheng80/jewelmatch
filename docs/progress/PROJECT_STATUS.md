@@ -2,7 +2,7 @@
 
 > 프로젝트 전체의 NOW. 다음 작업자 인계 문장은 HANDOFF.md에 둔다. 구현 상태와 검증 상태를 섞지 않는다.
 
-Updated: 2026-09-24 11:00 KST
+Updated: 2026-09-24 11:35 KST
 
 ## Current Phase
 Phase 3 — Stabilization (Phase 4 출시 값은 대기)
@@ -42,6 +42,7 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 - [x] TASK-005f Step 5 레벨 도전 스테이지(`87f50ca`, BR-043)
 - [x] TASK-005g 독립 검수 R3(P0 0, P1 1, P2 1, P3 7) 반영(`f2a26ae`, `70cad69`), 비활성 익명 사용자 정리(`cef0acc`)
 - [x] TASK-008a 실험 스위치(T1, Time 보석, Multiplier 보석, 7색, Last Hurrah 콤보) 구현, 검수 R4 반영, 원격 적용
+- [x] TASK-008b Last Hurrah 권장안 규칙: 마무리 연쇄의 새 특수 보석 생성 금지, Multiplier 배율 동결, 자연 연쇄 20단계 상한, Last Hurrah 콤보 코드 기본값 꺼짐(원격 행은 아직 true, 변경하지 않음)
 - [x] TASK-009a 텍스처 아틀라스 통합: board_atlas, ui_atlas, ui_buttons_atlas(무손실 WebP), 쓰지 않던 레거시 시트 번들 제외(TECH_SPEC 3-1 텍스처 아틀라스)
 - [x] TASK-009b 웹 로딩 화면을 HTML, CSS로 교체(네이티브는 Flutter 로딩 유지), 웹 hot restart 뒤 BGM 중첩 수정, 이름 입력창이 키보드에 가려 취소와 시작을 누를 수 없던 문제 수정(Android Chrome 실기기 확인)
 - [ ] TASK-001g ISSUE-007 멀티스레드 skwasm 같은 탭 재로드 멈춤 대응
@@ -106,6 +107,7 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 | Android NAS PLAN-005 Step 4, 5 | PARTIAL | RECHECKED | 2026-09-24 05:50 KST | NAS `223303e` | CURRENT | 폰 시작 보드가 데스크톱과 같음, 20초 평균 89.3~89.6fps, p95 11.2ms, 주간 제출 200 1회, 도전 스테이지 상태 정상. 같은 탭 재로드 뒤 skwasm 멈춤(ISSUE-007, 기존 문제) 확인. 최종 `2889d7e` 배포 뒤 새 Chrome에서 8/8(이번 회차 평균 76.3fps, p95 22.4ms로 앞선 89fps보다 낮아 발열이나 첫 로드 영향 가능성, 장시간 측정은 PLAN-001) |
 | PLAN-008 실험 스위치 analyze / test / wasm | PASS | RECHECKED | 2026-09-24 08:00 KST | `4ed725e` | CURRENT | `flutter analyze lib test` 0건, 전체 431 tests PASS, `--wasm` 빌드 exit 0. 스위치 꺼짐은 8c703a6과 날짜 3개 × 120 입력에서 보드, 점수, 시간이 바이트 단위로 같음(검수 R4) |
 | PLAN-008 로컬 웹 + 실제 백엔드 | PASS | RECHECKED | 2026-09-24 08:05 KST | `4ed725e` | CURRENT | `s15_plan008.js` 13/13(원격 조회와 캐시, Time +5초, 배율 ×2, exp 이벤트, URL 판 랭킹 제외, exp=none 기존 동작, 레벨 7색, 타임 6색). 회귀 s10 20/20, s8 14/14, s14 7/7. 배지와 7색 스크린샷 확인 |
+| Last Hurrah 권장안 analyze / test | PASS | RECHECKED | 2026-09-24 11:30 KST | 이 문서를 포함한 Last Hurrah 권장안 커밋 | CURRENT | `flutter analyze lib test` 0건, 전체 441 tests PASS. 시드 보드 60판(bomb, hyper, star 배치) 비교: 마무리 중 새 특수 보석이 생긴 판 28 → 0, 추가 점수 최대 14,450 → 6,050(원격 현재값인 콤보 켬은 9,500). 저장소 루트 `flutter analyze`는 Git 제외 `tmp/` 옛 Dart 파일 247건이라 범위를 lib, test로 둔다. 웹 빌드와 실기기, NAS 배포는 미실행 |
 
 ## Next
 1. 사용자 플레이테스트: PLAN-005 하단 양식으로 기록하고 D7(시간 보상 T1)을 정한다. 구조 작업 중 코드로 남은 항목은 없다

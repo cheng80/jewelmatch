@@ -52,7 +52,8 @@ extension MatchBoardResolution on MatchBoardLogic {
       }
       score += lastRemovalScore;
       stats.recordMoveScore(lastRemovalScore);
-      if (multiplierGems > 0) {
+      // Last Hurrah 중 지운 Multiplier 보석은 보통 보석 점수만 얻고 배율은 올리지 않는다.
+      if (multiplierGems > 0 && !lastHurrahRules) {
         scoreMultiplier = min(
           MatchBoardLogic.maxScoreMultiplier,
           scoreMultiplier + multiplierGems,
@@ -173,6 +174,14 @@ extension MatchBoardResolution on MatchBoardLogic {
       _finishResolutionFlowImpl();
       return false;
     }
+    // Last Hurrah 자연 연쇄 상한. 다 쓰면 남은 매치는 해소하지 않고 멈춘다.
+    if (lastHurrahRules) {
+      if (lastHurrahCascadeBudget <= 0) {
+        _finishResolutionFlowImpl();
+        return false;
+      }
+      lastHurrahCascadeBudget--;
+    }
 
     combo++;
     lastCombo = combo;
@@ -184,7 +193,10 @@ extension MatchBoardResolution on MatchBoardLogic {
     stats.recordMatchGroups(matchData.groups.length);
 
     final mi = pendingMoveInfo;
-    final spawns = classifyMatchGroups(matchData, mi?.movedA, mi?.movedB);
+    // Last Hurrah 연쇄는 새 특수 보석을 만들지 않는다. 4개 이상 매치도 모두 지운다.
+    final spawns = lastHurrahRules
+        ? const <SpecialSpawn>[]
+        : classifyMatchGroups(matchData, mi?.movedA, mi?.movedB);
     var longest = 3;
     for (final group in matchData.groups) {
       longest = max(longest, group.length);

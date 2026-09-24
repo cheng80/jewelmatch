@@ -146,11 +146,11 @@ void main() {
           const GameplayFlags(timeGem: true).toJson(),
         ),
       });
-      url = '-tg,nolhc';
+      url = '-tg,lhc';
       GameplayConfigService.applyCached();
       expect(
         GameplayFlags.current,
-        const GameplayFlags(lastHurrahComboMultiplier: false),
+        const GameplayFlags(lastHurrahComboMultiplier: true),
       );
 
       await GameplayConfigService.refresh(
@@ -166,7 +166,7 @@ void main() {
         GameplayFlags.current,
         const GameplayFlags(
           multiplierGem: true,
-          lastHurrahComboMultiplier: false,
+          lastHurrahComboMultiplier: true,
         ),
       );
       expect(

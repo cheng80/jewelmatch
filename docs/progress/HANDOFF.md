@@ -2,9 +2,11 @@
 
 > 다음 작업자가 즉시 시작할 정보만 둔다. 프로젝트 전체 상태는 PROJECT_STATUS.md에 둔다.
 
-Updated: 2026-09-24 08:10 KST
+Updated: 2026-09-24 11:35 KST
 
 ## Current State
+2026-09-24 11:35: Last Hurrah를 권장안 규칙으로 정리했다(Product Spec 6-4). 첫 자동 발동부터 보드에 마무리 규칙을 걸어 연쇄가 새 특수 보석을 만들지 않고, Multiplier 배율은 오르지 않으며, 자연 연쇄는 20단계까지만 해소한다. 시간 0 순간 진행 중이던 마지막 수는 기존 규칙으로 끝낸다. `last_hurrah_combo_multiplier` 코드 기본값은 꺼짐(`exp` 표시는 켰을 때 `lhc`)으로 바꿨지만 원격 `app_config.gameplay`에는 아직 `true`가 있어 원격 설정을 받는 빌드는 콤보 켬으로 돈다. 권장안 기본으로 보려면 원격 값을 false로 바꾸거나 웹에서 `?exp=-lhc`. 원격 값 변경, push, NAS 배포는 하지 않았다. 점수 분포 탐침은 `tmp/last-hurrah-policy/probe_test.dart`(Git 제외, `flutter test tmp/last-hurrah-policy/probe_test.dart`).
+
 2026-09-24 08:10: PLAN-008 실험 스위치(T1, Time 보석, Multiplier 보석, 레벨 7색, Last Hurrah 콤보)를 main에 넣고 원격 `app_config.gameplay`를 모두 켰다. 끄려면 대시보드에서 값을 바꾸거나 웹에서 `?exp=none`. URL 실험 판은 랭킹에 올리지 않는다. 검증 스크립트 `tmp/local-verify/s15_plan008.js`.
 
 2026-09-24 05:55: PLAN-005 Step 4(일일 동일 보드, 주간 순위, PLAN-007)와 Step 5(도전 스테이지)를 main `223303e`에 반영하고 NAS에 배포했다. Supabase 마이그레이션 3개(주간 랭킹, 조회 계획 보강, 익명 사용자 정리)를 원격에 적용했다. 워커와 워크트리는 정리했다. 이어서 아이템과 이어하기 이벤트도 연결했다. 남은 것은 D7 플레이테스트와 ISSUE-007(멀티스레드 skwasm 같은 탭 재로드 멈춤, 기존 문제)이다. 폰 검증 스크립트는 `tmp/local-verify/s11_android_p5b.js`, A/B는 `s12_ab.js`, `s13_fps.js`.

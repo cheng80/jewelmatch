@@ -6,15 +6,15 @@ import 'match_board_specials.dart';
 /// Last Hurrah(Product Spec 6-4, PLAN-005 1c, ADR-007 개정).
 ///
 /// 타임 모드에서 시간이 0이 된 뒤 보드에 남은 특수 보석을 위쪽 행부터 왼쪽에서
-/// 오른쪽 순서로 하나씩 발동한다. 한 발동의 연쇄 해소가 끝나면 다음 것을 다시 찾으므로
-/// 연쇄로 새로 생긴 특수 보석도 발동한다. 보드 해소 단계는 [MatchBoardLogic.update]가
-/// 진행하고, 이 클래스는 다음 발동 시점과 연출 상한만 정한다.
+/// 오른쪽 순서로 하나씩 발동한다. 폭발 범위에 든 다른 특수 보석은 같은 발동에서 함께 터진다.
+/// 첫 자동 발동부터 보드에 [MatchBoardLogic.beginLastHurrahRules]를 걸어 연쇄가 새 특수
+/// 보석을 만들지 않고 배율도 오르지 않게 하므로, 다시 찾는 대상은 시작할 때 있던 특수 보석뿐이다.
+/// 시간 0 순간 진행 중이던 유저의 마지막 수는 기존 규칙대로 끝까지 해소한다.
+/// 보드 해소 단계는 [MatchBoardLogic.update]가 진행하고, 이 클래스는 다음 발동 시점과 상한만 정한다.
 class LastHurrah {
   LastHurrah(this.board, {Random? random})
     : _random = random ?? Random(),
-      scoreBefore = board.score {
-    board.comboScoreMultiplier = board.flags.lastHurrahComboMultiplier;
-  }
+      scoreBefore = board.score;
 
   /// 전체 마무리 연출 상한(초). 넘으면 남은 발동을 즉시 계산으로 끝낸다.
   static const double maxSeconds = 6;
@@ -22,8 +22,11 @@ class LastHurrah {
   /// 첫 발동 전에 LAST HURRAH 표시를 읽을 시간(초). [maxSeconds]에 포함된다.
   static const double startDelaySeconds = 0.4;
 
-  /// 연쇄로 특수 보석이 계속 생겨도 끝나도록 둔 발동 상한.
+  /// 자동 발동 상한. 새 특수 보석이 생기지 않아 보통은 시작할 때의 특수 보석 수에서 끝난다.
   static const int maxActivations = 64;
+
+  /// Last Hurrah 전체에서 해소하는 자연 연쇄 단계 상한. 넘으면 남은 매치는 두고 점수에 넣지 않는다.
+  static const int maxCascadeSteps = 20;
 
   /// 즉시 계산에서 보드 해소 단계를 진행하는 상한. 멈춘 상태에서 무한 반복을 막는다.
   static const int _maxInstantSteps = 10000;
@@ -129,6 +132,10 @@ class LastHurrah {
       board.stats
         ..finishMove()
         ..trackMoves = false;
+      board.beginLastHurrahRules(
+        comboMultiplier: board.flags.lastHurrahComboMultiplier,
+        cascadeSteps: maxCascadeSteps,
+      );
     }
     board.selected = null;
     board.resolveSpecialSwap(
@@ -151,7 +158,7 @@ class LastHurrah {
 
   void _finish() {
     done = true;
-    board.comboScoreMultiplier = true;
+    board.endLastHurrahRules();
     board.stats.trackMoves = true;
   }
 }

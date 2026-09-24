@@ -50,30 +50,103 @@ void main() {
       expect(board.getGem(2, 6)!.kind, GemKind.bomb);
     });
 
-    test('rescans after each chain, so newly born specials fire too', () {
+    test('specials hit by a blast chain in the same activation', () {
       final board = _board();
-      _putSpecial(board, 5, 5, GemKind.bomb);
+      _putSpecial(board, 2, 3, GemKind.bomb);
+      _putSpecial(board, 2, 4, GemKind.star); // bomb 범위 안
+      _putSpecial(board, 6, 1, GemKind.hyper); // 두 범위 밖
       final run = LastHurrah(board, random: Random(1));
-      var injected = false;
-      for (var frame = 0; frame < 600 && !run.done; frame++) {
+      for (var frame = 0; frame < 60 * 8 && !run.done; frame++) {
         board.update(1 / 60);
-        if (!injected && run.activations == 1 && board.state == 'idle') {
-          // 연쇄 해소가 끝난 뒤 새로 생긴 특수 보석을 흉내 낸다.
-          _putSpecial(board, 0, 0, GemKind.star);
-          injected = true;
-          run.update(1 / 60);
-          expect(run.activations, 2);
-          expect(board.pendingRemovalSet, contains('0:0'));
-          continue;
-        }
         run.update(1 / 60);
       }
 
-      expect(injected, isTrue);
       expect(run.done, isTrue);
+      expect(run.activations, 2);
+      expect(board.stats.specialGemsActivated, 3);
+      expect(board.stats.specialGemsCreated, 0);
       expect(LastHurrah.hasSpecial(board), isFalse);
       expect(run.scoreAdded, greaterThan(0));
     });
+
+    // 권장안 회귀: 기존 규칙에서는 이 보드들 중 여럿이 마무리 연쇄로 새 특수 보석을 만들어 다시 발동했다.
+    test('finale never creates or fires new specials, and m stays', () {
+      for (var day = 1; day <= 20; day++) {
+        final board = MatchBoardLogic(rows: 8, cols: 8)
+          ..startDailyBoard('2026-08-${day.toString().padLeft(2, '0')}')
+          ..generateFreshBoard(withIntroFill: false)
+          ..scoreMultiplier = 3;
+        _putSpecial(board, 1, 2, GemKind.bomb);
+        _putSpecial(board, 4, 5, GemKind.hyper);
+        _putSpecial(board, 6, 1, GemKind.star);
+        board.getGem(7, 7)!.bonus = GemBonus.multiplier;
+
+        final run = LastHurrah(board, random: Random(day))..finishInstantly();
+
+        expect(board.stats.specialGemsCreated, 0, reason: 'day $day');
+        expect(run.activations, lessThanOrEqualTo(3), reason: 'day $day');
+        expect(board.stats.specialGemsActivated, 3, reason: 'day $day');
+        expect(board.scoreMultiplier, 3, reason: 'day $day');
+        expect(LastHurrah.hasSpecial(board), isFalse, reason: 'day $day');
+        expect(board.lastHurrahRules, isFalse, reason: 'day $day');
+      }
+    });
+
+    test('Last Hurrah cascades clear 4+ matches without making specials', () {
+      MatchBoardLogic fourInRow() {
+        final board = _board();
+        for (var col = 0; col < 4; col++) {
+          board.setGem(7, col, board.createGem(7, col, 2, GemKind.normal));
+        }
+        return board;
+      }
+
+      final normal = fourInRow();
+      expect(normal.beginNextResolutionCycle(), isTrue);
+      expect(normal.stats.specialGemsCreated, 1);
+
+      final finale = fourInRow()
+        ..beginLastHurrahRules(comboMultiplier: false, cascadeSteps: 1);
+      expect(finale.beginNextResolutionCycle(), isTrue);
+      expect(finale.stats.specialGemsCreated, 0);
+      expect(
+        finale.pendingRemovalSet!.keys,
+        containsAll(['7:0', '7:1', '7:2', '7:3']),
+      );
+      expect(finale.lastHurrahCascadeBudget, 0);
+
+      // 연쇄 상한을 다 쓰면 남은 매치는 해소하지 않고 멈춘다.
+      final capped = fourInRow()
+        ..beginLastHurrahRules(comboMultiplier: false, cascadeSteps: 0);
+      expect(capped.beginNextResolutionCycle(), isFalse);
+      expect(capped.state, 'idle');
+      expect(capped.score, 0);
+      expect(capped.getGem(7, 0)!.color, 2);
+    });
+
+    test(
+      'Multiplier gems cleared in Last Hurrah score at m without raising it',
+      () {
+        MatchBoardLogic withMultiplier() {
+          final board = _board()
+            ..scoreMultiplier = 2
+            ..combo = 1;
+          board.getGem(7, 0)!.bonus = GemBonus.multiplier;
+          return board;
+        }
+
+        const cells = {'7:0': true, '7:1': true, '7:2': true};
+        final normal = withMultiplier()..removeMarkedGems(cells);
+        expect(normal.scoreMultiplier, 3);
+
+        final finale = withMultiplier()
+          ..beginLastHurrahRules(comboMultiplier: false, cascadeSteps: 20)
+          ..removeMarkedGems(cells);
+        expect(finale.lastRemovalScore, 200);
+        expect(finale.scoreMultiplier, 2);
+        expect(finale.stats.maxMultiplier, 1);
+      },
+    );
 
     test('cap reached finishes the rest instantly', () {
       final board = _board();
@@ -135,7 +208,7 @@ void main() {
       expect(colors, contains(a));
     });
 
-    test('combo multiplier is one switch, restored after finish', () {
+    test('combo switch applies from the first activation, restored after', () {
       final board = _board();
       board.combo = 3;
       board.removeMarkedGems({'7:0': true, '7:1': true, '7:2': true});
@@ -145,20 +218,29 @@ void main() {
       board.removeMarkedGems({'6:0': true, '6:1': true, '6:2': true});
       expect(board.lastRemovalScore, 100);
 
+      // 기본(권장안)은 꺼짐. 시간 0 순간 진행 중이던 유저 연쇄는 첫 발동 전까지 보통 규칙이다.
       final fresh = _board();
       _putSpecial(fresh, 2, 2, GemKind.bomb);
       final run = LastHurrah(fresh);
       expect(fresh.comboScoreMultiplier, isTrue);
+      expect(fresh.lastHurrahRules, isFalse);
+      run.update(LastHurrah.startDelaySeconds);
+      expect(run.activations, 1);
+      expect(fresh.comboScoreMultiplier, isFalse);
+      expect(fresh.lastHurrahRules, isTrue);
       run.finishInstantly();
       expect(fresh.comboScoreMultiplier, isTrue);
+      expect(fresh.lastHurrahRules, isFalse);
 
-      final off = _board()
-        ..flags = const GameplayFlags(lastHurrahComboMultiplier: false);
-      _putSpecial(off, 2, 2, GemKind.bomb);
-      final offRun = LastHurrah(off);
-      expect(off.comboScoreMultiplier, isFalse);
-      offRun.finishInstantly();
-      expect(off.comboScoreMultiplier, isTrue);
+      final on = _board()
+        ..flags = const GameplayFlags(lastHurrahComboMultiplier: true);
+      _putSpecial(on, 2, 2, GemKind.bomb);
+      final onRun = LastHurrah(on)..update(LastHurrah.startDelaySeconds);
+      expect(on.comboScoreMultiplier, isTrue);
+      expect(on.lastHurrahRules, isTrue);
+      onRun.finishInstantly();
+      expect(on.comboScoreMultiplier, isTrue);
+      expect(on.lastHurrahRules, isFalse);
     });
   });
 
@@ -303,12 +385,15 @@ void main() {
       game.timeRemaining = 0.01;
       game.update(0.02);
       expect(game.lastHurrahActive, isTrue);
+      game.update(LastHurrah.startDelaySeconds);
+      expect(game.board.lastHurrahRules, isTrue);
 
       game.restartRound();
 
       expect(game.lastHurrahActive, isFalse);
       expect(game.timeUp, isFalse);
       expect(game.board.comboScoreMultiplier, isTrue);
+      expect(game.board.lastHurrahRules, isFalse);
     });
   });
 }

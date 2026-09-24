@@ -1,14 +1,14 @@
 /// 실험 기능 스위치. 나중에 플레이 판단으로 켜고 끄기 위해 원격 설정과 URL로 바꿀 수 있다.
 ///
-/// 기본값은 모두 기존 동작이다. 판마다 판 시작 때 [current]를 한 번 읽어 판 도중에는 바뀌지 않는다.
-/// 원격 키는 Supabase `app_config`의 `gameplay`, 웹 URL은 `?exp=`(예: `?exp=t1,tg,mg,c7:10,nolhc`, `?exp=none`).
+/// 기본값은 모두 꺼짐이다. 판마다 판 시작 때 [current]를 한 번 읽어 판 도중에는 바뀌지 않는다.
+/// 원격 키는 Supabase `app_config`의 `gameplay`, 웹 URL은 `?exp=`(예: `?exp=t1,tg,mg,c7:10,lhc`, `?exp=none`).
 class GameplayFlags {
   const GameplayFlags({
     this.timeRewardT1 = false,
     this.timeGem = false,
     this.multiplierGem = false,
     this.seventhColorFromLevel,
-    this.lastHurrahComboMultiplier = true,
+    this.lastHurrahComboMultiplier = false,
   });
 
   /// T1(D7): 타임 모드에서 3개 매치 단독 단계는 시간 보상 0초. 4개 이상, 특수 보석 생성이나 발동, 콤보 2 이상 단계만 시간을 준다.
@@ -23,7 +23,8 @@ class GameplayFlags {
   /// 레벨 모드에서 이 레벨부터 보석 색이 7개. null이면 항상 6색.
   final int? seventhColorFromLevel;
 
-  /// Last Hurrah 자동 발동 점수에 연쇄 콤보 배수를 적용할지.
+  /// 라스트 허레이 콤보: Last Hurrah 자연 연쇄 단계 점수에 연쇄 콤보 배수(BR-011)를 곱할지.
+  /// 2026-09-24 권장안으로 기본 꺼짐. 켜도 새 특수 보석 생성 금지, 배율 동결, 연쇄 상한은 그대로다.
   final bool lastHurrahComboMultiplier;
 
   /// 새 판의 보석 색 수. 레벨 모드에서 [seventhColorFromLevel] 이상이면 7, 그 밖(타임, 무한 모드 포함)은 6.
@@ -57,7 +58,7 @@ class GameplayFlags {
       timeGem: flag('time_gem', false),
       multiplierGem: flag('multiplier_gem', false),
       seventhColorFromLevel: level != null && level >= 1 ? level : null,
-      lastHurrahComboMultiplier: flag('last_hurrah_combo_multiplier', true),
+      lastHurrahComboMultiplier: flag('last_hurrah_combo_multiplier', false),
     );
   }
 
@@ -91,12 +92,13 @@ class GameplayFlags {
           tg = false;
           mg = false;
           c7 = null;
-          lhc = true;
+          lhc = false;
         case 'all':
           t1 = true;
           tg = true;
           mg = true;
           c7 = 10;
+          lhc = true;
         case 't1':
           t1 = !off;
         case 'tg':
@@ -136,7 +138,7 @@ class GameplayFlags {
       if (timeGem) 'tg',
       if (multiplierGem) 'mg',
       if (seventhColorFromLevel != null) 'c7:$seventhColorFromLevel',
-      if (!lastHurrahComboMultiplier) 'nolhc',
+      if (lastHurrahComboMultiplier) 'lhc',
     ];
     return parts.join(',');
   }

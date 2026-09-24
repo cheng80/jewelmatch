@@ -80,8 +80,30 @@ class MatchBoardLogic {
   MatchJuicePattern removalJuicePattern = MatchJuicePattern.normal;
   void Function(List<SpecialSpawn> spawns)? onSpecialsBorn;
 
-  /// 제거 점수에 콤보 배수(BR-011)를 곱할지. Last Hurrah가 플레이테스트 설정으로 바꾼다.
+  /// 제거 점수에 콤보 배수(BR-011)를 곱할지. Last Hurrah 자동 발동 동안은 `라스트 허레이 콤보` 스위치를 따른다.
   bool comboScoreMultiplier = true;
+
+  /// Last Hurrah 자동 발동 규칙(Product Spec 6-4). 켜져 있으면 연쇄 매치가 새 특수 보석을 만들지 않고,
+  /// Multiplier 보석을 지워도 배율 m이 오르지 않으며, 자연 연쇄는 [lastHurrahCascadeBudget] 단계까지만 해소한다.
+  bool lastHurrahRules = false;
+
+  /// Last Hurrah 동안 더 해소할 수 있는 자연 연쇄 단계 수. 0이면 남은 매치는 두고 멈춘다.
+  int lastHurrahCascadeBudget = 0;
+
+  void beginLastHurrahRules({
+    required bool comboMultiplier,
+    required int cascadeSteps,
+  }) {
+    lastHurrahRules = true;
+    lastHurrahCascadeBudget = cascadeSteps;
+    comboScoreMultiplier = comboMultiplier;
+  }
+
+  void endLastHurrahRules() {
+    lastHurrahRules = false;
+    lastHurrahCascadeBudget = 0;
+    comboScoreMultiplier = true;
+  }
 
   /// 하이퍼 교환 성공 알림. [targetKind]는 하이퍼와 바꾼 보석 종류다.
   void Function(GemKind targetKind)? onHyperSwap;
