@@ -17,6 +17,7 @@ import 'services/gameplay_config_service.dart';
 import 'services/in_app_review_service.dart';
 import 'services/wakelock_service.dart';
 import 'utils/storage_helper.dart';
+import 'utils/web_loading.dart';
 
 /// 앱 진입점.
 /// main()은 초기화와 실행만 담당하고, 앱 설정(테마, 라우팅)은 App 위젯에 위임한다.
@@ -55,6 +56,12 @@ void main() async {
         saveLocale: true,
         child: const App(),
       ),
+    ),
+  );
+  // 웹 HTML 로딩 화면: 붙잡은 화면(타이틀 준비, 게임 첫 보드)이 없으면 첫 프레임 뒤 걷는다.
+  unawaited(
+    WidgetsBinding.instance.waitUntilFirstFrameRasterized.then(
+      (_) => WebLoadingScreen.markFirstFrame(),
     ),
   );
 }

@@ -132,6 +132,96 @@
   
   
   <script src="stone_match_sfx.js"></script>
+  <!-- 웹 로딩 화면. Flutter 첫 화면 빌드 중 메인 스레드가 막혀도 움직이도록 transform과 opacity만
+       쓰는 CSS 애니메이션으로 그린다. Dart가 stoneMatchLoading.hide()로 걷어낸다(lib/utils/web_loading*.dart).
+       flutter_native_splash:create를 다시 돌리면 이 파일이 바뀌므로 이 블록이 남았는지 확인한다. -->
+  <style id="sm-loading-style">
+    #sm-loading {
+      position: fixed; inset: 0; z-index: 2147483000;
+      display: flex; align-items: center; justify-content: center;
+      background: #040A18; opacity: 1; transition: opacity 220ms ease-in;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+      -webkit-user-select: none; user-select: none; touch-action: none;
+    }
+    #sm-loading.sm-hidden { opacity: 0; pointer-events: none; }
+    #sm-loading .sm-panel {
+      --accent: #2A8E87;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 28px 34px; border-radius: 34px;
+      background: rgba(17, 19, 24, 0.9);
+      border: 2.5px solid var(--accent);
+      box-shadow: 0 0 24px 1px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+    #sm-loading[data-accent="gold"] .sm-panel { --accent: #C98A32; }
+    #sm-loading .sm-gems { display: flex; gap: 10px; }
+    #sm-loading .sm-gems img {
+      width: 46px; height: 46px; will-change: transform, opacity;
+      animation: sm-gem 1.2s ease-in-out infinite;
+    }
+    #sm-loading .sm-gems img:nth-child(2) { animation-delay: -0.8s; }
+    #sm-loading .sm-gems img:nth-child(3) { animation-delay: -0.4s; }
+    #sm-loading .sm-spinner {
+      width: 34px; height: 34px; margin-top: 18px; box-sizing: border-box;
+      border-radius: 50%; border: 3px solid color-mix(in srgb, var(--accent) 25%, transparent);
+      border-top-color: var(--accent); will-change: transform;
+      animation: sm-spin 0.9s linear infinite;
+    }
+    #sm-loading .sm-text {
+      margin-top: 16px; color: rgba(240, 228, 200, 0.9);
+      font-size: 16px; font-weight: 700; letter-spacing: 0;
+    }
+    @keyframes sm-gem {
+      0%, 100% { transform: scale(0.96); opacity: 0.5; }
+      50% { transform: scale(1.08); opacity: 1; }
+    }
+    @keyframes sm-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      #sm-loading .sm-gems img, #sm-loading .sm-spinner { animation: none; }
+      #sm-loading { transition: none; }
+    }
+  </style>
+  <div id="sm-loading" role="status" aria-live="polite">
+    <div class="sm-panel">
+      <div class="sm-gems" aria-hidden="true">
+        <img src="loading/gem_0.webp" alt="" width="46" height="46">
+        <img src="loading/gem_3.webp" alt="" width="46" height="46">
+        <img src="loading/gem_6.webp" alt="" width="46" height="46">
+      </div>
+      <div class="sm-spinner" aria-hidden="true"></div>
+      <div class="sm-text" id="sm-loading-text">불러오는 중...</div>
+    </div>
+  </div>
+  <script id="sm-loading-script">
+    (() => {
+      const el = document.getElementById('sm-loading');
+      const text = document.getElementById('sm-loading-text');
+      const lang = (navigator.language || 'ko').toLowerCase();
+      text.textContent = lang.startsWith('ko') ? '불러오는 중...'
+        : lang.startsWith('ja') ? '読み込み中...'
+        : lang.startsWith('zh') ? '加载中...'
+        : 'Loading...';
+      if (/[?&]mode=timed/.test(location.search)) el.dataset.accent = 'gold';
+      let hideTimer = 0;
+      let touched = false;
+      const show = (accent) => {
+        touched = true;
+        clearTimeout(hideTimer);
+        el.dataset.accent = accent === 'gold' ? 'gold' : 'teal';
+        el.style.display = 'flex';
+        void el.offsetWidth;
+        el.classList.remove('sm-hidden');
+      };
+      const hide = () => {
+        touched = true;
+        el.classList.add('sm-hidden');
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => { el.style.display = 'none'; }, 260);
+      };
+      window.stoneMatchLoading = Object.freeze({ show, hide });
+      // 안전장치: 앱이 20초 안에 한 번도 부르지 않으면 스스로 걷어 화면을 막지 않는다.
+      setTimeout(() => { if (!touched) hide(); }, 20000);
+    })();
+  </script>
   <script src="flutter_bootstrap.js" async=""></script>
 
 

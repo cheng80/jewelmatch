@@ -30,6 +30,7 @@ import 'overlays/game_loading_overlay.dart';
 import 'overlays/game_stats_overlay.dart';
 import 'overlays/ranking_overlay.dart';
 import 'overlays/stage_inventory_overlay.dart';
+import '../utils/web_loading.dart';
 
 const bool _qaPerfAutorun = bool.fromEnvironment('QA_PERF_AUTORUN');
 
@@ -74,6 +75,15 @@ class _GameViewState extends State<GameView> {
 
   bool _gameMounted = false;
   bool _loadingVisible = true;
+  bool _webLoadingHeld = false;
+
+  /// 웹 HTML 로딩 화면을 놓는다. 보석 인트로가 시작되기 직전 한 번.
+  void _releaseWebLoading() {
+    if (!_webLoadingHeld) return;
+    _webLoadingHeld = false;
+    WebLoadingScreen.release();
+  }
+
   bool _qaVfxPreviewScheduled = false;
   bool _qaLevelUpPreviewScheduled = false;
   bool _qaNoMovesPreviewScheduled = false;
@@ -91,6 +101,9 @@ class _GameViewState extends State<GameView> {
   @override
   void initState() {
     super.initState();
+    // 웹은 HTML 로딩 화면이 첫 보드가 준비될 때까지 덮는다(메인 스레드가 막혀도 움직인다).
+    WebLoadingScreen.hold(timed: widget.gameMode == JewelGameMode.timed);
+    _webLoadingHeld = WebLoadingScreen.replacesFlutterOverlay;
     _ownsAdService = widget.adService == null;
     _adService = widget.adService ?? createAdService();
     _adRewardPolicy =
@@ -112,6 +125,7 @@ class _GameViewState extends State<GameView> {
 
   @override
   void dispose() {
+    _releaseWebLoading();
     _qaPerfTimer?.cancel();
     _adService.hideBanner();
     if (_ownsAdService) _adService.dispose();
@@ -174,6 +188,7 @@ class _GameViewState extends State<GameView> {
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
     setState(() => _loadingVisible = false);
+    _releaseWebLoading();
     _syncBanner();
     await Future<void>.delayed(_loadingFadeDuration);
     await WidgetsBinding.instance.endOfFrame;

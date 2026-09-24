@@ -23,6 +23,7 @@ import 'title/title_icon_button.dart';
 import 'title/player_name_dialog.dart';
 import 'title/title_round_button.dart';
 import 'title/title_version_footer.dart';
+import '../utils/web_loading.dart';
 
 String _gameRoute(String mode) {
   final params = <String>[
@@ -72,14 +73,27 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
   }
 
   Future<void> _prepareTitleSurface() async {
+    WebLoadingScreen.hold();
+    _webLoadingHeld = WebLoadingScreen.replacesFlutterOverlay;
     await WidgetsBinding.instance.endOfFrame;
-    if (!mounted) return;
+    if (!mounted) return _releaseWebLoading();
     await Future.wait([
       precacheImage(const AssetImage(AssetPaths.stoneMatchTitle), context),
       TextureAtlas.precacheUi(),
     ]);
-    if (!mounted) return;
+    if (!mounted) return _releaseWebLoading();
     setState(() => _ready = true);
+    // 타이틀이 한 프레임 그려진 뒤 HTML 로딩 화면을 걷어 빈 화면이 비치지 않게 한다.
+    await WidgetsBinding.instance.endOfFrame;
+    _releaseWebLoading();
+  }
+
+  bool _webLoadingHeld = false;
+
+  void _releaseWebLoading() {
+    if (!_webLoadingHeld) return;
+    _webLoadingHeld = false;
+    WebLoadingScreen.release();
   }
 
   Future<void> _cachePackageInfo() async {
@@ -92,6 +106,7 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _releaseWebLoading();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

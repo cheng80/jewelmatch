@@ -447,6 +447,14 @@ GameView.build()
 - 측정(테스트 캔버스 스파이, 같은 장면): 보드 장면 이미지 그리기 7회에서 5회, 텍스처 6장에서 3장. HUD 텍스처는 타임 6장에서 2장, 레벨 11장에서 3장, 텍스처 전환은 10에서 3, 18에서 7. HUD 그리기 호출 수는 타임 11회 그대로, 레벨 24회에서 32회(나인패치 조각). 이미지 번들은 4.50MB에서 약 4.5MB로 비슷하다(팔레트 PNG를 합치면 팔레트를 쓸 수 없어 WebP로 저장).
 - 작업 전 빌드와 스크린샷 비교: 타이틀 최대 차이 1, 타임 모드 HUD 최대 1, 보드는 무작위 반짝임과 FPS 표시만 다름, 레벨 모드 HUD와 아이템 슬롯 차이 0.
 
+#### 웹 로딩 화면과 hot restart 오디오 (2026-09-24)
+
+- 웹은 로딩 화면을 Flutter가 아닌 `web/index.html`의 `#sm-loading`(HTML, CSS)으로 그린다. 엔진과 에셋을 받는 동안에도 브라우저가 바로 그리므로 첫 화면과 보드 진입 사이에 멈춘 구간이 보이지 않는다. 보석 그림은 `web/loading/gem_{0,3,6}.webp`, 글꼴은 앱과 같다. `?mode=timed`이면 강조색이 금색이다.
+- Dart 쪽은 `lib/utils/web_loading.dart`의 `WebLoadingScreen.hold/release/markFirstFrame`으로 `window.stoneMatchLoading.show/hide`를 부른다. 타이틀은 첫 프레임까지, 게임 화면은 `_loadingVisible`이 꺼질 때까지 잡는다. 스크립트가 끝내 해제하지 못해도 20초 뒤 스스로 숨는다.
+- Android와 iOS 빌드는 이 HTML을 쓰지 않는다. `WebLoadingScreen.replacesFlutterOverlay`가 `kIsWeb`이라 네이티브는 기존 Flutter `GameLoadingOverlay`를 그대로 그린다.
+- `flutter_native_splash:create`는 `web/index.html`을 다시 쓴다. 실행한 뒤에는 `#sm-loading` 블록이 남아 있는지 확인한다.
+- 웹 hot restart는 페이지를 새로 읽지 않아 이전 실행의 `<audio>`가 계속 재생되고 BGM이 겹친다. `web/stone_match_sfx.js`가 재생 중인 미디어를 추적하고, `main()` 초반의 `SoundManager.stopOrphansFromPreviousRun()`이 `stopOrphans()`로 멈춘다. 새로고침에는 영향이 없다.
+
 ### 3-2. `lib/app.dart`
 
 `MaterialApp.router`를 생성하는 앱 루트다.

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../game/jewel_game_mode.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../../widgets/sprite_sheet_frame.dart';
+import '../../utils/web_loading.dart';
 
 class GameLoadingOverlay extends StatefulWidget {
   const GameLoadingOverlay({super.key, required this.gameMode});
@@ -31,6 +32,8 @@ class _GameLoadingOverlayState extends State<GameLoadingOverlay>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _reduced = MediaQuery.disableAnimationsOf(context);
+    // 웹은 HTML 로딩 화면이 대신 그린다. Flutter 쪽 애니메이션은 돌리지 않는다.
+    if (WebLoadingScreen.replacesFlutterOverlay) return;
     // 로딩 해제는 1.2초를 넘길 수 있다. 끝날 때까지 움직여야 먹통으로 보이지 않는다.
     // 동작 줄이기에서만 정지 상태로 둔다.
     if (_reduced) {
@@ -49,6 +52,9 @@ class _GameLoadingOverlayState extends State<GameLoadingOverlay>
 
   @override
   Widget build(BuildContext context) {
+    if (WebLoadingScreen.replacesFlutterOverlay) {
+      return const SizedBox.expand();
+    }
     final accent = widget.gameMode == JewelGameMode.timed
         ? JewelCandyLuminaTheme.goldStrong
         : JewelCandyLuminaTheme.focusTeal;
