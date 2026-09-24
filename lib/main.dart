@@ -26,6 +26,7 @@ void main() async {
   if (kIsWeb) {
     usePathUrlStrategy(); // /#/game → /game (hash 제거, path 기반 URL)
   }
+  SoundManager.stopOrphansFromPreviousRun();
   await EasyLocalization.ensureInitialized();
   await StorageHelper.init();
   await InAppReviewService.saveFirstLaunchDateIfNeeded();

@@ -57,6 +57,13 @@ class SoundManager {
     ),
   };
 
+  /// 웹: 앱 시작 때 호출. hot restart는 Dart만 다시 시작해 이전 실행의 BGM이 계속 울리므로 멈춘다.
+  /// 새로 연 페이지에서는 멈출 것이 없어 아무 일도 하지 않는다.
+  static void stopOrphansFromPreviousRun() {
+    if (!kIsWeb) return;
+    stopOrphanWebAudio();
+  }
+
   /// 웹: 사용자 상호작용 시 호출. 대기 중인 BGM 재생.
   /// SFX 풀은 첫 상호작용과 화면 복귀 후 첫 상호작용에서 해제한다.
   static void unlockForWeb() {

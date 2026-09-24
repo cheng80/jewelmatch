@@ -12,6 +12,13 @@ void unlockWebSfx() {
   } catch (_) {}
 }
 
+/// 이전 실행(웹 hot restart)이 남긴 재생 중 미디어를 멈춘다. 새로 연 페이지에서는 멈출 것이 없다.
+void stopOrphanWebAudio() {
+  try {
+    _stopOrphans();
+  } catch (_) {}
+}
+
 /// 브라우저 캐시만 채운다(Dart로 본문을 복사하지 않음).
 void warmWebAudio(List<String> paths) {
   try {
@@ -37,6 +44,9 @@ external void _initialize(JSString defaultPath);
 
 @JS('stoneMatchSfx.unlock')
 external void _unlock();
+
+@JS('stoneMatchSfx.stopOrphans')
+external JSNumber _stopOrphans();
 
 @JS('stoneMatchSfx.warm')
 external void _warm(JSArray<JSString> paths);

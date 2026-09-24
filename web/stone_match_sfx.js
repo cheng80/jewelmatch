@@ -1,4 +1,28 @@
 (() => {
+  // 재생 중인 미디어 요소를 기억한다. 웹 hot restart는 Dart만 다시 시작하고 페이지는 남아
+  // 이전 실행의 BGM <audio>가 계속 울린다. 앱 시작 때 stopOrphans()로 멈춘다.
+  const playing = new Set();
+  const originalPlay = HTMLMediaElement.prototype.play;
+  HTMLMediaElement.prototype.play = function (...args) {
+    playing.add(this);
+    const forget = () => playing.delete(this);
+    this.addEventListener('pause', forget, { once: true });
+    this.addEventListener('ended', forget, { once: true });
+    return originalPlay.apply(this, args);
+  };
+  const stopOrphans = () => {
+    let stopped = 0;
+    for (const media of Array.from(playing)) {
+      try {
+        media.pause();
+        media.currentTime = 0;
+        stopped += 1;
+      } catch (_) {}
+    }
+    playing.clear();
+    return stopped;
+  };
+
   const slotCount = 4;
   const slots = Array.from({ length: slotCount }, () => ({
     audio: new Audio(),
@@ -132,6 +156,7 @@
   const getState = () => ({
     ...stats,
     active: slots.filter((slot) => slot.busy).length,
+    playingMedia: playing.size,
   });
 
   // 브라우저 HTTP 캐시만 채운다. 본문은 JS에서 읽고 버려 Dart 메모리로 복사하지 않는다.
@@ -149,5 +174,5 @@
     next();
   };
 
-  window.stoneMatchSfx = Object.freeze({ initialize, unlock, play, warm, getState });
+  window.stoneMatchSfx = Object.freeze({ initialize, unlock, play, warm, stopOrphans, getState });
 })();
