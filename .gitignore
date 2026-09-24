@@ -200,3 +200,6 @@ tmp/
 
 # Supabase 연결 값 (공개용 키도 코드와 문서에 두지 않는다)
 config/supabase.json
+
+# 번들 밖 레거시 원본 이미지(아틀라스 원본 포함). 로컬에만 둔다.
+assets/design/legacy/
