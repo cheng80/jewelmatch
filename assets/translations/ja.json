@@ -20,8 +20,6 @@
   "statsCreatedBreakdown": "特殊作成内訳",
   "statsActivatedBreakdown": "特殊発動内訳",
   "statsKindNormal": "通常",
-  "statsKindRow": "行",
-  "statsKindCol": "列",
   "statsKindBomb": "ボム",
   "statsKindStar": "星",
   "statsKindHyper": "ハイパー",

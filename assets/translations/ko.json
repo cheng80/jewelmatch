@@ -20,8 +20,6 @@
   "statsCreatedBreakdown": "특수 생성 내역",
   "statsActivatedBreakdown": "특수 발동 내역",
   "statsKindNormal": "일반",
-  "statsKindRow": "행",
-  "statsKindCol": "열",
   "statsKindBomb": "폭탄",
   "statsKindStar": "별",
   "statsKindHyper": "하이퍼",

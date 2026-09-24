@@ -9,7 +9,7 @@ import '../../resources/asset_paths.dart';
 /// `board_atlas.webp` 한 장과 칸 좌표(`board_atlas.json`).
 /// 보드 보석, 특수 보석, 배지, 범위 효과 레이어, 게임 방법 화면이 이 한 장에서 잘라 쓴다.
 /// 칸 이름: `gem_0`~`gem_6`(Jewel_Arcane 열), `action_0`~`action_3`(bomb, star,
-/// hyper, supernova), `legacy_0`~`legacy_1`(col, row), `badge_0`~`badge_1`(Time,
+/// hyper, supernova), `badge_0`~`badge_1`(Time,
 /// Multiplier), `bomb_`/`hyper_`/`supernova_` + `0`~`4`(범위 효과 레이어).
 /// 이미지는 Flame.images가 소유하므로 여기서 해제하지 않는다.
 class BoardAtlas {

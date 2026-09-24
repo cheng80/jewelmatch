@@ -75,15 +75,6 @@ class HowToPlaySpecialGemPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final specialSheetCol = switch (kind) {
-      GemKind.col => 0,
-      GemKind.row => 1,
-      GemKind.normal ||
-      GemKind.bomb ||
-      GemKind.star ||
-      GemKind.hyper ||
-      GemKind.supernova => null,
-    };
     final actionSpecialSheetCol = switch (kind) {
       GemKind.bomb => 0,
       GemKind.star => 1,
@@ -97,12 +88,7 @@ class HowToPlaySpecialGemPreview extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          if (specialSheetCol != null)
-            Padding(
-              padding: const EdgeInsets.all(4),
-              child: HowToPlaySpecialGemClip(specialSheetCol),
-            )
-          else if (actionSpecialSheetCol != null)
+          if (actionSpecialSheetCol != null)
             Padding(
               padding: const EdgeInsets.all(4),
               child: HowToPlayActionSpecialGemClip(actionSpecialSheetCol),

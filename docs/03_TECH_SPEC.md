@@ -434,11 +434,13 @@ GameView.build()
 
 | 아틀라스 | 크기 | 칸 | 쓰는 곳 |
 |---|---|---|---|
-| `sprites/board_atlas.webp` | 1376×1120 | 보석 `gem_0`~`gem_6`(시트 열 순서), 특수 `action_0`~`action_3`(bomb, star, hyper, supernova), `legacy_0`, `legacy_1`(row, col, 게임 방법 화면), 배지 `badge_0`(Time), `badge_1`(Multiplier), 범위 이펙트 `bomb_`, `hyper_`, `supernova_` 각 0~4 | 보드 렌더러(런타임 보석 atlas 굽기 포함), 범위 이펙트, HUD 보석 아이콘, 게임 방법, 로딩 화면 |
+| `sprites/board_atlas.webp` | 1376×1120 | 보석 `gem_0`~`gem_6`(시트 열 순서), 특수 `action_0`~`action_3`(bomb, star, hyper, supernova), 배지 `badge_0`(Time), `badge_1`(Multiplier), 범위 이펙트 `bomb_`, `hyper_`, `supernova_` 각 0~4 | 보드 렌더러(런타임 보석 atlas 굽기 포함), 범위 이펙트, HUD 보석 아이콘, 게임 방법, 로딩 화면 |
 | `ui/ui_atlas.webp` | 2048×1024 | obsidian 버튼 프레임과 아이콘 5종, 패널 나인패치, 아이템 아이콘 8, 모드 아이콘 6 | HUD, 타이틀, 일시정지, 인벤토리, 레벨업, `ObsidianFrame` |
 | `ui/ui_buttons_atlas.webp` | 2048×2048 | 모드 버튼 판 2, 일반 버튼 판 2 | 타이틀 모드 버튼, 일시정지 메뉴 버튼 |
 
 - 묶지 않는 큰 단일 이미지: 타이틀 로고, 스플래시 로고, 배경.
+- 행, 열 특수 보석(`GemKind.row`, `col`)은 게임에서 만들어지지 않아(생성 규칙은 bomb, star, hyper, supernova만) 그림을 아틀라스에서 뺐다(2026-09-24). 게임 방법 화면의 죽은 분기와 결과 통계의 행, 열 칸도 지웠다. 열거값은 저장 기록 형식과 QA 훅 때문에 남기며, QA로 만들면 일반 보석 그림으로 그린다.
+- 원본이 Git에 없는 곳에서는 `ui_atlas_pixels_test.dart`의 원본 비교 2건을 건너뛴다.
 - 범위 이펙트 레이어는 `drawRawAtlas` 한 번으로 그린다(블렌드가 같은 레이어끼리). `special_area_effects.json`은 없애고 배율은 코드 상수다.
 - 배지와 HUD 아이콘은 칸마다 `drawImageRect`로 그린다. `drawRawAtlas`와 `toImageSync` 이미지는 밉맵 없이, 웹에서는 큐빅 대신 선형으로 샘플링돼 작게 그리는 그림이 흐려진다. 같은 텍스처를 연달아 그리므로 Skia가 GPU 작업 하나로 합친다.
 - 나인패치는 `Canvas.drawImageNine`이 소스 사각형을 받지 않아 조각 9개 `drawImageRect`(`drawAtlasNine`)로 그린다.

@@ -227,8 +227,6 @@ class _BreakdownSection extends StatelessWidget {
       GemKind.star,
       GemKind.hyper,
       GemKind.supernova,
-      GemKind.row,
-      GemKind.col,
     ];
 
     return Column(
@@ -261,8 +259,8 @@ class _BreakdownSection extends StatelessWidget {
   String _kindLabel(BuildContext context, GemKind kind) {
     return switch (kind) {
       GemKind.normal => context.tr('statsKindNormal'),
-      GemKind.row => context.tr('statsKindRow'),
-      GemKind.col => context.tr('statsKindCol'),
+      // 행, 열 특수 보석은 게임에서 만들어지지 않아 통계에 보이지 않는다.
+      GemKind.row || GemKind.col => '',
       GemKind.bomb => context.tr('statsKindBomb'),
       GemKind.star => context.tr('statsKindStar'),
       GemKind.hyper => context.tr('statsKindHyper'),

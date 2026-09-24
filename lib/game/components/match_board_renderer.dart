@@ -86,10 +86,6 @@ class MatchBoardRenderer extends PositionComponent
   final List<Sprite?> _sheetSprites = List<Sprite?>.filled(7, null);
   final Map<GemKind, Sprite?> _specialSprites = <GemKind, Sprite?>{};
 
-  static const List<GemKind> _specialSheetKinds = <GemKind>[
-    GemKind.col,
-    GemKind.row,
-  ];
   static const List<GemKind> _specialActionSheetKinds = <GemKind>[
     GemKind.bomb,
     GemKind.star,
@@ -164,9 +160,7 @@ class MatchBoardRenderer extends PositionComponent
       for (var i = 0; i < _sheetSprites.length; i++) {
         _sheetSprites[i] = sprite('gem_$i');
       }
-      for (var i = 0; i < _specialSheetKinds.length; i++) {
-        _specialSprites[_specialSheetKinds[i]] = sprite('legacy_$i');
-      }
+      // 행, 열 특수 보석은 게임에서 만들어지지 않아 그림이 없다(QA 훅에서만 생기며 일반 보석 그림으로 대체).
       for (var i = 0; i < _specialActionSheetKinds.length; i++) {
         _specialSprites[_specialActionSheetKinds[i]] = sprite('action_$i');
       }

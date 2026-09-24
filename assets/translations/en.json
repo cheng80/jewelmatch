@@ -20,8 +20,6 @@
   "statsCreatedBreakdown": "Specials created",
   "statsActivatedBreakdown": "Specials activated",
   "statsKindNormal": "Normal",
-  "statsKindRow": "Row",
-  "statsKindCol": "Column",
   "statsKindBomb": "Bomb",
   "statsKindStar": "Star",
   "statsKindHyper": "Hyper",

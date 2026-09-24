@@ -8,7 +8,6 @@
   "sources": [
     {"prefix": "gem_", "file": "assets/design/legacy/sprites/Jewel_Arcane.png", "cell": [128, 128], "count": 7},
     {"prefix": "action_", "file": "assets/design/legacy/sprites/Special_Action_Arcane.png", "cell": [128, 128], "count": 4},
-    {"prefix": "legacy_", "file": "assets/design/legacy/sprites/Special_Arcane.png", "cell": [128, 128], "count": 2},
     {"prefix": "badge_", "file": "assets/design/legacy/sprites/Gem_Badges.png", "cell": [128, 128], "count": 2},
     {"prefix": "bomb_", "file": "assets/design/legacy/sprites/bomb_layers.png", "cell": [256, 256], "count": 5},
     {"prefix": "hyper_", "file": "assets/design/legacy/sprites/hyper_layers.png", "cell": [256, 256], "count": 5},

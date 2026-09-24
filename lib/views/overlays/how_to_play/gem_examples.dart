@@ -65,18 +65,6 @@ class HowToPlayGemClip extends StatelessWidget {
   }
 }
 
-/// legacy 특수 보석 칸(0 col, 1 row).
-class HowToPlaySpecialGemClip extends StatelessWidget {
-  const HowToPlaySpecialGemClip(this.sheetCol, {super.key});
-
-  final int sheetCol;
-
-  @override
-  Widget build(BuildContext context) {
-    return BoardAtlasFrame('legacy_$sheetCol', size: howToPlayGemSize);
-  }
-}
-
 /// 액션 특수 보석 칸(0 bomb, 1 star, 2 hyper, 3 supernova).
 class HowToPlayActionSpecialGemClip extends StatelessWidget {
   const HowToPlayActionSpecialGemClip(this.sheetCol, {super.key});
