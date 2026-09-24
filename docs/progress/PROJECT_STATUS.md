@@ -45,7 +45,7 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 - [x] TASK-008b Last Hurrah 권장안 규칙: 마무리 연쇄의 새 특수 보석 생성 금지, Multiplier 배율 동결, 자연 연쇄 20단계 상한, Last Hurrah 콤보 코드 기본값 꺼짐(원격 행은 아직 true, 변경하지 않음)
 - [x] TASK-009a 텍스처 아틀라스 통합: board_atlas, ui_atlas, ui_buttons_atlas(무손실 WebP), 쓰지 않던 레거시 시트 번들 제외(TECH_SPEC 3-1 텍스처 아틀라스)
 - [x] TASK-009b 웹 로딩 화면을 HTML, CSS로 교체(네이티브는 Flutter 로딩 유지), 웹 hot restart 뒤 BGM 중첩 수정, 이름 입력창이 키보드에 가려 취소와 시작을 누를 수 없던 문제 수정(Android Chrome 실기기 확인)
-- [ ] TASK-001g ISSUE-007 멀티스레드 skwasm 같은 탭 재로드 멈춤 대응
+- [x] TASK-001g ISSUE-007 멀티스레드 skwasm 같은 탭 재로드 멈춤: Flutter 3.44.8 → 3.47.5 업그레이드로 해소(2026-09-24, Android Chrome 같은 탭 연속 6회 모두 정상)
 - [x] TASK-006a Supabase 스키마, 익명 로그인 게이트웨이, 랭킹 이전, 보충 광고 서버 확인, 이벤트 로거 구현과 테스트
 - [x] TASK-006b Supabase 원격 프로젝트 준비, 마이그레이션 적용, 원격 스모크, NAS 배포(`b71ba31`)
 
@@ -64,7 +64,7 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 - ISSUE-003: refill 3회 → Supabase 익명 사용자 기준으로 원격 적용과 NAS 배포 완료(PLAN-006). 저장소 삭제나 재설치 시 새 사용자라 제한이 새로 시작된다(BR-103)
 - ISSUE-004: RunInventory 비영속 → PLAN-003 (2차 범위로는 허용)
 - ISSUE-005: 빈 App Store ID
-- ISSUE-007: 같은 탭에서 게임 문서를 다시 불러오면 멀티스레드 skwasm(격리 헤더 있음)이 "memory access out of bounds", "table index is out of bounds", "divide by zero"로 멈춘다. `b71ba31`에서도 재현되는 기존 문제다. 새 Chrome 첫 로드는 NAS 3회와 로컬 10회 모두 정상. 단일 스레드 skwasm(격리 헤더 없음)은 같은 탭 재로드 4회 모두 정상이지만 FPS가 약 89에서 45로 떨어진다 → PLAN-001
+- ISSUE-007(해소, 2026-09-24): 같은 탭에서 게임 문서를 다시 불러오면 멀티스레드 skwasm이 메모리 오류로 멈추던 문제. Flutter 3.47.5로 올린 뒤 격리 헤더를 켠 profile wasm 빌드로 같은 탭 연속 실행 6회(각 25초 자동 플레이) 모두 멈춤 없음(예전에는 1~2회 안에 멈춤). 20초 평균 86.8fps, p95 11.3ms로 이전(89.2fps, 11.2ms)과 같은 수준 → PLAN-001
 - ISSUE-006: 미출시로 외부 사용 지표 없음. GA4, Firebase Analytics 미연동. 내부 이벤트 로거는 Supabase `game_events`로 동작한다. 시험 데이터는 매 검증 뒤 지워 현재 수집 데이터는 없다 → PLAN-006, PLAN-005 Step 2
 
 ## Implementation Status
@@ -111,7 +111,7 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 
 ## Next
 1. 사용자 플레이테스트: PLAN-005 하단 양식으로 기록하고 D7(시간 보상 T1)을 정한다. 구조 작업 중 코드로 남은 항목은 없다
-2. ISSUE-007(PLAN-001): 멀티스레드 skwasm 같은 탭 재로드 멈춤. 권장 순서는 Flutter 업그레이드 뒤 재현 확인, 그래도 나면 Flutter 이슈 보고. 임시 대안(격리 헤더 제거)은 FPS가 절반이라 적용하지 않았다
+2. ISSUE-007은 Flutter 3.47.5 업그레이드로 해소했다. 같은 탭 재로드 멈춤이 다시 보이면 Flutter 이슈로 보고한다
 3. 플레이테스트 때 PLAN-008 스위치를 켜고 끄며 비교한다(원격은 모두 켜짐, `?exp=none`으로 기존 동작). Supabase는 무료 요금제 유지(2026-09-24 사용자 결정)
 4. 구조 개편 뒤: 앱인토스 QR 확인(토스 앱이 있는 폰 필요), Play와 App Store용 Google AdMob 연결(ADR-003 개정). 웹(NAS)은 테스트 전용이라 광고 없음
 5. 출시 값(운영 광고 그룹, Apple ID, URL)이 오면 TASK-004. PLAN-003 영속 인벤토리는 코인 경제 전 단계로 Phase 6

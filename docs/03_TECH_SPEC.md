@@ -10,7 +10,7 @@
 
 | 영역 | 기술 | 선택 이유/제약 |
 |---|---|---|
-| Client | Flutter, Dart SDK ^3.10.8 | 멀티 채널 한 코드베이스 |
+| Client | Flutter 3.47.5(stable), Dart SDK ^3.10.8 | 멀티 채널 한 코드베이스 |
 | Game | Flame ^1.35.1 | 보드 루프/렌더 |
 | Routing | go_router ^17 | / , /game, /setting |
 | State | flutter_riverpod ^3 수동 Notifier | codegen 미사용 |

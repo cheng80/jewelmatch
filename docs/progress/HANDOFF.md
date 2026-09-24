@@ -56,7 +56,7 @@ Updated: 2026-09-24 11:35 KST
 4. PLAN-001 실기기 장시간 측정 (원문부터 INCOMPLETE. 별도 승인 작업)
 5. 이전 문서는 archive/docs/에 있음. 삭제 여부는 별도 결정
 6. STALE AIT 재검증과 PLAN-001 실측은 이관 밖 별도 작업
-7. 게임 방향 개편: 코드 작업 완료. D7과 플레이테스트 기록은 사용자 플레이 판단. ISSUE-007은 PLAN-001에서 다룬다
+7. 게임 방향 개편: 코드 작업 완료. D7과 플레이테스트 기록은 사용자 플레이 판단. ISSUE-007은 Flutter 3.47.5 업그레이드로 해소
 8. Supabase: NAS 배포 완료. 앱인토스 QR 확인은 구조 개편 뒤. 원격 검증 뒤에는 시험 데이터를 지운다(game_events, ad_refill_claims, ranking_entries, 익명 auth.users)
 9. 광고는 구조 작업을 끝낸 뒤 손본다(ADR-003 개정). 웹(NAS)은 테스트 전용이라 광고를 넣지 않고, Play와 App Store는 이후 Google AdMob을 `AdService` 구현으로 붙인다. 그 전에는 광고 SDK를 추가하지 않는다
 

@@ -250,7 +250,7 @@ class SoundManager {
         }
       }
       FlameAudio.play(path, volume: vol);
-    } catch (e, _) {
+    } catch (e) {
       SfxPlayLog.append(
         'playSfx ${kIsWeb ? 'web' : 'native'} ERROR path=$path err=$e',
       );
