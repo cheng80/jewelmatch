@@ -272,8 +272,9 @@ class MatchBoardLogic {
 
   /// 유효 스왑 뒤 제거를 시작하기 전 두 보석이 자리에 앉는 시간.
   /// 이 동안 상태는 `swapSettle`이고 점수·콤보·시간 보상 계산은 건드리지 않는다.
-  static const double swapSettleDelay = 0.12;
-  static const double removeDelay = 0.18;
+  // 2026-09-24 사용자 체감(매칭 이펙트가 반박자 늦음)으로 0.12, 0.18에서 줄였다. 스왑 뒤 파편까지 0.30초 → 0.20초.
+  static const double swapSettleDelay = 0.07;
+  static const double removeDelay = 0.13;
   static const double fallingDelay = 0.11;
   static const double refillDelay = 0.11;
   static const double checkingDelay = 0.09;

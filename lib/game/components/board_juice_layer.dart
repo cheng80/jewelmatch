@@ -239,8 +239,9 @@ class BoardJuiceLayer extends PositionComponent
     final extras = (_sparkBudgetPerBurst ~/ cells.length - 2).clamp(0, wanted);
     final power = 1 + math.min(combo, 6) * 0.07 + pattern.index * 0.08;
     final unit = ts / _atlasSize;
-    const speedUp = 1.4;
-    const lifeScale = 0.65;
+    // 2026-09-24 사용자 체감(퍼지고 사라지는 속도가 느림)으로 1.4, 0.65에서 올렸다.
+    const speedUp = 1.75;
+    const lifeScale = 0.5;
     var sumX = 0.0;
     var sumY = 0.0;
     for (final cell in cells) {

@@ -169,14 +169,19 @@ extension _MatchBoardGemOverlayRenderer on MatchBoardRenderer {
     if (isRemovalVisualCell) {
       sx = sy = _removalVisualScale;
       if (gem.kind != GemKind.normal) {
-        // 기존 제거 0.18초 안에서 첫 0.07초만 수축한다. 판정/발동은 지연하지 않는다.
+        // 제거 시간의 앞 7/18만 수축하고 나머지에서 튀며 사라진다. 판정/발동은 지연하지 않는다.
         final elapsed = MatchBoardLogic.removeDelay - logic.stageTimer;
-        if (elapsed < 0.07) {
+        const contract =
+            MatchBoardLogic.removeDelay *
+            MatchBoardRenderer.specialContractFraction;
+        const burst = MatchBoardLogic.removeDelay - contract;
+        if (elapsed < contract) {
           sx = sy =
               1 -
-              0.22 * math.sin((elapsed / 0.07).clamp(0.0, 1.0) * math.pi / 2);
+              0.22 *
+                  math.sin((elapsed / contract).clamp(0.0, 1.0) * math.pi / 2);
         } else {
-          final p = ((elapsed - 0.07) / 0.11).clamp(0.0, 1.0);
+          final p = ((elapsed - contract) / burst).clamp(0.0, 1.0);
           sx = sy = p < 0.25
               ? 0.78 + 0.46 * p / 0.25
               : 1.24 - 0.94 * math.pow((p - 0.25) / 0.75, 2);

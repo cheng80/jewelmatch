@@ -118,7 +118,13 @@ void main() {
       r.logic.pendingRemovalSet = {
         for (var row = 0; row < 7; row++) '$row:3': true,
       };
-      for (final elapsed in [0.0, 0.035, 0.07, 0.10, 0.16]) {
+      for (final elapsed in [
+        0.0,
+        MatchBoardLogic.removeDelay * 0.035 / 0.18,
+        MatchBoardLogic.removeDelay * 0.07 / 0.18,
+        MatchBoardLogic.removeDelay * 0.10 / 0.18,
+        MatchBoardLogic.removeDelay * 0.16 / 0.18,
+      ]) {
         r.logic.stageTimer = MatchBoardLogic.removeDelay - elapsed;
         await compare(r, 'removal at $elapsed');
       }
@@ -149,7 +155,16 @@ void main() {
       r.logic.pendingRemovalSet = {'0:0': true};
       final scales = <double>[];
       final alphas = <int>[];
-      for (final elapsed in [0.0, 0.035, 0.07, 0.0975, 0.17]) {
+      // 수축은 제거 시간의 앞 7/18, 튀기는 나머지. 원래 0.18초 기준 0.035, 0.07, 0.0975, 0.17초와 같은 위치.
+      const d = MatchBoardLogic.removeDelay;
+      const f = MatchBoardRenderer.specialContractFraction;
+      for (final elapsed in [
+        0.0,
+        d * f / 2,
+        d * f,
+        d * f + d * (1 - f) * 0.25,
+        d * 0.17 / 0.18,
+      ]) {
         r.logic.stageTimer = MatchBoardLogic.removeDelay - elapsed;
         final spy = AtlasSpy();
         r.render(spy);

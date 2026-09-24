@@ -634,13 +634,13 @@ void main() {
 
     expect(board.trySwap(6, 0, 7, 0), isTrue);
     expect(board.state, 'swapSettle');
-    expect(board.stageTimer, 0.12);
+    expect(board.stageTimer, MatchBoardLogic.swapSettleDelay);
     expect(board.score, 0);
     expect(board.pendingRemovalSet, isNull);
     expect(board.trySwap(6, 1, 6, 2), isFalse);
     expect(board.removeSingleCellForItem(0, 0), isFalse);
 
-    board.update(0.12 + 0.001);
+    board.update(MatchBoardLogic.swapSettleDelay + 0.001);
 
     expect(board.state, 'removing');
     expect(board.stageTimer, MatchBoardLogic.removeDelay);

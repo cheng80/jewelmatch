@@ -109,6 +109,9 @@ class MatchBoardRenderer extends PositionComponent
   /// 색 1~7 → `Jewel_Arcane.png` 열. 7번째 색은 흰 돌(열 1)이다.
   static const List<int> _sheetColByColor1based = [0, 6, 3, 2, 4, 5, 1];
 
+  /// 특수 보석 제거 연출에서 수축이 차지하는 비율(원래 0.18초 중 0.07초).
+  static const double specialContractFraction = 0.07 / 0.18;
+
   ui.Picture? _boardChromePicture;
   double? _cachedTileSize;
   double? _cachedBoardX;

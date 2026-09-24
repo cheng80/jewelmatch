@@ -147,6 +147,9 @@ void main() {
     expect(gem.x, closeTo(beforeX + (gem.targetX - beforeX) * 0.36, 0.0001));
     expect(gem.y, closeTo(beforeY + (gem.targetY - beforeY) * 0.36, 0.0001));
     expect(board.state, 'swapSettle');
-    expect(board.stageTimer, closeTo(0.10, 0.0001));
+    expect(
+      board.stageTimer,
+      closeTo(MatchBoardLogic.swapSettleDelay - 0.02, 0.0001),
+    );
   });
 }
