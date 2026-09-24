@@ -134,5 +134,20 @@
     active: slots.filter((slot) => slot.busy).length,
   });
 
-  window.stoneMatchSfx = Object.freeze({ initialize, unlock, play, getState });
+  // 브라우저 HTTP 캐시만 채운다. 본문은 JS에서 읽고 버려 Dart 메모리로 복사하지 않는다.
+  // 순서대로 하나씩 받아 첫 화면과 네트워크를 다투지 않게 한다.
+  const warm = (paths) => {
+    const list = Array.from(paths || []);
+    const next = () => {
+      const path = list.shift();
+      if (!path) return;
+      fetch(resolveAsset(path))
+        .then((response) => (response.ok ? response.arrayBuffer() : null))
+        .catch(recordError)
+        .finally(next);
+    };
+    next();
+  };
+
+  window.stoneMatchSfx = Object.freeze({ initialize, unlock, play, warm, getState });
 })();

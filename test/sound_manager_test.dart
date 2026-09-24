@@ -198,11 +198,25 @@ void main() {
     expect(
       soundManagerSource,
       contains(
-        '} else if (defaultTargetPlatform == TargetPlatform.android) {\n'
+        'if (defaultTargetPlatform == TargetPlatform.android) {\n'
         '      await _initNativeSfxPools();',
       ),
     );
     expect(soundManagerSource, contains('if (kIsWeb) {'));
+  });
+
+  // 웹은 audioplayers의 http.get 전체 읽기(Dart 메모리 복사) 대신 주소 등록과 브라우저 fetch로 캐시를 채운다.
+  test('웹 preload는 Dart로 파일을 읽지 않고 브라우저 캐시만 채운다', () {
+    final webBranch = soundManagerSource.substring(
+      soundManagerSource.indexOf('static Future<void> _preload() async {'),
+      soundManagerSource.indexOf('await Future.wait(['),
+    );
+    expect(webBranch, contains('cache.loadedFiles[path] ??='));
+    expect(webBranch, contains('warmWebAudio(_webAudioWarmOrder);'));
+    expect(webBranch, isNot(contains('audioCache.load(')));
+    expect(webBranch, contains('return;'));
+    expect(webSfxScript, contains('const warm = (paths) =>'));
+    expect(webSfxScript, contains('response.arrayBuffer()'));
   });
 
   test('웹 포커스 복귀 후 다음 입력에서 SFX 풀을 다시 해제한다', () {

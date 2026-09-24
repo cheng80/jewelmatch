@@ -12,6 +12,13 @@ void unlockWebSfx() {
   } catch (_) {}
 }
 
+/// 브라우저 캐시만 채운다(Dart로 본문을 복사하지 않음).
+void warmWebAudio(List<String> paths) {
+  try {
+    _warm(paths.map((p) => p.toJS).toList().toJS);
+  } catch (_) {}
+}
+
 bool playWebSfx(String path, double volume, Duration duration, double rate) {
   try {
     return _play(
@@ -30,6 +37,9 @@ external void _initialize(JSString defaultPath);
 
 @JS('stoneMatchSfx.unlock')
 external void _unlock();
+
+@JS('stoneMatchSfx.warm')
+external void _warm(JSArray<JSString> paths);
 
 @JS('stoneMatchSfx.play')
 external JSBoolean _play(

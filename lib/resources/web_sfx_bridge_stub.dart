@@ -4,5 +4,7 @@ void initializeWebSfx(String defaultPath) {}
 
 void unlockWebSfx() {}
 
+void warmWebAudio(List<String> paths) {}
+
 bool playWebSfx(String path, double volume, Duration duration, double rate) =>
     false;

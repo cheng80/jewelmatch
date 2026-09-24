@@ -84,6 +84,20 @@ class SoundManager {
   }
 
   static Future<void> _preload() async {
+    if (kIsWeb) {
+      // audioplayers의 웹 AudioCache.load는 브라우저 캐시를 채우려고 http.get으로 파일 전체를
+      // Dart 메모리로 읽고 버린다(BGM 5.6MB 포함, 로딩 화면 중 메인 스레드 약 140ms).
+      // 주소만 캐시 목록에 등록해 재생 때도 다시 받지 않게 하고, 캐시 채우기는 브라우저 fetch에 맡긴다.
+      final cache = FlameAudio.audioCache;
+      for (final path in _webAudioWarmOrder) {
+        cache.loadedFiles[path] ??= Uri.parse(
+          Uri.encodeFull('assets/${cache.prefix}$path'),
+        );
+      }
+      _webSfxPool = await _WebSfxPool.create();
+      warmWebAudio(_webAudioWarmOrder);
+      return;
+    }
     await Future.wait([
       FlameAudio.audioCache.load(AssetPaths.bgmMenu),
       FlameAudio.audioCache.load(AssetPaths.bgmMain),
@@ -100,12 +114,28 @@ class SoundManager {
       FlameAudio.audioCache.load(AssetPaths.sfxSpecialGem),
       FlameAudio.audioCache.load(AssetPaths.sfxTimeUp),
     ]);
-    if (kIsWeb) {
-      _webSfxPool = await _WebSfxPool.create();
-    } else if (defaultTargetPlatform == TargetPlatform.android) {
+    if (defaultTargetPlatform == TargetPlatform.android) {
       await _initNativeSfxPools();
     }
   }
+
+  /// 웹 캐시 채우기 순서. 게임에서 먼저 쓰는 효과음, 게임 BGM, 메뉴 BGM 순이다.
+  static const List<String> _webAudioWarmOrder = [
+    AssetPaths.sfxStart,
+    AssetPaths.sfxCollect,
+    AssetPaths.sfxComboHit,
+    AssetPaths.sfxBigMatch,
+    AssetPaths.sfxSpecialGem,
+    AssetPaths.sfxBtnSnd,
+    AssetPaths.sfxTimeTic,
+    AssetPaths.sfxFail,
+    AssetPaths.sfxTimeUp,
+    AssetPaths.sfxClear,
+    AssetPaths.sfxLevelUp,
+    AssetPaths.sfxConfetti,
+    AssetPaths.bgmMain,
+    AssetPaths.bgmMenu,
+  ];
 
   /// BGM 재생. 음소거 시에는 _currentBgm만 갱신하고 재생하지 않음.
   /// 웹: unlock 전이면 대기 후 첫 탭 시 재생.
