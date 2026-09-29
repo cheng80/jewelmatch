@@ -84,21 +84,32 @@ extension _MatchGameHudSectionRenderer on MatchGameHud {
     final challenge = _challenge;
     if (challengeValue == null || challenge == null) return;
     final top = valueTop + _scoreValue.height + 2;
+    final label = _challengeLabel!;
     final color = challenge.color;
-    if (color == null) {
-      challengeValue.paint(canvas, Offset(cx - challengeValue.width / 2, top));
-      return;
+    final icon = color == null ? 0.0 : challengeValue.height * 1.05;
+    const gap = 6.0;
+    final width =
+        label.width +
+        gap +
+        challengeValue.width +
+        (color == null ? 0 : icon + gap);
+    // 번역이 긴 언어와 좁은 화면에서도 목표 줄 전체를 안전 영역 안에 둔다.
+    final fit = math.min(1.0, game.safeContentWidth * 0.9 / width);
+    canvas.save();
+    canvas.translate(cx - width * fit / 2, top);
+    canvas.scale(fit);
+    label.paint(canvas, Offset(0, (challengeValue.height - label.height) / 2));
+    var left = label.width + gap;
+    if (color != null) {
+      _drawGemSprite(
+        canvas,
+        Rect.fromLTWH(left, (challengeValue.height - icon) / 2, icon, icon),
+        color,
+      );
+      left += icon + gap;
     }
-    // 색 목표는 보석 스프라이트로 색을 보여 줘 색 이름 번역이 필요 없다.
-    final icon = challengeValue.height * 1.05;
-    const gap = 4.0;
-    final left = cx - (icon + gap + challengeValue.width) / 2;
-    _drawGemSprite(
-      canvas,
-      Rect.fromLTWH(left, top + (challengeValue.height - icon) / 2, icon, icon),
-      color,
-    );
-    challengeValue.paint(canvas, Offset(left + icon + gap, top));
+    challengeValue.paint(canvas, Offset(left, 0));
+    canvas.restore();
   }
 
   /// [painter]를 [centerX] 가운데 정렬로 그리되 자기 중심 기준으로 [scale]만큼 키운다.

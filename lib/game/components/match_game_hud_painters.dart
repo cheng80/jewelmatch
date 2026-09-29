@@ -242,9 +242,21 @@ extension _MatchGameHudPainterCache on MatchGameHud {
     _challenge = challenge;
     if (challenge == null) {
       _challengeValue = null;
+      _challengeLabel = null;
       _challengeProgress = null;
       return;
     }
+    _challengeLabel = TextPainter(
+      text: TextSpan(
+        text: game.localeString('challengeMission', 'Mission'),
+        style: _ts(
+          size: 14 * game.hudTextScale,
+          color: JewelCandyLuminaTheme.tertiaryGold,
+          weight: FontWeight.bold,
+        ),
+      ),
+      textDirection: ui.TextDirection.ltr,
+    )..layout();
     final progress = challenge.progress(game.board.stats);
     _challengeProgress = progress;
     final count = '$progress/${challenge.target}';

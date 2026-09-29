@@ -81,6 +81,7 @@ class MatchGameHud extends PositionComponent
 
   /// 도전 스테이지 목표 줄. 일반 레벨과 다른 모드는 null.
   TextPainter? _challengeValue;
+  TextPainter? _challengeLabel;
   StageChallenge? _challenge;
   int? _challengeProgress;
   late TextPainter _bestLabel;
