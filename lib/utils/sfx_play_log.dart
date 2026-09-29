@@ -6,7 +6,9 @@ class SfxPlayLog {
 
   static bool enabled = false;
 
-  static final ValueNotifier<List<String>> lines = ValueNotifier<List<String>>([]);
+  static final ValueNotifier<List<String>> lines = ValueNotifier<List<String>>(
+    [],
+  );
 
   static const int maxLines = 500;
 

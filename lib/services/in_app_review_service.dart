@@ -36,7 +36,9 @@ class InAppReviewService {
   /// Clear 오버레이가 처음 표시될 때 1회만 호출.
   static Future<void> maybeRequestReviewAfterFirstClear() async {
     if (!_isSupported) return;
-    if (StorageHelper.readBool(StorageKeys.reviewRequestedAfterFirstClear)) return;
+    if (StorageHelper.readBool(StorageKeys.reviewRequestedAfterFirstClear)) {
+      return;
+    }
 
     StorageHelper.write(StorageKeys.reviewRequestedAfterFirstClear, true);
 
@@ -50,9 +52,13 @@ class InAppReviewService {
   static Future<void> maybeRequestReviewOnTitleIfEligible() async {
     if (!_isSupported) return;
     if (StorageHelper.readBool(StorageKeys.reviewRequestedOnTitle)) return;
-    if (StorageHelper.readBool(StorageKeys.reviewRequestedAfterFirstClear)) return;
+    if (StorageHelper.readBool(StorageKeys.reviewRequestedAfterFirstClear)) {
+      return;
+    }
 
-    final firstLaunchStr = StorageHelper.read<String>(StorageKeys.firstLaunchDate);
+    final firstLaunchStr = StorageHelper.read<String>(
+      StorageKeys.firstLaunchDate,
+    );
     if (firstLaunchStr == null) return;
 
     final firstLaunch = DateTime.tryParse(firstLaunchStr);
