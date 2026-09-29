@@ -325,4 +325,3 @@ JS bridge stoneMatchLeaderboard.submitLevelScore(score)
 ### 이전 NAS API (2026-09-24 폐기, 기록용)
 
 Base: https://cheng80.myqnapcloud.com/matchranking/ranking.php. `?action=list|top1`(GET), `?action=submit`(POST `{name, score, mode}`), `?action=reset`(POST, 헤더 `X-Ranking-Admin-Token`). JSON 파일 두 개에 모드별 상위 30건만 저장했다. 2026-09-23 클라이언트 연결을 끊었다. 파일은 NAS 폐기 결정 전까지 저장소와 NAS에 남긴다.
-
