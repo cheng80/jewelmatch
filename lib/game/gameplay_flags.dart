@@ -1,7 +1,7 @@
 /// 실험 기능 스위치. 나중에 플레이 판단으로 켜고 끄기 위해 원격 설정과 URL로 바꿀 수 있다.
 ///
 /// 기본값은 모두 꺼짐이다. 판마다 판 시작 때 [current]를 한 번 읽어 판 도중에는 바뀌지 않는다.
-/// 원격 키는 Supabase `app_config`의 `gameplay`, 웹 URL은 `?exp=`(예: `?exp=t1,tg,mg,c7:10,lhc`, `?exp=none`).
+/// 원격 키는 PocketBase `sm_config`의 `gameplay`, 웹 URL은 `?exp=`(예: `?exp=t1,tg,mg,c7:10,lhc`, `?exp=none`).
 class GameplayFlags {
   const GameplayFlags({
     this.timeRewardT1 = false,

@@ -3,39 +3,50 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:stonematch/services/backend/supabase_config.dart';
-import 'package:stonematch/services/backend/supabase_gateway.dart';
+import 'package:stonematch/services/backend/pocketbase_config.dart';
+import 'package:stonematch/services/backend/pocketbase_gateway.dart';
 import 'package:stonematch/services/event_logger.dart';
 import 'package:stonematch/services/play_event_context.dart';
 import 'package:stonematch/services/telemetry_policy.dart';
 
-const _config = SupabaseConfig(
-  url: 'https://example.supabase.co',
-  publishableKey: 'sb_publishable_test',
+const _config = PocketBaseConfig(url: 'https://pb.example');
+const _unconfigured = PocketBaseConfig(url: '');
+
+final _start = DateTime.utc(2026, 9, 23, 12);
+var _clock = _start;
+
+/// 게스트 인증은 여기서 처리하고 이벤트 요청만 [handler]에 넘긴다.
+PocketBaseGateway _gateway(
+  Future<http.Response> Function(http.Request) handler, {
+  String userId = 'user-1',
+}) => PocketBaseGateway(
+  config: _config,
+  now: () => _clock,
+  client: MockClient((request) async {
+    if (request.url.path.endsWith('/auth/guest')) {
+      return http.Response(
+        jsonEncode({
+          'token': 'token',
+          'record': {'id': userId},
+          'expires_in': 86400,
+        }),
+        200,
+      );
+    }
+    return handler(request);
+  }),
 );
 
-final _now = DateTime.utc(2026, 9, 23, 12);
-
-SupabaseGateway _gateway(Future<http.Response> Function(http.Request) handler) {
-  return SupabaseGateway(
-    config: _config,
-    now: () => _now,
-    client: MockClient(handler),
-    sessionStore: MemorySupabaseSessionStore(
-      SupabaseSession(
-        accessToken: 'token',
-        refreshToken: 'refresh',
-        expiresAt: _now.add(const Duration(hours: 1)),
-        userId: 'user-1',
-      ),
-    ),
-  );
+/// backoff가 끝난 시각으로 옮긴 뒤 다시 보낸다.
+Future<void> _retry(EventLogger logger) {
+  _clock = _clock.add(EventLogger.maxBackoff);
+  return logger.flush();
 }
 
 const _testPolicy = TelemetryPolicy(env: TelemetryEnv.test);
 
 EventLogger _logger(
-  SupabaseGateway gateway, {
+  PocketBaseGateway gateway, {
   int batchSize = 20,
   TelemetryPolicy policy = _testPolicy,
 }) => EventLogger(
@@ -43,18 +54,18 @@ EventLogger _logger(
   flushDelay: const Duration(hours: 1),
   batchSize: batchSize,
   maxQueue: 5,
-  now: () => _now,
+  now: () => _clock,
   sessionId: '00000000-0000-4000-8000-000000000000',
   channel: 'intoss',
   policy: policy,
 );
 
 void main() {
-  test('Supabase 설정이 없으면 이벤트를 쌓지 않는다', () {
+  setUp(() => _clock = _start);
+
+  test('백엔드 설정이 없으면 이벤트를 쌓지 않는다', () {
     final logger = EventLogger(
-      gateway: SupabaseGateway(
-        config: const SupabaseConfig(url: '', publishableKey: ''),
-      ),
+      gateway: PocketBaseGateway(config: _unconfigured),
     );
     addTearDown(logger.dispose);
 
@@ -68,7 +79,7 @@ void main() {
     final logger = _logger(
       _gateway((request) async {
         bodies.add(jsonDecode(request.body) as List<dynamic>);
-        return http.Response('', 201);
+        return http.Response('', 204);
       }),
     );
     addTearDown(logger.dispose);
@@ -116,7 +127,7 @@ void main() {
     final logger = _logger(
       _gateway((_) async {
         posts += 1;
-        return http.Response('', 201);
+        return http.Response('', 204);
       }),
       batchSize: 2,
     );
@@ -135,7 +146,7 @@ void main() {
     final offline = _logger(
       _gateway((_) async {
         if (fail) throw Exception('offline');
-        return http.Response('', 201);
+        return http.Response('', 204);
       }),
     );
     addTearDown(offline.dispose);
@@ -143,7 +154,7 @@ void main() {
     await offline.flush();
     expect(offline.pendingCount, 1);
     fail = false;
-    await offline.flush();
+    await _retry(offline);
     expect(offline.pendingCount, 0);
 
     final rejected = _logger(
@@ -165,11 +176,11 @@ void main() {
     forbidden.log('session_start');
     await forbidden.flush();
     expect(forbidden.pendingCount, 0);
-    expect(paths, ['/rest/v1/game_events']);
+    expect(paths, ['/api/stone-match/events']);
   });
 
   test('큐는 최대 개수를 넘으면 오래된 이벤트부터 버린다', () {
-    final logger = _logger(_gateway((_) async => http.Response('', 201)));
+    final logger = _logger(_gateway((_) async => http.Response('', 204)));
     addTearDown(logger.dispose);
 
     for (var i = 0; i < 8; i++) {
@@ -197,7 +208,7 @@ void main() {
           for (final row in jsonDecode(request.body) as List<dynamic>) {
             rows.add(row as Map<String, dynamic>);
           }
-          return http.Response('', 201);
+          return http.Response('', 204);
         }),
         batchSize: batchSize,
         policy: policy,
@@ -243,7 +254,7 @@ void main() {
       await logger.flush();
       expect(logger.pendingCount, 1);
       setFail(false);
-      await logger.flush();
+      await _retry(logger);
       logger.log('round_end');
       await logger.flush();
 
@@ -259,13 +270,13 @@ void main() {
         _gateway((request) async {
           bodies.add(request.body);
           if (attempt++ == 0) throw Exception('offline');
-          return http.Response('', 201);
+          return http.Response('', 204);
         }),
       );
       addTearDown(retry.dispose);
       retry.log('session_start', {'a': 1});
       await retry.flush();
-      await retry.flush();
+      await _retry(retry);
       expect(bodies, hasLength(2));
       expect(bodies[0], bodies[1]);
     });
@@ -581,7 +592,7 @@ void main() {
           _gateway((request) async {
             bodies.add(request.body);
             if (attempt++ == 0) throw Exception('offline');
-            return http.Response('', 201);
+            return http.Response('', 204);
           }),
         );
         addTearDown(logger.dispose);
@@ -591,7 +602,7 @@ void main() {
         final advanced = first.nextAttempt(); // 이후 진행해도 큐의 행은 그대로.
         logger.logPlay('round_start', advanced);
         await logger.flush();
-        await logger.flush();
+        await _retry(logger);
 
         expect(bodies, hasLength(2));
         expect(bodies[0], bodies[1]);
@@ -739,11 +750,9 @@ void main() {
         expect(rows, hasLength(3));
       });
 
-      test('Supabase 미설정이면 상한도 쓰지 않는다', () {
+      test('백엔드 미설정이면 상한도 쓰지 않는다', () {
         final logger = EventLogger(
-          gateway: SupabaseGateway(
-            config: const SupabaseConfig(url: '', publishableKey: ''),
-          ),
+          gateway: PocketBaseGateway(config: _unconfigured),
           policy: sampled,
         );
         addTearDown(logger.dispose);
@@ -773,7 +782,7 @@ void main() {
       test('표본 선택은 세션 ID로 고정되고 매 이벤트 난수가 아니다', () {
         const policy = TelemetryPolicy();
         final logger = _logger(
-          _gateway((_) async => http.Response('', 201)),
+          _gateway((_) async => http.Response('', 204)),
           policy: policy,
         );
         addTearDown(logger.dispose);
@@ -792,7 +801,7 @@ void main() {
           _gateway((request) async {
             bodies.add(request.body);
             if (attempt++ == 0) throw Exception('offline');
-            return http.Response('', 201);
+            return http.Response('', 204);
           }),
           policy: sampled,
         );
@@ -800,7 +809,7 @@ void main() {
 
         logger.logBehavior('menu_open', {'a': 1});
         await logger.flush();
-        await logger.flush();
+        await _retry(logger);
 
         expect(bodies, hasLength(2));
         expect(bodies[1], bodies[0]);
@@ -866,7 +875,7 @@ void main() {
           _gateway((request) async {
             bodies.add(request.body);
             if (attempt++ == 0) throw Exception('offline');
-            return http.Response('', 201);
+            return http.Response('', 204);
           }),
           policy: TelemetryPolicy(
             env: TelemetryEnv.production,
@@ -878,7 +887,7 @@ void main() {
         logger.log('round_start');
         await logger.flush(); // 실패, 큐에 되돌림
         qaOn = true;
-        await logger.flush();
+        await _retry(logger);
 
         expect(bodies, hasLength(2));
         expect(bodies[1], bodies[0]);
@@ -914,7 +923,7 @@ void main() {
 
     test('메타데이터 생성이 실패해도 log는 예외를 던지지 않는다', () {
       final logger = EventLogger(
-        gateway: _gateway((_) async => http.Response('', 201)),
+        gateway: _gateway((_) async => http.Response('', 204)),
         now: () => throw StateError('clock'),
       );
       addTearDown(logger.dispose);

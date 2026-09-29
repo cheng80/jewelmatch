@@ -1,6 +1,6 @@
 # ADR-009 — 서버 저장소를 Supabase로 옮기고 익명 로그인과 REST 직접 호출로 연결한다
 
-- Status: Accepted (코드와 스키마 준비 완료, 원격 프로젝트 적용 대기)
+- Status: Superseded by ADR-010 for new PocketBase builds (기존 Supabase 빌드와 복구용 계약은 보존)
 - Date: 2026-09-23
 
 ## Context

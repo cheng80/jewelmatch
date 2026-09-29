@@ -65,3 +65,5 @@
 - [x] PROJECT_STATUS 갱신
 - [x] HANDOFF 갱신
 
+
+2026-09-29 이전 확인: PocketBase sm_rankings week_start/index 및 ranking/list/submit에 KST 주간 계약을 이식했다. 실제 서버 날짜경계/지난주제외/레벨전체기간을 검증했고 운영 공개 두 목록은 이전 원본과 일치한다. 위 SQL/PG17 검수는 구축 당시 이력이다.

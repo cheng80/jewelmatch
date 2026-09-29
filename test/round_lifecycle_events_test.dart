@@ -13,8 +13,8 @@ import 'package:stonematch/game/jewel_game_mode.dart';
 import 'package:stonematch/game/match_board_game.dart';
 import 'package:stonematch/game/match_board_logic.dart';
 import 'package:stonematch/game/round_timing.dart';
-import 'package:stonematch/services/backend/supabase_config.dart';
-import 'package:stonematch/services/backend/supabase_gateway.dart';
+import 'package:stonematch/services/backend/pocketbase_config.dart';
+import 'package:stonematch/services/backend/pocketbase_gateway.dart';
 import 'package:stonematch/services/event_logger.dart';
 import 'package:stonematch/services/game_settings.dart';
 import 'package:stonematch/services/records/records_store.dart';
@@ -479,10 +479,7 @@ const overlayNames = [
   'GameStats',
 ];
 
-const _config = SupabaseConfig(
-  url: 'https://example.supabase.co',
-  publishableKey: 'sb_publishable_test',
-);
+const _config = PocketBaseConfig(url: 'https://pb.example');
 final _now = DateTime.utc(2026, 9, 29, 12);
 
 /// MockClient로 실제 EventLogger 전송 본문을 받고, 가짜 단조 시계로 RoundTiming을 움직인다.
@@ -498,23 +495,25 @@ class Telemetry {
   Duration clock = Duration.zero;
   late final RoundTiming timing = RoundTiming(now: () => clock);
   late final EventLogger logger = EventLogger(
-    gateway: SupabaseGateway(
+    gateway: PocketBaseGateway(
       config: _config,
       now: () => _now,
       client: MockClient((request) async {
+        if (request.url.path.endsWith('/auth/guest')) {
+          return http.Response(
+            jsonEncode({
+              'token': 'token',
+              'record': {'id': 'user-1'},
+              'expires_in': 3600,
+            }),
+            200,
+          );
+        }
         for (final row in jsonDecode(request.body) as List<dynamic>) {
           rows.add((row as Map).cast<String, Object?>());
         }
-        return http.Response('', 201);
+        return http.Response('', 204);
       }),
-      sessionStore: MemorySupabaseSessionStore(
-        SupabaseSession(
-          accessToken: 'token',
-          refreshToken: 'refresh',
-          expiresAt: _now.add(const Duration(hours: 1)),
-          userId: 'user-1',
-        ),
-      ),
     ),
     flushDelay: const Duration(hours: 1),
     batchSize: 1000,

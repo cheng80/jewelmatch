@@ -150,8 +150,8 @@ DONE은 구현뿐 아니라 필요한 검증과 문서 갱신까지 끝난 상�
 - 진행 랭킹은 현재 진입 레벨이 아니라 완료한 레벨 수다. 레벨 4 진입 상태는 3을 제출하고, 완료 레벨이 없는 레벨 1 상태는 0이며 제출하지 않는다.
 - 유효한 진행 기록은 TimeUp 진입 또는 일시정지 나가기에서 제출한다. 일시정지 나가기는 제출 완료를 기다린다. TimeUp 나가기는 진입 시 보낸 제출을 기다리지 않는다. 클라이언트 계약은 `tools/ranking_client_contract.md`를 본다.
 - 랭킹 서버 장애가 게임 진행이나 타이틀 복귀를 막아서는 안 된다.
-- 2026-09-23부터 게임 내 랭킹 저장소는 Supabase다(ADR-009, PLAN-006). 스키마 변경은 `supabase/migrations/`에 새 마이그레이션으로 추가하고 원격 적용 뒤 보안 권고(advisors)를 확인한다. 적용한 마이그레이션 파일은 고치지 않는다.
-- Supabase secret/service_role 키는 클라이언트, 저장소, 문서, 로그에 두지 않는다. 공개용 키와 URL은 `config/supabase.json`(Git 제외)에만 둔다.
+- 게임 내 서버는 PLAN-013에서 PocketBase로 이전한다(ADR-010). 변경은 `pocketbase/pb_migrations`, `pocketbase/pb_hooks`에 두고 실제 서버 버전에서 검증한다. Supabase 마이그레이션과 연결 값은 복구용으로 보존한다. 적용한 마이그레이션 파일은 고치지 않는다.
+- PocketBase 관리자 자격정보는 클라이언트, 저장소, 문서, 로그에 넣지 않는다. 공개 URL만 config/pocketbase.json에 둔다.
 - NAS `matchranking/ranking.php`는 2026-09-24 폐기해 저장소에서 제거했다. NAS에 남은 파일과 JSON은 NAS 관리 화면에서 수동으로 지운다.
 - 운영 랭킹에 유효한 시험 기록을 넣거나 데이터를 초기화하지 않는다. 원격 스모크 기록은 확인 직후 SQL로 지우고 건수를 기록한다. 초기화는 사용자 승인 뒤 백업, dry-run, 예상 건수 고정, 사후 조회 순서로 수행한다(TECH_SPEC API-004).
 - 게임 흐름은 `architecture/game_flow.md`, 초기화와 복원은 `tools/ranking_server.md`를 따른다.
@@ -262,15 +262,15 @@ flutter run -d web-server
 
 출력된 로컬 URL을 ego 브라우저에서 연다. Flutter 디버그 실행은 기능 확인용이다. FPS 비교 수치로 사용하지 않는다.
 
-### Supabase 연결 실행
+### PocketBase 연결 실행
 
-`config/supabase.example.json`을 `config/supabase.json`으로 복사하고 프로젝트 URL과 공개용 키를 넣는다. 이 파일은 Git에서 제외된다.
+`config/pocketbase.example.json`을 Git 제외 `config/pocketbase.json`으로 복사하고 `POCKETBASE_URL`을 넣는다. 공개 서버 주소만 포함하며 관리자/SSH 설정 `.env.pocketbase`는 빌드에 넣지 않는다. `tools/backend_define.sh`는 PocketBase 설정만 사용하고 운영 빌드에서는 설정이 없으면 중단한다.
 
 ```bash
-flutter run -d web-server --dart-define=TELEMETRY_ENV=development --dart-define-from-file=config/supabase.json
+flutter run -d web-server --dart-define=TELEMETRY_ENV=development --dart-define-from-file=config/pocketbase.json
 ```
 
-파일 없이 실행하면 랭킹은 연결 불가로 표시되고, 보충 광고는 세션 로컬 제한만 쓰며, 이벤트는 보내지 않는다. `npm run dev:ads`는 파일이 있으면 자동으로 넣는다.
+ego 브라우저에서 표시된 로컬 주소를 연다. 두 설정이 모두 없는 빌드는 서버 기능을 사용하지 않는다. 운영 빌드/배포는 설정 파일이 없으면 중단한다.
 
 ### 브라우저 모의 광고
 
@@ -305,12 +305,12 @@ flutter build web \
   --base-href "/match/" \
   --wasm \
   --no-web-resources-cdn \
-  --dart-define-from-file=config/supabase.json
+  --dart-define-from-file=config/pocketbase.json
 dart run tools/patch_flutter_web_deprecations.dart
 ```
 
 결과는 `build/web/`에 생성된다. `/match/` 빌드를 루트(`/`)에 배포하거나 그 반대로 배포하지 않는다.
-`tools/deploy_match_web.sh`는 `config/supabase.json`이 있으면 같은 옵션을 자동으로 넣고, 없으면 Supabase 기능이 꺼진 빌드라고 로그를 남긴다.
+`tools/deploy_match_web.sh`는 PocketBase 설정을 우선하고 `TELEMETRY_ENV=production`으로 빌드한다. 결과는 `tmp/nas-web-<시각>/`에 보존하며 기존 `build/web`, 루트 `match/`, `match.zip`을 지우지 않는다. `--output-dir`로 새 작업 폴더를 지정할 수 있다. HTTP 200과 NAS 응답 `result=OK`를 모두 확인한다.
 
 ### NAS 자동 배포
 
@@ -1283,10 +1283,31 @@ xcrun devicectl device install app --device <DEVICE_ID> build/ios/iphoneos/Runne
 
 ## 관측 환경과 로컬 검증 (PLAN-009 Step 3)
 
-- 원격 연결 없는 회귀 검증은 `flutter test`와 Supabase define 없는 로컬 웹 빌드를 사용한다.
+- 원격 연결 없는 회귀 검증은 `flutter test`와 PocketBase define 없는 로컬 웹 빌드를 사용한다.
 - QA 웹 빌드는 `flutter build web --release --dart-define=TELEMETRY_ENV=qa --output tmp/<작업명>/web-release`로 구분한다. 로컬 정적 서버의 URL은 ego 검증용 새 탭에서 연다.
 - 운영 빌드는 `TELEMETRY_ENV=production`, 개발 실행은 `development`를 명시할 수 있다. release 기본값은 production이므로 QA 배포에는 반드시 qa를 명시한다. 잘못된 값은 development가 된다.
 - QA용 query/hash route와 QA 빌드 스위치가 있으면 qa가 우선한다. 한 번 QA를 기록한 EventLogger는 이후 일반 화면에서도 qa를 유지한다. 앱 재시작/새 탭은 별도 세션이다.
 - 테스트에서 원격 요청은 MockClient로 격리하고 `EventLogger(policy: const TelemetryPolicy(env: TelemetryEnv.test))`를 주입한다. 표본 UI 경로는 `sessionSampled: true`로 결정적으로 확인한다. 운영 표본률을 검증 편의를 위해 바꾸지 않는다.
 - 전수 요약은 `collection=full`, 상세 행동은 `sampled`로 구분한다. 후자는 세션당 40건 상한이 있어 전체 행동량으로 단순 확대 추정하지 않는다.
 - 원격 삽입, 실제 운영 데이터 품질과 서버 중복 제거는 로컬 테스트 통과와 구분해서 기록한다. 이번 단계는 GA4/Sentry SDK를 연결하지 않는다.
+
+## PocketBase 서버 운영 (PLAN-013)
+
+- 인스턴스: `/Users/cheng80/Servers/stonematch`, 바이너리 `pocketbase` 0.39.7, 데이터 `pb_data/`, 원본 마이그레이션 `pb_migrations/`, 서버 코드 `pb_hooks/`.
+- 자동 실행: `~/Library/LaunchAgents/com.fastmake.stonematch.pocketbase.plist`, label `com.fastmake.stonematch.pocketbase`. `RunAtLoad=true`, `KeepAlive=true`. 사용자 로그인 후 실행하며 로그인 전 서비스는 아니다.
+- 리스너: `127.0.0.1:8090`. 외부 API는 Cloudflare Tunnel을 통해 HTTPS로 제공한다. 기존 preview 4173 경로는 별개다.
+- 관리자 설정은 `.env.pocketbase`에서 읽되 shell source로 실행하지 않는다. HTTP 도구는 인증 토큰을 메모리에만 유지하고 리다이렉트에 자격정보를 전달하지 않는다.
+- 백업은 실행 중 파일 복사 대신 서비스 중지 후 일관된 전체 폴더 복사/해시 검증 또는 PocketBase 백업 API를 사용한다. `/Users/cheng80/Servers/backups/`는 서버 로컬 백업 위치이며 다른 게임 폴더와 구분한다.
+- 복구용 원본 Supabase export는 `tools/pocketbase/export_snapshot.sql`을 기존 CLI 연결로 실행하고 Git 제외 `tmp/`에 보관한다. 인증 사용자/비밀번호/토큰을 가져오지 않는다.
+- 데이터 이전: `python3 tools/pocketbase/import_snapshot.py --snapshot <snapshot.json> --report <dry-run.json>`으로 조사하고, 검토한 같은 파일에 `--apply`를 추가한다. 기존 legacy ID의 내용이 다르면 임의 덮어쓰지 않고 중단한다. 원격 설정 키는 원본 값으로 갱신한다.
+- 검증은 관리자 성공만으로 끝내지 않는다. 비인증/일반 사용자 API 권한, 순위, 광고 동시 요청, 이벤트 배치, 로그인 복구와 기존 `users`/`tasks` 불변을 확인한다. 실기기 검증 여부는 별도 기록한다.
+
+## PocketBase 운영 전환 후 유지보수
+
+- 실제 서버 경로 `/Users/cheng80/Servers/stonematch`, LaunchAgent label `com.fastmake.stonematch.pocketbase`, 127.0.0.1:8090. 실행 파일은 0.39.7이다. 폴더만 복제해 다른 게임을 띄울 때에는 데이터 디렉터리, 포트, launchd label/plist와 도메인을 각각 분리한다.
+- 배포 전 `launchctl bootout gui/501/com.fastmake.stonematch.pocketbase`로 중지하고 폴더 전체와 plist를 별도 700 디렉터리에 복사해 해시를 확인한다. 기존 pb_data와 pb_migrations를 덮어쓰지 않고 새 파일만 추가한다. 원격 호스트의 `launchctl bootstrap gui/501 /Users/cheng80/Library/LaunchAgents/com.fastmake.stonematch.pocketbase.plist`로 기동하고 `/api/stone-match/health` 및 권한을 검증한다.
+- 서비스만 재시작할 때는 해당 호스트에서 `launchctl kickstart -k gui/501/com.fastmake.stonematch.pocketbase`. 로그인 전 부팅 자동 시작은 LaunchAgent의 보장 범위가 아니다. 실제 재부팅을 검증한 것으로 보고하지 않는다.
+- 복구는 서비스 중지 후 현재 폴더도 별도 보존하고 일관된 백업을 복원하는 방식이다. 운영에서 `migrate down`은 sm_* 데이터를 삭제하므로 복구 명령으로 사용하지 않는다. 새 PB 기록이 생긴 이후에는 원본/신규 데이터 보존과 역이관을 먼저 검토한다.
+- 전환 후 구 탭이 Supabase에 쓰는 경우 `export_snapshot.sql`로 새 읽기 전용 스냅샷을 만들고 importer dry-run → apply → 재실행 변경 0건 확인한다. legacy_id로 중복을 막고 순번 충돌은 최대 5회 재조회/재시도한다. 원본에서 삭제된 행은 자동 삭제하지 않는다. 신규 이벤트가 많으면 전체 재조회 방식이 느릴 수 있다.
+- 관리자 환경변수는 Git 제외 .env.pocketbase에만 두고, 임시 SSH 터널용 자격 파일은 작업 후 삭제한다. 원본 export와 로컬 runtime DB에는 비공개 이력이 있으므로 tmp 아래 제한된 권한으로 관리한다. API Rules의 빈 문자열은 공개 허용이므로 잠금 해제 용도로 임의 변경하지 않는다.
+- 협업은 사용자가 지정한 Orca CLI orchestration을 사용한다. Codex 외부 세션은 자신이 만든 백그라운드 coordinator 터미널 handle로 Run을 연결할 수 있다. 다른 터미널의 handle을 빌리거나 내부 subagent로 조용히 대체하지 않는다. 브라우저는 `/Users/cheng80/.local/bin/ego-browser` CLI만 사용한다.

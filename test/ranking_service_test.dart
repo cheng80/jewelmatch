@@ -3,14 +3,12 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:stonematch/services/backend/supabase_config.dart';
-import 'package:stonematch/services/backend/supabase_gateway.dart';
+import 'package:stonematch/services/backend/pocketbase_config.dart';
+import 'package:stonematch/services/backend/pocketbase_gateway.dart';
 import 'package:stonematch/services/ranking_service.dart';
 
-const testConfig = SupabaseConfig(
-  url: 'https://example.supabase.co',
-  publishableKey: 'sb_publishable_test',
-);
+const testConfig = PocketBaseConfig(url: 'https://pb.example');
+const guestPath = '/api/stone-match/auth/guest';
 
 http.Response jsonResponse(int status, Object? body) => http.Response(
   jsonEncode(body),
@@ -18,27 +16,18 @@ http.Response jsonResponse(int status, Object? body) => http.Response(
   headers: {'content-type': 'application/json'},
 );
 
-Map<String, Object?> authBody({
-  String access = 'token-1',
-  String refresh = 'refresh-1',
-  String userId = 'user-1',
-}) => {
-  'access_token': access,
-  'refresh_token': refresh,
+Map<String, Object?> authBody() => {
+  'token': 'token-1',
+  'record': {'id': 'user-1'},
   'expires_in': 3600,
-  'user': {'id': userId},
 };
 
-SupabaseGateway gatewayWith(
+PocketBaseGateway gatewayWith(
   Future<http.Response> Function(http.Request request) handler,
-) => SupabaseGateway(
-  config: testConfig,
-  client: MockClient(handler),
-  sessionStore: MemorySupabaseSessionStore(),
-);
+) => PocketBaseGateway(config: testConfig, client: MockClient(handler));
 
 void main() {
-  group('Supabase 랭킹 조회와 제출', () {
+  group('랭킹 조회와 제출', () {
     test('목록과 1위는 로그인 없이 get_ranking을 부른다', () async {
       final requests = <http.Request>[];
       final gateway = gatewayWith((request) async {
@@ -67,10 +56,9 @@ void main() {
       expect(top.data!.score, 300);
       expect(
         requests.map((r) => r.url.path),
-        everyElement('/rest/v1/rpc/get_ranking'),
+        everyElement('/api/stone-match/ranking/list'),
       );
       expect(requests.every((r) => r.headers['Authorization'] == null), isTrue);
-      expect(requests.first.headers['apikey'], 'sb_publishable_test');
       expect(jsonDecode(requests.first.body), {'p_mode': 'level'});
       expect(jsonDecode(requests.last.body), {'p_mode': 'time', 'p_limit': 1});
     });
@@ -88,10 +76,10 @@ void main() {
       final paths = <String>[];
       final gateway = gatewayWith((request) async {
         paths.add(request.url.path);
-        if (request.url.path == '/auth/v1/signup') {
+        if (request.url.path == guestPath) {
           return jsonResponse(200, authBody());
         }
-        expect(request.headers['Authorization'], 'Bearer token-1');
+        expect(request.headers['Authorization'], 'token-1');
         expect(jsonDecode(request.body), {
           'p_mode': 'time',
           'p_name': 'A',
@@ -114,14 +102,14 @@ void main() {
 
       expect(result.data!.ranked, isTrue);
       expect(result.data!.rank, 1);
-      expect(paths, ['/auth/v1/signup', '/rest/v1/rpc/submit_ranking']);
+      expect(paths, [guestPath, '/api/stone-match/ranking/submit']);
     });
   });
 
   group('랭킹 실패 유형', () {
     test('404를 기능 없음으로 구분한다', () async {
       final gateway = gatewayWith(
-        (_) async => jsonResponse(404, {'code': 'PGRST202'}),
+        (_) async => jsonResponse(404, {'code': 'not_found'}),
       );
 
       final result = await RankingService.fetchList(gateway: gateway);
@@ -140,15 +128,12 @@ void main() {
     });
 
     test('제약 위반과 제출 과다를 저장 실패로 구분한다', () async {
-      for (final body in [
-        {'code': '23514', 'message': 'violates check constraint'},
-        {'code': 'P0001', 'message': 'ranking_rate_limited'},
-      ]) {
+      for (final status in [400, 429]) {
         final gateway = gatewayWith((request) async {
-          if (request.url.path == '/auth/v1/signup') {
+          if (request.url.path == guestPath) {
             return jsonResponse(200, authBody());
           }
-          return jsonResponse(400, body);
+          return jsonResponse(status, {'code': 'rejected'});
         });
 
         final result = await RankingService.submit(
@@ -163,10 +148,13 @@ void main() {
     });
 
     test('잘못된 응답, 네트워크 예외, 미설정 빌드를 연결 불가로 구분한다', () async {
-      final invalid = gatewayWith((_) async => http.Response('not json', 200));
+      // 비JSON 본문은 gateway가 server 실패로 분류한다(pocketbase_gateway_test). 여기서는 형태가 틀린 JSON.
+      final invalid = gatewayWith(
+        (_) async => jsonResponse(200, {'not': 'a list'}),
+      );
       final offline = gatewayWith((_) async => throw Exception('offline'));
-      final unconfigured = SupabaseGateway(
-        config: const SupabaseConfig(url: '', publishableKey: ''),
+      final unconfigured = PocketBaseGateway(
+        config: const PocketBaseConfig(url: ''),
       );
 
       final invalidResult = await RankingService.fetchList(gateway: invalid);

@@ -42,49 +42,45 @@ void main() {
   // 원본 PNG(assets/design/legacy/ui)는 Git에서 빠져 있어 없는 곳에서는 비교를 건너뛴다.
   final hasSources = Directory('assets/design/legacy/ui').existsSync();
 
-  test(
-    'every ui atlas frame decodes within 1/255 of its source PNG',
-    () async {
-      var differing = 0;
-      var total = 0;
-      for (final sheet in ['ui_atlas', 'ui_buttons_atlas']) {
-        final atlas = await decodeFile('assets/images/ui/$sheet.webp');
-        final frames = TextureAtlas.parseFrames(
-          File('assets/images/ui/$sheet.json').readAsStringSync(),
-        );
-        final atlasBytes = await rgba(atlas);
-        for (final MapEntry(key: name, value: r) in frames.entries) {
-          final path = Directory('assets/design/legacy/ui')
-              .listSync(recursive: true)
-              .whereType<File>()
-              .firstWhere((f) => f.path.endsWith('/$name.png'))
-              .path;
-          final source = await decodeFile(path);
-          final sourceBytes = await rgba(source);
-          expect(source.width, r.width.toInt(), reason: name);
-          expect(source.height, r.height.toInt(), reason: name);
-          for (var y = 0; y < source.height; y++) {
-            for (var x = 0; x < source.width * 4; x++) {
-              final a =
-                  atlasBytes[((r.top.toInt() + y) * atlas.width +
-                              r.left.toInt()) *
-                          4 +
-                      x];
-              final s = sourceBytes[y * source.width * 4 + x];
-              total++;
-              if (a != s) differing++;
-              if ((a - s).abs() > 1) fail('$name ($x, $y) $a != $s');
-            }
+  test('every ui atlas frame decodes within 1/255 of its source PNG', () async {
+    var differing = 0;
+    var total = 0;
+    for (final sheet in ['ui_atlas', 'ui_buttons_atlas']) {
+      final atlas = await decodeFile('assets/images/ui/$sheet.webp');
+      final frames = TextureAtlas.parseFrames(
+        File('assets/images/ui/$sheet.json').readAsStringSync(),
+      );
+      final atlasBytes = await rgba(atlas);
+      for (final MapEntry(key: name, value: r) in frames.entries) {
+        final path = Directory('assets/design/legacy/ui')
+            .listSync(recursive: true)
+            .whereType<File>()
+            .firstWhere((f) => f.path.endsWith('/$name.png'))
+            .path;
+        final source = await decodeFile(path);
+        final sourceBytes = await rgba(source);
+        expect(source.width, r.width.toInt(), reason: name);
+        expect(source.height, r.height.toInt(), reason: name);
+        for (var y = 0; y < source.height; y++) {
+          for (var x = 0; x < source.width * 4; x++) {
+            final a =
+                atlasBytes[((r.top.toInt() + y) * atlas.width +
+                            r.left.toInt()) *
+                        4 +
+                    x];
+            final s = sourceBytes[y * source.width * 4 + x];
+            total++;
+            if (a != s) differing++;
+            if ((a - s).abs() > 1) fail('$name ($x, $y) $a != $s');
           }
-          source.dispose();
         }
-        atlas.dispose();
+        source.dispose();
       }
-      // ignore: avoid_print
-      print('[decode] differing=$differing / $total bytes (max 1)');
-    },
-    skip: hasSources ? false : '원본 PNG 없음(Git 제외)',
-  );
+      atlas.dispose();
+    }
+    // ignore: avoid_print
+    print('[decode] differing=$differing / $total bytes (max 1)');
+  }, skip: hasSources ? false : '원본 PNG 없음(Git 제외)');
 
   test(
     'atlas nine slice matches drawImageNine of the original panel',

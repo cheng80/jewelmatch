@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../resources/sound_manager.dart';
+import '../services/ga4_analytics.dart';
 import '../services/game_settings.dart';
 import '../services/wakelock_service.dart';
 
@@ -13,6 +14,7 @@ class SettingsState {
     this.sfxMuted = false,
     this.keepScreenOn = true,
     this.showFps = false,
+    this.analyticsConsent = false,
   });
 
   final double bgmVolume;
@@ -21,6 +23,7 @@ class SettingsState {
   final bool sfxMuted;
   final bool keepScreenOn;
   final bool showFps;
+  final bool analyticsConsent;
 
   SettingsState copyWith({
     double? bgmVolume,
@@ -29,6 +32,7 @@ class SettingsState {
     bool? sfxMuted,
     bool? keepScreenOn,
     bool? showFps,
+    bool? analyticsConsent,
   }) {
     return SettingsState(
       bgmVolume: bgmVolume ?? this.bgmVolume,
@@ -37,6 +41,7 @@ class SettingsState {
       sfxMuted: sfxMuted ?? this.sfxMuted,
       keepScreenOn: keepScreenOn ?? this.keepScreenOn,
       showFps: showFps ?? this.showFps,
+      analyticsConsent: analyticsConsent ?? this.analyticsConsent,
     );
   }
 
@@ -48,7 +53,8 @@ class SettingsState {
         other.bgmMuted == bgmMuted &&
         other.sfxMuted == sfxMuted &&
         other.keepScreenOn == keepScreenOn &&
-        other.showFps == showFps;
+        other.showFps == showFps &&
+        other.analyticsConsent == analyticsConsent;
   }
 
   @override
@@ -59,6 +65,7 @@ class SettingsState {
     sfxMuted,
     keepScreenOn,
     showFps,
+    analyticsConsent,
   );
 }
 
@@ -73,6 +80,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
       sfxMuted: GameSettings.sfxMuted,
       keepScreenOn: GameSettings.keepScreenOn,
       showFps: GameSettings.showFps,
+      analyticsConsent: GameSettings.analyticsConsent,
     );
   }
 
@@ -133,6 +141,13 @@ class SettingsNotifier extends Notifier<SettingsState> {
     if (state.showFps == v) return;
     GameSettings.showFps = v;
     state = state.copyWith(showFps: v);
+  }
+
+  void setAnalyticsConsent(bool v) {
+    if (state.analyticsConsent == v) return;
+    GameSettings.analyticsConsent = v;
+    Ga4Analytics.instance.setConsent(v);
+    state = state.copyWith(analyticsConsent: v);
   }
 }
 

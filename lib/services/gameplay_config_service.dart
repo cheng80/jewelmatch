@@ -5,7 +5,8 @@ import 'package:flutter/foundation.dart';
 import '../app_config.dart';
 import '../game/gameplay_flags.dart';
 import '../utils/storage_helper.dart';
-import 'backend/supabase_gateway.dart';
+import 'backend/backend_gateway.dart';
+import 'backend/backend_selector.dart';
 
 /// 실험 기능 스위치 적용. 캐시를 먼저 쓰고 원격 `app_config.gameplay`로 갱신한다.
 ///
@@ -41,8 +42,8 @@ class GameplayConfigService {
   }
 
   /// 원격 값을 받아 캐시와 현재 값을 갱신한다. 실패하면 지금 값을 유지한다.
-  static Future<void> refresh({SupabaseGateway? gateway}) async {
-    final backend = gateway ?? SupabaseGateway.instance;
+  static Future<void> refresh({BackendGateway? gateway}) async {
+    final backend = gateway ?? BackendSelector.instance;
     final result = await backend.select(
       'app_config?key=eq.$configKey&select=value',
     );

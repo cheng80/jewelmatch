@@ -20,7 +20,7 @@ Stone Match는 Bejeweled 3 계열 규칙(4일렬 bomb, T/L star, 5일렬 hyper, 
 조사 근거와 출처는 [01_PRODUCT_SPEC.md](../01_PRODUCT_SPEC.md)의 "게임 방향 기획" 절에 둔다.
 
 ## Decision
-제안 내용이다. Accepted 전까지 현재 규칙(ADR-001 등)이 유효하다.
+2026-09-24 승인된 결정이다. 구현된 규칙은 현행 Product Spec과 PLAN-005를 따르며, D7의 시간 보상 채택은 플레이테스트 후 결정한다.
 
 1. 게임의 정체성은 Bejeweled Blitz식 60초 점수 경쟁이다. Bejeweled 3의 구조를 통째로 복원하지 않고, 요즘 사가형도 따라가지 않는다.
 2. 모드 역할을 나눈다.

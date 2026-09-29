@@ -37,11 +37,11 @@ Stone Match는 Flutter와 Flame 기반 8×8 매치 3 퍼즐 게임이다.
 - TimeUp 진입 또는 일시정지 나가기에서 제출한다. Pause 나가기는 await, TimeUp 나가기는 기다리지 않는다. BR-093, [ADR-007](decisions/ADR-007-ranking-submit-timing.md)
 - 랭킹 장애가 플레이/나가기를 막지 않는다. BR-002
 - NAS 랭킹 `matchranking/ranking.php`는 2026-09-24 폐기해 저장소에서 제거했다. 새로 만들거나 빌드와 ZIP에 넣지 않는다.
-- 게임 내 랭킹, 보충 광고 제한, 이벤트 로그의 저장소는 Supabase다(ADR-009). secret/service_role 키는 어디에도 두지 않고, 공개용 키와 URL은 Git 제외 파일 config/supabase.json으로만 넣는다.
+- 게임 내 랭킹, 보충 광고 제한, 이벤트 로그는 PLAN-013에서 PocketBase로 이전한다(ADR-010). 새 빌드는 Git 제외 config/pocketbase.json의 공개 URL을 사용한다. 관리자 자격정보는 Git 제외 .env.pocketbase에만 두고 앱 빌드에 포함하지 않는다. 현재 앱/빌드에 Supabase 경로를 두지 않는다. 원본 데이터와 과거 SQL은 이력으로만 보존한다.
 - 운영 랭킹 초기화는 승인, 백업, dry-run, 예상 건수, 사후 조회 순서다.
 - Riverpod codegen을 새로 도입하지 않는다.
 - 실시간 HUD는 Flame 구성요소를 우선한다.
-- 게임 방향 개편(ADR-008, PLAN-005)은 제안 상태다. Accepted와 해당 결정(D1~D10) 전에는 ADR-001 특수 보석 규칙과 ADR-007 제출 시점을 바꾸지 않는다.
+- 게임 방향 개편(ADR-008)은 Accepted다. PLAN-005의 승인된 D1~D6, D8, D9와 현재 제품 계약을 따른다. D7 시간 보상 채택은 플레이테스트 결정 전까지 바꾸지 않는다.
 
 ## Plan 사용 규칙
 

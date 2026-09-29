@@ -1,4 +1,5 @@
-import 'backend/supabase_gateway.dart';
+import 'backend/backend_gateway.dart';
+import 'backend/backend_selector.dart';
 
 enum RankingMode {
   level('level'),
@@ -42,7 +43,7 @@ class RankingResult<T> {
   bool get isSuccess => failure == null;
 }
 
-/// 게임 내 랭킹(타임 점수, 레벨 완료 수). 저장소는 Supabase(ADR-009).
+/// 게임 내 랭킹(타임 점수, 레벨 완료 수). 설정된 백엔드를 사용한다.
 ///
 /// - 조회는 공개용 키만으로 anon 역할로 `get_ranking`을 부른다.
 /// - 제출은 익명 로그인 뒤 `submit_ranking`을 부른다.
@@ -52,7 +53,7 @@ class RankingService {
 
   static Future<RankingResult<RankingEntry?>> fetchTop1({
     RankingMode mode = RankingMode.time,
-    SupabaseGateway? gateway,
+    BackendGateway? gateway,
   }) async {
     final result = await _list(mode, limit: 1, gateway: gateway);
     if (!result.isSuccess) return RankingResult.failure(result.failure!);
@@ -62,7 +63,7 @@ class RankingService {
 
   static Future<RankingResult<List<RankingEntry>>> fetchList({
     RankingMode mode = RankingMode.time,
-    SupabaseGateway? gateway,
+    BackendGateway? gateway,
   }) {
     return _list(mode, gateway: gateway);
   }
@@ -70,9 +71,9 @@ class RankingService {
   static Future<RankingResult<List<RankingEntry>>> _list(
     RankingMode mode, {
     int? limit,
-    SupabaseGateway? gateway,
+    BackendGateway? gateway,
   }) async {
-    final backend = gateway ?? SupabaseGateway.instance;
+    final backend = gateway ?? BackendSelector.instance;
     final result = await backend.rpc('get_ranking', {
       'p_mode': mode.queryValue,
       'p_limit': ?limit,
@@ -96,9 +97,9 @@ class RankingService {
     required RankingMode mode,
     required String name,
     required int score,
-    SupabaseGateway? gateway,
+    BackendGateway? gateway,
   }) async {
-    final backend = gateway ?? SupabaseGateway.instance;
+    final backend = gateway ?? BackendSelector.instance;
     final result = await backend.rpc('submit_ranking', {
       'p_mode': mode.queryValue,
       'p_name': name,

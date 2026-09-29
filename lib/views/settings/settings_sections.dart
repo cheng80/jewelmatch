@@ -73,6 +73,24 @@ class ShowFpsTile extends ConsumerWidget {
   }
 }
 
+/// NAS 웹에서 GA4 대상이 있을 때만 보인다. 기본은 꺼짐이다.
+class AnalyticsConsentTile extends ConsumerWidget {
+  const AnalyticsConsentTile({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final value = ref.watch(settingsProvider.select((s) => s.analyticsConsent));
+    final notifier = ref.read(settingsProvider.notifier);
+    return SwitchListTile(
+      secondary: const Icon(Icons.insights),
+      title: Text(context.tr('analyticsConsent')),
+      subtitle: Text(context.tr('analyticsConsentDesc')),
+      value: value,
+      onChanged: notifier.setAnalyticsConsent,
+    );
+  }
+}
+
 class BgmVolumeTile extends ConsumerWidget {
   const BgmVolumeTile({super.key});
 

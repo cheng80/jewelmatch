@@ -6,6 +6,8 @@
 작성 기준일: 2026-08-23, 계약 정합 수정 2026-08-23
 근거: 현재 코드와 테스트
 
+2026-09-29 백엔드 계약 갱신(PLAN-013): PocketBase 전용 API를 사용한다. PocketBase만 사용하며 `POCKETBASE_URL`이 없으면 서버 기능을 비활성화하고 플레이를 유지한다. 이 문서의 날짜가 붙은 Supabase 구현/검증 기록은 당시 이력이다. 운영 전환 완료 여부는 PROJECT_STATUS와 HANDOFF에서 확인한다.
+
 ## 1. 프로젝트 정의
 
 - 한 줄 정의: 8×8 보드에서 같은 보석을 맞춰 콤보와 특수 보석을 만드는 캐주얼 매치-3 퍼즐
@@ -34,7 +36,7 @@
 - 특수 보석끼리의 스왑 조합 (Bejeweled Stars식 Flame+Star 등). 하이퍼 큐브 교환(H1, H2)만 2026-09-24 PLAN-005 1a로 활성
 - 강제 전면 광고
 - 계정 시스템, 소셜 친구, 실시간 멀티플레이
-- 외부 GA/Firebase 분석 SDK (2026-09-23 확인: GA4, Firebase Analytics 미연동. 내부 이벤트는 Supabase `game_events`로 보낸다. ADR-009)
+- 외부 GA/Firebase 분석 SDK (2026-09-23 확인: GA4, Firebase Analytics 미연동. 현재 내부 이벤트는 PocketBase `sm_events`로 보낸다. PLAN-013, 이전 Supabase 결정은 ADR-009)
 
 ## 3. 사용자 유형
 
@@ -267,10 +269,11 @@
 - 타임 목록과 HUD 1위는 이번 주 기록 기준이다(BR-095). 팝업 탭 이름은 "이번 주 타임"이고 초기화 안내를 보여 주며, HUD 1위 이름 앞에 "이번 주"를 붙인다
 - 인게임 HUD 왕관과 top1 fetch, HUD 랭킹 버튼은 타임 모드만
 - 타임: 점수, 레벨: 완료 레벨 수
-- Apps in Toss는 레벨 기록만 공식 리더보드에도 제출하고, 게임 내 목록은 Supabase 랭킹을 쓴다
+- Apps in Toss는 레벨 기록만 공식 리더보드에도 제출하고, 게임 내 목록은 PocketBase 랭킹을 쓴다
 - 제출 실패 시 TimeUp에서 재제출 가능
-- 저장소는 Supabase다(ADR-009). 제출은 설치 또는 브라우저 단위 익명 사용자로 하고 이름, 점수만 공개한다. 모든 기록을 저장하고 상위 30(원격 설정 `ranking.list_limit`)을 보여 준다
-- 2026-09-23 저장소 이전 때 NAS 기록은 가져오지 않고 새로 시작한다(사용자 결정)
+- 저장소는 PocketBase `sm_rankings`다(PLAN-013). 제출은 설치 또는 브라우저 단위 익명 사용자로 하고 이름, 점수만 공개한다. 모든 기록을 저장하고 상위 30(원격 설정 `ranking.list_limit`)을 보여 준다
+- 2026-09-23 저장소 이전 때 NAS 기록은 가져오지 않고 새로 시작한다(사용자 결정, 과거 이력)
+- PLAN-013에서는 기존 랭킹 이름, 점수, 시각과 동점 순서를 보존한다. 기존 Supabase 익명 계정을 연결하지 않고 새 PocketBase 사용자를 만든다. URL별 기기 자격정보(device_id, device_secret)를 네트워크 요청 전에 저장하고 토큰 만료/재시작에도 재사용한다. 실패를 이유로 기기 자격정보를 재생성하지 않는다. 서버의 90일 비활성 사용자 정리 뒤에는 같은 기기 자격정보로 새 사용자 ID를 받을 수 있다.
 
 **조건 / 비즈니스 규칙**
 - BR-001, BR-002
@@ -278,12 +281,12 @@
 - BR-091: score <= 0 이면 제출하지 않는다
 - BR-092: HUD 랭킹/top1은 타임 전용. 레벨 모드는 타이틀 목록만
 - BR-093: Pause 나가기는 제출 await. TimeUp 나가기는 진입 시 fire-and-forget 제출 후 대기 없이 타이틀(타임 모드는 Last Hurrah가 끝난 뒤 TimeUp에 진입한다)
-- BR-095: 타임 랭킹은 KST 월요일 00:00에 시작하는 주 단위이고, 주는 제출 시각 기준이다(일요일에 시작해 월요일에 끝난 판은 새 주). HUD 1위는 게임 진입과 다시 하기 때 다시 가져온다. 서버가 `ranking_entries.week_start`(생성 열)로 조회와 순위 계산 범위만 이번 주로 좁히고 기록은 지우지 않는다. 레벨 랭킹은 전체 기간이다. 앱인토스 공식 리더보드는 레벨 완료 수를 유지한다(D8)
+- BR-095: 타임 랭킹은 KST 월요일 00:00에 시작하는 주 단위이고, 주는 제출 시각 기준이다(일요일에 시작해 월요일에 끝난 판은 새 주). HUD 1위는 게임 진입과 다시 하기 때 다시 가져온다. 서버가 `sm_rankings.week_start`(서버가 계산한 KST 주 시작 날짜)로 조회와 순위 계산 범위만 이번 주로 좁히고 기록은 지우지 않는다. 레벨 랭킹은 전체 기간이다. 앱인토스 공식 리더보드는 레벨 완료 수를 유지한다(D8)
 - BR-094: 서버는 이름 1~20자, 점수 상한(레벨 10,000, 타임 1,000,000,000), 사용자당 분당 10건만 검증한다. 치트 방지 장치가 아니다
 
 **실패 / 예외**
 - 서버 없음/로드 실패/저장 실패는 유형별 메시지만 보여 준다. 플레이와 나가기는 막지 않는다
-- Supabase 연결 값 없이 만든 빌드는 연결 불가 메시지를 보인다
+- PocketBase 연결 값이 없는 빌드는 연결 불가 메시지를 보인다
 
 **Acceptance Criteria**
 - [x] 목록/1위/제출이 동작한다
@@ -303,7 +306,7 @@
 - BR-100: 강제 전면 광고 없음
 - BR-101: rewarded 완료에서만 보상. 로드/클릭/닫힘은 보상 아님
 - BR-102: 광고 중 입력/타이머/BGM/SFX 정지, 종료 후 복구
-- BR-103: 일일 제한(기본 3회, 원격 설정 `ads.daily_refill_limit`)은 Supabase에서 KST 날짜와 익명 사용자 기준으로 센다. 인벤토리를 열 때 남은 횟수를 서버 값으로 맞추고, 광고 완료 후 서버가 기록을 거절하면 지급하지 않는다. 서버에 닿지 못하면 세션 로컬 제한으로 판단한다. 저장소 삭제나 재설치로 익명 사용자가 바뀌면 제한도 새로 시작한다. 한도를 다 쓰면 보충 버튼은 비활성으로 "오늘 횟수를 모두 사용했습니다"를 보이고, 남은 횟수 자리에 "내일 0시(한국 시간)에 N회로 다시 채워집니다"를 보인다. 광고를 끝까지 봤는데 서버가 한도로 거절하면 같은 한도 문구로 알린다
+- BR-103: 일일 제한(기본 3회, 원격 설정 `ads.daily_refill_limit`)은 PocketBase에서 KST 날짜와 익명 사용자 기준으로 센다. 인벤토리를 열 때 남은 횟수를 서버 값으로 맞추고, 광고 완료 후 서버가 기록을 거절하면 지급하지 않는다. 서버에 닿지 못하면 세션 로컬 제한으로 판단한다. 저장소 삭제나 재설치로 익명 사용자가 바뀌면 제한도 새로 시작한다. 한도를 다 쓰면 보충 버튼은 비활성으로 "오늘 횟수를 모두 사용했습니다"를 보이고, 남은 횟수 자리에 "내일 0시(한국 시간)에 N회로 다시 채워집니다"를 보인다. 광고를 끝까지 봤는데 서버가 한도로 거절하면 같은 한도 문구로 알린다
 
 **실패 / 예외**
 - 로드 실패, 미지원, 중도 종료는 보상 없음. 기존 상태 유지
@@ -311,7 +314,7 @@
 **Acceptance Criteria**
 - [x] 세 위치만 존재한다
 - [x] 이어가기/보충이 rewarded 완료에서만 지급된다
-- [ ] 일일 제한 서버 영속화 (코드 구현, Supabase 원격 적용과 확인 대기. PLAN-006)
+- [x] 일일 제한 서버 영속화 (PocketBase 운영 전환과 검증 완료. PLAN-002, PLAN-013. 실기기 광고 SDK 검증은 별도)
 
 상세: ADR-003, FR-010
 
@@ -366,7 +369,7 @@
 ### Later
 
 - 3차 영속 인벤토리와 타이틀 진입
-- 광고 일일 제한 서버 영속, 측정 이벤트 연결 (Supabase로 코드 구현, 원격 적용 대기. PLAN-006)
+- 광고 일일 제한 서버 영속, 측정 이벤트 연결 (현재 PocketBase 계약, PLAN-013. Supabase 구현 당시 이력은 PLAN-006)
 - 코인 경제, 인앱 결제
 - 스토어 채널 flavor, Apple ID, 개인정보/지원 URL
 - Apps in Toss iPhone 장시간 FPS/오디오 회귀
@@ -1101,7 +1104,7 @@ Stone Match의 하단 아이템 슬롯, 인벤토리, 스테이지 종료 보상
 
 2.5차에서는 GA/Firebase를 붙이기 전에 내부 이벤트 로거를 먼저 둔다. 목표는 외부 SDK 선택이 아니라 “무엇을 측정할지”를 고정하는 것이다.
 
-구현 상태(2026-09-23): 로거는 `lib/services/event_logger.dart`(EventLogger)로 구현했고 Supabase `game_events`에 보낸다(ADR-009, TECH_SPEC API-007). 연결한 이벤트는 `session_start`, `round_start`, `round_end`, `level_clear`, `stage_continue`, `ranking_submit`, `ad_reward`와 2026-09-24에 추가한 `item_used`, `item_target_cancel`(item_kind, target_required, mode, level, time_left), `item_earned`(item_kind, quantity, reason, level), `item_equipped`(item_kind, slot_index), `continue_clicked`(mode, level, score)다. 아래 표의 `stage_start`, `stage_clear`, `stage_fail`은 각각 `round_start`, `level_clear`, `round_end`(reason time_up)가 같은 역할을 하므로 따로 만들지 않는다. `item_unequipped`는 슬롯 해제 기능이 없어 해당 없다. 광고 mock 클릭 이벤트는 결과까지 담는 `ad_reward`(placement, result)로 대신한다. GA4와 Firebase Analytics는 연동하지 않았다. 게임 방향 개편에 필요한 추가 이벤트는 하단 "게임 방향 기획" 8절에 둔다.
+과거 구현 상태(2026-09-23, 저장소는 PLAN-013으로 변경): 로거는 `lib/services/event_logger.dart`(EventLogger)로 구현했고 Supabase `game_events`에 보낸다(ADR-009, TECH_SPEC API-007). 연결한 이벤트는 `session_start`, `round_start`, `round_end`, `level_clear`, `stage_continue`, `ranking_submit`, `ad_reward`와 2026-09-24에 추가한 `item_used`, `item_target_cancel`(item_kind, target_required, mode, level, time_left), `item_earned`(item_kind, quantity, reason, level), `item_equipped`(item_kind, slot_index), `continue_clicked`(mode, level, score)다. 아래 표의 `stage_start`, `stage_clear`, `stage_fail`은 각각 `round_start`, `level_clear`, `round_end`(reason time_up)가 같은 역할을 하므로 따로 만들지 않는다. `item_unequipped`는 슬롯 해제 기능이 없어 해당 없다. 광고 mock 클릭 이벤트는 결과까지 담는 `ad_reward`(placement, result)로 대신한다. GA4와 Firebase Analytics는 연동하지 않았다. 게임 방향 개편에 필요한 추가 이벤트는 하단 "게임 방향 기획" 8절에 둔다.
 
 ### 원칙
 
@@ -1911,7 +1914,7 @@ Stone Match는 8×8 보드에서 같은 보석을 맞추고 콤보를 이어가�
 
 [개인정보 및 데이터]
 - 게임 설정과 기록은 기기에 저장됩니다.
-- 랭킹 기능을 사용하면 플레이어 이름과 점수가 익명 식별자와 함께 서버(Supabase, 서울 지역)에 저장되고 다른 플레이어에게 이름과 점수가 공개됩니다.
+- 랭킹 기능을 사용하면 플레이어 이름과 점수가 익명 식별자와 함께 서버(PocketBase, 실제 서버 위치는 공개 전 확인 필요)에 저장되고 다른 플레이어에게 이름과 점수가 공개됩니다.
 - 게임 개선을 위해 판 시작과 종료, 점수, 광고 시청 결과 같은 익명 플레이 기록이 서버에 저장됩니다. 이름, 연락처, 기기 광고 식별자는 이 기록에 포함하지 않습니다.
 - 광고 시청 중 광고 제공자가 수집하는 정보는 각 플랫폼의 광고 정책을 따릅니다.
 - 자세한 내용은 개인정보처리방침을 확인해 주세요.
@@ -1937,7 +1940,7 @@ Stone Match is a casual match-3 puzzle game played on an 8x8 board.
 
 [Privacy and Data]
 - Game settings and local records are stored on your device.
-- If you use ranking, your player name and score are stored on our server (Supabase, Seoul region) with an anonymous ID, and the name and score are visible to other players.
+- If you use ranking, your player name and score are stored on our server (PocketBase; hosting location to be confirmed before publication) with an anonymous ID, and the name and score are visible to other players.
 - To improve the game, anonymous play records such as round start and end, score, and ad results are stored on the server. They do not include your name, contact details, or device advertising ID.
 - Information collected by the ad provider while an ad plays follows each platform's ad policy.
 - Please review the privacy policy for details.
@@ -1975,7 +1978,7 @@ Stone Match는 같은 보석을 맞추고 콤보를 이어가는 캐주얼 매�
 
 개인정보 및 데이터
 - 설정과 로컬 기록은 기기에 저장됩니다.
-- 랭킹 기능 사용 시 플레이어 이름과 점수가 익명 식별자와 함께 서버(Supabase, 서울 지역)에 저장되며 다른 플레이어에게 공개됩니다.
+- 랭킹 기능 사용 시 플레이어 이름과 점수가 익명 식별자와 함께 서버(PocketBase, 실제 서버 위치는 공개 전 확인 필요)에 저장되며 다른 플레이어에게 공개됩니다.
 - 게임 개선을 위한 익명 플레이 기록(판 시작과 종료, 점수, 광고 결과)이 서버에 저장됩니다.
 ```
 
@@ -1994,7 +1997,7 @@ Key features
 
 Privacy and data
 - Settings and local records are stored on your device.
-- If you use ranking, your player name and score are stored on our server (Supabase, Seoul region) with an anonymous ID and are visible to other players.
+- If you use ranking, your player name and score are stored on our server (PocketBase; hosting location to be confirmed before publication) with an anonymous ID and are visible to other players.
 - Anonymous play records (round start and end, score, ad results) are stored to improve the game.
 ```
 
@@ -2355,7 +2358,7 @@ Stone Match는 Bejeweled Blitz식 60초 점수 경쟁을 지금 방식으로 다
 - 후보: 3개 기본 매치 단독 단계는 0초, 4개 이상 매치, 특수 보석 생성이나 발동, 콤보 2 이상 단계에만 시간 보상. 수치는 플레이테스트로 정한다. 채택은 D7.
 - 후속 후보 T2: Lightning식 Time 보석(큰 한 수에서 생성, 매치해야 시간 획득). 새 보석 이미지가 필요해 T1 결과를 본 뒤 검토한다.
 
-- 실험 스위치 구현(2026-09-24, PLAN-008): 아래 후보들은 모두 코드에 들어 있고 `GameplayFlags` 스위치로만 켜진다. 기본값은 꺼짐(기존 동작)이고, Supabase `app_config.gameplay`나 웹 URL `?exp=`로 켜고 끈다. URL로 바꾼 판은 랭킹에 올리지 않는다. 판마다 `round_start`, `round_end`에 `exp`(예: `t1,tg,mg,c7:10`)가 남아 켠 판과 끈 판을 나눠 볼 수 있다. 채택 여부는 D7 플레이테스트로 정한다.
+- 실험 스위치 구현(2026-09-24, PLAN-008): 아래 후보들은 모두 코드에 들어 있고 `GameplayFlags` 스위치로만 켜진다. 기본값은 꺼짐(기존 동작)이고, PocketBase `sm_config`의 `gameplay` 값이나 웹 URL `?exp=`로 켜고 끈다. URL로 바꾼 판은 랭킹에 올리지 않는다. 판마다 `round_start`, `round_end`에 `exp`(예: `t1,tg,mg,c7:10`)가 남아 켠 판과 끈 판을 나눠 볼 수 있다. 채택 여부는 D7 플레이테스트로 정한다.
   - T1(`time_reward_t1`, URL `t1`, 타임 모드): 3개짜리 매치 하나만 있는 콤보 1 단계(특수 생성과 발동 없음)는 시간 보상 0초. 떨어진 3개 매치 두 개가 함께 지워지는 단계와 그 밖의 단계는 BR-050 그대로. 프리즘 아이템이 만든 매치 단계도 같은 규칙을 따른다.
   - T2 Time 보석(`time_gem`, URL `tg`, 타임 모드): 유저 스왑 한 수(연쇄 포함, 보드가 멈출 때까지)가 10개 이상 지우면 속성 없는 일반 보석 하나가 Time 보석이 된다(보드 난수, 보드 최대 2개). 어떤 이유로든 지우면 +5초(90초 상한, H2 흐름은 BR-023 3초 한도에 포함, Last Hurrah 중 0초). 특수 보석 재료가 되면 속성은 사라지고 시간은 준다. 스왑과 낙하, 운명 섞기에서는 속성이 보석을 따라가고, NoMoves 셔플과 새 보드는 개수를 새 보석으로 옮긴다. 그림은 `Gem_Badges.png`의 시계 배지와 "+5".
   - Multiplier 보석(`multiplier_gem`, URL `mg`, 타임 모드, Blitz식): 판 점수 배율 m은 1에서 시작해 최대 8. 한 수가 12 + 4 × (m - 1)개 이상 지우고 보드에 Multiplier 보석이 없으면 생긴다(지우면 얻는 배율 ×(m + 1) 표시). 지우면 m + 1이고 그다음 제거 점수부터 BR-011 결과(특수 보너스 포함), 하이퍼, H2, Last Hurrah 보드 점수에 곱한다. Speed Bonus에는 곱하지 않는다. 같은 수에 Time 조건도 맞으면 Multiplier를 먼저 정하고 다른 보석에 Time을 붙인다. 코인 보상은 코인 경제가 없어 넣지 않았다.
@@ -2424,7 +2427,7 @@ Stone Match는 Bejeweled Blitz식 60초 점수 경쟁을 지금 방식으로 다
   - 여러 종류의 재화
 - 코인 1차안: 실력으로 번다(레벨 클리어 보상, 아이템 플랜 5차 초안의 20코인과 보너스. 보드 코인 보석은 추가 검토). 사용처는 레벨 모드 아이템(5차 초안 가격 30~120). 인앱 코인 팩은 인앱 결제 단계에서 검토한다.
 - 광고: 위치 3개(continueStage, refillItem, infiniteBanner) 유지(ADR-003). Encore식 시간 추가는 랭킹 판에 넣지 않는다. "결과 보상 2배" 같은 새 위치는 조사 근거가 없어 후보로만 둔다.
-- 전제: 광고로 재화를 주려면 일일 제한 영속화가 먼저다. 2026-09-23 Supabase로 코드를 구현했고 원격 적용을 기다린다(PLAN-006). 익명 사용자 기준이라 저장소 삭제나 재설치로는 제한이 새로 시작된다(BR-103).
+- 전제: 광고로 재화를 주려면 일일 제한 영속화가 먼저다. 2026-09-23 당시에는 Supabase로 코드를 구현하고 원격 적용을 기다렸다(PLAN-006). 현재 이전 계약은 PocketBase(PLAN-013)다. 익명 사용자 기준이라 저장소 삭제나 재설치로는 제한이 새로 시작된다(BR-103).
 
 ## 8. 지표와 판단 방식
 
@@ -2432,7 +2435,7 @@ Stone Match는 Bejeweled Blitz식 60초 점수 경쟁을 지금 방식으로 다
 
 - 미출시라 외부 사용 지표가 없다.
 - GA4, Firebase Analytics 미연동: `pubspec.yaml` 의존성에 분석 SDK가 없다. `web/index.html`은 `stone_match_sfx.js`와 `flutter_bootstrap.js`만 불러온다. `google-services.json`, `GoogleService-Info.plist`가 없다. Git 전체 이력에서 `gtag`, `googletagmanager`, `firebase_analytics` 추가 기록이 없다.
-- 내부 이벤트 로거: 2026-09-23 같은 날 EventLogger와 Supabase `game_events`로 구현했다(PLAN-006). 원격 프로젝트 적용 전이라 아직 수집되는 데이터는 없다.
+- 내부 이벤트 로거: 2026-09-23 같은 날 EventLogger와 Supabase `game_events`로 구현했다(PLAN-006). 이는 원격 프로젝트 적용 전의 이력이다. 현재 이전 계약은 PocketBase `sm_events`이며 수집/전환 상태는 PROJECT_STATUS를 따른다.
 - 확인 범위는 저장소다. NAS에 배포된 서버 파일을 따로 열어 보지는 않았다.
 
 ### 8-2. 출시 전 판단: 내부 플레이테스트
@@ -2468,9 +2471,9 @@ Stone Match는 Bejeweled Blitz식 60초 점수 경쟁을 지금 방식으로 다
 | D5 | Speed Bonus 적용 모드와 점수 결합 방식 | 타임 모드 먼저, 콤보 배수 미적용 | 승인(타임 모드만) | BR-011, BR-040, ADR-006 |
 | D6 | Last Hurrah 적용 모드, 레벨 모드 클리어 인정, 제출 시점 | 타임 모드 먼저, 완료 후 제출 | 승인(타임 모드만, ADR-007 개정) | ADR-007, BR-093 |
 | D7 | 시간 보상 T1 채택 여부와 기준 | 플레이테스트 후 결정 | 대기(플레이테스트) | BR-050 |
-| D8 | 앱인토스 공식 리더보드 대상(레벨 완료 수 유지, 타임 점수로 변경) | 일일 보드와 주간 순위 설계 때 함께 결정 | 결정(2026-09-24, 권장안): 레벨 완료 수 유지. 주간 타임 순위는 Supabase 게임 내 랭킹 | FR-009, ADR-002, 스토어 메타 |
+| D8 | 앱인토스 공식 리더보드 대상(레벨 완료 수 유지, 타임 점수로 변경) | 일일 보드와 주간 순위 설계 때 함께 결정 | 결정(2026-09-24, 권장안): 레벨 완료 수 유지. 주간 타임 순위는 게임 내 랭킹(당시 Supabase, PLAN-013 이후 PocketBase) | FR-009, ADR-002, 스토어 메타 |
 | D9 | 레벨 모드 규칙 변형 스테이지와 이동 제한 스테이지 혼합 여부, 간격 | 공통 코어 뒤에 검토 | 결정(2026-09-24, 권장안): 이동 제한 미혼합, 4의 배수 레벨 도전 스테이지(BR-043) | FR-004, BR-040 |
-| D10 | 타임 랭킹 점수 규모 변화 시 기존 기록 처리 | Speed Bonus와 Last Hurrah 반영 시점에 결정 | 해당 없음(Supabase 랭킹에 실사용 기록 없음) | FR-009, 운영 초기화 절차 |
+| D10 | 타임 랭킹 점수 규모 변화 시 기존 기록 처리 | Speed Bonus와 Last Hurrah 반영 시점에 결정 | 당시 해당 없음(Supabase 랭킹에 실사용 기록 없음). PLAN-013 이전에서는 기존 기록 보존 | FR-009, 운영 초기화 절차 |
 
 ## 10. 기존 문서 정정
 
