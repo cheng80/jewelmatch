@@ -10,6 +10,7 @@ import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import '../services/event_logger.dart';
 import '../services/game_settings.dart';
+import '../services/play_event_context.dart';
 import '../services/ranking_service.dart';
 import '../services/records/player_records.dart';
 import '../services/records/records_store.dart';
@@ -29,6 +30,8 @@ import 'match_board_camera_shake.dart';
 import 'match_board_logic.dart';
 import 'match_board_qa_bridge.dart';
 import 'match_board_specials.dart';
+import 'round_summary.dart';
+import 'round_timing.dart';
 import 'speed_bonus.dart';
 import 'stage_challenge.dart';
 import 'stage_reward.dart';
@@ -42,6 +45,10 @@ part 'match_board_game_progression.dart';
 part 'match_board_game_timing.dart';
 
 const bool qaSpecialEffectsEnabled = bool.fromEnvironment('QA_SPECIAL_EFFECTS');
+
+/// 판 문맥을 캡처한 이벤트 기록 함수. [MatchBoardGame.capturePlayEventSink] 참고.
+typedef PlayEventSink =
+    void Function(String name, [Map<String, Object?> params]);
 
 enum MatchGameHudBottomPanel { inventory, qaEffects, developmentItems, none }
 
@@ -64,7 +71,10 @@ class MatchBoardGame extends FlameGame {
   MatchBoardGame({
     this.safeAreaPadding = EdgeInsets.zero,
     this.gameMode = JewelGameMode.simple,
-  }) {
+    EventLogger? eventLogger,
+    RoundTiming? roundTiming,
+  }) : eventLogger = eventLogger ?? EventLogger.instance,
+       _roundTiming = roundTiming ?? RoundTiming() {
     _remainingHints = _initialHintsForMode(gameMode);
     board = MatchBoardLogic(
       rows: rows,
@@ -75,7 +85,7 @@ class MatchBoardGame extends FlameGame {
       timedModeBonusBaseUnits: timeBonusBaseUnitsForMode,
       timedModeBonusPerComboTierUnits: timeBonusPerComboTierUnitsForMode,
       onTimedModeTimeBonus: hasTimedClock ? _applyTimedModeTimeBonus : null,
-      onInvalidSwap: _playInvalidSwapSfx,
+      onInvalidSwap: _onInvalidSwap,
     );
     board.idleHintsEnabled = gameMode == JewelGameMode.simple;
     board.timedModeRules = isTimedMode;
@@ -93,7 +103,7 @@ class MatchBoardGame extends FlameGame {
     speedBonus = SpeedBonus(enabled: isTimedMode);
     if (isTimedMode) board.onValidSwapBonus = _onSpeedBonusSwap;
     board.onHyperSwap = (kind) =>
-        EventLogger.instance.log('hyper_swap', {'target_kind': kind.name});
+        logPlayEvent('hyper_swap', {'target_kind': kind.name});
     if (hasTimedClock) {
       timeRemaining = roundSecondsForMode;
       _lastFlooredSecondForTimeTic = timeRemaining.floor();
@@ -107,6 +117,22 @@ class MatchBoardGame extends FlameGame {
 
   final EdgeInsets safeAreaPadding;
   final JewelGameMode gameMode;
+
+  /// 게임 이벤트 로거. 테스트는 생성자로 주입한다.
+  final EventLogger eventLogger;
+  final RoundTiming _roundTiming;
+
+  /// 현재 판과 시도(PLAN-009 Step 2). onLoad 전에는 null이라 판 이벤트를 남기지 않는다.
+  PlayEventContext? _playContext;
+  PlayEventContext? get playContext => _playContext;
+
+  /// 현재 시도의 round_end를 이미 보냈는지. 로컬 기록 반영과 별도로 이벤트만 막는다.
+  bool _roundEndLogged = false;
+  bool _inBackground = false;
+
+  /// 판 단위 입력 계수(PLAN-009 Step 3). 새 판마다 새로 만들고 이어하기/NoMoves는 유지한다.
+  RoundInputStats _roundInput = RoundInputStats();
+  RoundInputStats get roundInput => _roundInput;
 
   static int _initialHintsForMode(JewelGameMode mode) => switch (mode) {
     JewelGameMode.simple => 0,
@@ -171,7 +197,13 @@ class MatchBoardGame extends FlameGame {
   static const int cols = 8;
   static const double _hudScaleRatio = 0.2;
 
-  bool isPlaying = true;
+  bool _isPlaying = true;
+  bool get isPlaying => _isPlaying;
+  set isPlaying(bool value) {
+    _isPlaying = value;
+    _syncRoundPhase();
+  }
+
   bool timeUp = false;
   int _stageAttemptSerial = 0;
   int _lastSavedScore = -1;
@@ -357,10 +389,12 @@ class MatchBoardGame extends FlameGame {
       ..position = Vector2.zero();
 
     _hud = MatchGameHud(
-      onPausePressed: pauseGame,
+      onPausePressed: () => hudMenuAction('pause', pauseGame),
       onHintPressed: requestHint,
-      onTutorialPressed: showHowToPlay,
-      onRankingPressed: isTimedMode ? pauseForRankingPopup : null,
+      onTutorialPressed: () => hudMenuAction('help', showHowToPlay),
+      onRankingPressed: isTimedMode
+          ? () => hudMenuAction('ranking', pauseForRankingPopup)
+          : null,
     );
     camera.viewport.add(_hud!);
 
@@ -377,19 +411,38 @@ class MatchBoardGame extends FlameGame {
     }
     _effectPoolsReady = true;
     installMatchBoardQaBridge(this);
-    _logRoundStart();
+    _beginRound(PlayEventContext.startRun());
 
     if (isTimedMode) {
       _fetchTop1();
     }
   }
 
-  DateTime? _roundStartedAt;
+  /// 지금 판 문맥을 캡처한 기록 함수. 비동기 작업은 await 전에 받아 두어
+  /// 늦은 결과도 요청 시점의 판과 시도에 붙인다. 문맥이 없으면 문맥 없이 기록한다.
+  PlayEventSink capturePlayEventSink() {
+    final context = _playContext;
+    final logger = eventLogger;
+    return (String name, [Map<String, Object?> params = const {}]) =>
+        context == null
+        ? logger.log(name, params)
+        : logger.logPlay(name, context, params);
+  }
 
-  void _logRoundStart() {
-    _roundStartedAt = DateTime.now();
+  void logPlayEvent(String name, [Map<String, Object?> params = const {}]) =>
+      capturePlayEventSink()(name, params);
+
+  /// 판 시작. 시간 누적을 새로 시작하고 round_start를 한 번 보낸다.
+  /// [context]가 null이면(onLoad 전 다음 레벨) 판 이벤트 없이 상태만 초기화한다.
+  void _beginRound(PlayEventContext? context) {
+    _playContext = context;
+    _roundEndLogged = false;
+    _roundInput = RoundInputStats();
+    _roundTiming.reset();
     speedBonus.reset();
-    EventLogger.instance.log('round_start', {
+    _syncRoundPhase();
+    if (context == null) return;
+    eventLogger.logPlay('round_start', context, {
       'mode': gameMode.name,
       if (isTimedMode)
         'daily_key': board.dailyKey ?? DailySeed.keyFor(DateTime.now()),
@@ -397,26 +450,69 @@ class MatchBoardGame extends FlameGame {
     });
   }
 
-  /// 판 종료 이벤트. [reason]은 time_up, exit, restart.
+  /// 판 종료 이벤트와 로컬 기록 반영. [reason]은 time_up, exit, restart.
   void logRoundEnd(String reason) {
-    final startedAt = _roundStartedAt;
+    _logRoundEndEvent(reason);
+    commitRecords(level: progressionLevel);
+  }
+
+  /// round_end는 시도마다 한 번. 시간은 판 시작부터의 누적이며 종료 뒤에도 계속 쌓인다.
+  void _logRoundEndEvent(String reason) {
+    final context = _playContext;
+    if (context == null || _roundEndLogged) return;
+    _roundEndLogged = true;
     if (speedBonus.enabled) {
-      EventLogger.instance.log('speed_bonus_peak', {
+      eventLogger.logPlay('speed_bonus_peak', context, {
         'max_tier': speedBonus.peakTier,
         'total_bonus': speedBonus.totalBonus,
       });
     }
-    EventLogger.instance.log('round_end', {
+    eventLogger.logPlay('round_end', context, {
       'mode': gameMode.name,
       'reason': reason,
       if (board.flags.tag.isNotEmpty) 'exp': board.flags.tag,
       'score': board.score,
       ...board.bonusGemEventParams,
       if (isProgressionMode) 'level': progressionLevel,
-      if (startedAt != null)
-        'duration_s': DateTime.now().difference(startedAt).inSeconds,
+      ..._roundTiming.snapshot(),
     });
-    commitRecords(level: progressionLevel);
+    // 판 요약은 표본 없이 시도마다 한 번. 이어하기 뒤 값은 같은 판의 누적이다.
+    // 진행 중인 한 수를 확정한다. 모든 호출자가 곧이어 commitRecords에서 같은 확정을 한다.
+    final stats = board.stats..finishMove();
+    eventLogger.logPlay(
+      'round_summary',
+      context,
+      roundSummaryParams(stats, maxCombo: board.maxCombo),
+    );
+    eventLogger.logPlay('round_specials', context, roundSpecialsParams(stats));
+    eventLogger.logPlay('round_input', context, _roundInput.eventParams());
+    // 종료 뒤 시간은 다음 시도나 새 판 전까지 paused(또는 background)로 쌓는다.
+    _syncRoundPhase();
+  }
+
+  /// 시간 상태 우선순위: 백그라운드 > 엔진 정지/결과/메뉴/종료된 시도 > 인트로/Last Hurrah > 플레이.
+  /// Last Hurrah는 isPlaying이 false여도 엔진이 돌므로 system이다.
+  RoundPhase get _currentRoundPhase {
+    if (_inBackground) return RoundPhase.background;
+    if (timeUp || paused || _roundEndLogged) return RoundPhase.paused;
+    if (lastHurrahActive) return RoundPhase.system;
+    if (!_isPlaying) return RoundPhase.paused;
+    if (board.introFillInProgress) return RoundPhase.system;
+    return RoundPhase.active;
+  }
+
+  void _syncRoundPhase() => _roundTiming.setPhase(_currentRoundPhase);
+
+  @override
+  void pauseEngine() {
+    super.pauseEngine();
+    _syncRoundPhase();
+  }
+
+  @override
+  void resumeEngine() {
+    super.resumeEngine();
+    _syncRoundPhase();
   }
 
   /// 직전 결과 화면에 보일 랭크 상승과 배지 획득. 없으면 null.
@@ -442,6 +538,7 @@ class MatchBoardGame extends FlameGame {
         sameScore: _recordsAppliedAttempt == _stageAttemptSerial,
         sameStats: identical(_recordsAppliedStats, stats),
       ),
+      log: capturePlayEventSink(),
     );
     _recordsApplied = round;
     _recordsAppliedAttempt = _stageAttemptSerial;
@@ -586,6 +683,10 @@ class MatchBoardGame extends FlameGame {
   void lifecycleStateChange(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.resumed:
+        // 재개는 기존처럼 PauseMenu에서 한다. 시간 상태만 백그라운드에서 뺀다.
+        _inBackground = false;
+        _syncRoundPhase();
+        return;
       case AppLifecycleState.inactive:
         return;
       case AppLifecycleState.detached:
@@ -593,6 +694,8 @@ class MatchBoardGame extends FlameGame {
         return;
       case AppLifecycleState.paused:
       case AppLifecycleState.hidden:
+        _inBackground = true;
+        _syncRoundPhase();
         // 마무리 중 백그라운드: 남은 발동을 즉시 계산하고 결과로 간다.
         _completeLastHurrah(instant: true);
         board.clearHint();
@@ -619,6 +722,7 @@ class MatchBoardGame extends FlameGame {
         !timeUp &&
         activeTargetItem == null &&
         pendingImmediateItemConfirm == null;
+    _syncRoundPhase();
     board.update(dt);
     _spawnSpecialEffectEvents();
     _updateBoardShake(dt);
@@ -628,6 +732,7 @@ class MatchBoardGame extends FlameGame {
     _updateLastHurrah(dt);
     _updateProgressionMode();
     _saveBestScoreIfChanged();
+    _syncRoundPhase();
     super.update(dt);
   }
 
@@ -649,7 +754,30 @@ class MatchBoardGame extends FlameGame {
       _handleItemTargetTap(x, y);
       return;
     }
+    // Flame은 드래그 시작에도 누름을 먼저 보내므로 누름 수는 세지 않고 성공한 결과만 센다.
+    final stats = board.stats;
+    final swapsBefore = stats.validSwaps;
+    final activatedBefore = stats.specialGemsActivated;
     board.handleTap(x, y);
+    if (stats.validSwaps > swapsBefore) {
+      _roundInput.tapSwaps++;
+      _recordFirstInputSuccess();
+    } else if (stats.specialGemsActivated > activatedBefore) {
+      _roundInput.specialTaps++;
+      _recordFirstInputSuccess();
+    }
+  }
+
+  void _recordFirstInputSuccess() =>
+      _roundInput.recordSuccess(_roundTiming.snapshot()['active_s']! as double);
+
+  /// HUD 메뉴 버튼 이용(표본). 백그라운드 자동 일시정지는 HUD를 거치지 않아 세지 않는다.
+  void hudMenuAction(String action, void Function() open) {
+    eventLogger.logBehavior('game_menu_action', {
+      'action': action,
+      'mode': gameMode.name,
+    }, context: _playContext);
+    open();
   }
 
   /// 보드 누름을 뗄 때. 누른 하이퍼가 교환되지 않았으면 탭 발동한다.
@@ -658,7 +786,10 @@ class MatchBoardGame extends FlameGame {
       board.cancelPendingHyperTap();
       return;
     }
-    board.confirmPendingHyperTap();
+    if (board.confirmPendingHyperTap()) {
+      _roundInput.specialTaps++;
+      _recordFirstInputSuccess();
+    }
   }
 
   /// 스와이프 입력: 시작 좌표(px)에서 [dr]/[dc] 방향으로 1칸 스왑 시도.
@@ -690,6 +821,10 @@ class MatchBoardGame extends FlameGame {
     }
     board.selected = null;
     final swapped = board.trySwap(fromRow, fromCol, toRow, toCol);
+    if (swapped) {
+      _roundInput.dragSwaps++;
+      _recordFirstInputSuccess();
+    }
     if (!swapped && board.getGem(fromRow, fromCol) != null) {
       board.startInvalidDragFeedback(
         row: fromRow,
@@ -741,7 +876,7 @@ class MatchBoardGame extends FlameGame {
     );
     final changed = !identical(before, nextStageLoadoutDraft);
     if (changed) {
-      EventLogger.instance.log('item_equipped', {
+      logPlayEvent('item_equipped', {
         'item_kind': item.name,
         'slot_index': slotIndex,
       });
@@ -906,6 +1041,7 @@ class MatchBoardGame extends FlameGame {
     );
     if (used) {
       _consumeRunInventoryIfNeeded(item);
+      _roundInput.itemsUsed++;
       _logItemEvent('item_used', item);
     }
     _showItemFeedback(used ? _targetUsedMessage(item) : '선택한 보석에는 사용할 수 없습니다');
@@ -965,6 +1101,7 @@ class MatchBoardGame extends FlameGame {
     }
     if (used) {
       _consumeRunInventoryIfNeeded(item);
+      _roundInput.itemsUsed++;
       _logItemEvent('item_used', item);
     }
     _showItemFeedback(feedback);
@@ -974,7 +1111,7 @@ class MatchBoardGame extends FlameGame {
 
   /// 아이템 이벤트 공통 파라미터(Product Spec 웹 테스트 이벤트 로깅 필수 이벤트).
   void _logItemEvent(String name, ItemKind item) {
-    EventLogger.instance.log(name, {
+    logPlayEvent(name, {
       'item_kind': item.name,
       'target_required': item.needsTarget,
       'mode': gameMode.name,
@@ -1072,12 +1209,14 @@ class MatchBoardGame extends FlameGame {
 
   void newBoard() => _newBoardImpl();
 
-  /// [seconds]는 정수 초. [timedMaxTimeSeconds]까지 남은 여유(`room`)만큼만 가산하고,
-  /// 보상 초 중 **초과분은 제외**(버림)한다.
-  void _playInvalidSwapSfx() {
+  /// 매치 불성립으로 되돌아간 교환. 입력 계수는 이 경로에서만 올린다.
+  void _onInvalidSwap() {
+    _roundInput.invalidSwaps++;
     SoundManager.playSfx(AssetPaths.sfxFail);
   }
 
+  /// [seconds]는 정수 초. [timedMaxTimeSeconds]까지 남은 여유(`room`)만큼만 가산하고,
+  /// 보상 초 중 **초과분은 제외**(버림)한다.
   void _applyTimedModeTimeBonus(int seconds) =>
       _applyTimedModeTimeBonusImpl(seconds);
 

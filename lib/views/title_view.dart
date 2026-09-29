@@ -12,6 +12,7 @@ import '../game/jewel_game_mode.dart';
 import '../resources/asset_paths.dart';
 import '../resources/texture_atlas.dart';
 import '../resources/sound_manager.dart';
+import '../services/event_logger.dart';
 import '../services/game_settings.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import '../widgets/overlay_motion.dart';
@@ -38,7 +39,10 @@ String _gameRoute(String mode) {
 
 /// 타이틀 화면. 심플/타임 모드 선택 후 게임 진입, 설정.
 class TitleView extends StatefulWidget {
-  const TitleView({super.key});
+  const TitleView({super.key, this.eventLogger});
+
+  /// 메뉴 이용 수집용. 테스트에서만 주입하고 기본은 앱 전역 로거다.
+  final EventLogger? eventLogger;
 
   @override
   State<TitleView> createState() => _TitleViewState();
@@ -128,7 +132,11 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
   }
 
   Future<void> _showNameDialog(BuildContext context, String mode) async {
-    final name = await showPlayerNameDialog(context);
+    final name = await showPlayerNameDialog(
+      context,
+      mode: mode,
+      logger: widget.eventLogger,
+    );
     if (name == null || !context.mounted) return;
     GameSettings.playerName = name;
     await WidgetsBinding.instance.endOfFrame;
@@ -144,6 +152,7 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
       );
     }
     final content = _TitleContent(
+      logger: widget.eventLogger ?? EventLogger.instance,
       onShowNameDialog: (mode) => _showNameDialog(context, mode),
       packageInfo: _cachedPackageInfo,
     );
@@ -153,10 +162,19 @@ class _TitleViewState extends State<TitleView> with WidgetsBindingObserver {
 }
 
 class _TitleContent extends StatelessWidget {
-  const _TitleContent({required this.onShowNameDialog, this.packageInfo});
+  const _TitleContent({
+    required this.logger,
+    required this.onShowNameDialog,
+    this.packageInfo,
+  });
 
+  final EventLogger logger;
   final ValueChanged<String> onShowNameDialog;
   final PackageInfo? packageInfo;
+
+  /// 눌린 메뉴 종류만 기록한다. 화면 그리기나 다시 그리기에서는 부르지 않는다.
+  void _logMenu(String action) =>
+      logger.logBehavior('title_menu_action', {'action': action});
 
   void _showHowToPlayDialog(BuildContext context) {
     showMotionDialog<void>(
@@ -202,6 +220,7 @@ class _TitleContent extends StatelessWidget {
                   semanticLabel: context.tr('settings'),
                   onPressed: () {
                     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                    _logMenu('settings');
                     context.push(RoutePaths.setting);
                   },
                 ),
@@ -211,6 +230,7 @@ class _TitleContent extends StatelessWidget {
                   semanticLabel: context.tr('recordsTitle'),
                   onPressed: () {
                     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                    _logMenu('records');
                     context.push(RoutePaths.records);
                   },
                 ),
@@ -220,6 +240,7 @@ class _TitleContent extends StatelessWidget {
                   semanticLabel: context.tr('howToPlayTitle'),
                   onPressed: () {
                     SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                    _logMenu('help');
                     _showHowToPlayDialog(context);
                   },
                 ),
@@ -236,6 +257,7 @@ class _TitleContent extends StatelessWidget {
             iconFrame: UiFrames.modeIconSimple,
             onPressed: () {
               SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+              _logMenu('mode_simple');
               context.go(_gameRoute('simple'));
             },
           ),
@@ -249,6 +271,7 @@ class _TitleContent extends StatelessWidget {
             iconFrame: UiFrames.modeIconProgression,
             onPressed: () {
               SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+              _logMenu('mode_progression');
               onShowNameDialog('progression');
             },
           ),
@@ -265,6 +288,7 @@ class _TitleContent extends StatelessWidget {
                 iconFrame: UiFrames.modeIconTimed,
                 onPressed: () {
                   SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                  _logMenu('mode_timed');
                   onShowNameDialog('timed');
                 },
               ),
@@ -282,6 +306,7 @@ class _TitleContent extends StatelessWidget {
             iconFrame: UiFrames.modeIconRanking,
             onPressed: () {
               SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+              _logMenu('ranking');
               showMotionDialog<void>(
                 context: context,
                 barrierDismissible: true,

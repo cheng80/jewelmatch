@@ -124,8 +124,8 @@ extension MatchBoardGameFlow on MatchBoardGame {
       _lastFlooredSecondForTimeTic = timeRemaining.floor();
     }
     _generateFreshBoardWithStartSfx();
-    // 새 판의 일일 키가 정해진 뒤 기록한다.
-    _logRoundStart();
+    // 새 판의 일일 키가 정해진 뒤 기록한다. 다시 하기는 새 run이다.
+    _beginRound(PlayEventContext.startRun());
     _syncIntroInputBlock();
     resumeEngine();
     isPlaying = true;
@@ -138,7 +138,10 @@ extension MatchBoardGameFlow on MatchBoardGame {
 
   bool _continueStageAfterAdImpl() {
     if (!isProgressionMode || !timeUp) return false;
-    EventLogger.instance.log('stage_continue', {'level': progressionLevel});
+    // 같은 판의 다음 시도. 시간 누적은 판 시작 기준으로 이어진다.
+    _playContext = _playContext?.nextAttempt();
+    _roundEndLogged = false;
+    logPlayEvent('stage_continue', {'level': progressionLevel});
     overlays.remove('TimeUp');
     overlays.remove('GameStats');
     timeUp = false;
@@ -160,6 +163,7 @@ extension MatchBoardGameFlow on MatchBoardGame {
     if (board.state != 'idle') return;
     if (hasLimitedHints && _remainingHints <= 0) return;
     if (board.showHint()) {
+      _roundInput.hintsUsed++;
       if (hasLimitedHints) {
         _remainingHints -= 1;
       }

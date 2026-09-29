@@ -11,7 +11,6 @@ import '../../ads/ad_service.dart';
 import '../../game/match_board_game.dart';
 import '../../resources/asset_paths.dart';
 import '../../resources/sound_manager.dart';
-import '../../services/event_logger.dart';
 import '../../services/ranking_service.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../../vm/ranking_notifier.dart';
@@ -140,6 +139,7 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
           skipMessage: widget.game.board.flagsFromUrl
               ? context.tr('rankSkippedExperiment')
               : null,
+          logEvent: widget.game.capturePlayEventSink(),
         );
   }
 
@@ -155,7 +155,9 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
         !widget.adRewardPolicy.canContinueStage(widget.game.stageAttemptId)) {
       return;
     }
-    EventLogger.instance.log('continue_clicked', {
+    // 광고를 기다리는 동안 이어하기가 시도를 바꾸므로 끝난 시도의 문맥을 먼저 캡처한다.
+    final log = widget.game.capturePlayEventSink();
+    log('continue_clicked', {
       'mode': widget.game.gameMode.name,
       'level': widget.game.progressionLevel,
       'score': widget.game.board.score,
@@ -173,7 +175,7 @@ class _TimeUpOverlayState extends ConsumerState<TimeUpOverlay>
       widget.game.stageAttemptId,
       result,
     );
-    EventLogger.instance.log('ad_reward', {
+    log('ad_reward', {
       'placement': 'continue_stage',
       'result': result.name,
       'granted': granted,

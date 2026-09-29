@@ -11,7 +11,6 @@ import '../../game/match_board_game.dart';
 import '../../resources/asset_paths.dart';
 import '../../resources/sound_manager.dart';
 import '../../resources/texture_atlas.dart';
-import '../../services/event_logger.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../../widgets/atlas_image.dart';
 import '../../widgets/lumina_overlay_card.dart';
@@ -63,6 +62,7 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
         !widget.adRewardPolicy.canRefill(widget.game.runInventory, item)) {
       return;
     }
+    final log = widget.game.capturePlayEventSink();
     SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
     setState(() {
       _showingAd = true;
@@ -76,7 +76,7 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
       result,
     );
     final granted = outcome == RefillGrantOutcome.granted;
-    EventLogger.instance.log('ad_reward', {
+    log('ad_reward', {
       'placement': 'refill_item',
       'result': result.name,
       'granted': granted,

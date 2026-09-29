@@ -88,7 +88,7 @@ extension MatchBoardGameTiming on MatchBoardGame {
     _lastHurrahBadge.hide();
     // 실제로 발동한 마무리만 남긴다(시간 0 순간 유저 연쇄가 특수 보석을 모두 지운 경우 제외).
     if (run.activations > 0) {
-      EventLogger.instance.log('last_hurrah', run.eventParams);
+      logPlayEvent('last_hurrah', run.eventParams);
     }
     _finalizeRound();
   }

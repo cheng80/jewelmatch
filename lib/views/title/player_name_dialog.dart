@@ -1,16 +1,28 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
+import '../../services/event_logger.dart';
 import '../../services/game_settings.dart';
 import '../../theme/jewel_candy_lumina_theme.dart';
 import '../../widgets/obsidian_frame.dart';
 import '../../widgets/overlay_motion.dart';
 
-Future<String?> showPlayerNameDialog(BuildContext context) async {
+/// 이름 입력창. 이용 여부만 기록한다: 열림, 확인, 취소(버튼과 바깥 탭 모두).
+/// 이름, 입력 문자열, 길이는 이벤트에 넣지 않는다. [mode]는 진입하려는 게임 모드 enum이다.
+Future<String?> showPlayerNameDialog(
+  BuildContext context, {
+  String? mode,
+  EventLogger? logger,
+}) async {
+  final log = logger ?? EventLogger.instance;
+  void track(String step) =>
+      log.logBehavior('player_name_dialog', {'step': step, 'mode': ?mode});
+  track('open');
   final result = await showMotionDialog<String>(
     context: context,
     builder: (_) => const _PlayerNameDialog(),
   );
+  track(result == null ? 'cancel' : 'confirm');
   if (result == null) return null;
   return result.trim().isEmpty ? 'GUEST' : result.trim();
 }

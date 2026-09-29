@@ -638,6 +638,7 @@ class _RecordingRanking extends RankingNotifier {
     required String trRankSubmitFailed,
     required String trIntossLevelRankSubmitFailed,
     String? skipMessage,
+    void Function(String name, Map<String, Object?> params)? logEvent,
   }) async {
     calls++;
     this.score = score;

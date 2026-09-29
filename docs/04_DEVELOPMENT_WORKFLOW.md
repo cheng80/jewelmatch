@@ -257,17 +257,17 @@ flutter test test/match_board_logic_test.dart
 ### 일반 개발 실행
 
 ```bash
-flutter run -d chrome
+flutter run -d web-server
 ```
 
-Flutter 디버그 실행은 기능 확인용이다. FPS 비교 수치로 사용하지 않는다.
+출력된 로컬 URL을 ego 브라우저에서 연다. Flutter 디버그 실행은 기능 확인용이다. FPS 비교 수치로 사용하지 않는다.
 
 ### Supabase 연결 실행
 
 `config/supabase.example.json`을 `config/supabase.json`으로 복사하고 프로젝트 URL과 공개용 키를 넣는다. 이 파일은 Git에서 제외된다.
 
 ```bash
-flutter run -d chrome --dart-define-from-file=config/supabase.json
+flutter run -d web-server --dart-define=TELEMETRY_ENV=development --dart-define-from-file=config/supabase.json
 ```
 
 파일 없이 실행하면 랭킹은 연결 불가로 표시되고, 보충 광고는 세션 로컬 제한만 쓰며, 이벤트는 보내지 않는다. `npm run dev:ads`는 파일이 있으면 자동으로 넣는다.
@@ -278,7 +278,7 @@ flutter run -d chrome --dart-define-from-file=config/supabase.json
 npm run dev:ads
 ```
 
-`STORE_CHANNEL=intoss`, `INTOSS_AD_MODE=mock`으로 실행한다. 보상 흐름과 배너 레이아웃을 Chrome에서 확인할 때 사용하며 실제 토스 광고 요청은 하지 않는다.
+`STORE_CHANNEL=intoss`, `INTOSS_AD_MODE=mock`으로 실행한다. 보상 흐름과 배너 레이아웃을 ego에서 확인할 때 사용하며 실제 토스 광고 요청은 하지 않는다.
 
 ### 일반 릴리즈 Web을 정적 서버로 확인
 
@@ -1274,3 +1274,19 @@ xcrun devicectl device install app --device <DEVICE_ID> build/ios/iphoneos/Runne
 - [ ] 게임 화면 변경은 웹 또는 실제 기기에서 수동 QA한다.
 - [ ] QA 스크린샷은 `tmp/qa/` 아래에 저장한다.
 - [ ] 문서와 실제 구현이 어긋나면 이 문서와 플랜 문서를 같이 갱신한다.
+
+
+## 로컬 브라우저 검증 (2026-09-29)
+
+사용자 지정 브라우저는 ego lite다(`/Applications/ego lite.app`, `com.citrolabs.ego.lite`). Chrome은 설치되어 있지 않다. 캐시 Chromium으로 대체하지 않고 ego에서 로컬 빌드를 검증한다. 기존 운영 탭을 보존하고 검증용 새 탭을 사용한다. 자동 테스트 도구가 ego를 지원하지 않으면 자동 테스트 통과와 ego에서 확인한 범위를 구분해 보고한다.
+
+
+## 관측 환경과 로컬 검증 (PLAN-009 Step 3)
+
+- 원격 연결 없는 회귀 검증은 `flutter test`와 Supabase define 없는 로컬 웹 빌드를 사용한다.
+- QA 웹 빌드는 `flutter build web --release --dart-define=TELEMETRY_ENV=qa --output tmp/<작업명>/web-release`로 구분한다. 로컬 정적 서버의 URL은 ego 검증용 새 탭에서 연다.
+- 운영 빌드는 `TELEMETRY_ENV=production`, 개발 실행은 `development`를 명시할 수 있다. release 기본값은 production이므로 QA 배포에는 반드시 qa를 명시한다. 잘못된 값은 development가 된다.
+- QA용 query/hash route와 QA 빌드 스위치가 있으면 qa가 우선한다. 한 번 QA를 기록한 EventLogger는 이후 일반 화면에서도 qa를 유지한다. 앱 재시작/새 탭은 별도 세션이다.
+- 테스트에서 원격 요청은 MockClient로 격리하고 `EventLogger(policy: const TelemetryPolicy(env: TelemetryEnv.test))`를 주입한다. 표본 UI 경로는 `sessionSampled: true`로 결정적으로 확인한다. 운영 표본률을 검증 편의를 위해 바꾸지 않는다.
+- 전수 요약은 `collection=full`, 상세 행동은 `sampled`로 구분한다. 후자는 세션당 40건 상한이 있어 전체 행동량으로 단순 확대 추정하지 않는다.
+- 원격 삽입, 실제 운영 데이터 품질과 서버 중복 제거는 로컬 테스트 통과와 구분해서 기록한다. 이번 단계는 GA4/Sentry SDK를 연결하지 않는다.

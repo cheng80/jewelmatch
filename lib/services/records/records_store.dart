@@ -29,7 +29,12 @@ class RecordsStore {
   }
 
   /// 한 판의 값을 반영하고 새 랭크와 새 배지를 돌려준다.
-  static RecordsUpdate apply(RoundRecord round) {
+  /// [log]는 판 문맥을 캡처한 기록 함수다. 없으면 문맥 없이 기록한다.
+  static RecordsUpdate apply(
+    RoundRecord round, {
+    void Function(String name, Map<String, Object?> params)? log,
+  }) {
+    final emit = log ?? EventLogger.instance.log;
     try {
       final records = load();
       final rankBefore = records.rank;
@@ -43,10 +48,7 @@ class RecordsStore {
         if (tier > 0) records.badgeTiers[badge] = tier;
         if (tier > tiersBefore[badge]!) {
           earned.add((badge: badge, tier: tier));
-          EventLogger.instance.log('badge_earned', {
-            'badge': badge.name,
-            'tier': tier,
-          });
+          emit('badge_earned', {'badge': badge.name, 'tier': tier});
         }
       }
       final update = RecordsUpdate(
@@ -55,7 +57,7 @@ class RecordsStore {
         earnedBadges: earned,
       );
       if (update.rankedUp) {
-        EventLogger.instance.log('rank_up', {'rank': update.rankAfter});
+        emit('rank_up', {'rank': update.rankAfter});
       }
       _save(records);
       return update;

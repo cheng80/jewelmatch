@@ -61,6 +61,8 @@ class RankingNotifier extends Notifier<RankingSubmitState> {
   }
 
   /// 점수를 서버에 제출한다. [trRankSuccess] 등은 이미 번역된 템플릿 문자열.
+  /// [logEvent]는 호출 시점(await 전)의 판 문맥을 캡처한 기록 함수다.
+  /// 응답이 늦어도 제출을 요청한 판과 시도에 붙는다. 없으면 문맥 없이 기록한다.
   Future<void> submit({
     required RankingMode mode,
     required int score,
@@ -72,11 +74,13 @@ class RankingNotifier extends Notifier<RankingSubmitState> {
     required String trRankSubmitFailed,
     required String trIntossLevelRankSubmitFailed,
     String? skipMessage,
+    void Function(String name, Map<String, Object?> params)? logEvent,
   }) async {
+    final log = logEvent ?? EventLogger.instance.log;
     if (state.isSubmitting || state.submitted || score <= 0) return;
     // URL 실험 설정으로 한 판은 서버와 앱인토스 리더보드에 올리지 않는다.
     if (skipMessage != null) {
-      EventLogger.instance.log('ranking_submit', {
+      log('ranking_submit', {
         'mode': mode.queryValue,
         'score': score,
         'ok': false,
@@ -107,7 +111,7 @@ class RankingNotifier extends Notifier<RankingSubmitState> {
               const RankingResult.failure(RankingFailure.unavailable),
         );
     final intossSubmitted = await intossSubmission;
-    EventLogger.instance.log('ranking_submit', {
+    log('ranking_submit', {
       'mode': mode.queryValue,
       'score': score,
       'ok': result.isSuccess,

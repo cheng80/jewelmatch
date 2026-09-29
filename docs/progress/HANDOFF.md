@@ -2,7 +2,52 @@
 
 > 다음 작업자가 즉시 시작할 정보만 둔다. 프로젝트 전체 상태는 PROJECT_STATUS.md에 둔다.
 
-Updated: 2026-09-24 11:35 KST
+Updated: 2026-09-29 18:22 KST
+
+## PLAN-009 Step 3 판별 요약과 행동 측정 (완료)
+
+- schema_version 3. 기존 통계의 round_summary(9필드), 종류별 round_specials(12필드), 신규 round_input(6+선택 1필드)을 시도별 한 번 기록한다. 이어하기는 판 누적값, 새 판/재시작은 초기화, NoMoves는 보존한다.
+- 실패 교환, 성공한 탭/드래그 교환, 직접 특수 발동, 첫 성공 active_s, 수동 힌트와 실제 아이템 사용을 측정한다. Last Hurrah 자동 수치 포함 여부와 입력 귀속 규칙은 TECH_SPEC 필드 사전에 명시했다.
+- 제목/게임 메뉴와 이름 입력창의 open/confirm/cancel을 표본 기록한다. 입력 이름과 문자열은 보내지 않는다. 세션 기준 10%, 세션당 40건이며 요약은 전수다. 운영/QA/개발/테스트 필드, 늦은 QA 진입과 hash 경로 감지, QA 세션 유지, 재전송 메타데이터 보존을 검증했다.
+- 최종 검증: 전체 Flutter 테스트 548개, 변경 범위 analyze, git diff --check 통과. 웹 release 빌드와 Wasm dry run 통과. ego에서 이름 입력 취소/시작, 힌트, 실제 드래그 교환, 통계(100점, 교환 1, 제거 3), 일시정지와 나가기 확인. 원격 적재, NAS 경로 빌드/배포, 실제 Wasm과 모바일 실기기는 미검증이다.
+- 독립 검수 P1/P2 없음. 핵심 96개와 최종 집중 38개 테스트 통과. 실제 로그 payload 600개를 로컬 PGlite jsonb 제약으로 모두 저장(최대 1433바이트, 거절 0)했다.
+- Orca run `run_ac5cfd8776b3`: 3A Opus/high, 3B/3C Sonnet/high 병렬, 3D Opus/high 검수. 모든 Task 성공. 정확한 모델 버전은 미확인이다. 메뉴 테스트 지연은 캐시 Future를 setUpAll에서 준비하여 해결했다. 신규 메뉴 테스트는 13개, 기존 이름창 1개와 합계 14개다(작업자 초기 보고서의 11개 표기는 정정).
+- 보고서와 로그: `tmp/observability-step3-20260929/`. ego 검증 탭과 로컬 서버는 종료했다. 구현/검수 세션은 Orca 소유권 판정에 따라 release하고, 3C 세션은 runtime의 user_takeover 판정으로 보존했다.
+- 사용자 승인 범위: Step 3까지만 완료 후 문서 갱신, 관련 변경 커밋/push, 워크트리 점검. 미커밋 Step 1~2는 필수 선행 구현이라 함께 포함한다. 현재 Git 워크트리는 main 1개뿐이라 삭제할 별도 작업 워크트리는 없다. 별도 오디오/포맷 변경은 보존한다.
+- 다음: PLAN-009 Step 4 전송과 집계 신뢰성. 이번에는 착수하지 않는다. PLAN-010~012, GA4/Sentry SDK와 가입 개편, NAS 배포도 후속 범위다.
+
+## PLAN-009 Step 2 판 구분과 시간 측정 (완료)
+
+- 새 게임(run_id), 판(round_seq), 이어하기 시도(attempt_seq)를 불변 문맥으로 구분한다. schema_version 2, 레벨마다 시작/종료 이벤트, 시도별 종료 1회, 다음 레벨 중복 콜백 방어를 구현했다.
+- 단조 시계로 active/system/paused/background와 총 경과를 측정한다. 이어하기는 판 시작 기준 누적 시간, 새 게임/다음 레벨은 초기화한다. 랭킹/광고 응답은 요청 시점 문맥을 캡처한다. 기존 로컬 기록, 점수와 제한 시간, 광고 키와 랭킹 제출 시점은 유지했다.
+- 최종 검증: 전체 Flutter 테스트 494개, 변경 범위 analyze, 웹 release 빌드와 Wasm dry run 통과. 독립 검수 P1/P2 없음(관련 39개와 임시 재현 3개 통과). 원격 적재, Wasm 실제 실행과 모바일 실기기는 미검증이다.
+- ego lite에서 로컬 release 타이틀, 게스트 레벨 진입, 일시정지/계속하기/다시하기/나가기 확인. 기존 운영 탭 보존, 검증 탭과 서버 정리. 사용자 지정 이전 Chromium 39개 통과는 별도 과거 이력이며 최종 JS/Wasm 테스트 판별 변경 후에는 VM만 재검증했다. 앞으로 브라우저 검증은 ego만 사용한다.
+- Orca run `run_10ebaf784e07`: 2A/2B Sonnet high 병렬, 2C 연결과 후속 수정, 2D 독립 검수는 Opus high. 별칭만 확인했으므로 5.5 등 실제 버전 번호는 미확인이다. 모든 Task 성공, 회수 대기 0개. 구현 세션 1개는 runtime의 external_terminal 판정에 따라 보존했고 나머지 작업자는 release했다.
+- 검증과 보고서: `tmp/observability-step2-20260929/`. 브라우저 지정은 DEVELOPMENT_WORKFLOW에도 반영했다. 기존 오디오와 in_app_review_service/sfx_play_log/ui_atlas 관련 별도 작업은 보존했다. 커밋/push/원격 설정/배포 없음.
+- 당시 다음: PLAN-009 Step 3 판별 요약과 행동 측정. 기존 게임 통계 재사용, 누적치 해석과 이벤트별 12필드 예산을 먼저 확정한다. Step 4와 PLAN-010~012는 후속이다.
+
+## 관측과 사용자 식별 Step 1 완료 기록 (2026-09-29)
+
+- 사용자 요청: 기존 통계 보완부터 한 단계씩 진행하고 독립 작업은 Orca CLI로 병렬 조정한다. PLAN-009(기반), PLAN-010(사용자 식별과 기록), PLAN-011(GA4), PLAN-012(충돌/오류)을 만들었다. 해당 실행의 제품 변경은 PLAN-009 Step 1이었다.
+- EventLogger params에 event_id, event_seq, schema_version을 최초 enqueue 때 추가해 재전송에도 유지한다. 예약 이름 보호, 기존 사용자 필드 12개와 별도 계산, UTF-8 JSON 1500바이트 상한, 크기로 제외한 개수 params_dropped, 비유한 숫자와 NUL/잘못된 surrogate 정제를 넣었다. DB 열/권한/원격 상태는 변경하지 않았다.
+- 최신 검증: 전체 Flutter 테스트 453개, 변경한 로거/테스트의 analyze 문제 없음. 로컬 PGlite 실제 payload 600개 저장 성공, jsonb 최대 1352바이트, 거절 0. 빌드/실기기/원격 수집 미실행. 전체 lib/test 분석의 중간 결과에는 별도 작업 중인 in_app_review_service.dart info 2건이 있었고 이 작업에서는 해당 파일을 수정하지 않았다.
+- Orca run: run_230dae3fd1cb. 구현 Claude sonnet/high, 독립 생명주기 조사와 검수 Claude 기본 모델. Codex 준비 시간 초과 시도는 작업 전달 전 실패해 release하고 Claude로 대체했다. 결과: tmp/observability-plan-20260929/.
+- 독립 검수 P1/P2 없음. 추가 로컬 PGlite 퍼징 3,031행 모두 저장 성공, 최대 jsonb 1540바이트. 구버전 schema_version 누락=v0 해석을 명세에 반영했다. 작업자 3개(준비 실패 1개 포함) release 완료, 회수 대기 0개.
+- 진행 표시 규칙: 현재 세션명은 플랜명, Orca 세션은 `플랜명 | Step N 세부 작업명`, 화면 안내는 `플랜명 → 세부 스텝명 → 상태`로 표시한다. 이후 단계와 플랜에도 유지한다.
+- 당시 다음 작업: PLAN-009 Step 2에서 run/round/attempt 및 활성/정지/백그라운드 시간 계약과 테스트 주입부터 진행한다. PLAN-009 9절에 병렬 분해와 비동기 결과의 판 문맥 캡처, 광고 키 보존, Last Hurrah 통계 주의점을 남겼다. GA4/Sentry/가입 화면은 아직 연결하지 않는다.
+- 서버 중복 제거와 영속 큐는 Step 4 전까지 없다. event_id 추가만으로 중복 삽입/종료 유실이 해결된 것은 아니다. 커밋/push/배포 없음. 기존 오디오 및 별도 작업 변경은 보존한다.
+
+## 메뉴 진입 효과음 중복 경로 수정 (2026-09-29)
+
+- 웹 `unlock()`이 첫 입력과 화면 복귀 뒤 기존 효과음을 4슬롯에서 `volume=0`으로 재생했다. 볼륨 쓰기를 무시하는 모의 환경에서 첫 진입과 복귀의 원치 않는 효과음 재생을 재현했다. 10ms 무음 WAV 데이터로 준비 재생을 교체했다. 사용자 제보 환경과 동일 원인인지는 실기기 확인이 필요하다.
+- 검증: `node --test test/web/stone_match_sfx_test.mjs` 3개 통과(수정 전 동일 테스트 2개 실패), `flutter test test/sound_manager_test.dart` 17개 통과, `flutter analyze lib test` 문제 없음. 전체 `flutter analyze`는 기존 `tmp/` 임시 Dart 파일을 포함해 247건으로 실패했다.
+- 실제 브라우저와 기기 청취, 웹 빌드 및 배포는 미실행. 다음 확인은 제보 기기에서 첫 메뉴 입력과 화면 복귀 후 중복음 여부 및 정상 효과음 유지다. 커밋과 원격 변경 없음.
+
+## 임시 자료 정리 인계 (2026-09-28)
+
+- 사용자 요청으로 과거 웹 빌드, 검증용 의존성, 시험 ZIP, QA 캡처와 PDF 렌더링 이미지 등 약 906MiB를 정리했다. 삭제 목록과 검증 결과는 `tmp/cleanup-20260928/`에 있다. 아래 과거 기록의 빌드와 캡처 보존 설명은 이번 정리 이전 상태다.
+- 원본 PDF, 연구 자료, 인계 백업, 패치, 검증 스크립트, 결과 로그와 성능 측정 JSON, 연결 설정은 보존했다. 보존 파일 718개의 내용과 속성 일치를 확인했다.
+- 웹 검증 전 필요한 출력 경로에 다시 빌드한다. `tmp/fx-prompt-builder/`, `tmp/orca-plan006/pglite/`, `tmp/orca-plan006/retention/`, `tmp/plan005b/review3/pglite/`는 `package.json`과 `package-lock.json`이 남아 있으므로 각 폴더에서 `npm ci` 후 검증 스크립트를 실행한다. 제품 코드와 원격 상태 변경 없음. Flutter 테스트와 빌드는 재실행하지 않았다.
 
 ## Current State
 2026-09-24 11:35: Last Hurrah를 권장안 규칙으로 정리했다(Product Spec 6-4). 첫 자동 발동부터 보드에 마무리 규칙을 걸어 연쇄가 새 특수 보석을 만들지 않고, Multiplier 배율은 오르지 않으며, 자연 연쇄는 20단계까지만 해소한다. 시간 0 순간 진행 중이던 마지막 수는 기존 규칙으로 끝낸다. `last_hurrah_combo_multiplier` 코드 기본값은 꺼짐(`exp` 표시는 켰을 때 `lhc`)으로 바꿨지만 원격 `app_config.gameplay`에는 아직 `true`가 있어 원격 설정을 받는 빌드는 콤보 켬으로 돈다. 권장안 기본으로 보려면 원격 값을 false로 바꾸거나 웹에서 `?exp=-lhc`. 원격 값 변경, push, NAS 배포는 하지 않았다. 점수 분포 탐침은 `tmp/last-hurrah-policy/probe_test.dart`(Git 제외, `flutter test tmp/last-hurrah-policy/probe_test.dart`).
@@ -222,3 +267,5 @@ Updated: 2026-09-24 11:35 KST
 - 01:29 범용 개편은 미커밋이다. 첫 버전은 `e1a75c5`에 들어가 있다. 저장 키가 `fxPromptBuilder.v2`로 바뀌어 첫 버전의 브라우저 저장값은 읽지 않는다.
 - 이펙트 종류를 늘리려면 `data.js`의 `FX.EFFECTS`에 추천값 묶음을 추가한다. 새 발동 방식이나 범위는 `FX.DELIVERIES`, `FX.AREAS`와 `preview.js`의 `buildHits`, `hitTimes`, `drawDelivery`, `prompt.js`의 `deliveryText`, `areaText`를 함께 고친다.
 - 재검증: 저장소 루트에서 `node tmp/fx-prompt-builder/smoke.js`(조합 생성), `tmp/fx-prompt-builder`에서 `node e2e2.js`(브라우저, `playwright-core`와 사용자 캐시의 헤드리스 Chromium 필요).
+
+- 브라우저 기준(2026-09-29 사용자 지정): 앞으로 검증은 ego 브라우저를 사용한다. Chrome과 캐시 Chromium으로 새 검증을 시작하지 않는다. 이번 Chromium 39개 통과는 이 지정 이전 이력으로만 남긴다.

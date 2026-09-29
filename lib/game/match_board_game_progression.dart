@@ -28,12 +28,14 @@ extension MatchBoardGameProgression on MatchBoardGame {
     final nextLevel = progressionLevel + 1;
     levelUpFromLevel = progressionLevel;
     levelUpToLevel = nextLevel;
-    EventLogger.instance.log('level_clear', {
+    logPlayEvent('level_clear', {
       'level': progressionLevel,
       'score': board.score,
       'max_combo': board.maxCombo,
       if (challenge != null) 'challenge': challenge.kind.name,
     });
+    // 레벨 클리어도 시도 종료다. 기록 반영은 아래 levelUpToLevel 기준 한 번만 한다.
+    _logRoundEndEvent('level_clear');
     progressionNextBoardBonusKinds = _bonusKindsForNextLevel();
     _grantStageRewardsOnce();
     commitRecords(level: levelUpToLevel);
@@ -60,7 +62,8 @@ extension MatchBoardGameProgression on MatchBoardGame {
   }
 
   void _continueAfterLevelUpImpl() {
-    if (!isProgressionMode) return;
+    // 같은 목표 레벨로 두 번 불려도(중복 콜백) 판과 round_start를 한 번만 연다.
+    if (!isProgressionMode || progressionLevel >= levelUpToLevel) return;
     _stageAttemptSerial += 1;
     overlays.remove('LevelUp');
     overlays.remove('StageInventory');
@@ -76,6 +79,8 @@ extension MatchBoardGameProgression on MatchBoardGame {
     _lastFlooredSecondForTimeTic = timeRemaining.floor();
     _generateFreshBoardWithStartSfx();
     _applyNextBoardBonusKinds();
+    // 같은 run의 다음 판. 시도와 시간 누적을 새로 시작한다.
+    _beginRound(_playContext?.nextRound());
     nextStageLoadoutDraft = stageLoadout;
     progressionNextBoardBonusKinds = const [];
     latestStageRewards = const [];
@@ -128,7 +133,7 @@ extension MatchBoardGameProgression on MatchBoardGame {
     );
     for (final reward in rewards) {
       runInventory.add(reward.item, reward.quantity);
-      EventLogger.instance.log('item_earned', {
+      logPlayEvent('item_earned', {
         'item_kind': reward.item.name,
         'quantity': reward.quantity,
         'reason': reward.reasonKey,

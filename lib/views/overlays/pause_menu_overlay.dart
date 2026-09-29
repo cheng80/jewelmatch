@@ -117,6 +117,7 @@ class PauseMenuOverlay extends ConsumerWidget {
                       skipMessage: game.board.flagsFromUrl
                           ? context.tr('rankSkippedExperiment')
                           : null,
+                      logEvent: game.capturePlayEventSink(),
                     );
               }
               if (!context.mounted) return;

@@ -205,8 +205,87 @@ JS bridge stoneMatchLeaderboard.submitLevelScore(score)
 - `POST /rest/v1/game_events`, `Prefer: return=minimal`, 행 배열. 익명 로그인 필요, 조회 권한 없음
 - 행: `session_id`(uuid), `name`(`^[a-z][a-z0-9_]{0,39}$`), `params`(객체, 2KB 이하), `app_version`(32자 이하), `channel`(16자 이하), `client_ts`
 - 사용자당 1분 300건 초과는 `game_events_rate_limited`로 거절
+- PLAN-009 Step 3(2026-09-29): params 예약 필드는 `event_id`(UUID v4), `event_seq`(EventLogger 인스턴스 내 1부터 증가), `schema_version`(3)이다. 최초 enqueue 때 생성하고 재전송 시 보존한다. 호출자가 같은 이름으로 덮어쓸 수 없고 기존 사용자 파라미터 12개와 별도로 센다. Step 1의 버전 1, Step 2의 버전 2와 구분한다.
+- `PlayEventContext`는 불변 값이다. `EventLogger.logPlay(name, context, params)`에 명시적으로 전달하면 `run_id`(UUID v4), `round_seq`(1부터), `attempt_seq`(0부터)를 예약 필드로 함께 보낸다. 일반 `log`는 판 문맥을 붙이지 않는다. 전역 현재 판 문맥과 변경 가능한 로거 싱글턴은 두지 않는다. 문맥 예약 필드도 사용자 입력으로 덮어쓸 수 없고 사용자 12개 한도에 세지 않는다.
+- `event_seq`는 session_id와 함께 해석한다. 앱 재시작/다른 탭에서는 다시 시작하며 GA4 세션 ID와 동일하지 않다. 잘못된 이벤트 이름은 순번을 소비하지 않지만 큐 초과 등으로 버린 이벤트는 순번 공백을 남길 수 있다.
+- 구버전 행에 `schema_version`이 없으면 legacy v0으로 해석한다. `event_id`가 없는 구버전 행은 새 ID 기반 중복 제거 대상으로 간주하지 않는다.
+- event_id는 현재 params 값이며 DB 유니크 제약이 아니다. 서버 중복 제거와 영속 재전송은 PLAN-009 Step 4 전까지 제공하지 않는다. 종료 이벤트 누락만으로 충돌로 판정하지 않는다.
+
 - 게임 흐름(PLAN-005): `SpeedBonus`(lib/game/speed_bonus.dart)는 `MatchBoardLogic.trySwap`에서 가산한다. `LastHurrah`(lib/game/last_hurrah.dart)가 마무리 발동 시점과 상한을 정하고 보드 해소는 기존 `MatchBoardLogic.update`를 쓴다. 시간 0은 `_triggerTimeUpImpl`, 판 종료 확정은 `_finalizeRound()`. 첫 자동 발동 때 `MatchBoardLogic.beginLastHurrahRules`가 마무리 규칙을 걸고(`lastHurrahRules`: 연쇄 매치의 특수 보석 생성 생략과 Multiplier 배율 동결, `lastHurrahCascadeBudget`: 자연 연쇄 `LastHurrah.maxCascadeSteps` 20단계, `comboScoreMultiplier`: `GameplayFlags.lastHurrahComboMultiplier` 기본 꺼짐), 마무리 완료와 다시 하기에서 `endLastHurrahRules`로 푼다. QA 상태 `lastHurrahActive`, QA 훅 `__jewelMatchDebugPlaceSpecial(kind, row, col)`(qaPerf 전용).
-- 현재 이벤트: `session_start`(platform), `round_start`(mode), `round_end`(mode, reason, score, level?, duration_s?), `level_clear`(level, score, max_combo), `stage_continue`(level), `ranking_submit`(mode, score, ok, ranked?, rank?, failure?), `ad_reward`(placement, result, granted, outcome?, item?, level?). `outcome`은 보충 광고만 기록하며 `granted`, `adNotCompleted`, `limitReached`, `rejected` 중 하나다(`AdRewardPolicy.grantRefillVerified`의 `RefillGrantOutcome`). PLAN-005 추가: `hyper_swap`(target_kind), `speed_bonus_peak`(max_tier, total_bonus), `last_hurrah`(specials_count, score_added), `badge_earned`(badge, tier), `rank_up`(rank). round_end의 reason에 `restart`(일시정지 다시 하기)가 추가된다
+- 현재 이벤트: `session_start`(platform), `round_start`(mode), `round_end`(mode, reason, score, level?, duration_s, active_s, system_s, paused_s, background_s), `level_clear`(level, score, max_combo), `stage_continue`(level), `ranking_submit`(mode, score, ok, ranked?, rank?, failure?), `ad_reward`(placement, result, granted, outcome?, item?, level?). `outcome`은 보충 광고만 기록하며 `granted`, `adNotCompleted`, `limitReached`, `rejected` 중 하나다(`AdRewardPolicy.grantRefillVerified`의 `RefillGrantOutcome`). PLAN-005 추가: `hyper_swap`(target_kind), `speed_bonus_peak`(max_tier, total_bonus), `last_hurrah`(specials_count, score_added), `badge_earned`(badge, tier), `rank_up`(rank). round_end의 reason은 `time_up`, `exit`, `restart`, `level_clear`다(schema_version 2부터)
+
+#### PLAN-009 Step 2 판과 시간 계약
+
+| 상황 | 식별과 이벤트 |
+|---|---|
+| 모드 진입, 다시 하기 | 새 run_id, round_seq 1, attempt_seq 0, round_start 1회. 진행 중 재시작이면 이전 round_end(restart) 1회 |
+| 다음 레벨 | 같은 run_id, round_seq +1, attempt_seq 0, round_start 1회. 시간 누적 초기화 |
+| 레벨 클리어 | 기존 level_clear 유지, 해당 시도 round_end(level_clear) 1회 |
+| 시간 종료 | Last Hurrah 완료 후 해당 시도 round_end(time_up) 1회 |
+| 광고 이어하기 | 같은 run_id/round_seq, attempt_seq +1, stage_continue. round_start는 반복하지 않음 |
+| 정상 나가기 | 미종료 시도만 round_end(exit) 1회 |
+| NoMoves 새 보드 | 판과 시도 유지, 새 round_start 없음 |
+| 강제 종료, 탭 닫기, 브라우저 뒤로가기 | 새 종료/로컬 기록 처리를 만들지 않음. 누락을 충돌로 단정하지 않음 |
+
+`round_end`의 점수와 시간은 같은 판 안에서 누적 값이다. 이어하기 전후 결과를 합산하지 않고 `(run_id, round_seq)`의 마지막 시도 결과를 선택한다. 랭킹과 광고 응답은 비동기 요청 전의 문맥을 캡처하여 기록한다. 레벨 클리어 뒤 다음 레벨 시작 전의 아이템 장착과 보충 광고 등 준비 이벤트는 직전 판 문맥에 붙는다. 실제 다음 판 사용량으로 집계할 때는 이 준비 구간을 구분한다. 로컬 누적 기록의 기존 차감 방식과 광고 보상 식별자 `_stageAttemptSerial`은 관측 순번과 별개다.
+
+강제 화면 해제 중 Last Hurrah가 진행 중이면 기존 Flame 생명주기 처리에 따라 즉시 마무리되어 round_end(time_up)과 기록 반영이 발생할 수 있다. 일반 강제 이탈의 종료 누락과 이 기존 예외를 구분한다.
+
+`RoundTiming`은 주입 가능한 단조 시계(기본 Stopwatch)만 사용한다. 프레임 dt와 DateTime 경과를 혼합하지 않는다. 출력은 초 단위 double이며 내부 마이크로초 정수를 합산한다.
+
+| 필드 | 정의 |
+|---|---|
+| duration_s | 해당 판 시작부터 이벤트까지의 총 경과 |
+| active_s | 게임 전경 플레이 구간. 힌트와 아이템 대상 선택, 확인/프리즘 색 선택 포함 |
+| system_s | 인트로와 Last Hurrah 자동 마무리 |
+| paused_s | 일시정지, 도움말, 랭킹, NoMoves, 결과 화면과 전경 광고 대기 |
+| background_s | hidden/paused 상태부터 resumed까지. 다른 분류보다 우선 |
+
+네 분류는 동시에 누적하지 않으며 합은 duration_s다(부동소수 표현 오차 제외). inactive는 기존 게임 동작을 유지한다. 게임이 끝난 뒤에도 시간 누적은 paused/background로 이어져, 광고 이어하기 후 다음 round_end에는 결과 대기 시간이 포함된다. 다음 레벨과 새 게임은 초기화한다. round_end는 기존 최대 사용자 필드 7개와 시간 필드 5개로 12개 한도 안에 둔다. 실제 사용자 조작 횟수나 매 프레임 원격 전송은 이 단계에서 추가하지 않는다. QA 전용 `qaSixRewards`는 정상 클리어/종료 이벤트 없이 다음 판으로 갈 수 있으므로 정상 플레이 집계로 해석하지 않는다. 운영/QA 수집 분리는 아래 Step 3 계약을 따른다. 인트로/마무리 전이는 프레임 경계의 오차가 있을 수 있고, 기기 절전 중 Stopwatch 경과 특성은 실기기에서 미검증이다.
+
+#### PLAN-009 Step 3 수집 정책과 요약
+
+`log`와 `logPlay`는 전수 대상이다. `logBehavior(name, params, {context})`만 세션 기준 10% 표본에 적용하며 EventLogger 인스턴스당 최대 40건을 큐에 넣는다. 표본 여부는 비개인 session_id의 고정 해시로 결정하고 재전송은 표본 판정을 반복하지 않는다. 잘못된 이름과 백엔드 미설정 호출은 표본 상한을 소비하지 않는다. 전수는 기록 대상의 의미이며 전송 성공/보존 보장이 아니다.
+
+| 예약 필드 | 값과 의미 |
+|---|---|
+| telemetry_env | production, qa, development, test. 집계 필터이며 DB 물리 분리는 아니다 |
+| collection | full 또는 sampled |
+| sample_rate | full은 1.0, sampled는 기본 0.1. 이벤트 확률이 아니라 선택된 세션 비율 |
+
+예약 필드는 호출자 값으로 덮어쓰지 못하며 사용자 필드 12개 예산과 별도로 센다. 전체 params의 UTF-8 JSON 상한 1500바이트와 DB jsonb 2048바이트 계약을 유지한다. 표본의 세션당 40건 이후는 빠지므로 행동 횟수를 단순히 10배하여 전체 사용량으로 해석하지 않는다. 표본은 사용자당이 아니라 앱 실행 세션당 선택되며, 40건 상한을 타이틀/이름/게임 메뉴가 공유한다. 반복 실행과 긴 세션의 후반 메뉴 누락을 고려해야 한다. 판 단위 수치는 전수 요약을 쓴다. 신뢰성/서버 중복 제거와 장기 집계는 Step 4다.
+
+환경은 `TELEMETRY_ENV=production|qa|development` 빌드 정의로 정한다. 비어 있으면 release는 production, debug/profile은 development다. 알 수 없는 값은 development로 분류하며 test는 테스트 생성자 주입으로만 사용한다. `TelemetryPolicy.fromBuild()`는 enqueue 시 query와 hash 라우트 query의 `qa*=1`, 빌드 정의 `QA_PERF_AUTORUN`, `QA_SPECIAL_EFFECTS`, `QA_SPECIAL_EFFECTS_CHAIN`, 비어 있지 않은 `QA_PERF_LABEL`을 검사한다. 한 번 QA가 감지되면 해당 EventLogger 세션의 이후 이벤트는 qa로 유지한다. 앞서 큐에 들어간 이벤트와 재전송 메타데이터는 변경하지 않는다. QA 진입 이전 이벤트까지 포함해 QA 세션 전체를 제외할 때는 session_id 기준으로도 필터링한다. 명시적 `TelemetryPolicy(env: test)`는 외부 QA 감지 없이 테스트를 격리한다.
+
+판 요약은 round_end와 동일한 시도별 종료 가드에서 생성한다. `(run_id, round_seq, attempt_seq)`로 연결하며 이어하기 전후는 판 시작 기준 누적값이다. 최신 시도값을 택하고 시도들을 합산하지 않는다. 새 게임과 다음 레벨은 초기화하며 NoMoves 셔플은 보존한다. 레벨 클리어 요약은 기존 commitRecords와 같은 클리어 순간을 기준으로 하므로 진행 중인 연쇄의 나중 결과는 포함하지 않을 수 있다. 각 요약이 별도 이벤트이므로 네트워크 유실로 일부만 존재할 수 있다. 없는 요약은 0으로 간주하지 않는다.
+
+필드 사전(판 시작 기준 누적 정수, 시간 필드만 초 단위 double):
+
+| 이벤트 | 사용자 필드 | 의미 |
+|---|---|---|
+| round_summary | valid_swaps, match_groups | 유효 교환 수, 검출한 매치 그룹 수 |
+| round_summary | removed_gems, removed_specials | 전체 제거 수, 그중 특수 보석 제거 수 |
+| round_summary | specials_created, specials_activated, hyper_swaps | 특수 생성/발동 수, H2 하이퍼끼리 교환 수 |
+| round_summary | best_move, max_combo | 한 입력의 연쇄 최고 점수, 판의 최고 콤보 |
+| round_specials | created_{kind}, activated_{kind} | kind=row,col,bomb,star,hyper,supernova. 각 생성/발동 수, 0도 포함한 12필드 |
+| round_input | invalid_swaps | 실제 매치 불성립으로 원위치한 교환. 입력 차단/바깥 좌표/안정 구역 거절 제외 |
+| round_input | tap_swaps, drag_swaps, special_taps | 인접 칸 누름 교환, 스와이프 교환, 직접 특수 발동의 성공 횟수 |
+| round_input | hints_used, items_used | 성공한 수동 힌트 표시, 실제 아이템 사용 횟수 |
+| round_input | first_success_active_s | 첫 유효 교환 또는 직접 특수 발동 순간의 active_s. 성공이 없으면 필드 생략 |
+
+제거/특수/매치/콤보는 기존 보드 통계를 재사용하므로 Last Hurrah 자동 마무리도 포함한다. best_move는 기존 trackMoves 규칙으로 이를 제외한다. 종료 직전 finishMove로 진행 중인 한 수를 확정하여 직후 commitRecords와 같은 수치를 사용한다. 입력 계수는 사용자 처리 경로에서만 증가한다. tap_swaps는 실제 교환을 일으킨 입력 경로 기준이다. 이미 칸을 선택한 상태에서 인접 칸을 누르고 드래그하면 누름 순간 성립한 교환은 tap_swaps에 속한다. 모든 포인터 누름 횟수와 제스처 시도 횟수는 수집하지 않는다. hints_used는 자동 힌트와 힌트 아이템을 제외하고, 힌트 아이템 성공은 items_used로 센다.
+
+표본 UI 행동 사전:
+
+| 이벤트 | 필드와 허용 값 |
+|---|---|
+| title_menu_action | action=settings, records, help, mode_simple, mode_progression, mode_timed, ranking |
+| game_menu_action | action=pause, help, ranking. mode는 현재 게임 모드, 현재 판 문맥 포함. HUD 버튼 누름 시도만 기록하여 백그라운드 자동 정지를 제외. Last Hurrah 중 실제 메뉴가 열리지 않아도 누름은 기록 |
+| player_name_dialog | step=open, confirm, cancel. mode=progression/timed(호출자가 생략하면 필드 없음) |
+
+이름 입력의 확인/취소는 다이얼로그 결과로 판단하며 바깥 탭 취소와 키보드 제출도 포함한다. round_specials는 현재 사용자 필드 12개를 모두 사용하므로 GemKind 종류가 늘어나면 이벤트 분리와 필드 사전을 함께 갱신한다.
+
+입력한 이름, 문자열, 길이는 남기지 않는다. 단순 화면 재렌더링은 메뉴 이벤트를 만들지 않는다. mode_progression/mode_timed는 진입 의도이며 이름창 confirm/cancel로 후속 선택을 구분한다. 실제 게임 진입은 전수 round_start로 확인한다.
 
 ### 이전 NAS API (2026-09-24 폐기, 기록용)
 
@@ -226,7 +305,7 @@ Base: https://cheng80.myqnapcloud.com/matchranking/ranking.php. `?action=list|to
 - 공통 오류 모델: RankingFailure = notFound, loadFailed, saveFailed, unavailable
 - 사용자 표시 원칙: 번역 키 rankNotFound 등. 나가기 가능
 - 로그 정책: debugLog 기본 false. 웹 SFX는 window.stoneMatchSfx.getState()
-- 민감정보 제외: 토큰, 이름 외 PII, 광고 ID를 이벤트에 넣지 않는다. EventLogger는 숫자, bool, 64자 이하 문자열 값만 12개까지 남긴다
+- 민감정보 제외: 토큰, 이름 외 PII, 광고 ID를 이벤트에 넣지 않는다. EventLogger는 유한 숫자, bool, 64코드포인트 이하 문자열 값만 사용자 파라미터 12개까지 남긴다. 문자열의 NUL은 제거하고 짝 없는 surrogate는 U+FFFD로 바꾼다. 예약 메타데이터는 별도이며 params 전체 UTF-8 JSON을 1500바이트 이하로 제한한다. 크기를 초과하는 항목부터 뒤쪽 사용자 파라미터를 버리고 그 개수만 params_dropped에 남긴다. params_dropped는 형식/개수 제한으로 제외된 모든 항목의 합계가 아니라 크기 제한으로 제외한 개수다
 - FPS 패널: 현재/30초 AVG/LOW/GAP. 기본 꺼짐
 - 내부 이벤트: EventLogger가 Supabase `game_events`로 보낸다(API-007). 20건 또는 5초마다 묶어 보내고, 앱이 백그라운드로 갈 때 남은 이벤트를 보낸다. 네트워크, 서버, 인증 실패는 큐(최대 200건)에 되돌리고 제약 위반과 빈도 제한은 버린다. 외부 분석 SDK는 없다. 광고 정책의 ad_offer_shown 등 나머지 이름은 아직 연결하지 않았다
 
@@ -1264,7 +1343,7 @@ One Store와 Apps in Toss의 등록 자료는 **`store_metadata_onestore_intoss_
 - `web/stone_match_sfx.js`에서 Web Audio를 사용하지 않는 HTML 오디오 요소 4개를 생성하고 모든 SFX가 이 슬롯을 공유한다
 - 4개가 모두 재생 중이면 새 플레이어를 생성하지 않고 해당 SFX를 건너뛴다
 - 브라우저 재생이 실패하면 슬롯을 반환하고 오류 카운터에 기록한다
-- 첫 `pointerdown`과 화면이 숨겨졌다 복귀한 후 첫 `pointerdown`에서만 4개 플레이어를 0볼륨으로 해제한다
+- 첫 `pointerdown`과 화면이 숨겨졌다 복귀한 후 첫 `pointerdown`에서만 4개 플레이어를 10ms 무음 WAV 데이터로 해제한다. 볼륨 변경이 무시되는 환경에서도 준비 재생이 들리지 않도록 기존 효과음을 사용하지 않는다
 - 화면이 숨겨지면 진행 중인 SFX 슬롯을 정리하고, 모든 입력마다 반복 프라이밍하지는 않는다
 - 웹에서 같은 BGM을 다시 요청했는데 재생 중이 아니면 `resume`만 하지 않고 소스를 다시 설정해 재생한다
 - 콤보음(`ComboHit`)은 현재도 웹에서 별도 즉시 재생 분기 없이 기존 지연 재생(`playComboSfxDelayed`)을 유지한다
