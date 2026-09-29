@@ -32,6 +32,9 @@
   }));
   const stats = { plays: 0, drops: 0, errors: 0, unlocks: 0, lastError: '' };
   let needsUnlock = true;
+  // 8kHz, 8-bit mono PCM, 10ms 무음. iOS는 volume=0을 무시할 수 있으므로
+  // 실제 효과음으로 unlock하지 않는다. 복귀 시 슬롯에 남은 효과음도 재생하지 않는다.
+  const unlockSilence = 'data:audio/wav;base64,UklGRnQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==';
 
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) return;
@@ -84,6 +87,8 @@
       const token = ++slot.token;
       const audio = slot.audio;
       const previousVolume = audio.volume;
+      audio.src = unlockSilence;
+      audio.load();
       audio.volume = 0;
       audio.currentTime = 0;
       const promise = audio.play();
