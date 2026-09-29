@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
+import '../services/ga4_analytics.dart';
 import '../theme/jewel_candy_lumina_theme.dart';
 import '../widgets/obsidian_frame.dart';
 import '../widgets/phone_frame_scaffold.dart';
@@ -74,6 +75,14 @@ class SettingView extends StatelessWidget {
                             title: context.tr('language'),
                           ),
                           const LanguageSection(),
+                          if (Ga4Analytics.instance.available) ...[
+                            const Divider(height: 1),
+                            SettingsSectionTitle(
+                              icon: Icons.privacy_tip_outlined,
+                              title: context.tr('sectionPrivacy'),
+                            ),
+                            const AnalyticsConsentTile(),
+                          ],
                         ],
                       ),
                     ),

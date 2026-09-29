@@ -91,9 +91,9 @@
 - [ ] 채택 시 `match_board_resolution.dart` 보상 조건과 상수 변경, BR-050과 특수 보석 룰 10절 갱신
 
 ### Step 2 — 내부 이벤트 로거와 플레이테스트
-- [x] 로거 어댑터: 2026-09-23 `EventLogger`로 구현하고 Supabase `game_events`에 보낸다(PLAN-006, ADR-009). 게임 코드는 SDK를 직접 부르지 않는다
+- [x] 로거 어댑터: 2026-09-23 `EventLogger`로 구현했다. 현재는 PocketBase `sm_events`에 보낸다(PLAN-013, ADR-010; 최초 구현은 PLAN-006). 게임 코드는 SDK를 직접 부르지 않는다
 - [x] 기존 필수 이벤트(아이템 플랜 3.5차)와 Product Spec 8-3 추가 이벤트 연결. 8-3 추가 이벤트와 `daily_key`, `challenge` 파라미터, 아이템과 이어하기 이벤트까지 연결 완료(2026-09-24, Playwright `s14_item_events.js` 7/7). 대응표는 Product Spec 웹 테스트 이벤트 로깅 절
-- [ ] 개인 식별 정보 미기록, 임시 sessionId만 사용
+- [x] 이벤트 payload에 이름/토큰/토스키를 넣지 않는다. session_id는 임시 UUID이며 저장 소유자 player는 서버 인증에서 지정한다
 - [ ] Product Spec 8-2 플레이테스트 항목을 매 단계 뒤 기록. 결과는 이 PLAN 하단 "플레이테스트 기록"에 남긴다(양식 준비 완료, 기록은 사용자 플레이 필요)
 
 ### Step 3 — 기록과 장기 목표(R1)

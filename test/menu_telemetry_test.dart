@@ -7,8 +7,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stonematch/app_config.dart' show RoutePaths;
 import 'package:stonematch/resources/texture_atlas.dart';
-import 'package:stonematch/services/backend/supabase_config.dart';
-import 'package:stonematch/services/backend/supabase_gateway.dart';
+import 'package:stonematch/services/backend/pocketbase_config.dart';
+import 'package:stonematch/services/backend/pocketbase_gateway.dart';
 import 'package:stonematch/services/event_logger.dart';
 import 'package:stonematch/services/game_settings.dart';
 import 'package:stonematch/services/play_event_context.dart';
@@ -22,9 +22,7 @@ import 'package:stonematch/views/title_view.dart';
 class _RecordingLogger extends EventLogger {
   _RecordingLogger()
     : super(
-        gateway: SupabaseGateway(
-          config: const SupabaseConfig(url: '', publishableKey: ''),
-        ),
+        gateway: PocketBaseGateway(config: const PocketBaseConfig(url: '')),
       );
 
   final calls = <({String name, Map<String, Object?> params})>[];

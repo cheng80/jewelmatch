@@ -108,7 +108,7 @@ class _GameViewState extends State<GameView> {
     _adService = widget.adService ?? createAdService();
     _adRewardPolicy =
         widget.adRewardPolicy ??
-        AdRewardPolicy(backend: SupabaseAdRefillLimitBackend.fromEnvironment());
+        AdRewardPolicy(backend: RemoteAdRefillLimitBackend.fromEnvironment());
     if (widget.gameMode == JewelGameMode.progression) {
       unawaited(_adService.preloadRewarded());
     }

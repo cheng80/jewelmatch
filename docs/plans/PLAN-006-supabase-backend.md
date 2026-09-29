@@ -3,11 +3,15 @@
 ## Metadata
 - Plan ID: `PLAN-006`
 - Title: 랭킹, 원격 설정, 보충 광고 제한, 이벤트 로그를 Supabase로 옮긴다
-- Status: `IN_PROGRESS`
+- Status: `SUPERSEDED` (PLAN-013과 ADR-010으로 운영 기능 전부 이전)
 - Related Requirement: `FR-009`, `FR-010`, `BR-103`
 - Related ADR: `ADR-009`, `ADR-003`, `ADR-007`
 - Owner:
 - Updated: 2026-09-24
+
+## 후속 상태 (2026-09-29)
+
+이 문서는 최초 Supabase 구축 이력이다. 현재 기능은 PocketBase 익명 인증, 랭킹/주간 조회, 광고 제한, 이벤트, 원격 플래그, 보존 작업으로 이전됐다. 현재 앱/빌드의 Supabase 대체 경로도 제거한다. 원격 설정 읽기는 PLAN-008/013에서 이미 완료했다. 인벤토리 서버 백업은 PLAN-003/010, 실제 앱인토스 QR은 채널 검증 과제로 이동하며 이 문서의 미완료 체크를 새 Supabase 작업으로 실행하지 않는다.
 
 ## 1. 목표
 서버 저장이 필요한 기능을 사용자 조직의 Supabase 프로젝트로 옮긴다. 게임은 설정이 없는 빌드와 서버 장애에서도 지금처럼 플레이된다.

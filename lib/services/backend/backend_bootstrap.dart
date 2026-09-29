@@ -2,17 +2,18 @@ import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../event_logger.dart';
-import 'supabase_gateway.dart';
+import 'backend_gateway.dart';
+import 'backend_selector.dart';
 
-/// 앱 시작 시 Supabase 준비. 게임 시작을 막지 않도록 main에서 기다리지 않고 호출한다.
+/// 앱 시작 시 선택된 백엔드 준비. 게임 시작을 막지 않도록 main에서 기다리지 않고 호출한다.
 class BackendBootstrap {
   BackendBootstrap._();
 
   static Future<void> start({
-    SupabaseGateway? gateway,
+    BackendGateway? gateway,
     EventLogger? logger,
   }) async {
-    final backend = gateway ?? SupabaseGateway.instance;
+    final backend = gateway ?? BackendSelector.instance;
     if (!backend.isConfigured) return;
     final events = logger ?? EventLogger.instance;
     try {

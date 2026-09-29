@@ -6,18 +6,15 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stonematch/app_config.dart';
 import 'package:stonematch/game/gameplay_flags.dart';
-import 'package:stonematch/services/backend/supabase_config.dart';
-import 'package:stonematch/services/backend/supabase_gateway.dart';
+import 'package:stonematch/services/backend/pocketbase_config.dart';
+import 'package:stonematch/services/backend/pocketbase_gateway.dart';
 import 'package:stonematch/services/gameplay_config_service.dart';
 import 'package:stonematch/utils/storage_helper.dart';
 
-const _config = SupabaseConfig(
-  url: 'https://example.supabase.co',
-  publishableKey: 'sb_publishable_test',
-);
+const _config = PocketBaseConfig(url: 'https://pb.example');
 
-SupabaseGateway _gateway(http.Response Function(http.Request) handler) =>
-    SupabaseGateway(
+PocketBaseGateway _gateway(http.Response Function(http.Request) handler) =>
+    PocketBaseGateway(
       config: _config,
       client: MockClient((request) async => handler(request)),
     );
@@ -76,11 +73,8 @@ void main() {
         ]);
       }),
     );
-    expect(requested!.path, '/rest/v1/app_config');
-    expect(requested!.queryParameters, {
-      'key': 'eq.gameplay',
-      'select': 'value',
-    });
+    expect(requested!.path, '/api/stone-match/config/gameplay');
+    expect(requested!.queryParameters, isEmpty);
     const remote = GameplayFlags(
       multiplierGem: true,
       seventhColorFromLevel: 10,
@@ -120,8 +114,8 @@ void main() {
     await prefs();
     GameplayConfigService.applyCached();
     await GameplayConfigService.refresh(
-      gateway: SupabaseGateway(
-        config: const SupabaseConfig(url: '', publishableKey: ''),
+      gateway: PocketBaseGateway(
+        config: const PocketBaseConfig(url: ''),
         client: MockClient((_) async => fail('no request expected')),
       ),
     );

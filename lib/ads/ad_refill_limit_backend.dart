@@ -1,5 +1,6 @@
 import '../game/item_kind.dart';
-import '../services/backend/supabase_gateway.dart';
+import '../services/backend/backend_gateway.dart';
+import '../services/backend/backend_selector.dart';
 
 /// 서버가 알려 준 오늘의 보충 광고 상태.
 class AdRefillStatus {
@@ -38,16 +39,16 @@ abstract interface class AdRefillLimitBackend {
   Future<AdRefillStatus?> claim(ItemKind item);
 }
 
-class SupabaseAdRefillLimitBackend implements AdRefillLimitBackend {
-  SupabaseAdRefillLimitBackend(this._gateway);
+class RemoteAdRefillLimitBackend implements AdRefillLimitBackend {
+  RemoteAdRefillLimitBackend(this._gateway);
 
-  /// Supabase가 설정되지 않은 빌드에서는 null(세션 로컬 제한만 사용).
+  /// 백엔드가 설정되지 않은 빌드에서는 null(세션 로컬 제한만 사용).
   static AdRefillLimitBackend? fromEnvironment() {
-    final gateway = SupabaseGateway.instance;
-    return gateway.isConfigured ? SupabaseAdRefillLimitBackend(gateway) : null;
+    final gateway = BackendSelector.instance;
+    return gateway.isConfigured ? RemoteAdRefillLimitBackend(gateway) : null;
   }
 
-  final SupabaseGateway _gateway;
+  final BackendGateway _gateway;
 
   @override
   Future<AdRefillStatus?> status() async {

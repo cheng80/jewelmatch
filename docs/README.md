@@ -28,7 +28,12 @@
     │   ├── PLAN-003-persistent-inventory.md
     │   ├── PLAN-004-board-juice.md
     │   ├── PLAN-005-blitz-modernized-direction.md
-    │   └── PLAN-006-supabase-backend.md
+    │   ├── PLAN-006-supabase-backend.md (이전 이력)
+    │   ├── PLAN-009-telemetry-foundation.md
+    │   ├── PLAN-010-player-identity.md
+    │   ├── PLAN-011-ga4-behavior-analytics.md
+    │   ├── PLAN-012-crash-observability.md
+    │   └── PLAN-013-pocketbase-migration.md
     ├── progress/
     │   ├── ROADMAP.md
     │   ├── PROJECT_STATUS.md
@@ -137,3 +142,5 @@
 | Flutter Flame 모바일 웹 성능과 오디오 최적화 인계 | plans/PLAN-001 하단 성능 인계 |
 
 참고 이미지 폴더는 `assets/design/new_gem_concepts/`, `assets/reference_images/`다. 옛 맵의 `screenshots/` 폴더는 원본에도 없다.
+
+- [2026-09-29 기존 플랜 재검토](progress/PLAN_REVIEW_2026-09-29.md)

@@ -32,7 +32,7 @@ placement는 continueStage, refillItem, infiniteBanner 세 개만. 보상은 rew
 | Play, App Store | Google AdMob(`google_mobile_ads`) 예정. Unity Ads는 필요할 때 미디에이션으로 추가 검토 | 미착수. 계획된 구조 작업을 먼저 끝낸 뒤 붙인다 |
 
 - AdMob은 Android와 iOS 전용이다. `AdMobAdService`를 `AdService` 구현으로 추가하고 `STORE_CHANNEL=play|appstore`에서만 고른다. 웹 빌드에는 들어가지 않게 조건부 import로 분리한다.
-- 하루 보충 제한은 채널과 관계없이 Supabase 서버 기준(BR-103)을 재사용한다.
+- 하루 보충 제한은 채널과 관계없이 PocketBase 서버 기준(BR-103)을 재사용한다.
 - AdMob 도입 때 함께 할 일: 플랫폼별 앱 ID, Google UMP 동의, iOS ATT, 개인정보처리방침 초안의 광고 SDK 수집 항목.
 
 ## Related

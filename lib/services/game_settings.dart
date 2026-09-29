@@ -47,6 +47,15 @@ class GameSettings {
 
   static set showFps(bool v) => StorageHelper.write(StorageKeys.showFps, v);
 
+  /// NAS 웹 GA4 분석 허용(PLAN-011). 사용자가 켜기 전까지 false다.
+  static const String analyticsConsentKey = 'analytics_consent';
+
+  static bool get analyticsConsent =>
+      StorageHelper.readBool(analyticsConsentKey, defaultValue: false);
+
+  static set analyticsConsent(bool v) =>
+      StorageHelper.write(analyticsConsentKey, v);
+
   /// [gameMode]에 해당하는 베스트 스코어(초). 없으면 null.
   static double? getBestScore(int gameMode) => StorageHelper.read<double>(
     StorageKeys.bestScorePrefix + gameMode.toString(),

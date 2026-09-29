@@ -4,7 +4,7 @@
 > 시스템의 HOW와 기술 계약만 기록한다.
 
 작성 기준일: 2026-08-23, 계약 정합 수정 2026-08-23
-근거: pubspec.yaml, lib/, supabase/migrations/, 테스트
+근거: pubspec.yaml, lib/, pocketbase/pb_migrations/, pocketbase/pb_hooks/, 테스트
 
 ## 1. 기술 스택
 
@@ -19,7 +19,7 @@
 | Audio | flame_audio + 웹 HTML Audio 4슬롯 | ADR-004 |
 | HTTP | http | 랭킹 |
 | Ads | Apps in Toss SDK 3.x (intoss 채널) | AdService 추상화 |
-| Ranking backend | Supabase RPC(PostgREST), 익명 로그인 | ADR-009. NAS `ranking.php`는 2026-09-24 폐기 |
+| Backend | PocketBase 0.39.7, 전용 JS API, SQLite | ADR-010. 공개 URL만 빌드에 포함 |
 | Version | 1.0.0+1 | pubspec.yaml |
 
 ## 2. Architecture
@@ -44,13 +44,13 @@
 - render()/update()에서 Paint, TextPainter, Vector2, 리스트, 문자열 키를 반복 생성하지 않는다
 - 임시 산출물은 tmp/ 하위
 
-주요 모듈: lib/game/match_board_*.dart, lib/game/speed_bonus.dart, lib/ads/, lib/services/ranking_service.dart, lib/services/backend/(Supabase), lib/services/event_logger.dart, lib/services/records/(PlayerRecords, CumulativeRank, RecordBadge, RecordsStore), lib/vm/
+주요 모듈: lib/game/match_board_*.dart, lib/game/speed_bonus.dart, lib/ads/, lib/services/ranking_service.dart, lib/services/backend/(PocketBase), lib/services/event_logger.dart, lib/services/records/(PlayerRecords, CumulativeRank, RecordBadge, RecordsStore), lib/vm/
 
 ## 3. 인증 / 권한 / 보안
 
-- 인증 방식: Supabase 익명 로그인(ADR-009). 설치 또는 브라우저 저장소 단위 익명 사용자. 계정, 이메일, 토스 사용자 식별자 없음. 플레이어 이름은 로컬 StorageKeys.playerName이며 랭킹 제출 때만 서버에 간다
-- 권한 모델: public 스키마 전 테이블 RLS. 랭킹 조회는 anon, 제출과 보충 광고 기록, 이벤트 삽입은 익명 로그인 사용자 본인 행만. `user_id`는 anon/authenticated에게 공개 조회 권한이 없다(보충 기록의 본인 행 제외). 설정 쓰기와 랭킹 초기화는 대시보드 서비스 권한만
-- Secret 관리: Supabase secret/service_role 키는 클라이언트, 저장소, 문서에 두지 않는다. 공개용 키와 URL도 코드에 쓰지 않고 `config/supabase.json`(Git 제외)으로 넣는다. MATCH_DEPLOY_TOKEN은 .env / NAS env. 문서, 로그, URL에 넣지 않는다
+- 인증 방식: PocketBase 설치 자격정보 기반 익명 인증(ADR-010). 안전한 난수로 생성한 device_id/device_secret을 먼저 저장하고 전용 guest API로 토큰을 발급/복구한다. 표시명은 기존 로컬 이름과 랭킹 제출에만 사용한다.
+- 권한 모델: sm_* 직접 CRUD는 모두 Locked(null)로 관리자만 접근한다. 전용 공개 조회는 허용된 필드만 반환하고 쓰기 API는 sm_players 인증과 입력/소유자 검증을 수행한다. 클라이언트가 player, created_at을 지정해 다른 사람으로 기록할 수 없다.
+- Secret 관리: 관리자 이메일/비밀번호는 Git 제외 .env.pocketbase에만 둔다. 앱 빌드는 config/pocketbase.json의 공개 POCKETBASE_URL만 사용한다. MATCH_DEPLOY_TOKEN은 .env/NAS env에 두며 문서, 로그, URL에 넣지 않는다.
 - 클라이언트 저장 금지 정보: 관리자 토큰, secret 키, 키스토어 비밀번호, 토스 사용자 식별자, 광고 식별자. 익명 세션 토큰은 로컬 저장하되 로그와 이벤트에 넣지 않는다
 - AppConfig.appStoreId는 출시 전 입력. 현재 빈 문자열
 - 이전 NAS ranking.php는 CORS * 와 관리자 토큰 헤더(X-Ranking-Admin-Token) 방식이었다. 2026-09-24 폐기
@@ -93,22 +93,25 @@
 | score | int | >0 제출 | 타임=점수, 레벨=완료 레벨 |
 | ts | int? | epoch | |
 
-저장소: Supabase `ranking_entries`(id, user_id, mode, name, score, created_at, week_start). 클라이언트에는 name, score, ts(created_at epoch)만 돌아온다. `week_start`는 `date_trunc('week', created_at at time zone 'Asia/Seoul')::date` 생성 열(KST 월요일)이며 클라이언트가 쓸 수 없다. 인덱스 `ranking_entries_mode_week_score_idx`(mode, week_start, score desc, created_at, id). 마이그레이션 `20260924120000_stone_match_weekly_ranking.sql`(BR-095). `20260924160000_stone_match_weekly_ranking_plan.sql`은 두 RPC를 plpgsql로 바꿔 time과 그 밖의 모드를 별도 문장으로 나눈다. PG17은 SQL 함수 본문을 인자 없이 계획해 한 문장 조건으로는 주간 인덱스를 쓰지 못하고 전체 기간 기록을 훑기 때문이다(검수 P2-1, PGlite 강제 generic 계획에서 time 조회 버퍼 1009에서 4).
-`user_id`는 null 허용이고 `on delete set null`이다. 익명 사용자를 지워도 공개 랭킹 기록은 남는다. `ad_refill_claims`, `game_events`는 사용자와 함께 지워진다(cascade).
+저장소: PocketBase `sm_rankings`(player, legacy_id, legacy_user_id, mode, name, score, created_at, week_start, order_seq). 공개 응답은 name, score, ts만 포함한다. week_start는 서버에서 created_at 기준 KST 월요일을 계산한다. time은 현재 주, level은 전체 기간이며 score 내림차순/created_at/order_seq 오름차순이다. 원본 ID는 legacy_id에만 보존하며 신규/이전 행의 order_seq는 전체 MAX+1로 할당한다. 순번은 유니크다.
+player 관계는 선택이며 사용자 삭제 시 관계만 비워 공개 랭킹을 보존한다. 광고/이벤트는 사용자 삭제 시 cascade한다. 과거 PostgreSQL 구조와 검수 이력은 [이전 서버 기술 기록](references/SUPABASE_BACKEND_REFERENCE.md)에 보존한다.
 이름 규칙: 1~20자, 앞뒤 공백 없음, 제어 문자와 보이지 않는 서식 문자, 방향 문자, 한글 채움 문자 금지(이모지와 문자 결합에 쓰는 ZWJ, ZWNJ는 허용), 보이는 문자가 하나도 없는 이름 금지. `submit_ranking`은 금지 문자를 지운 뒤 trim과 20자 절단을 한다. 입력은 있었는데 정리 뒤 보이는 문자가 남지 않으면 클라이언트 기본값과 같은 `GUEST`로 저장하고, 입력이 비어 있으면 거부한다. 체크 제약은 직접 삽입을 막는 마지막 방어다.
 
-### Entity: Supabase 테이블 (ADR-009)
+### Entity: PocketBase 컬렉션 (ADR-010)
 
-| 테이블 | 용도 | 클라이언트 권한 |
+| 컬렉션 | 용도 | 클라이언트 접근 |
 |---|---|---|
-| app_config | key, value(jsonb) 원격 설정. 현재 `ranking.list_limit`=30, `ads.daily_refill_limit`=3 | anon/authenticated 조회(key, value) |
-| ranking_entries | 게임 내 랭킹 기록 | anon/authenticated 조회(user_id 제외), authenticated 본인 삽입 |
-| ad_refill_claims | 보충 광고 지급 기록(KST claim_date, item) | authenticated 본인 조회, 본인 삽입 |
-| game_events | 이벤트 로그 | authenticated 본인 삽입만 |
+| sm_players | 기기 식별, 비밀번호 해시, 생성/최근 이용 시각 | 전용 guest API만 |
+| sm_config | key/value JSON. ranking.list_limit=30, ads.daily_refill_limit=3, gameplay 플래그 | 전용 gameplay 조회만 |
+| sm_rankings | 점수, 시각, KST 주, 동점 순번과 비공개 원본 이력 | 전용 목록/제출 API만 |
+| sm_ad_claims | 보충 지급 item/claim_date/created_at | 전용 상태/지급 API만 |
+| sm_events | 사용자/세션/이벤트/params/클라이언트 시각 | 전용 배치 쓰기만 |
 
-실험 스위치(PLAN-008, 원격 적용): `app_config` 키 `gameplay`(`GameplayFlags.toJson` 형식, 마이그레이션 `20260924180000_stone_match_gameplay_flags.sql`). 앱은 시작 때 로컬 캐시(`gameplay_flags`)를 먼저 적용하고 `GET /rest/v1/app_config?key=eq.gameplay&select=value`(anon, `SupabaseGateway.select`)를 백그라운드로 받아 다음 새 판부터 쓴다. 웹 `?exp=`는 항상 마지막에 덮어쓰고 캐시에 남지 않으며, 그렇게 시작한 판은 랭킹 제출을 건너뛴다. 원격 값은 앱 시작 때 한 번만 받는다. `BoardGem.bonus`(`GemBonus`)는 `GemKind`와 별개 속성이고, 배지는 `Gem_Badges.png`(256×128) 한 장에서 보석 atlas 제출 뒤 drawImageRect로 그린다. 보석 atlas는 종류 7 × 색 7로 굽는다. QA: `__jewelMatchDebugPlaceBonus(kind, row, col)`, 상태 `scoreMultiplier`, `bonusGems`, `dailyKey`, `boardSignature`.
+스키마 정본은 pocketbase/pb_migrations, 서버 계약은 pocketbase/pb_hooks다. 모든 직접 CRUD 규칙은 null이며 관리자 우회 권한과 전용 라우트 인증을 혼동하지 않는다.
 
-보존(원격 적용): `supabase/migrations/20260924090000_stone_match_retention.sql`이 pg_cron으로 매일 `game_events` 90일, `ad_refill_claims` 35일 지난 행을 지운다(KST 04:00, 04:10). 익명 사용자 정리(원격 적용, 2026-09-24): `20260924140000_stone_match_anon_cleanup.sql`의 `private.purge_inactive_anonymous_users(p_inactive_days default 90, p_dry_run default false)`가 KST 04:20에 돈다. 가입, 마지막 로그인, 세션 생성과 갱신이 모두 90일보다 오래된 익명 사용자만 지운다(30일 미만 값은 30일로 보정). Supabase 익명 로그인 공식 문서의 SQL과 pg_cron 방식이다. 랭킹 행은 이름과 점수가 남고, 이벤트와 보충 기록은 함께 지워진다. 지워진 사용자의 클라이언트는 토큰 갱신이 거절되면 새 익명 사용자로 가입한다. 정리 함수는 모두 `private` 스키마에 있고 클라이언트 역할은 실행할 수 없다.
+실험 스위치(PLAN-008): `sm_config`의 `gameplay` JSON은 GameplayFlags.toJson 형식이다. 앱은 시작 때 로컬 캐시(`gameplay_flags`)를 먼저 적용하고 `GET /api/stone-match/config/gameplay`를 백그라운드로 받아 다음 새 판부터 쓴다. 원격 조회는 앱 실행마다 한 번이다. 웹 ?exp=는 마지막에 덮어쓰되 캐시하지 않고 해당 판은 랭킹에 제출하지 않는다. GemBonus는 GemKind와 별개 속성이며 Gem_Badges.png 배지와 종류7×색7 atlas를 사용한다. QA 훅과 scoreMultiplier/bonusGems/dailyKey/boardSignature 계약은 유지한다.
+
+보존 작업은 PocketBase cron에서 KST 04:00(이벤트 90일), 04:10(광고 claim_date 35일), 04:20(생성/최근활동 모두 90일 지난 플레이어)을 수행한다. 오래된 플레이어 삭제 후 랭킹은 남으며 다음 guest 인증은 같은 설치 자격정보로 새 player ID를 받을 수 있다. 예약 시각 실제 실행과 정리 함수의 로컬 DB 검증은 구분한다.
 
 ### Entity: Settings
 
@@ -126,90 +129,77 @@ StorageKeys: bgm/sfx volume·mute, keepScreenOn, showFps, best scores by mode, p
 
 ## 5. API 계약
 
-저장소: Supabase(ADR-009). 프로젝트 URL과 공개용 키는 `config/supabase.json`(Git 제외)에서 dart-define으로 넣는다. 스키마 정본은 `supabase/migrations/20260923142920_stone_match_init.sql`.
-호출: `SupabaseGateway`가 `POST {URL}/rest/v1/rpc/{함수}`와 `POST {URL}/auth/v1/...`을 부른다. 헤더 `apikey: <공개용 키>`, 로그인이 필요한 호출은 `Authorization: Bearer <익명 사용자 JWT>`.
-관련: FR-009, FR-010, BR-001, BR-002, BR-103
-2026-09-23 이전 NAS `ranking.php` 계약(아래 "이전 NAS API")은 2026-09-24 새 빌드 배포와 함께 폐기했다. NAS 기록은 이관하지 않았다.
+### PocketBase 현재 계약 (ADR-010, PLAN-013)
+
+새 빌드는 PocketBase만 사용한다. 배포 상태는 PROJECT_STATUS 기준이다. 과거 RPC는 references/SUPABASE_BACKEND_REFERENCE.md에 보존하며 제품의 응답 형식과 점수, 제출 시점은 유지한다.
+
+- 선택: `BackendSelector`는 `config/pocketbase.json`의 `POCKETBASE_URL`을 사용한다. 없으면 서버 기능을 notConfigured로 처리하고 플레이를 유지한다. Supabase 대체 경로는 없다.
+- 주소: `/api/stone-match`. 비공개 호출은 `Authorization: <PocketBase token>`이다. 앱에는 관리자 이메일/비밀번호/토큰이 들어가지 않는다.
+- 인증: `POST /auth/guest`에 안전한 난수 `device_id`(32자리 hex), `device_secret`(64자리 hex)를 전달한다. 응답 `{token, record:{id}, expires_in:604800}`. 처음 발급 후 같은 자격정보로 재인증한다. 기기에 먼저 영속 저장하며 URL별 저장 키를 분리한다. Supabase의 refresh token은 사용하지 않는다.
+- 기존 Supabase 사용자는 사용자 승인에 따라 연결하지 않는다. 기존 랭킹/이벤트의 ID와 등록 시각은 이력으로 보존한다. 새 계정 발급은 로컬 게임 기록 초기화와 다르다.
+- 권한: `sm_*` 컬렉션 직접 CRUD는 관리자 전용이다. 플레이어는 전용 API만 사용한다. 공개 응답에는 사용자 ID나 설치 비밀값을 넣지 않는다.
+- API Rules: `sm_players`, `sm_rankings`, `sm_ad_claims`, `sm_events`, `sm_config`, `sm_daily_metrics`의 `listRule/viewRule/createRule/updateRule/deleteRule`은 전부 `null`(Locked)이다. 빈 문자열은 공개 허용이므로 사용하지 않는다. `sm_players.authRule/manageRule`도 `null`이며 password/OAuth2/OTP 인증은 비활성화한다. 익명 복구는 전용 guest API만 사용한다.
+- 컬렉션 규칙은 superuser와 서버 내부 DB 호출을 제한하지 않는다. 따라서 전용 훅은 플레이어 컬렉션 인증을 별도로 검사하고 사용자 관계/시각을 서버에서 지정한다. 광고/점수/이벤트 검증을 컬렉션 규칙으로 대체하지 않는다. 공개 랭킹은 이름/점수/초 단위 시각만 반환하고 원본 식별자는 숨긴다.
+- 권한 근거: [공식 API Rules](https://pocketbase.io/docs/api-rules-and-filters/), [인증](https://pocketbase.io/docs/authentication/). 문서 최신판과 별개로 실제 0.39.7 및 운영 인스턴스의 규칙과 접근 거절을 검증한다.
+
+| 호출 | 인증 | 응답/계약 |
+|---|---|---|
+| `GET /health` | 불필요 | Stone Match 서버/스키마 상태 |
+| `POST /ranking/list` | 불필요 | `{p_mode,p_limit?}` → 기존 `[{name,score,ts}]` |
+| `POST /ranking/submit` | 필요 | `{p_mode,p_name,p_score}` → 기존 `{mode,ranked,rank,score,week_start?}` |
+| `POST /ads/status` | 필요 | 기존 `{daily_limit,used_today,remaining,date}` |
+| `POST /ads/claim` | 필요 | `{p_item}` → 상태와 `granted` |
+| `POST /events` | 필요 | 기존 EventLogger 행 배열, 성공 204 |
+| `GET /config/gameplay` | 불필요 | 기존 `[{value:...}]` |
+
+랭킹은 KST 이번 주(time)/전체 기간(level), 점수 내림차순/등록 시각/순번 오름차순이다. 기존 ID는 `legacy_id`, 동점 순번은 `order_seq`로 보존한다. 신규 쓰기의 소유자와 시각은 서버가 정한다. 광고 한도 검사와 삽입, 이벤트 300건/분 제한과 배치 삽입은 각각 한 트랜잭션으로 수행한다. 랭킹 제한은 10건/분이다.
+
+이벤트 `params`는 객체와 UTF-8 JSON 2048바이트 상한으로 검사한다. 기존 jsonb 내부 저장 크기와 같은 개념이 아니다. 클라이언트 1500바이트 예산과 schema_version 3, 표본/QA 규칙은 유지한다. PLAN-009 Step 4의 영속 큐와 서버 event_id 중복 제거를 사용한다. 운영 적용/검증 상태는 PROJECT_STATUS를 따른다.
+
+보존 작업은 이벤트 90일, 광고 35일, 비활성 플레이어 90일이다. 플레이어 정리 후 공개 랭킹은 남는다. 비활성 계정이 정리된 기기는 다음 인증에서 새 서버 사용자로 복구될 수 있다. 원본 Supabase 자체는 삭제하지 않는다.
 
 ### API-000 익명 인증
 
-- 가입: `POST /auth/v1/signup` body `{"data":{}}` → `access_token`, `refresh_token`, `expires_in`/`expires_at`, `user.id`
-- 갱신: `POST /auth/v1/token?grant_type=refresh_token` body `{"refresh_token": "..."}`
-- 세션은 `StorageKeys.supabaseSession`(shared_preferences, 웹은 localStorage)에 저장한다. 만료 60초 전부터 갱신한다.
-- 만료 시각은 `expires_in`이 있으면 로컬 시각 기준으로 계산한다(기기 시계 차이 대응). 없으면 `expires_at`을 쓴다.
-- 인증 직전과 새 가입 직전에 저장소의 최신 세션을 다시 읽는다. 웹은 `SharedPreferences.reload()` 뒤 읽어 다른 탭이 회전한 refresh 토큰을 쓴다. 저장된 refresh 토큰이 메모리와 다르면 만료 전이면 바로 쓰고, 만료면 그 토큰으로 갱신한다.
-- 갱신이 네트워크 문제로 실패하면 새 사용자를 만들지 않는다. refresh 토큰이 거절될 때만 새로 가입한다.
-- 서버가 401을 주면 한 번만 갱신 후 다시 보낸다. 갱신 뒤에도 401이면 인증 대기로 넘긴다. 403은 권한 문제라 갱신하지 않고 `rejected`로 처리한다. 동시 인증 요청은 하나로 합친다.
-- 인증 실패 뒤 대기: 거절, 빈도 제한, 서버 오류는 60초부터 실패마다 2배, 상한 10분. 네트워크 실패는 10초 고정. 대기 중에는 요청 없이 바로 실패를 돌려준다. 성공하면 초기화하고, 대기 끝 시각이 지금보다 10분 넘게 미래면(시계 역행) 대기를 끝낸 것으로 본다.
-- 랭킹 제출 대기 상한은 Supabase 제출과 토스 리더보드 제출을 합쳐 8초다(BR-093). 넘기면 기존 실패 문구로 처리한다. 요청은 취소되지 않으므로 늦게 저장될 수 있다.
+`POST /api/stone-match/auth/guest`. 요청은 device_id(32자리 hex), device_secret(64자리 hex), 응답은 token/record.id/expires_in이다. 세션은 URL별 SharedPreferences 키에 저장한다. 토큰 7일, 만료 60초 전부터 같은 설치 자격정보로 다시 인증한다. 저장 실패/거절로 기기 비밀값을 교체하지 않는다. 같은 인스턴스의 동시 인증은 합친다. 데이터401은 한 번 재인증해 재시도하며 다시 거절되면 대기한다. 인증 backoff는 네트워크10초, 그 외60초에서 최대10분이다.
 
 ### API-001 목록
 
-RPC `get_ranking(p_mode text, p_limit integer default null)`, anon 호출(로그인 불필요)
-
-**Success**
-    [ { "name": "...", "score": 123, "ts": 1790000000 } ]
-
-- `p_limit`가 null이면 `app_config.ranking.list_limit`(기본 30), 1~100으로 제한
-- 정렬: score 내림차순, 같은 점수는 먼저 등록한 기록이 위
-- `time`은 이번 주(KST 월요일 00:00 시작, `week_start`) 기록만 돌려준다. `level`은 전체 기간(BR-095). 시그니처와 반환 열은 주간 변경 전과 같다
-- 클라이언트: `RankingService.fetchList(mode:)`
+`POST /api/stone-match/ranking/list`, `{p_mode,p_limit?}`. 로그인 불필요. 반환 `[{name,score,ts}]`. 생략한 limit은 sm_config.ranking.list_limit(기본30), 1~100 보정. time은 KST 이번주, level은 전체기간. 등록시각/순번 동점 규칙은 데이터 모델을 따른다. RankingService.fetchList가 사용한다.
 
 ### API-002 1위
 
-`get_ranking(p_mode, 1)`의 첫 행. 빈 배열이면 null 성공.
-관련: BR-092. HUD 왕관은 타임 모드만 호출한다. `RankingService.fetchTop1()` 기본 mode=time.
+목록 API에 p_limit=1을 전달한 첫 행이며 빈 배열은 null 성공이다. HUD 왕관은 time을 사용하고 RankingService.fetchTop1 기본 모드도 time이다.
 
 ### API-003 제출
 
-RPC `submit_ranking(p_mode text, p_name text, p_score integer)`, 익명 로그인 필요
+`POST /api/stone-match/ranking/submit`, 플레이어 인증, `{p_mode,p_name,p_score}`. 반환 `{mode,ranked,rank,score,week_start?}`에서 week_start는 time만 포함한다. 동일 이름 다중 기록 허용, rank<=list_limit이면 ranked=true. 이름 정제20자, 양의 정수 점수, level10000/time1000000000 상한. 사용자당1분10건 초과는429. 쓰기/한도/순위계산은 하나의 SQLite 트랜잭션이다.
 
-**Success**
-    { "mode": "time"|"level", "ranked": true|false, "rank": n, "score": n, "week_start": "YYYY-MM-DD"(time만) }
-
-- `time` 순위는 방금 넣은 행과 같은 주 안에서 센다
-
-- 동일 이름 다중 기록 허용(BR-090). 모든 기록을 저장하고 `rank <= list_limit`이면 ranked=true
-- 이름은 앞뒤 공백 제거 후 1~20자. score는 1 이상, 레벨 10,000 이하, 타임 1,000,000,000 이하
-- 사용자당 1분 10건 초과는 `ranking_rate_limited`(P0001)로 거절
-- 클라이언트는 score<=0이면 호출하지 않는다(BR-091)
-
-**Errors (RankingFailure 매핑)**
-- 404(함수 없음) → notFound
-- 조회의 5xx, 제약 위반, 빈도 제한 → loadFailed / 제출의 같은 오류 → saveFailed
-- 미설정 빌드, 네트워크, 인증 실패, 잘못된 응답 → unavailable
+클라이언트 score<=0은 제출하지 않는다. 전체 제출 대기는 PocketBase와 토스 공식 리더보드를 합쳐8초이며 요청취소가 아니므로 응답상한후 저장될 수 있다. 404는 notFound, 조회/저장의 서버·제약·빈도실패는 loadFailed/saveFailed, 미설정·네트워크·인증·잘못된응답은 unavailable이다. TimeUp/나가기 시점과 게임진행보장은 ADR-007을 유지한다.
 
 ### API-004 운영 랭킹 초기화
 
-클라이언트 API가 아니다. Supabase 대시보드 SQL 편집기(서비스 권한)에서만 한다. 사용자 승인 뒤 다음 순서를 지킨다.
-
-1. 백업: `create table private.ranking_entries_backup_YYYYMMDD as select * from public.ranking_entries where mode = '<mode>';`
-2. dry-run: `select count(*) from public.ranking_entries where mode = '<mode>';` 결과를 예상 건수로 고정
-3. 삭제: 같은 트랜잭션에서 건수를 다시 확인하고 예상 건수와 같을 때만 `delete from public.ranking_entries where mode = '<mode>';`
-4. 사후 조회: `get_ranking` 빈 목록 확인, 백업 건수 기록
+일반 앱 API가 아니다. 사용자 승인, 현재 데이터 일관된 백업, 관리자 조회 dry-run과 예상 건수 고정, 대상 ID/내용 재확인, 승인한 기록만 삭제, 사후 목록/건수 확인 순으로 실행한다. 다중 요청 관리자 API가 하나의 DB 트랜잭션이라고 가정하지 않는다. 동시 쓰기 차단 또는 서버 트랜잭션을 확보한 관리 작업으로 수행한다. migrate down을 초기화/복구 수단으로 사용하지 않는다.
 
 ### API-005 Apps in Toss 레벨 리더보드
 
-JS bridge stoneMatchLeaderboard.submitLevelScore(score)
-관련 FR-009. 게임 내 목록은 API-001(Supabase)을 쓴다.
+JS bridge stoneMatchLeaderboard.submitLevelScore(score). 완료 레벨 수 계약(ADR-002)은 유지한다. 게임 내 목록은 별도 PocketBase API-001이다.
 
 ### API-006 보충 광고 하루 제한
 
-- RPC `ad_refill_status()` → `{ "daily_limit", "used_today", "remaining", "date" }`
-- RPC `claim_ad_refill(p_item text)` → 위 값 + `"granted": true|false`. 사용자별 advisory lock으로 동시 요청을 직렬화한다
-- 날짜는 KST(`Asia/Seoul`), 제한은 `app_config.ads.daily_refill_limit`(기본 3, 0~20)
-- 익명 로그인 필요. 실패하면 클라이언트는 세션 로컬 제한으로 판단한다
+`POST /api/stone-match/ads/status` {} → daily_limit/used_today/remaining/date.
+`POST /api/stone-match/ads/claim` {p_item} → 동일 상태와 granted.
+플레이어 인증, KST 날짜, sm_config.ads.daily_refill_limit 기본3/0~20 보정. 검사/삽입이 같은 SQLite 트랜잭션이므로 동시요청도한도초과하지 않는다. 보상형광고완료뒤만호출, 실패하면 기존 세션 로컬제한을 사용한다. 저장소삭제/재설치는 새 익명사용자다.
 
 ### API-007 이벤트 로그
 
-- `POST /rest/v1/game_events`, `Prefer: return=minimal`, 행 배열. 익명 로그인 필요, 조회 권한 없음
+- `POST /api/stone-match/events`, 행 배열, 성공204. 플레이어 인증 필요, 컬렉션 직접 조회 권한 없음
 - 행: `session_id`(uuid), `name`(`^[a-z][a-z0-9_]{0,39}$`), `params`(객체, 2KB 이하), `app_version`(32자 이하), `channel`(16자 이하), `client_ts`
-- 사용자당 1분 300건 초과는 `game_events_rate_limited`로 거절
+- 사용자당 1분 300건 초과는 HTTP429 rate_limited로 거절
 - PLAN-009 Step 3(2026-09-29): params 예약 필드는 `event_id`(UUID v4), `event_seq`(EventLogger 인스턴스 내 1부터 증가), `schema_version`(3)이다. 최초 enqueue 때 생성하고 재전송 시 보존한다. 호출자가 같은 이름으로 덮어쓸 수 없고 기존 사용자 파라미터 12개와 별도로 센다. Step 1의 버전 1, Step 2의 버전 2와 구분한다.
 - `PlayEventContext`는 불변 값이다. `EventLogger.logPlay(name, context, params)`에 명시적으로 전달하면 `run_id`(UUID v4), `round_seq`(1부터), `attempt_seq`(0부터)를 예약 필드로 함께 보낸다. 일반 `log`는 판 문맥을 붙이지 않는다. 전역 현재 판 문맥과 변경 가능한 로거 싱글턴은 두지 않는다. 문맥 예약 필드도 사용자 입력으로 덮어쓸 수 없고 사용자 12개 한도에 세지 않는다.
 - `event_seq`는 session_id와 함께 해석한다. 앱 재시작/다른 탭에서는 다시 시작하며 GA4 세션 ID와 동일하지 않다. 잘못된 이벤트 이름은 순번을 소비하지 않지만 큐 초과 등으로 버린 이벤트는 순번 공백을 남길 수 있다.
 - 구버전 행에 `schema_version`이 없으면 legacy v0으로 해석한다. `event_id`가 없는 구버전 행은 새 ID 기반 중복 제거 대상으로 간주하지 않는다.
-- event_id는 현재 params 값이며 DB 유니크 제약이 아니다. 서버 중복 제거와 영속 재전송은 PLAN-009 Step 4 전까지 제공하지 않는다. 종료 이벤트 누락만으로 충돌로 판정하지 않는다.
+- params.event_id가 UUID면 소문자로 정규화한 sm_events.event_id를 저장한다. (player,event_id), event_id가 비지 않고 legacy_id가 없는 행에 부분 유니크를 적용한다. 가져온 원본 행은 보존하고 집계에서는 legacy_user_id별로 중복 제거한다. 같은 키/같은 내용은 204, 다른 내용은 400으로 배치 전체를 거절한다. 신규 행만 300건/분 한도를 사용한다. ID 없는 구버전은 수락하지만 중복 제거를 보장하지 않는다. 종료 이벤트 누락만으로 충돌로 판정하지 않는다.
 
 - 게임 흐름(PLAN-005): `SpeedBonus`(lib/game/speed_bonus.dart)는 `MatchBoardLogic.trySwap`에서 가산한다. `LastHurrah`(lib/game/last_hurrah.dart)가 마무리 발동 시점과 상한을 정하고 보드 해소는 기존 `MatchBoardLogic.update`를 쓴다. 시간 0은 `_triggerTimeUpImpl`, 판 종료 확정은 `_finalizeRound()`. 첫 자동 발동 때 `MatchBoardLogic.beginLastHurrahRules`가 마무리 규칙을 걸고(`lastHurrahRules`: 연쇄 매치의 특수 보석 생성 생략과 Multiplier 배율 동결, `lastHurrahCascadeBudget`: 자연 연쇄 `LastHurrah.maxCascadeSteps` 20단계, `comboScoreMultiplier`: `GameplayFlags.lastHurrahComboMultiplier` 기본 꺼짐), 마무리 완료와 다시 하기에서 `endLastHurrahRules`로 푼다. QA 상태 `lastHurrahActive`, QA 훅 `__jewelMatchDebugPlaceSpecial(kind, row, col)`(qaPerf 전용).
 - 현재 이벤트: `session_start`(platform), `round_start`(mode), `round_end`(mode, reason, score, level?, duration_s, active_s, system_s, paused_s, background_s), `level_clear`(level, score, max_combo), `stage_continue`(level), `ranking_submit`(mode, score, ok, ranked?, rank?, failure?), `ad_reward`(placement, result, granted, outcome?, item?, level?). `outcome`은 보충 광고만 기록하며 `granted`, `adNotCompleted`, `limitReached`, `rejected` 중 하나다(`AdRewardPolicy.grantRefillVerified`의 `RefillGrantOutcome`). PLAN-005 추가: `hyper_swap`(target_kind), `speed_bonus_peak`(max_tier, total_bonus), `last_hurrah`(specials_count, score_added), `badge_earned`(badge, tier), `rank_up`(rank). round_end의 reason은 `time_up`, `exit`, `restart`, `level_clear`다(schema_version 2부터)
@@ -253,7 +243,7 @@ JS bridge stoneMatchLeaderboard.submitLevelScore(score)
 | collection | full 또는 sampled |
 | sample_rate | full은 1.0, sampled는 기본 0.1. 이벤트 확률이 아니라 선택된 세션 비율 |
 
-예약 필드는 호출자 값으로 덮어쓰지 못하며 사용자 필드 12개 예산과 별도로 센다. 전체 params의 UTF-8 JSON 상한 1500바이트와 DB jsonb 2048바이트 계약을 유지한다. 표본의 세션당 40건 이후는 빠지므로 행동 횟수를 단순히 10배하여 전체 사용량으로 해석하지 않는다. 표본은 사용자당이 아니라 앱 실행 세션당 선택되며, 40건 상한을 타이틀/이름/게임 메뉴가 공유한다. 반복 실행과 긴 세션의 후반 메뉴 누락을 고려해야 한다. 판 단위 수치는 전수 요약을 쓴다. 신뢰성/서버 중복 제거와 장기 집계는 Step 4다.
+예약 필드는 호출자 값으로 덮어쓰지 못하며 사용자 필드 12개 예산과 별도로 센다. 전체 params의 클라이언트 UTF-8 JSON 상한 1500바이트와 PocketBase 서버 JSON 2048바이트 계약을 유지한다. 표본의 세션당 40건 이후는 빠지므로 행동 횟수를 단순히 10배하여 전체 사용량으로 해석하지 않는다. 표본은 사용자당이 아니라 앱 실행 세션당 선택되며, 40건 상한을 타이틀/이름/게임 메뉴가 공유한다. 반복 실행과 긴 세션의 후반 메뉴 누락을 고려해야 한다. 판 단위 수치는 전수 요약을 쓴다. 신뢰성/서버 중복 제거와 장기 집계는 아래 Step 4 계약을 따른다.
 
 환경은 `TELEMETRY_ENV=production|qa|development` 빌드 정의로 정한다. 비어 있으면 release는 production, debug/profile은 development다. 알 수 없는 값은 development로 분류하며 test는 테스트 생성자 주입으로만 사용한다. `TelemetryPolicy.fromBuild()`는 enqueue 시 query와 hash 라우트 query의 `qa*=1`, 빌드 정의 `QA_PERF_AUTORUN`, `QA_SPECIAL_EFFECTS`, `QA_SPECIAL_EFFECTS_CHAIN`, 비어 있지 않은 `QA_PERF_LABEL`을 검사한다. 한 번 QA가 감지되면 해당 EventLogger 세션의 이후 이벤트는 qa로 유지한다. 앞서 큐에 들어간 이벤트와 재전송 메타데이터는 변경하지 않는다. QA 진입 이전 이벤트까지 포함해 QA 세션 전체를 제외할 때는 session_id 기준으로도 필터링한다. 명시적 `TelemetryPolicy(env: test)`는 외부 QA 감지 없이 테스트를 격리한다.
 
@@ -294,32 +284,48 @@ Base: https://cheng80.myqnapcloud.com/matchranking/ranking.php. `?action=list|to
 ## 6. 상태 관리 / 캐시 / 동기화
 
 - 상태 관리: Riverpod SettingsNotifier, RankingNotifier. 보드 상태는 Flame 객체
-- 로컬 저장: shared_preferences. 베스트 스코어 모드별, Supabase 익명 세션(StorageKeys.supabaseSession)
+- 로컬 저장: shared_preferences. 모드별 베스트 스코어와 URL별 PocketBase 기기 자격정보/세션(PrefsPocketBaseSessionStore)
 - 캐시: PackageInfo 1회, 스프라이트 시트 preload, HUD Paint/TextPainter, 배경 Picture
 - 동기화 정책: 랭킹은 종료 시 제출. 재제출은 submitted=false일 때. 인벤토리 서버 동기화 없음
 - 앱 시작: `BackendBootstrap.start()`를 기다리지 않고 호출해 익명 세션을 준비하고 `session_start`를 남긴다. 미설정 빌드는 아무것도 하지 않는다
-- 광고 일일 제한: StageInventory 오버레이가 열릴 때 `ad_refill_status`로 남은 횟수를 맞추고, 광고 완료 후 `claim_ad_refill`로 지급을 기록한다. 서버가 거절하면 지급하지 않고, 서버에 닿지 못하면 AdRewardPolicy 세션 메모리 제한(기본 3회, 날짜 바뀌면 리셋)으로 판단한다
+- 광고 일일 제한: StageInventory 오버레이가 열릴 때 `POST /ads/status`로 남은 횟수를 맞추고, 광고 완료 후 `POST /ads/claim`로 지급을 기록한다. 서버가 거절하면 지급하지 않고, 서버에 닿지 못하면 AdRewardPolicy 세션 메모리 제한(기본 3회, 날짜 바뀌면 리셋)으로 판단한다
 
 ## 7. 오류 / 로깅 / 관측
 
 - 공통 오류 모델: RankingFailure = notFound, loadFailed, saveFailed, unavailable
 - 사용자 표시 원칙: 번역 키 rankNotFound 등. 나가기 가능
 - 로그 정책: debugLog 기본 false. 웹 SFX는 window.stoneMatchSfx.getState()
-- 민감정보 제외: 토큰, 이름 외 PII, 광고 ID를 이벤트에 넣지 않는다. EventLogger는 유한 숫자, bool, 64코드포인트 이하 문자열 값만 사용자 파라미터 12개까지 남긴다. 문자열의 NUL은 제거하고 짝 없는 surrogate는 U+FFFD로 바꾼다. 예약 메타데이터는 별도이며 params 전체 UTF-8 JSON을 1500바이트 이하로 제한한다. 크기를 초과하는 항목부터 뒤쪽 사용자 파라미터를 버리고 그 개수만 params_dropped에 남긴다. params_dropped는 형식/개수 제한으로 제외된 모든 항목의 합계가 아니라 크기 제한으로 제외한 개수다
+- 민감정보 제외: 토큰, 입력 이름과 기타 PII, 광고 ID를 이벤트에 넣지 않는다. EventLogger는 유한 숫자, bool, 64코드포인트 이하 문자열 값만 사용자 파라미터 12개까지 남긴다. 문자열의 NUL은 제거하고 짝 없는 surrogate는 U+FFFD로 바꾼다. 예약 메타데이터는 별도이며 params 전체 UTF-8 JSON을 1500바이트 이하로 제한한다. 크기를 초과하는 항목부터 뒤쪽 사용자 파라미터를 버리고 그 개수만 params_dropped에 남긴다. params_dropped는 형식/개수 제한으로 제외된 모든 항목의 합계가 아니라 크기 제한으로 제외한 개수다
 - FPS 패널: 현재/30초 AVG/LOW/GAP. 기본 꺼짐
-- 내부 이벤트: EventLogger가 Supabase `game_events`로 보낸다(API-007). 20건 또는 5초마다 묶어 보내고, 앱이 백그라운드로 갈 때 남은 이벤트를 보낸다. 네트워크, 서버, 인증 실패는 큐(최대 200건)에 되돌리고 제약 위반과 빈도 제한은 버린다. 외부 분석 SDK는 없다. 광고 정책의 ad_offer_shown 등 나머지 이름은 아직 연결하지 않았다
+- 내부 이벤트: EventLogger가 PocketBase 전용 API로 보내 sm_events에 저장한다. 20건 또는 5초, 백그라운드 전환 시 전송한다. 429는 버리지 않고 최소 60초 대기하며 네트워크/서버/인증 실패는 5초부터 최대 5분 backoff로 재전송한다. 영속 큐와 소유자/손상/만료 정책은 아래 Step 4 계약을 따른다. NAS 웹은 선택 동의 후 GA4로 허용 이벤트를 전송한다(PLAN-011).
+
+
+#### PLAN-009 Step 4 전송과 집계 계약
+
+- 클라이언트 저장: SharedPreferences의 `telemetry.queue.v2.<URL scope>.<event_id>` 키마다 `{v:2,o:owner,t:queuedAtMs,r:wireRow}` 한 행을 저장한다. URL별 범위를 나누고 다른 탭의 키를 통째로 이동/삭제하지 않는다. 동기 log API와 schema_version 3은 유지한다.
+- 최대 200행, wire JSON 합 256KiB, 7일이다. 상한을 넘으면 오래된 행부터 제거한다. 다중 탭의 합계는 한 탭의 상한을 일시 초과할 수 있고 다음 복원에서 정리한다. 저장 실패는 게임을 막지 않으며 메모리로 유지하고 다시 저장한다. 손상 행은 격리하고 알 수 없는 버전은 보존한다.
+- 전송 중에도 저장을 유지한다. 204 뒤 해당 ID만 제거하며 동시 flush는 같은 Future를 사용한다. 내용 거절(400/403), 경로 없음(404)은 그 배치를 제거한다. 성공 응답 이후 삭제 전 종료되면 재전송될 수 있고 서버 중복 제거에 의존한다. 정확히 한 번 전송을 보장하지 않는다.
+- 소유자: enqueue 당시 사용자 ID를 유지한다. 인증 전 행은 생성한 세션의 첫 인증에서 확정한다. 다른 세션이 복원한 미확정 행은 타인에게 귀속하지 않고 보류한다. 사용자 변경 시 다른 사용자의 행은 보내지 않는다. insert의 expectedUserId를 재인증 재시도 직전에도 확인한다. 소유자가 맞지 않는 행만 남으면 폴링하지 않는다. 보류 행도 기한/용량 정리 대상이다. 첫 인증 전 오프라인 실행이나 토큰 만료와 장애가 겹친 실행의 이벤트는 다음 실행에서 수집되지 않을 수 있다.
+- 타이머: 429는 최소 60초, 401/5xx/네트워크 예외는 5초 지수 증가, 최대 5분이다. 무작위 지연과 실행 간 backoff 시각 저장은 없다. dispose 뒤 진행 중 작업이 끝나도 타이머를 재생성하지 않는다.
+- 집계: 관리자 전용 sm_daily_metrics, 서버 created_at의 KST 날짜 기준이다. 완료한 날만 계산한다. kind=day/env/event/rounds로 전체, 환경, 이벤트 조합, 시작일 라운드 집단을 구분한다. 환경은 production/qa/development/test/unknown이며 구버전 미기재 값을 운영으로 추정하지 않는다.
+- events는 소유자+event_id 중복 제거 수, raw_rows는 원시 수다. players/sessions는 distinct 수라 날짜나 조합을 더해 기간 활성 수로 해석하지 않는다. 원시 보존 이후 기간별 distinct는 이 표에서 복원할 수 없다. kind=day는 모든 환경의 합계이며 운영 DAU는 kind=env, env=production 행을 사용한다. event_id 없는 구버전의 날짜를 넘긴 재전송은 여러 날에 중복 집계될 수 있다.
+- round_starts는 소유자+run_id+round_seq별 시작 수다. attempt_ends는 동일 환경에서 받은 시도 종료 수, rounds_ended는 종료가 있는 판 수다. rounds_env_changed는 다른 환경의 종료만 있는 판, rounds_unknown은 종료를 찾지 못한 판이며 crash를 의미하지 않는다. 점수와 시도 누적 시간을 합산하지 않는다.
+- 종료 매칭은 시작일 0시부터 8일 미만이다. 매일 최근 완료일 8개와 아직 집계하지 않은 날을 다시 계산한다. 더 늦은 종료는 종료 수집일의 이벤트에는 포함되지만 시작 집단에는 반영되지 않는다.
+- 집계/보존: 90일 원시 삭제와 같은 트랜잭션에서 먼저 집계한다. 실패하면 원시 삭제도 롤백한다. 비활성 플레이어 정리도 같은 트랜잭션에서 집계를 먼저 수행한다. 보존 경계 밖에 이미 있는 집계는 덮어쓰지 않는다. 최초 도입/장기 중지로 오래된 미집계 원시만 남은 날은 최초 1회 completeness=partial로 집계하고 정리한다. 온전한 보존 구간의 집계는 complete다. complete는 저장된 원시의 범위이며 모든 게임 행동 수집을 보장하는 표시는 아니다.
+- 수동 재집계: superuser만 `POST /api/stone-match/admin/metrics/rebuild`에 `{from,to}` 날짜를 보낸다. 최대 101일 범위이며 응답 rebuilt/partial/skipped로 계산 범위를 구분한다. 기존 오래된 집계를 부분 원시로 덮어쓰지 않는다. 일반 사용자/비로그인 호출은 401이다.
+- 집계 보관: 개인 식별자 원문을 집계 행에 저장하지 않으며 자동 만료는 아직 없다. 공개 개인정보 정책의 보관 기간은 출시 전에 확정한다. 데이터 규모와 첫 집계 시 쓰기 잠금 시간은 실제 표본 검증 결과로 판단한다.
 
 ## 8. 테스트 / 배포
 
-- Unit: test/match_board_logic_test.dart, special_gem_combo_test.dart, stage_reward_test.dart, item_inventory_test.dart, ranking_service_test.dart, supabase_gateway_test.dart, event_logger_test.dart, ad_reward_policy_test.dart, sound_manager_test.dart 등
+- Unit: test/match_board_logic_test.dart, special_gem_combo_test.dart, stage_reward_test.dart, item_inventory_test.dart, ranking_service_test.dart, pocketbase_gateway_test.dart, event_logger_test.dart, ad_reward_policy_test.dart, sound_manager_test.dart 등
 - Integration: 위젯 오버레이 테스트. 광범위 E2E 없음
-- 환경: STORE_CHANNEL=play|appstore|onestore|intoss, INTOSS_AD_MODE=disabled|mock|test|production, QA_SPECIAL_EFFECTS, QA_PERF_AUTORUN, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY(`--dart-define-from-file=config/supabase.json`, 예시는 `config/supabase.example.json`)
+- 환경: STORE_CHANNEL=play|appstore|onestore|intoss, INTOSS_AD_MODE=disabled|mock|test|production, QA_SPECIAL_EFFECTS, QA_PERF_AUTORUN, POCKETBASE_URL(`--dart-define-from-file=config/pocketbase.json`, 예시는 `config/pocketbase.example.json`)
 - 배포:
-  - Web NAS: tools/deploy_match_web.sh, --base-href "/match/". `config/supabase.json`이 있으면 자동으로 넣고, 없으면 Supabase 기능이 꺼진 빌드라고 로그를 남긴다
+  - Web NAS: tools/deploy_match_web.sh, --base-href "/match/". `config/pocketbase.json`이 필수다. URL 하나만 포함하는 공개 설정을 검사하며 없거나 잘못되면 배포를 중단한다
   - Apps in Toss: npm run build:intoss:test(config 있으면 포함) / build:intoss(config 필수)
   - Android AAB/APK, iOS IPA: flutter build appbundle / ipa, STORE_CHANNEL define
-  - Supabase 스키마: `supabase/migrations/`를 원격 프로젝트에 적용. 적용 뒤 보안 권고(advisors) 확인
-- 롤백: NAS는 이전 정적 빌드 복원. 랭킹 초기화 복원은 API-004의 백업 테이블에서 다시 넣는다
+  - PocketBase 스키마/훅: `pocketbase/pb_migrations/`, `pocketbase/pb_hooks/`. 서비스 중지 후 일관된 백업을 만들고 적용/재시작/권한/API를 확인한다. 이미 적용한 마이그레이션을 수정하지 않는다
+- 롤백: NAS는 이전 정적 빌드 복원. 랭킹 초기화 복원은 API-004의 승인된 백업으로 수행한다
 - ranking.php는 웹 게임 산출물에 넣지 않는다
 
 채널 구현 상태: ADR-005. flavor/Apple ID는 미완.
@@ -1133,7 +1139,7 @@ render()
 
 # 랭킹 클라이언트 계약
 
-서버 API는 이 문서 5절의 Supabase RPC다(ADR-009). 아래 "랭킹 서버 운영"의 NAS 절차와 `matchranking/ranking.php`는 2026-09-24 폐기했다.
+서버 API는 이 문서 5절의 PocketBase 전용 API다(ADR-010). 아래 "랭킹 서버 운영"의 NAS 절차와 `matchranking/ranking.php`는 2026-09-24 폐기했다.
 이 문서는 Flutter 클라이언트가 언제 무엇을 보내는지만 적는다. 코드: `lib/game/match_board_game.dart`의 `rankingScore`, `lib/vm/ranking_notifier.dart`, `lib/views/overlays/pause_menu_overlay.dart`, `lib/views/overlays/time_up_overlay.dart`.
 
 ## 제출값
@@ -1177,7 +1183,7 @@ Apps in Toss는 레벨 제출값을 공식 리더보드에도 보낸다. 게임 
 
 # 랭킹 서버 운영
 
-> 2026-09-24 폐기, 기록용. 현재 랭킹 초기화는 5절 API-004(Supabase 백업, dry-run, 삭제) 절차를 따른다.
+> 2026-09-24 폐기, 기록용. 현재 랭킹 초기화는 5절 API-004(PocketBase 백업, dry-run, 삭제) 절차를 따른다.
 
 랭킹 초기화는 NAS에서 JSON을 백업한 뒤 한 모드씩 실행한다. 관리자 토큰은 `/share/Web/.match_deploy.env`의 `MATCH_DEPLOY_TOKEN`을 재사용하며 URL, 요청 body, 로그에 넣지 않는다.
 
@@ -1943,3 +1949,14 @@ BoardJuiceLayer는 onMount에서 아틀라스를 확보하고 onRemove에서 해
 - GameWidget 최종 이탈은 `removeAll(children)`와 `processLifecycleEvents()`로 atlas/ticker 종료를 완료한다. 공유 이미지 캐시는 유지한다. 다음 GameView는 새 게임을 만든다.
 - 퇴장 snapshot의 `debugNeedsPaint`는 assert 내부에서만 읽고, 캡처 실패도 즉시 action을 막지 않는다.
 - T6는 별도 BoardJuiceLayer를 overlay ticker로 구동한다. 120ms부터 대각선 90ms 간격 charge, 70ms 뒤 burst이며 실제 보드를 제거하거나 점수/보상을 갱신하지 않는다. stage attempt와 active overlay로 오래된 완료를 차단한다.
+
+
+## NAS 웹 GA4 최소 연결 (PLAN-011, 2026-09-30)
+
+- EventLogger는 기존 PocketBase 경로와 별도로 Ga4Analytics를 호출한다. GA4 메뉴는 전수, PocketBase 행동 표본은 유지한다. mapper allowlist 이외 이벤트/필드와 내부 식별자/user_id는 비전송.
+- config/ga4.json 공개 측정ID, QA 별도ID. native/intoss 제외. 운영빌드와 QA 판별은 telemetry 환경 계약을 사용한다. 늦은 QA 전환은 운영 GA를 중단한다.
+- Settings 분석 동의 기본off, StorageHelper analytics_consent에 저장. 동의 전 gtag/외부요청 없음. 철회 후 ga-disable과 consent denied, 전용 쿠키 삭제. provider 예외는 게임/내부 로거에 전파하지 않는다.
+- 순수 웹 interop gtag.js(CORS anonymous), 기존 COEP require-corp 유지. send_page_view false 뒤 정제URL page_view1회. 광고저장/광고userdata/광고개인화 denied, signals false, QA debug_mode true.
+- host-only /match/ 쿠키 prefix sm. cookie 삭제는 sm_ga와 해당측정ID별 sm_ga_*만. 메모리 대기열20건, 로드실패는 이번세션 전송중단, 추가 자동재시도 없음.
+- 이벤트 계측에는 쿠키 기반 GA식별과 자동 first_visit/session_start가 포함된다. 사용자 입력 이름/이메일/토큰, 내부player/session/run/event ID와 URLquery는 보내지 않는다.
+- 채널별 실검증과 배포상태는 PLAN-011/PROJECT_STATUS에 기록한다.

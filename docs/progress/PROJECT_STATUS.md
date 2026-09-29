@@ -1,8 +1,157 @@
 # Project Status
 
+## Git 게시 및 main 통합 검토 (2026-09-30)
+
+- 사용자 최신 승인으로 기존 커밋/push 금지를 해제하고 배포된 PocketBase/관측 구현과 관련 문서를 통합한다. 이전 금지 문구는 승인 이전 이력이다.
+- Flutter622, PB24, importer15, 웹 오디오3, 빌드 도구 검사, 전체 analyze와 release Wasm/JS 빌드 통과. 비밀 설정은 Git 제외 유지.
+- 오래된 원격 docs-agent-artifact-cleanup은 현행 문서 체계와 충돌해 적용하지 않고 보존한다. 상세 근거: [Git 통합 검토](GIT_INTEGRATION_2026-09-30.md).
+
+
+## 대시보드 ECharts 차트 배포 (2026-09-30)
+
+- 사용자 지적으로 직접 SVG 구현에서 Apache ECharts6.1.0으로 전환했다. 라이브러리는 버전/잠금파일 고정, 로컬 vendor와 라이선스 포함, CI npm ci 적용. 외부 CDN과 CSP 완화 없음.
+- DAU/세션/이벤트 선택 선그래프, 활동 달력, 상위6+기타 도넛, 원본 시간대 히트맵, 익명 사용자 날짜 추이와 시간대 히트맵 구현. 누락/0/잠정/미래시간/보존경계 구분, 상세보기와 텍스트 표 대체 유지.
+- 최종 대시보드 `ac6dac0`, 테스트46개와 CI https://github.com/cheng80/stomematch_dashboard/actions/runs/36598402772 성공. Pages 자동배포/원격8파일 일치/데스크톱과 모바일375 검증. TaskSpace21/22 finish, Dispatch `ctx_8d81974da926` succeeded/retained, 회수대기0.
+- 현재 실제 일별 활동 데이터가 적어 대부분0으로 보인다. 원본/서버/게임코드 변경 없음, 게임 커밋/push 없음. 상세 정본은 독립 저장소 docs/PLAN.md와 README.
+
+## 대시보드 이벤트 한글명과 사용자 날짜 상세 배포 (2026-09-30)
+
+- 사용자 요청으로 독립 대시보드 원본 이벤트 읽기 범위를 확장했다. 이벤트23종 한글명, 날짜→익명 설치 사용자→특정 날짜 이벤트 구성, 사용자200명씩 더보기, 오늘 포함 원본 상세 조회 구현.
+- 구버전 시작 이벤트와 식별자로 묶인 판 구분, 8일 종료 매칭, 서버 기준 날짜/중복 제거, 표본 이벤트 설명. 원본90일 보존, 설치와 사람 수 구분. 서버/원본 데이터 변경 없음.
+- 독립 최종 커밋 `71b7a5b`, 테스트43개/build, 실제 데스크톱/모바일375/450명 더보기/로그아웃 검수 통과. CI https://github.com/cheng80/stomematch_dashboard/actions/runs/36596217935 및 Pages 자동 배포 성공. 원격 파일 일치 확인.
+- Dispatch `ctx_2a9c476f1d46` succeeded/retained, TaskSpace18/19/20 finish, 회수 대기0. 게임 코드/커밋/push 변경 없음. 상세 정본은 독립 저장소 README/docs/PLAN.md.
+
+## 대시보드 환경 미기재 원인 확인 (2026-09-30)
+
+- 현재 완료된 집계의 이벤트331건(09-24 135, 09-28 196)은 환경 정보 없는 기존 기록으로 unknown이다. 원본 09-29에는 production9건과 qa30건이 있으며 09-30 KST04:00 집계 전 상태다. 오늘 데이터는 완료일 제외 정책으로 미표시. 원본 재분류 없음.
+- 대시보드 환경별 기록 건수 안내, 환경 의미와 오늘 제외/다음 집계 시각 설명 보강. 독립 커밋 `c7d22da`, 테스트35개/CI/Pages 자동 배포 성공. https://github.com/cheng80/stomematch_dashboard/actions/runs/36592923712
+- TaskSpace16 종료, Dispatch `ctx_5dd9c5d963d8` succeeded/retained. 04:00 이후 실제 예약 집계는 아직 미검증이며 예약 모니터링은 설정하지 않았다. 게임 app_version이 여러 빌드에서 1.0.0+1인 점은 후속 개선 참고, 이번 게임 코드 변경 없음.
+
+## 대시보드 Cloudflare Pages 배포 완료 (2026-09-30)
+
+- 사용자 승인으로 https://stomematch-dashboard.pages.dev 배포 완료. GitHub main 연결, npm run build, dist, NODE_VERSION=22. 대시보드 커밋 `19c2df8`의 github:push 자동 배포 성공과 CI https://github.com/cheng80/stomematch_dashboard/actions/runs/36591991649 성공 확인.
+- 원격 파일 일치와 보안 헤더, 비밀 제외, 실제 pages.dev 관리자 로그인/CORS/집계 조회, 로그인 전 PB 요청0와 비인증 조회403, 새로고침 인증 소거 검증. TaskSpace15 finish 완료.
+- 로그인 화면은 공개, 데이터는 PB superuser 인증 필요. Cloudflare Access는 미적용이며 Zero Trust 조직은 권한 부족으로 미확인이다. Access와 읽기 전용 프록시는 후속 범위. 배포 승인 대기라고 적힌 이전 기록은 과거 상태다.
+- 전담 Dispatch `ctx_b8a4e74bec21` succeeded/retained, 회수 대기0. 게임 소스/배포/커밋/push 변경 없음.
+
+## 대시보드 GitHub CI 활성화 완료 (2026-09-30)
+
+- 사용자 GitHub workflow 권한 추가 완료 후 대시보드 전담 세션이 `.github/workflows/verify.yml`을 적용했다. push/PR, contents read, Node22, 테스트와 빌드 자동 검증. 비밀이나 운영 데이터 불필요.
+- 대시보드 최종 커밋 `c7cfb7c`, GitHub Actions https://github.com/cheng80/stomematch_dashboard/actions/runs/36591383207 성공 확인. 기존 CI 권한 부족/미실행 기록은 과거 이력이다.
+- 전담 Dispatch `ctx_23e8964006b7` succeeded/retained. Cloudflare 배포와 운영 인증 결정은 여전히 대기다. 게임 커밋/push 없음.
+
+## 대시보드 시각 검수 후속 완료 (2026-09-30)
+
+- 사용자 계속 요청으로 기존 대시보드 전담 세션을 재개했다. 잠정 배지 모순, 차트 마지막 날짜 겹침과 잘림, 전부 0일 때 최대 DAU 날짜, 모바일 차트 글꼴 문제 4건을 수정하고 실제 데스크톱1280/모바일375 캡처로 재검수했다.
+- 독립 저장소 stomematch_dashboard 커밋 `0b0cf4e`를 origin/main에 일반 push 완료. 로컬과 origin/main 일치, 작업 트리 clean, 테스트34개와 빌드6파일 통과. 게임 커밋/push는 하지 않았다.
+- TaskSpace13은 로그아웃 후 finish 완료. 전담 터미널은 사용자 요청대로 보존한다. 후속 Dispatch `ctx_242cffe9126d` succeeded/retained. 이전 abandoned 기록은 재개 전 이력이다.
+- Cloudflare Pages 배포와 운영 인증 구성은 결정 대기다. GitHub CI는 workflow 권한 부족으로 템플릿만 있으며 실행되지 않았다. 상세 정본은 독립 대시보드 docs/HANDOFF.md다.
+
+## GA4 NAS 최소 연결 배포 완료 (2026-09-30)
+
+- 최종 정리: 실제 NAS QA page_view/level_start 확인, 테스트 동의 off와 게임 GA 쿠키0 복원. ego TaskSpace9 finish 완료, 소유한 로컬 검증 서버6개 종료. 대시보드 전담 세션/브라우저는 별도로 보존한다.
+- PLAN-011 Step2 NAS 범위 완료. 운영 G-1D8SDVLZQX, QA G-E942CQ3ZBL 별도 속성. 선택동의 기본off, 쿠키전용범위, 광고목적/신호off, 허용목록 이벤트와 정제URL. native/intoss는 비활성이다.
+- 실제Wasm QA4이벤트 각1회와 DebugView수신, 실제게임Wasm/JS 동의설정/전송, 철회후차단과전용쿠키삭제, 외부GA차단시게임보드 검증. Flutter622, 변경7파일analyze clean.
+- NAS HTTP200/OK, release stone-match@1.0.0+1-6c84d928ff14, ZIP SHA256 5de3ded63a459b25fc8e3ea7708345016a75112d73c92bdc732249e88627a6b2. 원격7파일/격리헤더/MIME/직접경로통과. 실제NAS동의전Google요청없음/동의후QA수집확인. Sentry source map 새release업로드/공개제외 유지.
+- 대시보드는 사용자요청으로 독립 stomematch_dashboard 저장소와 Orca 전담세션으로 분리했다. main 첫push ce2c5cc, 로컬34테스트/빌드/DOM기반브라우저검수통과, 데스크톱 시각 결함3개 수정, 모바일 글꼴 수정 후 재검수는 사용자 브라우저 제어 전환으로 대기 중이다. 마지막 시각 수정은 아직 미커밋이다. GitHub CI는 workflow권한부족으로 실행템플릿만보존했고 실행안됨. Cloudflare Pages 배포는 미실행. 게임변경은커밋/push하지않았다.
+- 남은범위: PLAN-011 Step3 보고서/리텐션, native/intoss, 실제기기/장시간성능. SearchConsole/BigQuery는 사용자예시이며착수하지않는다. PLAN-010 외부로그인정책은별도사용자결정대기.
+- 증거: tmp/ga4-integration-20260929/와 PLAN-011 11절. 기존 사용자4파일 해시 불변.
+- 대시보드 전담 터미널 term_99f828e2-1dd6-4703-9758-3dcc1a3d4614와 TaskSpace13은 사용자 확인용으로 보존했다. 검수 후속 ctx_eddb22ca1133는 사용자 제어 escalation 뒤 최종 turn이 종료돼 fence(abandoned) 처리했으며 프로세스/파일 삭제는 없다. 사용자가 전담 세션에서 계속하면 새 사용자 작업으로 재개하고 예전 lifecycle ID는 재사용하지 않는다. Orca 회수 대기0.
+
+
+## 대시보드 독립 세션 분리 (2026-09-29)
+
+- 사용자 요청으로 대시보드는 `/Users/cheng80/Desktop/Anther_Works/Flutter_Project/FlutterFrame_work/stomematch_dashboard` 독립 저장소로 이동했다. 비공개 GitHub `cheng80/stomematch_dashboard` 생성, origin 연결 완료. 이 게임 저장소의 커밋/push는 금지 유지한다.
+- 대시보드 전담 세션은 해당 저장소 `docs/HANDOFF.md`를 따른다. 기본 구현32테스트/6파일빌드와 실서버89일 집계조회 통과, 브라우저검수와 첫push는 대시보드 세션 담당. 게임 세션은 대시보드 파일을 더 수정하지 않는다.
+- 게임 세션은 PLAN-011 GA4를 계속한다. cookie_prefix sm, host-only /match/ 격리 보완, 관련35테스트 통과. 실제 Wasm QA에서 동의 전 태그/요청0, 동의 후 page_view/title_menu_action/level_start/level_end QA전송, URLquery/민감값제거 확인. 동의철회 후 추가전송0, 게임쿠키만삭제와 비관련시험쿠키보존 확인. 운영 향상된측정OFF 확인.
+- GA4 DebugView 확인, 실제 게임빌드/배포와 문서마감은 아직 남음. QA요청에서 debug_mode가 ep.debug_mode로 전달되는 점 확인 필요. 운영은 아직 Sentry-only 직전배포본이다.
+
+
+## Sentry NAS 배포 완료, GA4 연결 진행 (2026-09-29)
+
+- PLAN-012 승인 범위(오류 수집만, Wasm 유지) 배포 완료. release `stone-match@1.0.0+1-bd769fb5c599`, NAS ZIP SHA256 `107ce4c4d892f55d583a4efe272dcb9ffe5a5c094a1d7dea5200c36ba41e6fc2`, HTTP200/OK와 원격7파일 검증. 운영/QA 프로젝트 분리, 실제 NAS QA 오류 수신/민감값과 서버 파생 지역 제거 확인.
+- 독립 검수에서 발견한 JS 수집 누락/한 줄 스택 손실을 수정하고 재검증했다. Flutter587/오류11/빌드도구13그룹 통과, Wasm/JS 빌드와 실제 오류 수집, JS 원본 줄/문맥 복원 통과. Wasm 원본 줄 복원, 모바일/토스 실기기와 성능은 검증 한계다. 수집 endpoint 차단 상태에서도 게임 진입 통과.
+- 사용자 GA4 운영 ID `G-1D8SDVLZQX` 제공 및 Google 설정 직접 진행 요청. 로그인된 콘솔에서 계정378565797/속성556597456 `Stone Match` 일치 확인. 별도 QA 속성과 웹 전송/설정 구현 진행 중. Search Console/BigQuery/성과 분석은 사용자가 예시라고 명시하여 추가하지 않는다.
+- 기존 사용자 변경 보존, 새 커밋/push 없음. Orca 현재 Run `run_640edb280571`, Sentry 작업 완료 후 GA4 매핑/어댑터 위임. ego TaskSpace9 재사용(p1 게임/p2 Analytics), 종료 전 finish 필요. 세부 근거는 PLAN-012 14절과 `tmp/sentry-integration-20260929/`.
+
+
+## PLAN-009 Step 4 배포 완료와 Sentry PoC (2026-09-29)
+
+- Step 4 서버 선배포/NAS 후배포와 운영 검증을 완료했다. 서버 중지 백업 19파일 해시 확인, 기존 랭킹 11건/이벤트 362건/설정 3건/광고 0건 원본 필드 보존. 백업 `/Users/cheng80/Servers/backups/stonematch-before-step4-20260929-223044`.
+- 서버 실제 동시 중복 요청 4회→1행, 충돌 배치 400 원자성, ID 없는 구버전 호환, 6컬렉션 Locked CRUD, 관리자 전용 집계와 89일 backfill/raw 수 일치 통과. 집계 창은 최근 완료일 8개다. 운영 DAU는 env=production을 사용하고 종료 누락은 unknown으로 해석한다.
+- NAS 업로드 HTTP200/result=OK, ZIP SHA256 `9c2a6b039d5f396776208dfa9f29fbdb3ee49d08547d3180b90cc6ce522d425a`. 핵심 7파일 원격 해시/격리 헤더/Wasm MIME/no-cache/deep link 통과. 실제 Wasm 타이틀과 큐 전송 확인.
+- ego TaskSpace9에서 events 경로 차단→영속 저장→새로고침→동일 event_id/owner 복원→차단 해제 후 큐 비움, 대상 2이벤트 각각 서버 1행 확인. 첫 인증 전 이전 실행의 owner 미확정 이벤트는 수집되지 않을 수 있다. 모바일/앱인토스, 실제 재부팅과 cron 예약 시각 발화는 미검증.
+- 인계 최종 소스 검증: Flutter576/PB24/importer15/release Wasm+JS 빌드 통과. analyze는 기존 사용자 파일 info2로 종료1. 이번 세션 제품 소스 추가 수정 없이 배포/운영 검증을 수행했다. 새 커밋/push 없음, 사용자 변경 보존.
+- Sentry 조직 tk-media-m3/팀 tk-media에 stone-match Flutter 프로젝트 생성, DSN Git 제외 `.env.sentry`(0600)에 저장, 합성 QA 이벤트 수신 확인. 별도 `tmp/sentry-poc-20260929/`에서 SDK9.30.1 빌드/수집 검증. JS 원본 Dart 파일/줄 복원 성공, Wasm 원본 복원 미지원 확인. 사용자가 Wasm 유지+오류 수집만 연결을 승인했다. Run run_640edb280571에서 Opus/high 오류 연결과 Sonnet/high 빌드 도구를 병렬 구현 중이다. 게임 SDK 운영 배포는 아직 미실행이다.
+- Orca 재점검: Run run_d0d47915fd77 Task11 모두 completed, reclaimable0. 최종 client-review/server-fix released. 이전 재사용 dispatch7은 retained/자원 absent 이력이다. 터미널4개 유지: 인계 Codex(재연결 실패 문구), 별도 Codex 대기, 이전 PB 검수 Claude, 이전 coordinator 셸. 추가 사용자 요청에 따라 인계 Codex의 실제 exited를 확인하고 닫았다. 새 조정용 터미널을 생성해 작업자2명의 turn_started를 확인했다. 이전 핸들 사칭 없음.
+- 근거: `tmp/pocketbase-followup-20260929/`의 server-deployment.json, live-step4.json, browser-queue.json, nas/remote-verification.json, sentry-js.json, sentry-wasm.json, orca-recheck/summary.json. PLAN-009 DONE, PLAN-012 IN_PROGRESS.
+
+## 기존 플랜 재검토와 PocketBase 단독화 착수 이력 (2026-09-29 22:04 KST)
+
+- 사용자 요청으로 PLAN-009 Step 4를 재개했다. Supabase 앱 구현/설정/fallback을 제거하고 PocketBase만 선택하도록 변경했다. 과거 SQL, 원본 데이터와 Git 제외 설정은 복구 이력으로 보존하며 실행에는 사용하지 않는다.
+- Orca Run `run_d0d47915fd77`에서 빌드 설정 검증, 영구 큐, 서버 중복 방지/일별 집계, PLAN-010~012 사전 준비를 병렬 진행 중이다. 브라우저는 ego CLI 배경 작업만 허용한다.
+- PLAN-002, PLAN-007, PLAN-008은 코드와 운영 검증상 구현 완료다. PLAN-006은 PLAN-013으로 대체한다. PLAN-003의 최초 지급/매판 보충 정책과 PLAN-010~012의 로그인 제공자/외부 프로젝트 정보는 사용자 답변 대기다. PLAN-005 D7 플레이테스트와 실기기 검증은 완료로 표시하지 않는다.
+- Step 4 구현은 아직 통합 검증/운영 배포 전이다. 직전 배포의 성공 결과를 이번 변경의 검증 결과로 재사용하지 않는다.
+
+
+## PLAN-013 PocketBase 운영 전환 완료 (2026-09-29 21:48 KST)
+
+- 새 NAS 웹은 `https://stonematch.fastmake.net`을 사용한다. 운영 API와 데이터 반영, release Wasm/JS 빌드 및 NAS 업로드(HTTP 200, result=OK), 핵심 파일 7개 원격 해시/격리 헤더/SPA fallback 검증을 마쳤다. 소스는 기존 사용자 변경을 포함한 미커밋 main이며 새 커밋/push는 하지 않았다.
+- 원본 랭킹 11건, 이벤트 353건, 설정 3건, 광고 기록 0건을 이전했다. 원본 필드 전수 일치, 가져오기 재실행 변경 0건, 배포 후 최종 원본 차이 0건, 공개 time/level 목록과 원본 일치를 확인했다. 기존 익명 사용자 38명은 승인에 따라 이전하지 않았다. Supabase와 이전 NAS ZIP은 복구용으로 보존한다. 이후 구 탭이 Supabase에 쓸 수 있으므로 자동 동기화가 된다고 간주하지 않는다.
+- 서버 `/Users/cheng80/Servers/stonematch`, PocketBase 0.39.7, LaunchAgent `com.fastmake.stonematch.pocketbase`. 로그인 후 자동 실행, 서비스 재시작 후 데이터/동일 사용자/기존 토큰 유지 확인. 실제 Mac 재부팅과 운영 cron 예약 시각 발화는 미검증이다.
+- 배포 직전 중지 백업 `/Users/cheng80/Servers/backups/stonematch-before-api-20260929-213658`의 16파일 해시 일치 확인. 이전 폴더 변경 전 백업도 보존한다. 원격 `users`/`tasks`는 조사 이후 외부에서 삭제 마이그레이션이 추가된 상태였으며 이번 배포는 이를 복원하거나 삭제하지 않았다.
+- 권한: `sm_players`, `sm_rankings`, `sm_ad_claims`, `sm_events`, `sm_config` 직접 CRUD 5개 규칙은 모두 null(Locked). sm_players authRule/manageRule도 null, password/OAuth2/OTP 비활성. 공식 문서 확인 후 비로그인/플레이어 직접 접근 54건과 공개 도메인 10건 거절 검증. 허용 기능은 전용 API에서 별도 인증/입력 검증한다.
+- 검증: 전체 Flutter 561개, 서버 0.39.7 통합 16개, 추가 독립 서버 검증 18개, 최종 importer 15개, 변경 범위 analyze와 release Wasm/JS 빌드 통과. 관리자 이메일/비밀번호가 패키지 92파일에 없음을 확인했다.
+- ego CLI 배경 검증: 랭킹 UI 두 모드, 앱 인증 200/이벤트 204, 브라우저 저장 토큰의 실제 랭킹 제출 200과 DB 저장, 새로고침 후 동일 사용자 재사용 확인. 시험 랭킹은 삭제했고 최종 랭킹은 원본 11건이다. 실제 앱 QA 이벤트 8건은 qa 표시로 보존돼 최종 이벤트 361건, 새 플레이어 1명이다. 비밀 토큰을 보고서에 기록하지 않았다.
+- 한계: 배경 게임 조작 중 자동 일시정지로 점수 획득→나가기 전체 UI 제출 흐름은 완료하지 못했다. 브라우저 직접 API 제출과 Flutter 단위 테스트 결과를 UI 종단 검증으로 표시하지 않는다. 모바일 실기기/앱인토스 배포는 미실행이다.
+- 사용자가 지정한 Orca 방식을 어기고 내부 에이전트를 사용했던 것을 중단하고 3개 모두 종료했다. 최종 검수는 Orca Run `run_ba33fb9f722f`, Task `task_5641fb29505a`, Dispatch `ctx_88134dcaf753`에서 Claude로 수행했다(P1/P2 없음, 실제 모델 버전 미확인). worker_done 처리 및 ack 완료, 회수 대기 0개. worker는 runtime의 user_takeover 판정에 따라 보존했다. 앞으로 내부 subagent로 대체하지 않는다.
+- 근거와 빌드: `tmp/pocketbase-migration-20260929/`, ZIP `nas/match.zip`(SHA-256 `8e217e23c2cd1c3225507f2ed578f7c765a55aed9b65fde5d6d53bc88ca14fbd`). ego 작업 공간은 종료했다. 브라우저는 ego CLI만 사용하며 일반 computer-use/앱 활성화 명령은 쓰지 않는다.
+
+
+
+
 > 프로젝트 전체의 NOW. 다음 작업자 인계 문장은 HANDOFF.md에 둔다. 구현 상태와 검증 상태를 섞지 않는다.
 
-Updated: 2026-09-29 18:22 KST
+Updated: 2026-09-29 21:48 KST
+
+## PocketBase 이전 사전 조사 이력 (2026-09-29, 위 완료 기록으로 갱신)
+
+- 서버 경로는 사용자 확인 `/Users/cheng80/Servers/pocketbase`, Tailscale 호스트는 `mac-mini.tailc386bf.ts.net` / `100.92.43.82`다. 로컬 Tailscale이 Stopped여서 기존 설정 그대로 `tailscale up`으로 연결했다. SSH 22번까지 도달했으나 `cheng80` 인증은 거절됐다. 로컬 SSH 키/agent identity가 없어 공개키 등록 또는 SSH 비밀번호 입력 방법을 사용자에게 문의했다. 새 호스트 키는 accept-new로 등록했으며 원격 파일/프로세스는 아직 읽거나 변경하지 못했다. 서버 위치 변수만 Git 제외 환경변수에 추가했다.
+
+- PLAN-013 PocketBase 이전을 생성하고 Step 1 사전 조사를 진행했다. 서버 파일 배포를 위한 실제 설치 폴더와 접속/복사 방법은 사용자 확인 대기다. 기존 단일 폴더 실행 방식을 유지하며 pb_hooks/pb_migrations를 추가할 계획이다. 앱 구현과 원격 데이터 이전은 아직 수행하지 않았다.
+- 원본 읽기 전용 조회: 랭킹 11행, 이벤트 353행, 설정 3행, 광고 기록 0행, 익명 사용자 38명. 공개 랭킹 API는 time/level 모두 200(각 1행)이므로 모바일 장애 원인은 미확정이다. PocketBase NAS 출처 CORS 사전 요청 204 확인. 관리 화면 표시 버전은 0.39.7이며 실제 바이너리 버전은 서버 접근 후 확인한다. 근거: `tmp/pocketbase-migration-20260929/`.
+- Orca 병렬 조사 준비는 `no_active_sender_terminal`로 Run 생성 전 거절됐다. 다른 터미널 핸들을 사용하지 않았고 Task/Dispatch/worker는 생성하지 않았다. 직접 조사로 전환했다.
+
+- 사용자 요청으로 PocketBase 주소를 `https://stonematch.fastmake.net`으로 변경했다. mac-mini Tunnel의 기존 8090 서비스를 그대로 연결하고 새 CNAME을 생성한 뒤 관리 페이지/health/관리자 인증/컬렉션 조회 HTTP 200을 확인했다. 기존 pocket 호스트의 ingress와 DNS는 제거했고 preview 경로는 보존했다. `.env.pocketbase` URL도 갱신했다. 인스턴스나 DB를 새로 만들지 않았으며 기존 데이터 변경은 없다. 관리 주소는 `https://stonematch.fastmake.net/_/`. 복구용 기존 설정과 검증 근거는 `tmp/pocketbase-domain-20260929/`다.
+
+- 후속 사전 조사: 공식 문서의 인증, API Rules, 컬렉션, JS 확장/마이그레이션과 운영 백업을 확인했다. 입력한 관리자 정보로 health/인증/컬렉션 목록 HTTP 200 확인. 기존 `users`, `tasks`와 시스템 컬렉션 5개를 보존한다. 실제 서버 버전과 서버 훅 배포 경로는 미확인이다. 기본 Python User-Agent에서 403, Mozilla User-Agent에서 200이었으며 원인과 모바일 CORS는 미확정이다. 비밀정보를 저장하지 않은 조사 근거는 `tmp/pocketbase-discovery-20260929/`다. 아래 환경변수 준비 단계의 로그인 미실행은 이전 이력이며 이번 조사로 갱신한다. 데이터/설정 변경과 제품 구현은 없다.
+
+- 사용자 요청으로 Supabase에서 PocketBase로 이전하는 작업을 기존 PLAN보다 우선한다. 모바일 웹 랭킹 장애와 무료 프로젝트 비활성 정지 문제는 사용자 보고이며 이번에는 원인 검증을 수행하지 않았다.
+- Git 제외 `.env.pocketbase`에 `POCKETBASE_URL`, `POCKETBASE_ADMIN_EMAIL`, `POCKETBASE_ADMIN_PASSWORD`를 준비했다. 관리자 자격정보는 사용자가 로컬 파일에 입력한다. 관리 작업에만 사용하며 클라이언트 빌드에 포함하지 않는다.
+- 현재는 환경변수 준비 단계다. 관리자 로그인, 데이터 이전, 앱 연결 변경과 원격 변경은 미실행이다. 입력 완료 후 기존 스키마와 인증, 랭킹, 광고 제한, 이벤트 로그 의존성을 조사해 이전 계획을 정한다. PLAN-009 Step 4는 미착수로 유지한다.
+
+## QA 레벨 9999 기록 삭제 (2026-09-29 18:41 KST)
+
+- 사용자 요청으로 Supabase `ranking_entries`의 `id=79`, `mode=level`, `name=QA_OLDLEVEL`, `score=9999` 기록 1건을 삭제했다.
+- `private.ranking_entries_backup_20260929_qa9999`에 원본 1건을 백업하고 RLS와 클라이언트 접근 차단을 적용했다. dry-run 1건, 트랜잭션에서 원본과 백업 일치 및 삭제 1건을 검증했다.
+- 사후 확인: 원본 잔여 0건, `get_ranking('level',100)` 대상 0건, 백업 1건. 같은 트랜잭션에서 나머지 랭킹 행의 전체 내용 해시가 불변임을 확인했다. 사용자 계정과 다른 기록은 변경하지 않았다.
+- 실행 SQL과 결과: `tmp/qa-ranking-cleanup-20260929/`. 제품 코드 변경, 웹 재빌드/재배포, 커밋/push 없음.
+
+## NAS 업로드 완료 (2026-09-29 18:38 KST)
+
+- 사용자 요청에 따라 직전 검증한 `tmp/nas-web-build-20260929/match.zip`을 기존 NAS 배포 API로 업로드했다. HTTP 200, 응답 `result=OK`, 공개 주소 `https://cheng80.myqnapcloud.com/match/` 확인. 재빌드 없이 SHA-256이 일치하는 ZIP을 사용했다.
+- 배포 내용은 `752f870`과 로컬 미커밋 오디오 수정 등 기존 변경을 포함한다. 현재 원격 main만으로 재현한 배포본은 아니며 사용자 소스 변경은 보존했다.
+- 사후 검증: index, bootstrap, main.dart.js/mjs/wasm, stone_match_sfx.js, skwasm.wasm 7개 원격 SHA-256이 로컬과 일치. COOP/COEP, no-cache, Wasm MIME, `/match/game?mode=simple` HTTP 200과 index fallback 통과.
+- ego lite의 새 탭에서 `?qaDeploy=1`로 타이틀 로딩과 메뉴 접근성을 확인했다. 이후 사용자 브라우저 조작으로 추가 플레이/랭킹 확인과 검증 탭 정리를 중단했다. 기존 사용자 탭은 닫지 않았다. 실기기 청취, 장시간 플레이와 원격 이벤트 적재는 이번에 검증하지 않았다.
+- 근거: 같은 폴더의 `deploy-response.json`, `remote-verification.json`, `verification.json`. 아래 빌드 생성 항목의 업로드 미실행은 업로드 전 이력이며 이 항목으로 갱신한다. 새 커밋/push와 PLAN-009 Step 4 착수 없음.
+
+## NAS용 웹빌드 생성 (2026-09-29 18:27 KST)
+
+- `752f870`과 현재 로컬 미커밋 변경을 포함해 `/match/`용 release Wasm/JavaScript 폴백을 빌드했다. 메뉴 unlock 무음 수정도 포함하며, 원격 main만으로 만든 산출물과는 다르다.
+- `config/supabase.json` 연결 설정과 `TELEMETRY_ENV=production`, `--no-web-resources-cdn`을 적용했다. 기존 배포 스크립트의 `.htaccess`(격리 헤더, no-cache, SPA fallback)와 Flutter Intl 패치를 적용했다.
+- 산출물: `tmp/nas-web-build-20260929/match/`, 업로드용 `tmp/nas-web-build-20260929/match.zip`(33,270,989바이트). 이전 루트 `match.zip`, `match/`, `build/web`는 보존했으며 최신 빌드가 아니다.
+- 검증: 빌드 성공, 오디오 JS 회귀 테스트 3개 통과, ZIP 92개 파일 CRC와 압축 전후 SHA-256 일치, 필수 Wasm/JS 파일과 base href 확인. 폐기된 ranking.php와 설정 원본은 패키지에 없다. 상세 근거는 같은 폴더의 `build.log`, `verification.json`, `sha256.json`이다.
+- NAS 업로드는 하지 않았다. 이번 산출물의 실제 브라우저 실행, NAS 헤더 응답과 모바일 실기기는 미검증이며 이전 Step 3 ego 검증과 구분한다. 새 커밋/push와 PLAN-009 Step 4 착수 없음.
 
 ## PLAN-009 Step 3 판별 요약과 행동 측정 (완료)
 
