@@ -1,6 +1,15 @@
 # Project Status
 
-## 레벨 플레이 중 인벤토리 교환 (2026-10-01)
+## 플레이 중 인벤토리 NAS 배포 완료 (2026-10-01)
+
+- 사용자 요청에 따라 기능 커밋 `a3dad54`를 push하고 PR https://github.com/cheng80/jewelmatch/pull/20 을 스쿼시 병합했다. main 제품 커밋 `11194c4`, 기존 레벨 랭킹 검증 문서 기록 보존 확인. GitHub Actions 워크플로와 필수 CI는 없으며 전체632테스트 통과(기존2건 skip), 전체 analyze와 release Wasm/JS 빌드를 확인했다.
+- 병합 내용과 feature의 파일 일치, clean 상태와 다른 작업 사용 여부를 확인한 뒤 Orca CLI로 워크트리, 로컬 브랜치와 원격 브랜치를 정리했다. 캡처와 로그는 `tmp/inventory-nas-publish-20261001/play-inventory/`에 복사해 보존했다.
+- 깨끗하고 원격과 동기화된 main에서 `tools/deploy_match_web.sh --output-dir tmp/inventory-nas-20261001`로 배포했다. HTTP200/result=OK, 운영/QA 프로젝트2곳 비공개 JS source map 업로드 완료. release `stone-match@1.0.0+1-ca7d302b455b`, ZIP SHA256 `d2c08d3084fc4553413a36e35fcfdb038cc0c09b1d886091381f7a75f2b3b942`, ZIP119항목/map/env0개 확인.
+- 원격7파일 해시 일치, COOP/COEP, no-cache, Wasm MIME와 직접 게임 경로200 확인. health200, 레벨 랭킹 공개 POST 조회200/5행. 기존 랭킹 기록을 수정하거나 삭제하지 않았다.
+- 운영 헤드리스430 화면에서 레벨 보드와 금색 사각 가방, 인벤토리 보드 가림, 일시정지 후0:57 보존, Escape 취소와 장착 변경 없이 적용 후 재개를 확인했다. 실제 장착 변경의 수량/적용/취소는 로컬 Flutter 테스트로 검증했다. 콘솔 오류/경고0. Orca 브라우저는 Electron sandbox preload 오류와 로딩 화면으로 게임 검증이 제한돼 앞서 요청된 헤드리스 방식으로 운영 화면을 비교 검증했다. 실기기와 실제 청취/장시간 플레이는 미검증.
+- 배포 산출물은 `tmp/inventory-nas-20261001/`, 검증과 최종 운영 캡처는 `tmp/inventory-nas-publish-20261001/`에 보존한다. 제출용 공모전 ZIP과 앱인토스 빌드는 이번 범위에 포함하지 않았다.
+
+## 레벨 플레이 중 인벤토리 교환 (2026-10-01, 배포 전 기록)
 
 - Orca CLI 워크트리 `codex/play-inventory`에서 구현. 체크아웃 `/Users/cheng80/orca/workspaces/jewelmatch/codex-play-inventory`, base `f094d3b`. 사용자 승인에 따라 하단 패널을 얇게 줄이고 4슬롯과40×40 둥근 사각형 인벤토리 버튼을 한 줄로 정렬했다. 가방 아이콘은 유지하고 버튼은 어두운 청회색 배경, 일반 버튼과 같은 금색 테두리와8px 모서리로 금색 원형 아이템 슬롯과 구별한다. 오른쪽 버튼 앞 얇은 세로 구분선으로 사용/장착 편집을 구별한다. 슬롯 줄 높이를 유지하고 빈 공간을 줄였으며 좁은 화면에서는 슬롯 크기/간격을 너비에 맞춘다. 상단 HUD와 게임 규칙은 유지한다.
 - 레벨 모드 idle 상태에서 열면 엔진, 시간, 입력과 BGM을 일시정지하고 불투명 배경으로 보드를 가린다. 적용은 현재/다음 레벨 장착에 반영하며 취소, Escape, 시스템 뒤로가기는 장착을 유지하고 재개한다. 결과창 인벤토리는 기존 다음 레벨 편집 흐름 유지. 수량은 실제 사용 시만 소모하며 플레이 중 광고 보충은 제공하지 않는다.

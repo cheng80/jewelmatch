@@ -1,6 +1,6 @@
 # PLAN-014 플레이 중 인벤토리 교환
 
-- 상태: IN_PROGRESS (게시와 NAS 배포 검증)
+- 상태: DONE (PR 병합과 워크트리 정리, NAS 배포 검증 완료)
 - 날짜: 2026-10-01
 - 요청: Orca 워크트리에서 레벨 모드 플레이 중 장착 교환 구현, 헤드리스 화면 2장 제공
 
@@ -21,10 +21,16 @@
 - [x] analyze, 관련 테스트, release 웹 빌드
 - [x] 실제 헤드리스 플레이 화면과 열린 인벤토리 캡처, 375/430 너비 확인
 - [x] Product/UI/Tech Spec, Status/Handoff 갱신
+- [x] 커밋/push, PR 스쿼시 병합, clean main 동기화와 워크트리/브랜치 정리
+- [x] NAS production 빌드와 source map 업로드, 원격 파일/헤더/API와 운영 브라우저 검증
 
 사용자 요청으로 커밋/push/PR 스쿼시 병합, 워크트리 정리와 NAS 웹 배포까지 진행한다. 원본 main의 미커밋 레벨 랭킹 문서 기록은 같은 내용을 유지해 보존한다.
 
 ## 검증 결과
+
+- 기능 `a3dad54`, PR#20 스쿼시 `11194c4`, clean main에서 NAS 배포 HTTP200/result=OK. source map 운영/QA2곳 업로드, ZIP119항목/map/env0개. 원격7파일/격리 헤더/no-cache/Wasm MIME/직접 경로 일치, health200와 랭킹 공개 조회200/5행.
+- 운영 헤드리스에서 금색 사각 가방, 보드, 인벤토리 일시정지와 Escape/적용 후 재개 확인, 콘솔 오류/경고0. Orca Electron preload 오류로 게임 화면 검증이 제한돼 기존 요청의 헤드리스 방식으로 비교했다. 실제 장착 변경과 수량은 Flutter 테스트로 확인했으며 실기기/청취/장시간 검증은 미수행.
+- 워크트리와 브랜치 정리 완료, 기존 main 랭킹 문서 보존 확인. 초기 근거는 `tmp/inventory-nas-publish-20261001/play-inventory/`, 운영 검증은 `tmp/inventory-nas-publish-20261001/`, 배포는 `tmp/inventory-nas-20261001/`에 보존했다.
 
 - 게시 전 전체632테스트 통과(기존2건 skip), 전체 analyze 통과. 가방 아이콘 이미지1회 추가를 렌더링 예산에 반영했으며 텍스처 수와 전환 수는 유지했다.
 
@@ -37,4 +43,4 @@
 - 실제 헤드리스430×900/375×812에서 버튼과 모든 슬롯 프레임 비겹침, 보드 가림과 적용/취소 후 재개 확인. 320/375/430 HUD 좌표와 실제 HUD 탭 경로는 단위 테스트로 확인.
 - 실제 웹 Escape 포커스 실패를 확인해 post-frame FocusNode 요청으로 수정하고 편집 후 취소/재개까지 확인했다. 시스템 뒤로가기와 백그라운드 닫기는 Flutter 테스트로 검증했다.
 - 열린 빈 슬롯은 빈 프레임, 잠긴 슬롯만 자물쇠로 분리했다.
-- 근거 `tmp/play-inventory-20261001/`. 앱 콘솔 오류0, 격리 헤더가 없는 로컬 서버의 skwasm 안내와 헤드리스 GPU ReadPixels 경고. 실기기/장시간 검증과 운영 배포는 미수행.
+- 초기 로컬 근거 `tmp/inventory-nas-publish-20261001/play-inventory/`. 앱 콘솔 오류0, 격리 헤더가 없는 로컬 서버의 skwasm 안내와 헤드리스 GPU ReadPixels 경고. 이 단계의 실기기/장시간 검증과 운영 배포는 미수행이었으며 운영 배포 완료 결과는 위 기록을 따른다.
