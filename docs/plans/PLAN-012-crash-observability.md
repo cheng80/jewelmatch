@@ -160,3 +160,12 @@
 - 브라우저 비교: 수정 전 JS는 오류 뒤 Count 0과 연쇄 TypeError. 수정 후 JS와 Wasm 각각 Count 2/captured 1. 수집 비활성 JS도 오류 뒤 Count 1/captured 0. 런타임은 실제 `main.dart.js`/`main.dart.wasm` 스택으로 확인했다. 가짜 DSN과 메모리 Transport를 사용하여 원격 QA 이벤트를 추가하지 않았다.
 - 코드 수정은 로컬 검증 완료, 운영 미배포다. STONE-MATCH-5/6은 배포 후 확인할 수 있도록 unresolved를 유지한다. 커밋/push/배포와 해당 2건의 resolved 처리는 후속 게시 범위다. 실제 VoiceOver/TalkBack 기기는 미검증이며 Wasm 원본 줄 기호화 제한도 그대로다.
 - 근거: `tmp/sentry-triage-20260930/`의 issues.json, event-audit.json, browser-comparison.json, resolved-test-issues.json, unresolved-*-project.json, tests.log, analyze.log, game-build.log. 임시 재현 앱/빌드는 같은 폴더에 보관한다.
+
+## 16. 접근성 입력 수정 NAS 배포 (2026-10-01)
+
+- 사용자가 커밋/push와 NAS 웹 배포를 요청했다. 구현 `ff4a030`을 main에 push한 뒤 원격 동기화0/0과 깨끗한 작업 트리에서 `tools/deploy_match_web.sh --output-dir tmp/sentry-nas-20261001`을 실행했다.
+- 사전 검사 중 기존 정제 테스트의 `999` 문자열 검사가 임의 event_id와 충돌한 것을 확인해 `"score"` 필드 검사로 바꿨다. 관련30테스트와 전체 analyze 재검증 통과. 이 저장소에는 GitHub Actions 워크플로가 없어 로컬 검증을 사용했다.
+- release `stone-match@1.0.0+1-367f2554d66f`, release Wasm/JS 빌드, 2개 프로젝트 소스맵 업로드와 debug ID 일치, ZIP map/env 제외 통과. NAS HTTP200/result=OK, 원격7파일 해시/격리헤더/no-cache/Wasm MIME/직접경로200 확인. ZIP SHA256 `bd873cda8369d151339bf06a31ae1d4ee9fb20054f35f0eda0d9652b36362115`.
+- 운영 브라우저에서 첫 화면, 설정 이동/복귀, 새로고침, 무한 모드 보드 렌더링과 콘솔 오류/경고0 확인. 랭킹 화면은 검증 브라우저가 백엔드 접속을 ERR_BLOCKED_BY_CLIENT로 차단해 확인이 제한됐다. curl health/랭킹 API200(5행), CORS 사전 요청204로 서버 응답을 별도 확인했다. 브라우저 접근 제한을 우회하거나 서버 보안 설정을 변경하지 않았다. 음소거 상태의 사운드와 실제 VoiceOver/TalkBack 기기는 미검증이다.
+- Sentry 소스맵 업로드만으로 release 객체가 생성되지 않아, 실제 배포 버전과 구현 commit을 연결해 release를 등록했다. STONE-MATCH-5/6을 이 release에서 resolved 처리했다. 기존 합성 검증 이슈10개와 합쳐 분석 대상12개 처리 완료이며, 장시간 재발 여부 검증이나 자동 모니터링을 완료했다는 뜻은 아니다.
+- 근거: `tmp/sentry-deploy-20261001/`의 tests-final.log, analyze-final.log, deploy.log, browser-verification.json, sentry-release.json, sentry-resolved.json 및 `tmp/sentry-nas-20261001/remote-verification.json`.

@@ -1,5 +1,12 @@
 # Handoff
 
+## 접근성 입력 수정 NAS 배포 완료 (2026-10-01)
+
+- 사용자 요청으로 구현 `ff4a030`을 main에 커밋/push하고 깨끗한 main에서 NAS 배포 완료. 기존 Sentry 테스트가 임의 event_id의 999를 점수 누출로 오판하는 문제도 필드 검사로 보완했다. 관련30테스트와 전체 analyze 통과, GitHub Actions 워크플로는 없다.
+- release `stone-match@1.0.0+1-367f2554d66f`, Wasm/JS 빌드와 운영/QA 비공개 소스맵 업로드 완료. HTTP200/result=OK, 원격7파일 해시/격리헤더/no-cache/Wasm MIME/직접경로 검증 통과. ZIP SHA256 `bd873cda8369d151339bf06a31ae1d4ee9fb20054f35f0eda0d9652b36362115`, map/env 포함0개.
+- 실제 브라우저 타이틀/설정 이동/새로고침/게임 보드 렌더링, 콘솔 오류/경고0 확인. 검증 브라우저가 백엔드 도메인을 ERR_BLOCKED_BY_CLIENT로 차단해 랭킹 UI 확인은 제한됐다. 별도 curl의 health/랭킹 API200(5행), CORS 사전 요청204 확인. 기존 사운드 설정은 음소거이며 청취/실기기 접근성 검수는 미수행.
+- STONE-MATCH-5/6을 위 배포 release에 연결하여 resolved 처리. 이전 미배포/unresolved 문구는 09-30 시점 이력이다. 근거: `tmp/sentry-deploy-20261001/`, `tmp/sentry-nas-20261001/`, PLAN-012 16절.
+
 ## Sentry 이슈 분석과 접근성 입력 멈춤 수정 (2026-09-30)
 
 - Sentry 이슈12개/이벤트29건 모두 QA 기록이며 검증용10개 resolved 처리. STONE-MATCH-5/6은 접근성 버튼 예외가 Flutter ClickDebouncer의 reset을 건너뛰어 후속 입력을 막는 문제로 재현했다.
