@@ -117,7 +117,8 @@ void main() {
       'NAME-SECRET',
       'QUERY-SECRET',
       'player_name',
-      '999',
+      // 숫자 999는 임의 event_id에도 나타날 수 있으므로 필드로 검사한다.
+      '"score"',
     ]) {
       expect(raw, isNot(contains(secret)), reason: secret);
     }

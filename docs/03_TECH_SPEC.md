@@ -419,9 +419,18 @@ Flutter App Shell
 
 ### 2-1. 큰 흐름
 
+접근성 입력 보호: `WidgetsFlutterBinding.ensureInitialized()` 직후
+`installSemanticsErrorGuard(binding)`를 한 번 설치한다. 기존
+`PlatformDispatcher.onSemanticsActionEvent`에 이벤트와 인자를 그대로 전달하고,
+동기 예외는 원본 예외/스택을 보존해 `FlutterError.reportError`로 보고한 뒤 정상 반환한다.
+Flutter 웹 `ClickDebouncer`의 입력 상태 정리가 예외 때문에 건너뛰어지는 것을 막는다.
+Sentry가 꺼진 빌드에도 적용하며, 수집이 켜졌으면 기존 `ErrorReporter`의 정제/중복 제한을 따른다.
+비동기 예외는 기존 zone 처리 범위다. 근거와 검증은 [PLAN-012 15절](plans/PLAN-012-crash-observability.md#15-sentry-이슈-분석과-접근성-입력-보호-2026-09-30)을 따른다.
+
 ```text
 main()
 ├─ WidgetsFlutterBinding.ensureInitialized()
+├─ installSemanticsErrorGuard(binding)
 ├─ if (kIsWeb) usePathUrlStrategy()
 ├─ EasyLocalization.ensureInitialized()
 ├─ StorageHelper.init()

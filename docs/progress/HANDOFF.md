@@ -1,5 +1,12 @@
 # Handoff
 
+## Sentry 이슈 분석과 접근성 입력 멈춤 수정 (2026-09-30)
+
+- Sentry 이슈12개/이벤트29건 모두 QA 기록이며 검증용10개 resolved 처리. STONE-MATCH-5/6은 접근성 버튼 예외가 Flutter ClickDebouncer의 reset을 건너뛰어 후속 입력을 막는 문제로 재현했다.
+- `lib/utils/semantics_error_guard.dart`와 main 시작 연결, 회귀 테스트2개 추가. 원본 예외는 FlutterError로 보고하고 엔진 입력 상태 정리를 진행한다. Sentry 비활성에도 적용한다.
+- 관련30테스트/전체 analyze/게임 release Wasm+JS 빌드 통과. 브라우저 수정 전 실패, 수정 후 JS/Wasm 후속 탭2회/오류1회와 수집 비활성 JS 복구 확인. 원격 테스트 이벤트 추가 없음.
+- 로컬 수정 완료이며 커밋/push/배포는 하지 않았다. 입력 오류2개는 unresolved 유지, 게시 후 운영 검증과 resolved 처리가 다음 단계다. 실기기 접근성 검수는 미수행. 상세: PLAN-012 15절, `tmp/sentry-triage-20260930/`.
+
 ## 도전 목표 미션 표제 (2026-09-30)
 
 - 사용자 제보에 따라 도전 스테이지 목표 줄 앞에 금색 미션 표제를 상시 표시한다. 색 아이콘/진행도와 함께 가운데 정렬하며 긴 번역은 안전 너비 안에 축소한다. 점수와 클리어 조건은 유지한다.

@@ -148,3 +148,15 @@
 - `.map`/`.env`는 ZIP0개, 인증 토큰은 앱에 넣지 않는다. source map은 기존 CLI 로그인으로 운영/QA 프로젝트에 비공개 업로드하며 동일 debug ID를 확인한다. 비공개 map에 Dart 원문을 포함한다.
 - 수집 endpoint 차단 상태에서 게임 화면 진입과 단1회 전송 시도 확인. 네이티브/모바일/토스 실기기 FPS/메모리, 호스트 강제종료, 알림 채널/재발 운영은 검증하지 않았다. 성능 추적 기능은 이번 승인 범위에서 제외했다.
 - 근거: `tmp/sentry-integration-20260929/`의 review/client-review.md, browser-wasm.json, browser-js-final.json, events-verified.json, geo-removal-verified.json, blocked-game.json/png, browser-nas.json, nas-event-verified.json, release/remote-verification.json.
+
+## 15. Sentry 이슈 분석과 접근성 입력 보호 (2026-09-30)
+
+- 두 프로젝트의 이슈 12개, 이벤트 29건 전체를 조회했다. 모두 09-29의 `environment=qa` 이벤트이며 조회 시점의 production 환경 이슈는 없다. 프로젝트 이름과 이벤트 환경을 구분한다.
+- STONE-MATCH-1/2/3/4/7과 STONE-MATCH-QA-1~5는 CLI 연결 확인, handled/sync/async/FlutterError, 합성 JS 예외 검증 10개다. 이전 PoC 소스와 검증 이벤트 ID, release, 스택을 대조한 뒤 resolved 처리했다. 이벤트를 삭제하거나 수집 필터를 추가하지 않았다.
+- [STONE-MATCH-5](https://tk-media-m3.sentry.io/issues/150203348/) 6건과 [STONE-MATCH-6](https://tk-media-m3.sentry.io/issues/150203353/) 2건은 구 PoC `stone-match-poc@20260929`의 `ClickDebouncer` 오류다. 현재 Flutter 3.47.5에서도 접근성 버튼의 동기 예외 뒤 후속 탭이 막히고 `null.a`/`null.toString` 오류가 나는 것을 재현했다. 기존 `ErrorReporter.run`만 적용한 경로도 실패한다.
+- 원인은 엔진 `onClick`이 `_state`를 비운 뒤 앱 접근성 콜백을 호출하고, 콜백 예외 때문에 뒤의 `reset()`에 도달하지 않는 것이다. 오류 수집 zone이 있어도 같은 zone에서 콜백을 실행하면 예외가 엔진 호출부까지 전파될 수 있다. SDK나 엔진 파일 자체는 수정하지 않는다.
+- 앱 바인딩 초기화 직후 `installSemanticsErrorGuard`를 설치한다. 기존 콜백과 이벤트 전달을 유지하고 동기 예외를 `FlutterError.reportError`로 넘긴 뒤 정상 반환한다. Sentry 설정이 없어도 입력 복구가 동작하며 원본 오류는 기존 수집 경로로 보고한다.
+- 회귀 테스트 2개를 추가했다. 실제 semantics 노드의 예외 한 번 보고/후속 동작 2회, 이벤트 객체와 인자 보존을 검증한다. 관련 테스트 총30개, 전체 `flutter analyze`, 실제 게임 release Wasm/JS 빌드 통과.
+- 브라우저 비교: 수정 전 JS는 오류 뒤 Count 0과 연쇄 TypeError. 수정 후 JS와 Wasm 각각 Count 2/captured 1. 수집 비활성 JS도 오류 뒤 Count 1/captured 0. 런타임은 실제 `main.dart.js`/`main.dart.wasm` 스택으로 확인했다. 가짜 DSN과 메모리 Transport를 사용하여 원격 QA 이벤트를 추가하지 않았다.
+- 코드 수정은 로컬 검증 완료, 운영 미배포다. STONE-MATCH-5/6은 배포 후 확인할 수 있도록 unresolved를 유지한다. 커밋/push/배포와 해당 2건의 resolved 처리는 후속 게시 범위다. 실제 VoiceOver/TalkBack 기기는 미검증이며 Wasm 원본 줄 기호화 제한도 그대로다.
+- 근거: `tmp/sentry-triage-20260930/`의 issues.json, event-audit.json, browser-comparison.json, resolved-test-issues.json, unresolved-*-project.json, tests.log, analyze.log, game-build.log. 임시 재현 앱/빌드는 같은 폴더에 보관한다.

@@ -18,6 +18,7 @@ import 'services/game_settings.dart';
 import 'services/gameplay_config_service.dart';
 import 'services/in_app_review_service.dart';
 import 'services/wakelock_service.dart';
+import 'utils/semantics_error_guard.dart';
 import 'utils/storage_helper.dart';
 import 'utils/web_loading.dart';
 
@@ -27,7 +28,8 @@ import 'utils/web_loading.dart';
 void main() => ErrorReporter.instance.run(_main);
 
 Future<void> _main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  installSemanticsErrorGuard(binding);
   AppConfig.validateStoreChannel();
   if (kIsWeb) {
     usePathUrlStrategy(); // /#/game → /game (hash 제거, path 기반 URL)
