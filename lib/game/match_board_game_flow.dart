@@ -57,7 +57,7 @@ extension MatchBoardGameFlow on MatchBoardGame {
   }
 
   void _resumeGameImpl() {
-    if (timeUp) return;
+    if (timeUp || isInPlayInventoryOpen) return;
     SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
     resumeEngine();
     overlays.remove('PauseMenu');
@@ -93,6 +93,7 @@ extension MatchBoardGameFlow on MatchBoardGame {
     overlays.remove('LevelCelebration');
     overlays.remove('LevelUp');
     overlays.remove('StageInventory');
+    _inventoryOpenedDuringPlay = false;
     overlays.remove('GameStats');
     timeUp = false;
     _lastHurrah = null;
@@ -205,13 +206,52 @@ extension MatchBoardGameFlow on MatchBoardGame {
   }
 
   void _showStageInventoryImpl() {
-    if (!overlays.isActive('StageInventory')) {
-      overlays.add('StageInventory');
+    if (!isProgressionMode || overlays.isActive('StageInventory')) return;
+    if (isPlaying) {
+      if (!canOpenInPlayInventory) return;
+      cancelItemTargeting();
+      board
+        ..clearHint()
+        ..cancelPendingHyperTap()
+        ..selected = null;
+      nextStageLoadoutDraft = stageLoadout;
+      _inventoryOpenedDuringPlay = true;
+      isPlaying = false;
+      SoundManager.pauseBgm(onlyIfCurrent: AssetPaths.bgmMain);
+      pauseEngine();
+    } else if (!overlays.isActive('LevelUp')) {
+      return;
     }
+    overlays.add('StageInventory');
   }
 
-  void _closeStageInventoryImpl() {
+  void _closeStageInventoryImpl({bool apply = false}) {
+    if (!overlays.isActive('StageInventory')) return;
     overlays.remove('StageInventory');
+    if (!_inventoryOpenedDuringPlay) return;
+    _inventoryOpenedDuringPlay = false;
+    if (apply) {
+      for (final slot in nextStageLoadoutDraft.slots) {
+        if (slot.item != null &&
+            slot.item != stageLoadout.slots[slot.index].item) {
+          logPlayEvent('item_equipped', {
+            'item_kind': slot.item!.name,
+            'slot_index': slot.index,
+          });
+        }
+      }
+      stageLoadout = nextStageLoadoutDraft;
+    } else {
+      nextStageLoadoutDraft = stageLoadout;
+    }
+    if (timeUp) return;
+    if (_inBackground || overlays.isActive('PauseMenu')) {
+      overlays.add('PauseMenu');
+      return;
+    }
+    SoundManager.resumeBgm(onlyIfCurrent: AssetPaths.bgmMain);
+    resumeEngine();
+    isPlaying = true;
   }
 
   void _shuffleBoardImpl() {

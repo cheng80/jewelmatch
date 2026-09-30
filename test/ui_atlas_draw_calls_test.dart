@@ -123,7 +123,8 @@ void main() {
       // ui atlas + 보석 텍스처 + HUD 글로우 atlas.
       expect(spy.images, hasLength(3));
       // 나인패치가 drawImageNine 1회에서 같은 텍스처 drawImageRect 9회로 는다.
-      expect(spy.imageDrawCalls, 32);
+      // 플레이 중 인벤토리 아이콘 1회 추가. 사각 프레임은 이미지 없이 그린다.
+      expect(spy.imageDrawCalls, 33);
       expect(spy.textureSwitches, 7);
     },
   );

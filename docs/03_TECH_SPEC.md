@@ -287,6 +287,8 @@ Base: https://cheng80.myqnapcloud.com/matchranking/ranking.php. `?action=list|to
 - 로컬 저장: shared_preferences. 모드별 베스트 스코어와 URL별 PocketBase 기기 자격정보/세션(PrefsPocketBaseSessionStore)
 - 캐시: PackageInfo 1회, 스프라이트 시트 preload, HUD Paint/TextPainter, 배경 Picture
 - 동기화 정책: 랭킹은 종료 시 제출. 재제출은 submitted=false일 때. 인벤토리 서버 동기화 없음
+- 플레이 중 인벤토리 (PLAN-014): `canOpenInPlayInventory`로 progression/playing/foreground/idle/입력 잠금/시작 낙하/연출/즉시형 확인 조건을 검사한다. `showStageInventory`가 현재 `stageLoadout`을 `nextStageLoadoutDraft`에 복사하고 타깃과 보드 선택을 취소, `isPlaying=false`와 `pauseEngine`으로 일시정지한다. `isInPlayInventoryOpen`으로 결과창 진입과 구분한다. `closeStageInventory(apply:true)`는 현재 장착에 편집안을 반영하고 실제로 달라진 슬롯의 `item_equipped`만 기록한다. 취소는 편집안을 현재 장착으로 되돌린다. 결과창 닫기는 다음 레벨 편집안을 유지한다. 플레이 중 광고 상태 조회/보충은 없다. 활성 오버레이 검사와 재시작 시 플래그 초기화로 중복 닫기와 오래된 콜백을 무시한다. 백그라운드 닫기는 PauseMenu로 전환한다. 시간 분류는 기존 paused 상태를 사용한다
+- HUD 인벤토리는 레벨 하단의 얇은 패널에서 기존 가방 아이콘과 40×40px 둥근 사각형 Flame 버튼으로 그린다. 프레임은 RRect(모서리8px), 청회색 채움 `0xFF20272C`와 일반 버튼 외곽과 같은 `JewelCandyLuminaTheme.outlineBright.withValues(alpha:0.95)` 금색 선(1.4px)이며 금색 원형 아틀라스 프레임은 이 버튼에서만 사용하지 않는다. 4슬롯과 버튼의 중심 높이를 맞추고 버튼 앞 20px 구간 중앙에 26px 세로 구분선을 그린다. 그룹을 패널에 중앙 정렬하며 슬롯 간격은 너비의 2.2%를 7~9px로 제한한다. 12px 좌우 여백, 버튼과 구분선 구간을 뺀 가로 너비로 슬롯 크기를 제한한다. 패널 높이는 큰 컨트롤 높이+양쪽 프레임 여백이며 아이템 줄의 이전 중앙 높이는 유지한다. 상단 HUD와 다른 모드 정책은 유지한다. `StageInventoryOverlay`의 PopScope/CallbackShortcuts가 시스템 뒤로가기와 Escape를 취소로 처리한다. 불투명 ColoredBox로 플레이 보드를 숨기고 scrollable 카드와 Wrap 버튼을 사용한다
 - 앱 시작: `BackendBootstrap.start()`를 기다리지 않고 호출해 익명 세션을 준비하고 `session_start`를 남긴다. 미설정 빌드는 아무것도 하지 않는다
 - 광고 일일 제한: StageInventory 오버레이가 열릴 때 `POST /ads/status`로 남은 횟수를 맞추고, 광고 완료 후 `POST /ads/claim`로 지급을 기록한다. 서버가 거절하면 지급하지 않고, 서버에 닿지 못하면 AdRewardPolicy 세션 메모리 제한(기본 3회, 날짜 바뀌면 리셋)으로 판단한다
 
