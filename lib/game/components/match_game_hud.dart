@@ -96,6 +96,7 @@ class MatchGameHud extends PositionComponent
   late Rect _pauseRect;
   late Rect _hintRect;
   late Rect _rankingRect;
+  Rect _inventoryRect = Rect.zero;
   late Rect _tutorialRect;
   late Rect _timeBarRect;
 
@@ -239,6 +240,14 @@ class MatchGameHud extends PositionComponent
   final Paint _untimedFillPaint = Paint()
     ..color = JewelCandyLuminaTheme.secondaryCyan.withValues(alpha: 0.14);
   final Paint _itemTrayPaint = Paint()..isAntiAlias = true;
+  final Paint _inventoryButtonPaint = Paint()
+    ..isAntiAlias = true
+    ..color = const Color(0xFF20272C);
+  final Paint _inventoryButtonStrokePaint = Paint()
+    ..isAntiAlias = true
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.4
+    ..color = JewelCandyLuminaTheme.outlineBright.withValues(alpha: 0.95);
   final Paint _itemTrayStrokePaint = Paint()
     ..isAntiAlias = true
     ..style = PaintingStyle.stroke;
@@ -566,6 +575,7 @@ class MatchGameHud extends PositionComponent
     _loadoutSlotRects.clear();
     _debugEffectPreviewRects.clear();
     _itemTrayRect = Rect.zero;
+    _inventoryRect = Rect.zero;
     final g = game;
     final left = g.safeContentLeft;
     final right = g.safeContentRight;
@@ -582,14 +592,24 @@ class MatchGameHud extends PositionComponent
 
     final phase2 = g.hudBottomPanel == MatchGameHudBottomPanel.inventory;
     final gap = phase2
-        ? math.max(13.0, g.hudScale * 0.15)
+        ? (width * 0.022).clamp(7.0, 9.0)
         : math.max(9.0, g.hudScale * 0.105);
     final rowGap = math.max(7.0, g.hudScale * 0.085);
+    const inventoryButtonSide = 40.0;
+    const inventorySectionGap = 20.0;
+    final preferredSlotSide = (g.hudScale * 0.74).clamp(52.0, 66.0);
     final slotSide = phase2
-        ? math.min((width - gap * 3) / 4, g.hudScale * 0.74).clamp(52.0, 66.0)
+        ? math.min(
+            (width - 24 - inventoryButtonSide - inventorySectionGap - gap * 3) /
+                4,
+            preferredSlotSide,
+          )
         : math.min((width - gap * 3) / 4, g.hudScale * 0.54).clamp(36.0, 48.0);
     final totalW = slotSide * 4 + gap * 3;
-    final gridLeft = alignLeft + (width - totalW) / 2;
+    final groupWidth = phase2
+        ? totalW + inventorySectionGap + inventoryButtonSide
+        : totalW;
+    final gridLeft = alignLeft + (width - groupWidth) / 2;
     final phaseOneSlotSide = math
         .min(
           (width - math.max(9.0, g.hudScale * 0.105) * 3) / 4,
@@ -599,23 +619,47 @@ class MatchGameHud extends PositionComponent
     final phaseOneTrayH = phaseOneSlotSide * 2 + rowGap;
     final rowCount = phase2 ? 1 : (slotCount + 3) ~/ 4;
     final totalH = phase2
-        ? math.max(phaseOneTrayH, slotSide)
+        ? math.max(slotSide, inventoryButtonSide)
         : slotSide * rowCount + rowGap;
-    final trayPadY = math.max(4.0, g.hudScale * 0.055);
+    final trayPadY = phase2
+        ? math.max(6.0, slotSide * 0.08 + 3)
+        : math.max(4.0, g.hudScale * 0.055);
     final frameOverhang = slotSide * 0.08;
     final bottom =
         size.y -
         g.safeAreaPadding.bottom -
         math.max(5.0, gap) -
         math.max(trayPadY, frameOverhang);
-    final top = bottom - totalH;
-    final slotTop = phase2 ? top + (totalH - slotSide) / 2 : top;
+    // 패널의 빈 공간만 줄이고 아이템 줄은 이전 중앙 높이를 유지한다.
+    final previousSlotSide = math
+        .min(
+          (width - math.max(13.0, g.hudScale * 0.15) * 3) / 4,
+          preferredSlotSide,
+        )
+        .clamp(52.0, 66.0);
+    final toolbarCenterY =
+        size.y -
+        g.safeAreaPadding.bottom -
+        math.max(13.0, g.hudScale * 0.15) -
+        math.max(math.max(4.0, g.hudScale * 0.055), previousSlotSide * 0.08) -
+        math.max(phaseOneTrayH, previousSlotSide) / 2;
+    final top = phase2 ? toolbarCenterY - totalH / 2 : bottom - totalH;
+    final slotTop = top + (phase2 ? (totalH - slotSide) / 2 : 0);
     _itemTrayRect = Rect.fromLTWH(
       alignLeft,
       top - trayPadY,
       width,
       totalH + trayPadY * 2,
     );
+
+    if (phase2) {
+      _inventoryRect = Rect.fromLTWH(
+        gridLeft + totalW + inventorySectionGap,
+        toolbarCenterY - inventoryButtonSide / 2,
+        inventoryButtonSide,
+        inventoryButtonSide,
+      );
+    }
 
     for (var i = 0; i < slotCount; i++) {
       final row = phase2 ? 0 : i ~/ 4;
@@ -711,6 +755,10 @@ class MatchGameHud extends PositionComponent
     );
   }
 
+  @visibleForTesting
+  Map<int, Rect> debugReadLoadoutSlotRects() =>
+      Map<int, Rect>.unmodifiable(_loadoutSlotRects);
+
   Map<ItemKind, Rect> debugReadItemSlotRects() =>
       Map<ItemKind, Rect>.unmodifiable(_itemRects);
 
@@ -736,6 +784,7 @@ class MatchGameHud extends PositionComponent
     'pause': _pauseRect,
     'hint': _hintRect,
     'ranking': _rankingRect,
+    'inventory': _inventoryRect,
     'tutorial': _tutorialRect,
   };
 

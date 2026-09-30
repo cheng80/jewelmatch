@@ -254,6 +254,7 @@ extension _MatchGameHudInteractions on MatchGameHud {
     if (onRankingPressed != null && _rankingRect.width > 0) {
       _drawRankingButton(canvas);
     }
+    _drawInventoryButton(canvas);
     _drawPause(canvas);
   }
 
@@ -331,6 +332,7 @@ extension _MatchGameHudInteractions on MatchGameHud {
   bool _isUiButton(Vector2 p) {
     final o = Offset(p.x, p.y);
     return _pauseRect.contains(o) ||
+        _inventoryRect.contains(o) ||
         (game.hasPendingImmediateItemConfirm && _itemConfirmRect.contains(o)) ||
         _hintRect.contains(o) ||
         (onRankingPressed != null &&
@@ -364,6 +366,13 @@ extension _MatchGameHudInteractions on MatchGameHud {
           return true;
         }
       }
+    }
+    if (_inventoryRect.contains(o)) {
+      if (game.canOpenInPlayInventory) {
+        _pressButton(_inventoryRect, withSound: true);
+        game.showStageInventory();
+      }
+      return true;
     }
     if (_pauseRect.contains(o)) {
       _pressButton(_pauseRect, withSound: true);

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../ads/ad_reward_policy.dart';
 import '../../ads/ad_service.dart';
@@ -33,6 +34,7 @@ class StageInventoryOverlay extends StatefulWidget {
 }
 
 class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
+  final FocusNode _inventoryFocus = FocusNode();
   int _selectedLoadoutSlot = 0;
   ItemKind? _selectedRefillItem;
   bool _showingAd = false;
@@ -42,11 +44,22 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _inventoryFocus.requestFocus();
+    });
     final unlocked = widget.game.recentlyUnlockedLoadoutSlotIndices;
     if (unlocked.isNotEmpty) {
       _selectedLoadoutSlot = unlocked.first;
     }
-    unawaited(_syncRefillStatus());
+    if (!widget.game.isInPlayInventoryOpen) {
+      unawaited(_syncRefillStatus());
+    }
+  }
+
+  @override
+  void dispose() {
+    _inventoryFocus.dispose();
+    super.dispose();
   }
 
   Future<void> _syncRefillStatus() async {
@@ -103,7 +116,9 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
   @override
   Widget build(BuildContext context) {
     final game = widget.game;
-    return LuminaOverlayCard(
+    final inPlay = game.isInPlayInventoryOpen;
+    final card = LuminaOverlayCard(
+      scrollable: true,
       borderColor: JewelCandyLuminaTheme.goldStrong,
       shadowColor: JewelCandyLuminaTheme.tertiaryGold,
       maxCardWidth: 390,
@@ -131,6 +146,17 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
               ),
             ),
           ),
+          if (inPlay) ...[
+            Text(
+              context.tr('inventoryPausedHint'),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: JewelCandyLuminaTheme.textParchment,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
           const SizedBox(height: 10),
           if (game.hasPendingStageInventoryUnlock) ...[
             _UnlockNotice(
@@ -140,6 +166,7 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
           ],
           _StageInventoryLoadout(
             game: game,
+            inPlay: inPlay,
             selectedSlotIndex: _selectedLoadoutSlot,
             selectedRefillItem: _selectedRefillItem,
             onSelectSlot: (slotIndex) {
@@ -151,8 +178,9 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
               });
             },
             onSelectEmptyItem: (item) {
-              if (widget.adService.rewardedState ==
-                  RewardedAdState.unavailable) {
+              if (inPlay ||
+                  widget.adService.rewardedState ==
+                      RewardedAdState.unavailable) {
                 return;
               }
               setState(() {
@@ -224,14 +252,56 @@ class _StageInventoryOverlayState extends State<StageInventoryOverlay> {
             ),
           ],
           const SizedBox(height: 14),
-          _CloseInventoryButton(
-            onPressed: () {
-              SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-              runOverlayExit(context, () => game.closeStageInventory());
-            },
-          ),
+          if (inPlay)
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _CloseInventoryButton(
+                  labelKey: 'cancel',
+                  onPressed: () => _close(context),
+                ),
+                _CloseInventoryButton(
+                  labelKey: 'inventoryApplyResume',
+                  onPressed: () => _close(context, apply: true),
+                ),
+              ],
+            )
+          else
+            _CloseInventoryButton(onPressed: () => _close(context)),
         ],
       ),
+    );
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && !_showingAd) _close(context);
+      },
+      child: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.escape): () {
+            if (!_showingAd) _close(context);
+          },
+        },
+        child: Focus(
+          focusNode: _inventoryFocus,
+          child: inPlay
+              ? ColoredBox(
+                  color: JewelCandyLuminaTheme.surfaceContainer,
+                  child: card,
+                )
+              : card,
+        ),
+      ),
+    );
+  }
+
+  void _close(BuildContext context, {bool apply = false}) {
+    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    runOverlayExit(
+      context,
+      () => widget.game.closeStageInventory(apply: apply),
     );
   }
 }
@@ -289,6 +359,7 @@ class _UnlockNotice extends StatelessWidget {
 class _StageInventoryLoadout extends StatelessWidget {
   const _StageInventoryLoadout({
     required this.game,
+    required this.inPlay,
     required this.selectedSlotIndex,
     required this.selectedRefillItem,
     required this.onSelectSlot,
@@ -297,6 +368,7 @@ class _StageInventoryLoadout extends StatelessWidget {
   });
 
   final MatchBoardGame game;
+  final bool inPlay;
   final int selectedSlotIndex;
   final ItemKind? selectedRefillItem;
   final ValueChanged<int> onSelectSlot;
@@ -311,7 +383,7 @@ class _StageInventoryLoadout extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          context.tr('stageLoadoutTitle'),
+          context.tr(inPlay ? 'inventoryCurrentLoadout' : 'stageLoadoutTitle'),
           textAlign: TextAlign.center,
           style: TextStyle(
             color: JewelCandyLuminaTheme.goldStrong,
@@ -642,9 +714,13 @@ class _InventoryPanel extends StatelessWidget {
 }
 
 class _CloseInventoryButton extends StatelessWidget {
-  const _CloseInventoryButton({required this.onPressed});
+  const _CloseInventoryButton({
+    required this.onPressed,
+    this.labelKey = 'close',
+  });
 
   final VoidCallback onPressed;
+  final String labelKey;
 
   @override
   Widget build(BuildContext context) {
@@ -666,7 +742,7 @@ class _CloseInventoryButton extends StatelessWidget {
           ),
         ),
         child: Text(
-          context.tr('close'),
+          context.tr(labelKey),
           style: TextStyle(
             color: JewelCandyLuminaTheme.tertiaryGold,
             fontSize: 14,

@@ -218,6 +218,19 @@ class MatchBoardGame extends FlameGame {
   late RunInventory runInventory;
   late StageLoadout stageLoadout;
   late StageLoadout nextStageLoadoutDraft;
+  bool _inventoryOpenedDuringPlay = false;
+  bool get isInPlayInventoryOpen => _inventoryOpenedDuringPlay;
+
+  bool get canOpenInPlayInventory =>
+      isProgressionMode &&
+      isPlaying &&
+      !timeUp &&
+      !_inBackground &&
+      !board.inputLocked &&
+      !board.introFillInProgress &&
+      board.state == 'idle' &&
+      !hasActiveVisualEffects &&
+      !hasPendingImmediateItemConfirm;
   List<StageRewardGrant> latestStageRewards = const [];
   int stageLoadoutOpenSlotCount = StageLoadout.phase2InitialOpenSlotCount;
   List<int> recentlyUnlockedLoadoutSlotIndices = const [];
@@ -677,7 +690,8 @@ class MatchBoardGame extends FlameGame {
   void showLevelUpPopupAfterCelebration() =>
       _showLevelUpPopupAfterCelebrationImpl();
   void showStageInventory() => _showStageInventoryImpl();
-  void closeStageInventory() => _closeStageInventoryImpl();
+  void closeStageInventory({bool apply = false}) =>
+      _closeStageInventoryImpl(apply: apply);
 
   @override
   void lifecycleStateChange(AppLifecycleState state) {
@@ -875,7 +889,7 @@ class MatchBoardGame extends FlameGame {
       isAllowed: isItemEnabled,
     );
     final changed = !identical(before, nextStageLoadoutDraft);
-    if (changed) {
+    if (changed && !isInPlayInventoryOpen) {
       logPlayEvent('item_equipped', {
         'item_kind': item.name,
         'slot_index': slotIndex,

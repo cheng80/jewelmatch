@@ -114,6 +114,30 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
     if (pressed) canvas.restore();
   }
 
+  void _drawInventoryButton(Canvas canvas) {
+    final r = _inventoryRect;
+    if (r.isEmpty) return;
+    canvas.drawLine(
+      Offset(r.left - 10, r.center.dy - 13),
+      Offset(r.left - 10, r.center.dy + 13),
+      _itemTrayGroovePaint,
+    );
+    final pressed = _pushPressScale(canvas, r);
+    final frame = RRect.fromRectAndRadius(
+      r.deflate(0.7),
+      const Radius.circular(8),
+    );
+    canvas.drawRRect(frame, _inventoryButtonPaint);
+    canvas.drawRRect(frame, _inventoryButtonStrokePaint);
+    _drawButtonIcon(
+      canvas,
+      r,
+      _uiAtlas?[UiFrames.modeIconInventory],
+      sizeFactor: 0.70,
+    );
+    if (pressed) canvas.restore();
+  }
+
   void _drawPause(Canvas canvas) {
     final r = _pauseRect;
     final pressed = _pushPressScale(canvas, r);
@@ -141,8 +165,12 @@ extension _MatchGameHudButtonRenderer on MatchGameHud {
         continue;
       }
       final item = slot.item;
-      if (slot.locked || item == null) {
+      if (slot.locked) {
         _drawLockedItemSlot(canvas, r);
+        continue;
+      }
+      if (item == null) {
+        _drawIconButtonFrame(canvas, r);
         continue;
       }
       _drawItemSlot(
