@@ -1,5 +1,9 @@
 # Tech Spec
 
+## 타임 모드 플레이 검증 도구
+
+`tools/play_bot_vision.mjs`는 PhoneFrame/MatchBoardGameLayout 좌표와 PNG 보석 색으로 인접 매치를 찾는다. 운영 검증은 QA query/hash 없이 실제 포인터 입력을 사용하고, 낙하가 멈춘 보드 변화와 양수 결과 점수를 확인한다. 결과 점수 count-up 중간값은 종료 문구 후 최소 3초, 같은 값 유지 1초 조건으로 제외한다. 에고 입력은 네이티브 래퍼의 초점/일시정지 문제를 진단한 뒤 CDP mouse 이벤트를 사용한다. 별도 브라우저 QA 검증에서만 기존 QA 브리지의 읽기 API를 사용한다. 실행과 수집 판정 계약은 [플레이 봇 안내](../tools/PLAY_BOT.md)에 있다.
+
 > TRD + Data Model + API Spec을 통합한 기술 Source of Truth다.
 > 시스템의 HOW와 기술 계약만 기록한다.
 
