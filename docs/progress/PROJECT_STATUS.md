@@ -1,5 +1,20 @@
 # Project Status
 
+## PocketBase 백업 정리 (2026-10-02)
+
+- Mac mini의 Stone Match DB 백업은 `/Users/cheng80/Servers/backups/stonematch-verify-admin-20261002-072402-6db8fed9/` 1개뿐이었다. 최신 DB2개와 `before.json`을 보존하고, 백업 검증 과정에서 생긴 빈 WAL2개와 SHM2개(합계65536바이트)를 제거했다. 백업을 사용하는 프로세스가 없고 WAL이 비어 있음을 먼저 확인했다.
+- 정리 전후 두 DB의 `integrity_check=ok`, 최초 백업 SHA256 일치와8090 health200을 확인했다. pixeltown 백업, 실행 중 DB, 검증 관리자 자격 파일과 기존 이관/배포 근거는 보존했다.
+- 등록 도구가 완료된 백업 사본만 `mode=ro&immutable=1`로 검증하도록 수정했다. 실행 중 원본 DB는 기존 `sqlite3 .backup`을 사용한다. 로컬 WAL DB 온라인 백업 실행 검증에서 내용/권한 보존과 WAL/SHM 생성0개, 자격 파일 단위5테스트와 구문 검사 통과. 보고서는 `tmp/backup-cleanup-20261002/`에 있다. 커밋/push 미수행.
+
+## 검증 전용 PocketBase 관리자 적용 (2026-10-02)
+
+- 사용자 요청으로8090의 `verify-admin@stonematch.local`을 생성했다. 작업 PC에서24바이트 무작위 암호를 만든 뒤 Git 제외 `pocketbase/.local/remote-admin.env`의 REMOTE_ADMIN_EMAIL/REMOTE_ADMIN_PASSWORD에만 저장했다. 파일0600, 부모 폴더0700. 암호는 SSH stdin JSON으로만 전달하고 화면/로그/명령 인자에 출력하지 않았다.
+- 등록 전 실행 중 data.db/auxiliary.db를 `sqlite3 .backup`으로 `/Users/cheng80/Servers/backups/stonematch-verify-admin-20261002-072402-6db8fed9/`에 백업했다. 각각 integrity_check=ok와 SHA256, 백업 폴더0700/파일0600 확인. 서버 SDK0.26.9가 기존 관리자 권한으로 검증 계정만 생성했다. 기존 소유자는 등록에만 사용했으며 암호와 전체 레코드 해시가 변경되지 않았다. 검증에는 소유자 자격정보를 읽거나 대체하지 않는다.
+- 재사용 명령 `pb:verify-admin:provision`, `pb:verify-admin:check`, 파일 권한/계정 분리 단위 테스트와 [실행 안내](../../tools/pocketbase/VERIFICATION_ADMIN.md)를 추가했다. 등록 도구는 이미 있는 검증 계정만 update한다. 실제 운영에서는 create 경로를 검증했으며 update로 암호를 다시 갱신하는 운영 재실행은 하지 않았다.
+- 원격11검증 통과: 검증 계정 로그인, 공개 관리자 화면 셸200, 관리자 전용 컬렉션200, 대시보드 관리자 API200, 다른 Origin403, 미로그인/일반 플레이어/잘못된 토큰 각각401, 틀린 암호400(PocketBase 원래 계약), superuser 이메일 목록 확인, 임시 플레이어 정리. 관리자 계정 파일/권한 단위5테스트와 기존 플레이 봇4테스트 통과. 관리자 화면 셸은 공개 SPA이므로200을 로그인 성공으로 간주하지 않고 인증/API를 별도로 확인했다.
+- 일반 사용자 거절 검증 때 만든 sm_players 계정은 정확한 ID로 삭제했다. 기존 users/tasks/랭킹 기록, 광고 지급과 서버 훅/서비스/터널 설정은 변경하지 않았다. 현재 저장 전용 서비스 superuser가 없어 관리 화면 로그인 거부 분리는 적용 대상 없음. pixeltown8091/2567은 변경하지 않았다. 이미 설치된 Node 바이너리는 읽기만 해 Stone Match `.local/verification-admin/`에 복사했고 이후에는 해당 사본을 재사용한다.
+- 최종 superuser는 `cheng80@gmail.com`, `verify-admin@stonematch.local` 두 명이다. 계정과 로컬 자격 파일은 후속 검증을 위해 보존했다. 폐기 절차는 실행 안내를 따른다. 보고서는 `tmp/verification-admin-20261002/`에 있다. 이번 요청의 코드/문서 변경은 로컬에 준비했으며 커밋/push와 게임/대시보드 재배포는 하지 않았다.
+
 ## NAS 운영 배포와 기존 PocketBase 주소 정리 완료 (2026-10-02)
 
 - 사용자 후속 승인으로 깨끗하고 원격과 일치하는 main `d0ee39f`에서 `tools/deploy_match_web.sh --output-dir tmp/pb-nas-production-20261002`를 실행했다. 플레이 자동화 도구는 PR https://github.com/cheng80/jewelmatch/pull/22 로 main 반영 완료다.

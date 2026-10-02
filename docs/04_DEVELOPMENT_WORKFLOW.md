@@ -1313,5 +1313,9 @@ xcrun devicectl device install app --device <DEVICE_ID> build/ios/iphoneos/Runne
 - 서비스만 재시작할 때는 해당 호스트에서 `launchctl kickstart -k gui/501/com.fastmake.stonematch.pocketbase`. 로그인 전 부팅 자동 시작은 LaunchAgent의 보장 범위가 아니다. 실제 재부팅을 검증한 것으로 보고하지 않는다.
 - 복구는 서비스 중지 후 현재 폴더도 별도 보존하고 일관된 백업을 복원하는 방식이다. 운영에서 `migrate down`은 sm_* 데이터를 삭제하므로 복구 명령으로 사용하지 않는다. 새 PB 기록이 생긴 이후에는 원본/신규 데이터 보존과 역이관을 먼저 검토한다.
 - 전환 후 구 탭이 Supabase에 쓰는 경우 `export_snapshot.sql`로 새 읽기 전용 스냅샷을 만들고 importer dry-run → apply → 재실행 변경 0건 확인한다. legacy_id로 중복을 막고 순번 충돌은 최대 5회 재조회/재시도한다. 원본에서 삭제된 행은 자동 삭제하지 않는다. 신규 이벤트가 많으면 전체 재조회 방식이 느릴 수 있다.
-- 관리자 환경변수는 Git 제외 .env.pocketbase에만 두고, 임시 SSH 터널용 자격 파일은 작업 후 삭제한다. 원본 export와 로컬 runtime DB에는 비공개 이력이 있으므로 tmp 아래 제한된 권한으로 관리한다. API Rules의 빈 문자열은 공개 허용이므로 잠금 해제 용도로 임의 변경하지 않는다.
+- 유지보수/등록용 관리자 환경변수는 Git 제외 .env.pocketbase, 운영 검증용은 Git 제외 pocketbase/.local/remote-admin.env(0600)에 분리하고, 임시 SSH 터널용 자격 파일은 작업 후 삭제한다. 원본 export와 로컬 runtime DB에는 비공개 이력이 있으므로 tmp 아래 제한된 권한으로 관리한다. API Rules의 빈 문자열은 공개 허용이므로 잠금 해제 용도로 임의 변경하지 않는다.
 - 협업은 사용자가 지정한 Orca CLI orchestration을 사용한다. Codex 외부 세션은 자신이 만든 백그라운드 coordinator 터미널 handle로 Run을 연결할 수 있다. 다른 터미널의 handle을 빌리거나 내부 subagent로 조용히 대체하지 않는다. 브라우저는 `/Users/cheng80/.local/bin/ego-browser` CLI만 사용한다.
+
+## PocketBase 검증 전용 관리자 (2026-10-02)
+
+운영 관리 경로 테스트는 소유자가 아닌 `verify-admin@stonematch.local`로 실행한다. `pocketbase/.local/remote-admin.env`는 Git 제외0600이며24바이트 무작위 암호를 보관한다. `npm run pb:verify-admin:check`는 이 파일만 읽으며 소유자 `.env.pocketbase`로 대체하지 않는다. 등록/갱신은 `npm run pb:verify-admin:provision`이고 먼저8090의 두 SQLite DB를 `.backup`한다. 암호는 SSH stdin JSON으로 서버 SDK에 전달하며 CLI 인자/출력에 넣지 않는다. 실행과 실제 HTTP 계약, 서비스 계정 분리 조건 및 폐기는 [검증 관리자 안내](../tools/pocketbase/VERIFICATION_ADMIN.md)를 따른다.

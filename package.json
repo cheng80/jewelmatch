@@ -11,7 +11,10 @@
     "build:flutter:intoss:test": "backend=$(bash tools/backend_define.sh) && flutter build web --release --base-href / --wasm --no-web-resources-cdn --no-source-maps --dart-define=STORE_CHANNEL=intoss --dart-define=INTOSS_AD_MODE=test $backend && npm run build:ad-bridge",
     "build:intoss:test": "npm run build:flutter:intoss:test && ait build",
     "build:flutter:intoss": "test -n \"$INTOSS_REWARDED_AD_GROUP_ID\" && test -n \"$INTOSS_BANNER_AD_GROUP_ID\" && bash tools/backend_define.sh --required > /dev/null && flutter build web --release --base-href / --wasm --no-web-resources-cdn --no-source-maps --dart-define=STORE_CHANNEL=intoss --dart-define=INTOSS_AD_MODE=production --dart-define=INTOSS_REWARDED_AD_GROUP_ID=$INTOSS_REWARDED_AD_GROUP_ID --dart-define=INTOSS_BANNER_AD_GROUP_ID=$INTOSS_BANNER_AD_GROUP_ID $(bash tools/backend_define.sh --required) && npm run build:ad-bridge",
-    "build:intoss": "npm run build:flutter:intoss && ait build"
+    "build:intoss": "npm run build:flutter:intoss && ait build",
+    "pb:verify-admin:provision": "node tools/pocketbase/verification_admin.mjs provision",
+    "pb:verify-admin:check": "node tools/pocketbase/verification_admin.mjs check",
+    "test:verify-admin": "node --test tools/pocketbase/verification_admin.test.mjs"
   },
   "dependencies": {
     "@apps-in-toss/web-framework": "3.0.3"
@@ -19,6 +22,7 @@
   "devDependencies": {
     "esbuild": "0.28.2",
     "playwright-core": "1.63.0",
-    "pngjs": "7.0.0"
+    "pngjs": "7.0.0",
+    "pocketbase": "0.26.9"
   }
 }

@@ -203,5 +203,8 @@ config/supabase.json
 config/pocketbase.json
 config/ga4.json
 
+# 검증 전용 관리자 자격정보와 로컬 운영 파일
+pocketbase/.local/
+
 # 번들 밖 레거시 원본 이미지(아틀라스 원본 포함). 로컬에만 둔다.
 assets/design/legacy/

@@ -37,7 +37,7 @@ Stone Match는 Flutter와 Flame 기반 8×8 매치 3 퍼즐 게임이다.
 - TimeUp 진입 또는 일시정지 나가기에서 제출한다. Pause 나가기는 await, TimeUp 나가기는 기다리지 않는다. BR-093, [ADR-007](decisions/ADR-007-ranking-submit-timing.md)
 - 랭킹 장애가 플레이/나가기를 막지 않는다. BR-002
 - NAS 랭킹 `matchranking/ranking.php`는 2026-09-24 폐기해 저장소에서 제거했다. 새로 만들거나 빌드와 ZIP에 넣지 않는다.
-- 게임 내 랭킹, 보충 광고 제한, 이벤트 로그는 PLAN-013에서 PocketBase로 이전한다(ADR-010). 새 빌드는 Git 제외 config/pocketbase.json의 공개 URL을 사용한다. 관리자 자격정보는 Git 제외 .env.pocketbase에만 두고 앱 빌드에 포함하지 않는다. 현재 앱/빌드에 Supabase 경로를 두지 않는다. 원본 데이터와 과거 SQL은 이력으로만 보존한다.
+- 게임 내 랭킹, 보충 광고 제한, 이벤트 로그는 PLAN-013에서 PocketBase로 이전한다(ADR-010). 새 빌드는 Git 제외 config/pocketbase.json의 공개 URL을 사용한다. 운영 유지보수/등록용 관리자 자격정보는 Git 제외 .env.pocketbase, 운영 검증용은 pocketbase/.local/remote-admin.env(0600)에 분리한다. 소유자 계정은 검증하지 않으며 두 파일 모두 앱 빌드에 포함하지 않는다. 현재 앱/빌드에 Supabase 경로를 두지 않는다. 원본 데이터와 과거 SQL은 이력으로만 보존한다.
 - 운영 랭킹 초기화는 승인, 백업, dry-run, 예상 건수, 사후 조회 순서다.
 - Riverpod codegen을 새로 도입하지 않는다.
 - 실시간 HUD는 Flame 구성요소를 우선한다.
