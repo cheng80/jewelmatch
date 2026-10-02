@@ -110,8 +110,14 @@ class MemoryPocketBaseSessionStore implements PocketBaseSessionStore {
 
 class PrefsPocketBaseSessionStore implements PocketBaseSessionStore {
   const PrefsPocketBaseSessionStore();
-  static String keyFor(String scope) =>
-      'pocketbase.identity.v1.${Uri.encodeComponent(scope)}';
+  static String keyFor(String scope) {
+    // 동일한 운영 DB의 도메인 변경으로 기기 사용자와 광고 한도가 초기화되지 않게 한다.
+    final storageScope = scope == 'https://stonematch-pb.fastmake.net'
+        ? 'https://stonematch.fastmake.net'
+        : scope;
+    return 'pocketbase.identity.v1.${Uri.encodeComponent(storageScope)}';
+  }
+
   @override
   Future<PocketBaseIdentity?> readLatest(String scope) async {
     final prefs = await SharedPreferences.getInstance();

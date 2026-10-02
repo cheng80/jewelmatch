@@ -16,7 +16,7 @@ PLAN-009 Step 4, GA4/Sentry, 가입 UI와 영속 인벤토리는 이 작업에 �
 ## 2. 확인한 현재 상태
 
 - 앱은 `http` 기반 `SupabaseGateway`를 사용한다. 랭킹만이 아니라 `BackendBootstrap`, `EventLogger`, `GameplayConfigService`, `SupabaseAdRefillLimitBackend`가 의존한다.
-- PocketBase 주소는 `https://stonematch.fastmake.net`, 관리자 정보는 Git 제외 `.env.pocketbase`다. 클라이언트는 관리자 자격정보를 사용하지 않는다.
+- PocketBase 주소는 `https://stonematch-pb.fastmake.net`, 관리자 정보는 Git 제외 `.env.pocketbase`다. 클라이언트는 관리자 자격정보를 사용하지 않는다.
 - 기존 PocketBase 일반 컬렉션은 `users`, `tasks`다. 기존 데이터와 설정을 삭제하거나 용도를 바꾸지 않는다.
 - 관리 화면 JS에 `PocketBase v0.39.7` 표시를 확인했다. 실행 파일의 실제 `--version`과 설치 경로, 실행/재시작 방식은 서버 접근 후 확인한다. 공식 문서의 최신 버전을 원격 서버 버전으로 간주하지 않는다.
 - 2026-09-29 원본 조회: ranking_entries 11행(time 10, level 1), game_events 353행, ad_refill_claims 0행, app_config 3행(ads/gameplay/ranking), 익명 사용자 38명. 이 수치는 조사 시점이며 실제 이전 직전 다시 조회한다.

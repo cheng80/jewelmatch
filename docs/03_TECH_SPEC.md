@@ -135,7 +135,7 @@ StorageKeys: bgm/sfx volume·mute, keepScreenOn, showFps, best scores by mode, p
 
 - 선택: `BackendSelector`는 `config/pocketbase.json`의 `POCKETBASE_URL`을 사용한다. 없으면 서버 기능을 notConfigured로 처리하고 플레이를 유지한다. Supabase 대체 경로는 없다.
 - 주소: `/api/stone-match`. 비공개 호출은 `Authorization: <PocketBase token>`이다. 앱에는 관리자 이메일/비밀번호/토큰이 들어가지 않는다.
-- 인증: `POST /auth/guest`에 안전한 난수 `device_id`(32자리 hex), `device_secret`(64자리 hex)를 전달한다. 응답 `{token, record:{id}, expires_in:604800}`. 처음 발급 후 같은 자격정보로 재인증한다. 기기에 먼저 영속 저장하며 URL별 저장 키를 분리한다. Supabase의 refresh token은 사용하지 않는다.
+- 인증: `POST /auth/guest`에 안전한 난수 `device_id`(32자리 hex), `device_secret`(64자리 hex)를 전달한다. 응답 `{token, record:{id}, expires_in:604800}`. 처음 발급 후 같은 자격정보로 재인증한다. 기기에 먼저 영속 저장하며 URL별 저장 키를 분리한다. 동일한 운영 DB의 `https://stonematch-pb.fastmake.net`은 이전 `https://stonematch.fastmake.net`의 저장 키를 공유해 기기 사용자, 토큰과 광고 한도를 보존한다. 다른 URL과 경로는 공유하지 않는다. Supabase의 refresh token은 사용하지 않는다.
 - 기존 Supabase 사용자는 사용자 승인에 따라 연결하지 않는다. 기존 랭킹/이벤트의 ID와 등록 시각은 이력으로 보존한다. 새 계정 발급은 로컬 게임 기록 초기화와 다르다.
 - 권한: `sm_*` 컬렉션 직접 CRUD는 관리자 전용이다. 플레이어는 전용 API만 사용한다. 공개 응답에는 사용자 ID나 설치 비밀값을 넣지 않는다.
 - API Rules: `sm_players`, `sm_rankings`, `sm_ad_claims`, `sm_events`, `sm_config`, `sm_daily_metrics`의 `listRule/viewRule/createRule/updateRule/deleteRule`은 전부 `null`(Locked)이다. 빈 문자열은 공개 허용이므로 사용하지 않는다. `sm_players.authRule/manageRule`도 `null`이며 password/OAuth2/OTP 인증은 비활성화한다. 익명 복구는 전용 guest API만 사용한다.
