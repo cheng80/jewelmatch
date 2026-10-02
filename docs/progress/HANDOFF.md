@@ -1,5 +1,13 @@
 # Handoff
 
+## PocketBase 전용 도메인 변경 (2026-10-02)
+
+- 기본 API `https://stonematch-pb.fastmake.net`, 관리 화면 `https://stonematch-pb.fastmake.net/_/`. 기존 mac-mini 8090/DB를 재사용하며 새 프록시 CNAME과 ingress만 추가했다. preview와 모든 pixeltown 경로는 변경 전과 일치한다. 이전 `stonematch.fastmake.net`은 현재 운영 배포본 호환용이므로 소비자 전환 전 제거하지 않는다.
+- 게임 공개 설정과 게임/대시보드 관리자 환경 파일 URL, 대시보드 API/서버 auth-refresh/CSP를 갱신했다. `PrefsPocketBaseSessionStore.keyFor`는 새 운영 URL만 이전 키에 대응시켜 도메인 변경으로 새 기기 사용자가 생성되거나 광고 한도가 초기화되지 않게 한다. 새 URL에서 갱신한 세션은 이전 탭에서도 공유한다.
+- 양쪽 관리 인증/공개 API200, CORS204, 랭킹6행/gameplay/컬렉션 일치. Flutter28/define42, 전체 analyze, 새 주소 QA release Wasm/JS 빌드, 대시보드86/빌드, 에고 로컬 CSP와 새 호스트 health/랭킹200 통과. 운영 데이터 쓰기/삭제와 실기기 플레이 검증은 수행하지 않았다.
+- 도메인 연결 시점에는 커밋/push/게임 NAS 배포/대시보드 Pages 배포가 미수행이었다. 기존 플레이 봇과 대시보드 자동 로그인 미커밋 변경을 보존했다. 다음 게시에서 두 소비자를 전환해야 하며, 이번 로컬 게임 산출물은 QA 빌드이므로 그대로 운영에 올리지 않는다. 변경 전/후 tunnel 설정과 검증은 `tmp/pocketbase-domain-20261002/`에 있다.
+- 후속 사용자 승인으로 두 저장소의 도메인 변경을 커밋/push하고 PR을 스쿼시하여 main에 반영한다. 대시보드는 이미 운영 배포된 자동 로그인 코드를 기반 커밋으로 함께 게시해 main 자동 배포 시 회귀를 방지한다. 게임 플레이 봇 변경은 로컬에 보존하고 NAS 게임 재배포는 이번 요청 범위에 포함하지 않는다.
+
 ## 플레이 중 인벤토리 NAS 배포 완료 (2026-10-01)
 
 - 사용자 요청에 따라 기능 커밋 `a3dad54`를 push하고 PR https://github.com/cheng80/jewelmatch/pull/20 을 스쿼시 병합했다. main 제품 커밋 `11194c4`, 기존 레벨 랭킹 검증 문서 기록 보존 확인. GitHub Actions 워크플로와 필수 CI는 없으며 전체632테스트 통과(기존2건 skip), 전체 analyze와 release Wasm/JS 빌드를 확인했다.

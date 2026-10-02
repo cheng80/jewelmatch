@@ -483,6 +483,71 @@ void main() {
     },
   );
   test(
+    'production domain rename preserves device identity and refreshes at new host',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      const oldUrl = 'https://stonematch.fastmake.net';
+      const newConfig = PocketBaseConfig(
+        url: 'https://stonematch-pb.fastmake.net/',
+      );
+      const store = PrefsPocketBaseSessionStore();
+      var now = DateTime.utc(2026, 10, 2);
+      final identity = PocketBaseIdentity.generate().withSession(
+        PocketBaseSession(
+          token: 'existing-token',
+          userId: 'player',
+          expiresAt: now.add(const Duration(days: 1)),
+        ),
+      );
+      await store.write(oldUrl, identity);
+      var calls = 0;
+      final gateway = PocketBaseGateway(
+        config: newConfig,
+        sessionStore: store,
+        now: () => now,
+        client: MockClient((request) async {
+          calls++;
+          expect(request.url.host, 'stonematch-pb.fastmake.net');
+          expect(jsonDecode(request.body), identity.credentials);
+          return reply(auth('refreshed-token'));
+        }),
+      );
+      expect((await gateway.ensureSession()).data!.token, 'existing-token');
+      expect(calls, 0);
+      now = now.add(const Duration(days: 2));
+      expect((await gateway.ensureSession()).data!.token, 'refreshed-token');
+      expect(calls, 1);
+      final saved = (await store.readLatest(oldUrl))!;
+      expect(saved.credentials, identity.credentials);
+      expect(saved.session!.userId, 'player');
+      expect(saved.session!.token, 'refreshed-token');
+      expect(await store.readLatest('https://other.example'), isNull);
+      expect(
+        await store.readLatest('https://stonematch-pb.fastmake.net/other'),
+        isNull,
+      );
+    },
+  );
+  test('domain rename does not replace corrupt existing credentials', () async {
+    const oldUrl = 'https://stonematch.fastmake.net';
+    SharedPreferences.setMockInitialValues({
+      PrefsPocketBaseSessionStore.keyFor(oldUrl): '{}',
+    });
+    var calls = 0;
+    final gateway = PocketBaseGateway(
+      config: const PocketBaseConfig(url: 'https://stonematch-pb.fastmake.net'),
+      sessionStore: const PrefsPocketBaseSessionStore(),
+      client: MockClient((_) async {
+        calls++;
+        return reply(auth());
+      }),
+    );
+    expect((await gateway.ensureSession()).isSuccess, false);
+    expect(calls, 0);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString(PrefsPocketBaseSessionStore.keyFor(oldUrl)), '{}');
+  });
+  test(
     'preferences reload latest token, isolate URL and preserve legacy storage',
     () async {
       SharedPreferences.setMockInitialValues({'supabase_session': 'untouched'});

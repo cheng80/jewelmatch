@@ -10,7 +10,7 @@
 
 ## Decision
 
-1. Stone Match 서버는 mac-mini의 `/Users/cheng80/Servers/stonematch`, PocketBase 0.39.7이다. `127.0.0.1:8090`을 Cloudflare Tunnel의 `stonematch.fastmake.net`에 연결한다. 폴더 이름은 인스턴스 식별이며 실행 바이너리 이름은 `pocketbase`로 유지한다.
+1. Stone Match 서버는 mac-mini의 `/Users/cheng80/Servers/stonematch`, PocketBase 0.39.7이다. `127.0.0.1:8090`을 Cloudflare Tunnel의 `stonematch-pb.fastmake.net`에 연결한다. 폴더 이름은 인스턴스 식별이며 실행 바이너리 이름은 `pocketbase`로 유지한다.
 2. macOS 사용자 LaunchAgent `com.fastmake.stonematch.pocketbase`가 로그인 후 자동 실행하고 종료 시 재시작한다. 로그인 전 실행을 보장하는 LaunchDaemon으로 임의 전환하지 않는다.
 3. 기존 컬렉션을 임의 변경하지 않고 게임용 `sm_players`, `sm_rankings`, `sm_ad_claims`, `sm_events`, `sm_config`를 추가한다. SQLite 마이그레이션과 JS 서버 코드는 `pocketbase/pb_migrations`, `pocketbase/pb_hooks`에서 버전 관리한다.
 4. 공개 조회와 검증된 쓰기는 `/api/stone-match/` 전용 API로 제공한다. 컬렉션 직접 CRUD는 관리자로 제한한다. 서버 검증, 사용자별 요청 제한과 광고 한도 판정은 트랜잭션에서 수행한다.
