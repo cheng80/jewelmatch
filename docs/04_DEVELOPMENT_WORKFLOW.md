@@ -1299,7 +1299,7 @@ xcrun devicectl device install app --device <DEVICE_ID> build/ios/iphoneos/Runne
 
 - 인스턴스: `/Users/cheng80/Servers/stonematch`, 바이너리 `pocketbase` 0.39.7, 데이터 `pb_data/`, 원본 마이그레이션 `pb_migrations/`, 서버 코드 `pb_hooks/`.
 - 자동 실행: `~/Library/LaunchAgents/com.fastmake.stonematch.pocketbase.plist`, label `com.fastmake.stonematch.pocketbase`. `RunAtLoad=true`, `KeepAlive=true`. 사용자 로그인 후 실행하며 로그인 전 서비스는 아니다.
-- 리스너: `127.0.0.1:8090`. 외부 API는 Cloudflare Tunnel의 `https://stonematch-pb.fastmake.net`을 통해 제공한다. 관리 화면은 `/_/`다. 기존 `stonematch.fastmake.net`은 이전 배포 게임과 대시보드의 호환 주소로 유지하며, 모든 소비자 전환 확인 전에는 제거하지 않는다. 기존 preview 4173 경로는 별개다.
+- 리스너: `127.0.0.1:8090`. 외부 API는 Cloudflare Tunnel의 `https://stonematch-pb.fastmake.net`을 통해 제공한다. 관리 화면은 `/_/`다. 게임 NAS와 대시보드의 새 주소 전환을 확인한 뒤 2026-10-02 기존 `stonematch.fastmake.net`의 CNAME과 해당 터널 ingress를 제거했다. 현재 외부 API와 관리 화면은 새 주소를 사용하며, 기존 세션 저장 키 별칭은 기기 사용자 연속성을 위해 유지한다. 기존 preview 4173 경로는 별개다.
 - 관리자 설정은 `.env.pocketbase`에서 읽되 shell source로 실행하지 않는다. HTTP 도구는 인증 토큰을 메모리에만 유지하고 리다이렉트에 자격정보를 전달하지 않는다.
 - 백업은 실행 중 파일 복사 대신 서비스 중지 후 일관된 전체 폴더 복사/해시 검증 또는 PocketBase 백업 API를 사용한다. `/Users/cheng80/Servers/backups/`는 서버 로컬 백업 위치이며 다른 게임 폴더와 구분한다.
 - 복구용 원본 Supabase export는 `tools/pocketbase/export_snapshot.sql`을 기존 CLI 연결로 실행하고 Git 제외 `tmp/`에 보관한다. 인증 사용자/비밀번호/토큰을 가져오지 않는다.

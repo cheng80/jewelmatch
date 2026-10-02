@@ -1,5 +1,14 @@
 # Handoff
 
+## NAS 운영 배포와 기존 PocketBase 주소 정리 완료 (2026-10-02)
+
+- 사용자 후속 승인으로 깨끗하고 원격과 일치하는 main `d0ee39f`에서 `tools/deploy_match_web.sh --output-dir tmp/pb-nas-production-20261002`를 실행했다. 플레이 자동화 도구는 PR https://github.com/cheng80/jewelmatch/pull/22 로 main 반영 완료다.
+- NAS 업로드 HTTP200/result=OK. `TELEMETRY_ENV=production`, PocketBase `https://stonematch-pb.fastmake.net`, release `stone-match@1.0.0+1-3c5c84d8d466`. release Wasm/JS 빌드와 운영/QA Sentry 비공개 JS 소스맵 업로드 완료. ZIP119항목/map/env0개, SHA256 `76a070f2e128b9c8d01ee36e64241d010a457a5eb020282616fdd9ddffb6f02e`.
+- 에고의 실제 응답으로 원격7파일 바이트/해시 일치, COOP/COEP, no-cache와 Wasm MIME 확인. 직접 게임 경로200, 새 API health/레벨 랭킹200(6행), NAS Origin CORS204, 대시보드 CSP와 공개 API/session 파일의 main 빌드 일치를 확인했다. 새 PocketBase 관리자 인증/갱신200과 대시보드 서버 관측 경로 인증200도 기존 주소 제거 후 검증했다.
+- Cloudflare mac-mini 터널의 `stonematch.fastmake.net` ingress1개와 정확히 해당 CNAME1개를 제거했다. 설정 version9→10. DNS와 터널의 나머지 설정은 직전 백업과 동일하며 새 `stonematch-pb.fastmake.net`은 기존8090 인스턴스를 사용한다. preview, pixeltown, 다른 터널과 DB/서버 파일은 변경하지 않았다. Cloudflare 권한 서버 직접 조회에서 기존 주소 NXDOMAIN, 새 주소 정상 응답을 확인했다.
+- 제거 후 새로 로드한 에고 게임의 레벨 랭킹 UI와 새 호스트 설정/랭킹 API200 확인. 레벨 보드와 인벤토리 버튼, 시간 종료 화면 렌더링도 확인했다. 교환 없는 점수0 스모크이며 랭킹 제출/수정/삭제를 하지 않았다. 실제 교환 봇, 실기기, 청취와 장시간 플레이는 이번 배포에서 다시 검증하지 않았다. 기존 세션 저장 키 별칭은 사용자 연속성을 위해 유지한다.
+- 산출물 `tmp/pb-nas-production-20261002/`, Cloudflare 직전/직후 백업, API/브라우저/파일 검증은 `tmp/pb-nas-cleanup-20261002/`에 보존한다. 백업 파일은0600, 작업 폴더는0700이다. 검증용 에고 TaskSpace만 종료했다.
+
 ## 플레이 자동화 도구 Git 관리 (2026-10-02)
 
 - 사용자 후속 요청으로 타임 모드 플레이 봇, 에고 실행기, 화면 인식/교환 탐색/최종 점수 판정, 회귀 테스트와 실행 안내를 Git 관리 대상으로 게시한다. `package.json` 실행 명령과 AGENTS/Tech Spec/Workflow, 기존 플레이/GA4 검증 기록을 함께 보존한다.
