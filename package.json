@@ -2,6 +2,9 @@
   "name": "stonematch-intoss",
   "private": true,
   "scripts": {
+    "play:bot": "node tools/play_bot.mjs",
+    "play:bot:ego": "node tools/run_play_bot_ego.mjs",
+    "test:play-bot": "node --test tools/play_bot.test.mjs",
     "build:ad-bridge": "node tools/prepare_intoss_web.mjs",
     "dev:ads": "backend=$(bash tools/backend_define.sh) && flutter run -d web-server --dart-define=STORE_CHANNEL=intoss --dart-define=INTOSS_AD_MODE=mock $backend",
     "test:ads": "flutter test test/ad_reward_policy_test.dart test/ad_service_test.dart test/app_config_test.dart",
@@ -14,6 +17,8 @@
     "@apps-in-toss/web-framework": "3.0.3"
   },
   "devDependencies": {
-    "esbuild": "0.28.2"
+    "esbuild": "0.28.2",
+    "playwright-core": "1.63.0",
+    "pngjs": "7.0.0"
   }
 }
