@@ -52,6 +52,7 @@
 | 화면과 사용자 흐름은? | [02_UI_UX.md](02_UI_UX.md) |
 | 어떤 구조/데이터/API로 만드는가? | [03_TECH_SPEC.md](03_TECH_SPEC.md) |
 | 어떻게 작업하고 검증하는가? | [04_DEVELOPMENT_WORKFLOW.md](04_DEVELOPMENT_WORKFLOW.md) |
+| Flame 플레이 봇 실행 자료와 과거 검증 근거는? | [qa/play-bot/README.md](qa/play-bot/README.md) |
 | 프로젝트가 어떤 큰 단계로 진행되는가? | [progress/ROADMAP.md](progress/ROADMAP.md) |
 | 이번 기능/복합 작업을 어떻게 구현하는가? | [plans/](plans/) |
 | 지금 어디까지 왔고 현재 Task는 무엇인가? | [progress/PROJECT_STATUS.md](progress/PROJECT_STATUS.md) |

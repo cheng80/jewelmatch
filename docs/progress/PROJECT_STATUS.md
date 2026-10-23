@@ -1,5 +1,11 @@
 # Project Status
 
+## Flame 플레이 봇 자료 정리 (2026-10-08)
+
+- 외부 `referenced-chatgpt-conversation-this-is-an`의 자료를 [플레이 봇 자료](../qa/play-bot/README.md)에 정리했다. 원본 14파일과 ZIP 내부 7항목의 SHA256/대응 위치를 기록하고 보고서, JSON, 종료 PNG2장과 원본 ZIP을 보존했다. `.DS_Store`3개만 제외했고 원본 폴더는 변경하지 않았다.
+- 봇 MJS5개는 현재 `tools/`와 바이트 일치하여 재사용한다. 실행 안내에 옵션, 기본 URL, 최소 성공 조건, 에고/별도 브라우저의 보고서 차이와 실패 확인 순서를 보완했다. 대시보드22:02 조회가 JSON 실행22:36~22:39보다 앞선다는 점과 에고 점수 대기 수정 후 미재실행을 명시했다.
+- 검증: 기준 `c1221b6`, Node4테스트, MJS5개 구문, 실행기2개 help, 보존 파일/ZIP 해시, 로컬 문서 링크와 diff 검사 통과. 실제 브라우저/운영 GA4/대시보드 로그인/Flutter 빌드/실기기 검증은 재실행하지 않았다. 제품 코드, 커밋/push/배포 변경 없음.
+
 ## PocketBase 백업 정리 (2026-10-02)
 
 - Mac mini의 Stone Match DB 백업은 `/Users/cheng80/Servers/backups/stonematch-verify-admin-20261002-072402-6db8fed9/` 1개뿐이었다. 최신 DB2개와 `before.json`을 보존하고, 백업 검증 과정에서 생긴 빈 WAL2개와 SHM2개(합계65536바이트)를 제거했다. 백업을 사용하는 프로세스가 없고 WAL이 비어 있음을 먼저 확인했다.

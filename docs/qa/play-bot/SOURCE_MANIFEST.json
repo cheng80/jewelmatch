@@ -1,0 +1,161 @@
+{
+  "organized_on": "2026-10-08",
+  "source_root": "/Users/cheng80/Desktop/referenced-chatgpt-conversation-this-is-an",
+  "compared_revision": "c1221b6",
+  "path_base": "repository root",
+  "files": [
+    {
+      "source": "outputs/PLAY_BOT.md",
+      "bytes": 4929,
+      "sha256": "af3b0746c1f57489973730e6709e023c184df877a2cbad550ff9d4641baf3539",
+      "destination": "docs/qa/play-bot/evidence/2026-10-01/stone-match-play-bot.zip",
+      "zip_member": "tools/PLAY_BOT.md",
+      "handling": "preserved_in_source_zip",
+      "current_reference": "tools/PLAY_BOT.md"
+    },
+    {
+      "source": "outputs/report.json",
+      "bytes": 4354,
+      "sha256": "3bfdc6c4f53736b924771ed517a66d5a0e0b1c926cef0de616186b9669accd6d",
+      "destination": "docs/qa/play-bot/evidence/2026-10-01/report.json",
+      "handling": "preserved_bytes"
+    },
+    {
+      "source": "outputs/round-1-end.png",
+      "bytes": 278661,
+      "sha256": "623e17795e2914e1cc701521de8ab200983b9642e4d976cd074c34f8aa18c4af",
+      "destination": "docs/qa/play-bot/evidence/2026-10-01/round-1-end.png",
+      "handling": "preserved_bytes"
+    },
+    {
+      "source": "outputs/round-2-end.png",
+      "bytes": 286957,
+      "sha256": "24715e89b0c1344dbb0eb90463d1a9446606bb4c63724774cb20de653f553d69",
+      "destination": "docs/qa/play-bot/evidence/2026-10-01/round-2-end.png",
+      "handling": "preserved_bytes"
+    },
+    {
+      "source": "outputs/stone-match-play-bot.zip",
+      "bytes": 13523,
+      "sha256": "3c2086888d4380ba9a3174ec7a39304478dc9ec8895e611ccf62e66ca25c1e82",
+      "destination": "docs/qa/play-bot/evidence/2026-10-01/stone-match-play-bot.zip",
+      "handling": "preserved_bytes"
+    },
+    {
+      "source": "outputs/검증결과.md",
+      "bytes": 2176,
+      "sha256": "dec5aa6038598d2cbc248479c94a35577e8a3d6cc4c5fdd77ac2fb8449738102",
+      "destination": "docs/qa/play-bot/evidence/2026-10-01/검증결과.md",
+      "handling": "preserved_bytes"
+    },
+    {
+      "source": "outputs/대시보드-자동로그인-검증.md",
+      "bytes": 1004,
+      "sha256": "4d0221333f81bfc812ec651a0de745eca7c75b5417d9728afede369cbd6b5d64",
+      "destination": "docs/qa/play-bot/evidence/2026-10-01/대시보드-자동로그인-검증.md",
+      "handling": "preserved_bytes"
+    },
+    {
+      "source": "work/play-bot-package/package.json",
+      "bytes": 315,
+      "sha256": "abeb8a09740595a3e833f330f92ff81b4f9baddc110822ad3175b5b0864d6870",
+      "destination": "docs/qa/play-bot/evidence/2026-10-01/stone-match-play-bot.zip",
+      "zip_member": "package.json",
+      "handling": "preserved_in_source_zip",
+      "current_reference": "package.json"
+    },
+    {
+      "source": "work/play-bot-package/tools/PLAY_BOT.md",
+      "bytes": 4929,
+      "sha256": "af3b0746c1f57489973730e6709e023c184df877a2cbad550ff9d4641baf3539",
+      "destination": "docs/qa/play-bot/evidence/2026-10-01/stone-match-play-bot.zip",
+      "zip_member": "tools/PLAY_BOT.md",
+      "handling": "preserved_in_source_zip",
+      "current_reference": "tools/PLAY_BOT.md"
+    },
+    {
+      "source": "work/play-bot-package/tools/play_bot.mjs",
+      "bytes": 10945,
+      "sha256": "290c21a7e1431375f06be16ac3ed1709b22c767b6c965d3e68efa11f4ff50b26",
+      "destination": "tools/play_bot.mjs",
+      "handling": "reuse_identical_current_file"
+    },
+    {
+      "source": "work/play-bot-package/tools/play_bot.test.mjs",
+      "bytes": 2789,
+      "sha256": "ee62a4cda0b3090f02daa71acf7ac4e34f5c20e4a16eb651372cc37fe6e8c9f3",
+      "destination": "tools/play_bot.test.mjs",
+      "handling": "reuse_identical_current_file"
+    },
+    {
+      "source": "work/play-bot-package/tools/play_bot_ego.mjs",
+      "bytes": 7128,
+      "sha256": "db621ca08dc8ed42c14fec834ae2062056f62db9891584e73bf62cca0d7a6aee",
+      "destination": "tools/play_bot_ego.mjs",
+      "handling": "reuse_identical_current_file"
+    },
+    {
+      "source": "work/play-bot-package/tools/play_bot_vision.mjs",
+      "bytes": 3634,
+      "sha256": "33583535db143e548dbfc5f7cea6cc9f97bcd46609ebbb0f9ebf7f27b5eec287",
+      "destination": "tools/play_bot_vision.mjs",
+      "handling": "reuse_identical_current_file"
+    },
+    {
+      "source": "work/play-bot-package/tools/run_play_bot_ego.mjs",
+      "bytes": 1349,
+      "sha256": "38a35aa41aff655623acf813a6673eb4250073a618d54c93b122d89541443c78",
+      "destination": "tools/run_play_bot_ego.mjs",
+      "handling": "reuse_identical_current_file"
+    }
+  ],
+  "zip_entries": [
+    {
+      "member": "package.json",
+      "bytes": 315,
+      "sha256": "abeb8a09740595a3e833f330f92ff81b4f9baddc110822ad3175b5b0864d6870",
+      "matches_source": "work/play-bot-package/package.json"
+    },
+    {
+      "member": "tools/play_bot.mjs",
+      "bytes": 10945,
+      "sha256": "290c21a7e1431375f06be16ac3ed1709b22c767b6c965d3e68efa11f4ff50b26",
+      "matches_source": "work/play-bot-package/tools/play_bot.mjs"
+    },
+    {
+      "member": "tools/play_bot_vision.mjs",
+      "bytes": 3634,
+      "sha256": "33583535db143e548dbfc5f7cea6cc9f97bcd46609ebbb0f9ebf7f27b5eec287",
+      "matches_source": "work/play-bot-package/tools/play_bot_vision.mjs"
+    },
+    {
+      "member": "tools/play_bot_ego.mjs",
+      "bytes": 7128,
+      "sha256": "db621ca08dc8ed42c14fec834ae2062056f62db9891584e73bf62cca0d7a6aee",
+      "matches_source": "work/play-bot-package/tools/play_bot_ego.mjs"
+    },
+    {
+      "member": "tools/PLAY_BOT.md",
+      "bytes": 4929,
+      "sha256": "af3b0746c1f57489973730e6709e023c184df877a2cbad550ff9d4641baf3539",
+      "matches_source": "work/play-bot-package/tools/PLAY_BOT.md"
+    },
+    {
+      "member": "tools/run_play_bot_ego.mjs",
+      "bytes": 1349,
+      "sha256": "38a35aa41aff655623acf813a6673eb4250073a618d54c93b122d89541443c78",
+      "matches_source": "work/play-bot-package/tools/run_play_bot_ego.mjs"
+    },
+    {
+      "member": "tools/play_bot.test.mjs",
+      "bytes": 2789,
+      "sha256": "ee62a4cda0b3090f02daa71acf7ac4e34f5c20e4a16eb651372cc37fe6e8c9f3",
+      "matches_source": "work/play-bot-package/tools/play_bot.test.mjs"
+    }
+  ],
+  "excluded": [
+    ".DS_Store",
+    "work/.DS_Store",
+    "work/play-bot-package/.DS_Store"
+  ]
+}

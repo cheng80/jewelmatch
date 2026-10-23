@@ -1,0 +1,194 @@
+{
+  "url": "https://cheng80.myqnapcloud.com/match/",
+  "mode": "production",
+  "analytics": true,
+  "startedAt": "2026-10-01T13:36:51.147Z",
+  "rounds": [
+    {
+      "round": 1,
+      "attempts": 8,
+      "verifiedMoves": 8,
+      "score": 4500
+    },
+    {
+      "round": 2,
+      "attempts": 8,
+      "verifiedMoves": 8,
+      "score": 4400
+    }
+  ],
+  "ga4": [
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "page_view",
+      "environment": null,
+      "status": 204
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "page_view",
+      "environment": null,
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "title_menu_action",
+      "environment": null,
+      "status": 204
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "player_name_dialog",
+      "environment": null,
+      "status": 204
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "player_name_dialog",
+      "environment": null,
+      "status": 204
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "level_start",
+      "environment": null,
+      "status": 204
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "title_menu_action",
+      "environment": null,
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "player_name_dialog",
+      "environment": null,
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "player_name_dialog",
+      "environment": null,
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "level_start",
+      "environment": null,
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "level_end",
+      "environment": null,
+      "status": 204
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "round_summary",
+      "environment": null,
+      "status": 204
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "round_input",
+      "environment": null,
+      "status": 204
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "unlock_achievement",
+      "environment": null,
+      "status": 204
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "level_start",
+      "environment": null,
+      "status": 204
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "post_score",
+      "environment": null,
+      "status": 204
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "level_end",
+      "environment": null,
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "round_summary",
+      "environment": null,
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "round_input",
+      "environment": null,
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "unlock_achievement",
+      "environment": null,
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "level_start",
+      "environment": null,
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "post_score",
+      "environment": null,
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "level_end",
+      "environment": null,
+      "status": 204
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "round_summary",
+      "environment": null,
+      "status": 204
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "round_input",
+      "environment": null,
+      "status": 204
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "level_end",
+      "environment": null,
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "round_summary",
+      "environment": null,
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "measurementId": "G-1D8SDVLZQX",
+      "event": "round_input",
+      "environment": null,
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
+  "errors": [],
+  "consent": "true",
+  "success": true,
+  "finishedAt": "2026-10-01T13:39:28.422Z"
+}

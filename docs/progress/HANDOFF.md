@@ -1,5 +1,12 @@
 # Handoff
 
+## Flame 플레이 봇 자료 정리 (2026-10-08)
+
+- 자동화 자료의 진입점은 [qa/play-bot/README.md](../qa/play-bot/README.md), 실행 명령은 [tools/PLAY_BOT.md](../../tools/PLAY_BOT.md)다. 소스는 기존 `tools/play_bot*.mjs`와 `run_play_bot_ego.mjs`를 유지한다. 원본 ZIP의 최소 `package.json`을 프로젝트에 덮어쓰지 않는다.
+- `docs/qa/play-bot/evidence/2026-10-01/`에 과거 보고서와 JSON, 종료 캡처2장, 원본 ZIP을 보존했다. 대응 목록은 `SOURCE_MANIFEST.json`이다. 원본 외부 폴더는 유지했다. 새 임시 실행 결과는 `tmp/play-bot/<실행별 폴더>/`에 둔다.
+- 4500/4400점은 과거 별도 Chromium 실행 결과다. 에고 점수 대기 수정 후 실제 재검증은 남아 있고, 대시보드22:02의15건을22:36~22:39 실행의 수집 결과로 해석하지 않는다. 자동 로그인 원문의 현재형 표현도 당시 상태다.
+- 이번 검증은 Node4테스트, MJS5개 구문, help2개와 문서/해시/ZIP/링크 검사다. 브라우저와 운영 검증은 미실행. 다음 자동화 요청은 대상 URL을 명시하고 기본 에고 경로를 사용한다. 사용자 제어 반환 전 재시도하지 않으며 `--space`가 이전 판 상태를 복원한다고 가정하지 않는다.
+
 ## PocketBase 백업 정리 (2026-10-02)
 
 - Mac mini의 Stone Match DB 백업은 `/Users/cheng80/Servers/backups/stonematch-verify-admin-20261002-072402-6db8fed9/` 1개뿐이었다. 최신 DB2개와 `before.json`을 보존하고, 백업 검증 과정에서 생긴 빈 WAL2개와 SHM2개(합계65536바이트)를 제거했다. 백업을 사용하는 프로세스가 없고 WAL이 비어 있음을 먼저 확인했다.
