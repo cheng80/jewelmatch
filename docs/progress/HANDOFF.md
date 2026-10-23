@@ -1,5 +1,19 @@
 # Handoff
 
+## 운영 대시보드 일별 조회 개선 (2026-10-11, 운영 배포 완료)
+
+- 재개 위치는 게임의 형제 저장소 `../stomematch_dashboard`다. 기본30일/최대89일 직접범위/기간이동, 활동과 집계상태 필터/정렬/CSV/URL복원, 고정 머리글/날짜 열 스크롤과 마지막활동/연속0 안내를 구현했다. 집계 없음과 부분은 활동0으로 분류하지 않는다. GA4/Sentry의 독립7/30일과 기존 데이터 계약은 유지한다.
+- 실제 운영 읽기와 새 화면 검증: 최근7일0판,30일63판(종료40/미확인23), 판날짜5개,09-30상세34판/종료26판, 직접범위/이전다음/reload복원 일치. Node90테스트/build10파일+6vendor/diff와 에고 누락/부분/오류/CSV/89일 키보드 및320/375px 확인. 근거 대시보드 `tmp/daily-upgrade-20261011/RESULT.md`와 브라우저JSON/캡처다.
+- 대시보드 구현 `dfcf3b4` main 커밋/push 및 운영 Pages 배포 완료. GitHub CI/Pages 성공, 공개9파일 해시 일치. 운영 에고 TaskSpace31 최종 검수로 필터/CSV/기간이동/복원, 7일0판/30일63판/QA30일9판, 89일 방향키/휠과320px 고정 날짜 열 스크롤을 확인했다. 근거 대시보드 `tmp/daily-deploy-20261011/RESULT.md`. 게임 커밋/push/배포는 하지 않았다. 게임 재배포, 데이터 재집계와 Google Cloud 설정 변경은 필요 없다. 최종 운영 검수는 검증 전용 계정과 탭별 격리 세션을 사용했다. GA4/Sentry는 기존 화면 정상 표시를 관찰했으며 직접 API 계약/수집/Google Cloud와 Flutter는 재검증하지 않았다.
+- PLAN-011은 기본 수집/설정/보고서 배포 완료, 이번 일별 개선은 운영 배포/검수 완료, 리텐션/퍼널 등 상세 분석은 미완료로 구분한다. 기존 사용자 문서와 플레이 봇 자료를 보존했다.
+
+## PLAN-011 GA4와 대시보드 완료 범위 정합화 (2026-10-11)
+
+- 재개 기준: NAS GA4 수집, Google Cloud Analytics Data API/서비스 계정 설정과 독립 `stomematch_dashboard` 기본 보고서의 운영 배포는 완료됐다. 이전 `DRAFT`, GA4 미연동, 기본 대시보드 배포 대기 문구는 당시 이력이다. 전체 PLAN-011은 상세 분석 확장이 남아 `IN_PROGRESS`다.
+- 확인 소스: 대시보드 main `f5d8796`의 `server/observability.js`, `functions/api/observability.js`, `observability.js`와 서버/UI 회귀 테스트. 운영/QA, 완료일7/30일 요약/일별/이벤트 보고서, 인증 후15분 캐시, 빈 보고서의 오늘/최근30분 진단을 재사용한다. Google Cloud/Secrets/배포 확인 근거는 대시보드 README와 docs/HANDOFF.md/COSTS.md의 2026-09-30~10-01 기록이며 이번 원격 재확인은 아니다. 상세 계약과 소스 링크는 [PLAN-011 12절](../plans/PLAN-011-ga4-behavior-analytics.md#12-google-cloud와-기본-운영-대시보드-완료-확인-2026-10-11)에 있다.
+- 다음 범위: D1/D7, 퍼널, 레벨 실패/재시도, 아이템 활용/숙련도와 시간/계정/채널/버전/실험별 상세 보고서. 데이터 필드 계측과 보고서 구현을 혼동하지 않는다. user_id/계정 연결은 PLAN-010 결정 전 추가하지 않으며 native/intoss는 별도 후속이다. 완료된 외부 설정과 기본 대시보드를 다시 구축하지 않는다.
+- 이번 검증: Node v24.11.1 대시보드 `npm test` 전체86테스트 통과(실패/skip0), 문서 링크/체크리스트와 diff 확인. Flutter/대시보드 빌드, 원격 API/Google 콘솔/브라우저/실기기는 재실행하지 않았다. 기존 사용자 문서/미추적 플레이 봇 자료를 보존했고 제품 코드/커밋/push/배포 변경 없음.
+
 ## Flame 플레이 봇 자료 정리 (2026-10-08)
 
 - 자동화 자료의 진입점은 [qa/play-bot/README.md](../qa/play-bot/README.md), 실행 명령은 [tools/PLAY_BOT.md](../../tools/PLAY_BOT.md)다. 소스는 기존 `tools/play_bot*.mjs`와 `run_play_bot_ego.mjs`를 유지한다. 원본 ZIP의 최소 `package.json`을 프로젝트에 덮어쓰지 않는다.
@@ -337,6 +351,7 @@ Updated: 2026-09-29 21:48 KST
 - G2 hyper/supernova 정지 레이어 PNG 납품과 정량 게이트 PASS를 확인했다. 제품 통합과 실제 Flutter 렌더 검증, main 병합과 병합 후 데스크톱 검증을 완료했다. 실기기 검증은 별도다.
 
 ## In Progress
+- Plan: `PLAN-011` 상세 분석 확장. NAS GA4 수집, Google Cloud 읽기 설정과 기본 운영 대시보드 배포는 완료됐으며 D1/D7/퍼널/레벨별 분석 등의 보고서가 남았다(상단 2026-10-11 기록).
 - Plan: `PLAN-004` 보드 연출 보강. F1, T1, T2, T3, T4a, T4b, T5, T6 구현과 통합 완료. 2026-09-20 통합 브랜치를 커밋해 main에 fast-forward 병합했다(로컬). push 여부는 `git status`로 확인한다
 - Task: 실기기 검증. 합본 HUD 진단은 glyph 중복 근거 없음으로 마감했다.
 - Task: E2는 main 병합 및 작업 세션 정리 완료. Claude 재인계는 취소됐으며 Codex가 현재 main에서 계속한다.
@@ -348,6 +363,8 @@ Updated: 2026-09-29 21:48 KST
 - Task: TASK-001c 실기기 30초 이상 카운터 보존
 
 ## Next Task
+관측 후속: PLAN-011의 기본 대시보드와 외부 설정은 재사용한다. 상세 분석 보고서만 미구현이며 계정 연결은 PLAN-010, native/intoss는 별도 후속이다.
+
 1. 이번 NAS 미러링 검증은 종료했다. 추가 프로파일링은 진행하지 않으며 아래 검증 공백은 별도 요청 전까지 남겨 둔다. Claude 재인계는 취소 상태다. 완료된 E2를 재적용하거나 정리된 Worktree를 재생성하지 않는다.
 2. 실기기 FPS, 가독성, 오디오와 광고 흐름 확인. iOS 15/16 기기에서 연쇄와 저시간 틱의 피치가 실제로 오르는지 듣는다
 3. `?fps=1`로 모바일 실기기 FPS 전후 비교와 장시간 WebView 확인
@@ -366,7 +383,7 @@ Updated: 2026-09-29 21:48 KST
 - ISSUE-003: 광고 3회 세션 로컬
 - ISSUE-004: 인벤토리 비영속 (2차 허용)
 - ISSUE-005: 빈 App Store ID
-- ISSUE-006: 외부 지표 없음(미출시), GA4와 Firebase와 내부 로거 미연동. PLAN-005 Step 2
+- ISSUE-006: NAS GA4/PocketBase 내부 수집과 기본 대시보드는 완료. 상세 분석과 native/intoss는 후속, 지표 정의/동의/표본 차이를 유지한다. PLAN-011
 - PLAN-006: 원격 적용과 검수 완료, 배포 전. 현재 NAS와 앱인토스 배포본은 여전히 NAS 랭킹을 쓴다. `config/supabase.json` 없는 빌드는 랭킹 연결 불가
 
 ## Changed Contracts

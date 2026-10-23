@@ -1,5 +1,19 @@
 # Project Status
 
+## 운영 대시보드 일별 조회 개선 (2026-10-11, 운영 배포 완료)
+
+- 독립 `stomematch_dashboard`에 날짜 직접 선택/기간 이동, 활동/집계 상태 필터와 정렬, CSV/조회조건 복원, 스크롤/고정 열, 마지막 활동일/연속0 안내를 구현했다. 기본30일이고 집계 없음/부분을 활동0으로 판단하지 않는다. 게임 소스와 수집/집계 서버는 변경하지 않았다.
+- 운영 데이터 읽기 검증: production 최근7일0판은 원본과 일치하며 최근30일은63판(종료40/미확인23)이다. 새 화면의 판 있는 날5개, 09-30상세34판/종료26판도 집계와 일치했다.
+- 검증: Node90테스트와 빌드10공개파일/6vendor, diff, 에고 TaskSpace30의 누락/부분/오류/CSV/복원/89일 키보드 스크롤과320px, 실제 데이터 직접기간/이동/상세와375px 통과. GA4/Sentry 운영 API/Google Cloud와 게임/Flutter는 재검증하지 않았다.
+- 대시보드 구현 `dfcf3b4` main 커밋/push와 Pages 배포 완료. GitHub CI/Pages 성공, 운영 공개9파일 해시 일치. 실제 운영 에고 TaskSpace31에서 필터/CSV/기간이동/복원, 7일0판/30일63판/QA30일9판, 89일 방향키/휠과320px 고정 열 스크롤을 확인했다. 게임 커밋/push/재배포는 하지 않았다. [PLAN-011 13절](../plans/PLAN-011-ga4-behavior-analytics.md#13-일별-지표-실사용-개선-2026-10-11-운영-배포-완료), 대시보드 `tmp/daily-deploy-20261011/RESULT.md` 참조. 상세 분석 보고서는 계속 미완료다.
+
+## PLAN-011 GA4와 대시보드 완료 범위 정합화 (2026-10-11)
+
+- 상태: NAS GA4 수집, Google Cloud Analytics Data API/서비스 계정 설정과 기본 운영 대시보드 배포는 완료. [PLAN-011](../plans/PLAN-011-ga4-behavior-analytics.md)은 상세 분석 확장이 남아 `IN_PROGRESS`를 유지한다. 설정이나 기본 대시보드를 다시 만드는 작업은 남아 있지 않다.
+- 독립 `stomematch_dashboard` main `f5d8796`의 서버/Function/UI/테스트와 운영 기록을 대조했다. 운영/QA 속성, 완료일7/30일 사용자/세션/이벤트 요약, 일별/이벤트 차트와 표, 인증 후15분 캐시, 오늘/최근30분 빈 데이터 진단이 구현돼 있다. Google Cloud 설정과 운영 배포는 2026-09-30~10-01 기록으로 확인했으며 이번 원격 재조회는 아니다.
+- 남은 작업: D1/D7 리텐션, 첫 플레이 퍼널, 레벨별 실패/재시도, 아이템 활용/숙련도, 시간/계정/채널과 버전/실험별 상세 보고서. 계측 필드 전송 완료와 상세 보고서 완료를 구분한다. native/intoss GA4는 비활성인 별도 후속 범위이고 사용자 식별 연결은 PLAN-010 결정이 필요하다.
+- 검증: 대시보드 Node v24.11.1 `npm test` 전체86테스트 통과(실패/skip0), 문서 링크/상태/체크리스트와 diff 검사. 게임/대시보드 제품 코드와 원격 설정은 변경하지 않았다. Flutter 검사, 대시보드 빌드, 운영 API/Google 콘솔/브라우저/실기기는 재실행하지 않았다. 기존 사용자 변경과 플레이 봇 자료를 보존하고 커밋/push/배포는 수행하지 않았다.
+
 ## Flame 플레이 봇 자료 정리 (2026-10-08)
 
 - 외부 `referenced-chatgpt-conversation-this-is-an`의 자료를 [플레이 봇 자료](../qa/play-bot/README.md)에 정리했다. 원본 14파일과 ZIP 내부 7항목의 SHA256/대응 위치를 기록하고 보고서, JSON, 종료 PNG2장과 원본 ZIP을 보존했다. `.DS_Store`3개만 제외했고 원본 폴더는 변경하지 않았다.
@@ -306,7 +320,7 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 ## Active Plan
 - `PLAN-009` 기존 게임 통계 기반 보강 — IN_PROGRESS (Step 1~3 완료, 다음 Step 4 전송과 집계 신뢰성)
 - `PLAN-010` 최소 사용자 식별과 기록 연결 — DRAFT
-- `PLAN-011` GA4와 상세 행동 분석 — DRAFT
+- `PLAN-011` GA4와 상세 행동 분석 — IN_PROGRESS (NAS 수집, Google Cloud 읽기 설정과 기본 운영 대시보드 배포 완료. 남은 것은 Step 3 상세 분석 확장, native/intoss는 별도 후속)
 - `PLAN-012` 충돌과 오류 관측 — DRAFT
 - `PLAN-001` 모바일 웹 오디오/FPS 회귀 — IN_PROGRESS
 - `PLAN-004` 보드 연출 보강 — IN_PROGRESS (F1, T1, T2, T3, T4a, T4b, T5, T6 통합 완료, T6 및 독립 리뷰 수정 완료, 합본 HUD 잔상 가설은 픽셀 진단으로 기각, 기존 confetti 겹침)
@@ -316,6 +330,8 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 - `PLAN-006` Supabase 기반 구축 — IN_PROGRESS (Step 1~3 완료, Step 4 NAS 배포 완료(`b71ba31`). 앱인토스 QR 확인은 사용자 결정으로 보류. 남은 것: 익명 사용자 정리 정책, Supabase 요금제와 일시정지 정책)
 
 ## Current Tasks
+- [x] TASK-011a NAS GA4 운영/QA 수집, Google Cloud Analytics Data API/서비스 계정과 독립 대시보드 기본 보고서/빈 데이터 진단, 운영 배포
+- [ ] TASK-011b D1/D7 리텐션, 퍼널, 레벨별 실패/재시도, 아이템 활용/숙련도, 시간/계정/채널과 버전/실험별 상세 보고서. 원천 계측은 일부 완료, 보고서는 미구현
 - [x] TASK-001a HTML Audio 4슬롯/경로/unlock/웹 BGM replay
 - [x] TASK-001b 짧은 수동 확인 (복귀 SFX, 다시 하기 BGM)
 - [ ] TASK-001c 실기기 30초 이상 카운터 보존 — IN_PROGRESS
@@ -363,7 +379,7 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 - ISSUE-004: RunInventory 비영속 → PLAN-003 (2차 범위로는 허용)
 - ISSUE-005: 빈 App Store ID
 - ISSUE-007(해소, 2026-09-24): 같은 탭에서 게임 문서를 다시 불러오면 멀티스레드 skwasm이 메모리 오류로 멈추던 문제. Flutter 3.47.5로 올린 뒤 격리 헤더를 켠 profile wasm 빌드로 같은 탭 연속 실행 6회(각 25초 자동 플레이) 모두 멈춤 없음(예전에는 1~2회 안에 멈춤). 20초 평균 86.8fps, p95 11.3ms로 이전(89.2fps, 11.2ms)과 같은 수준 → PLAN-001
-- ISSUE-006: 미출시로 외부 사용 지표 없음. GA4, Firebase Analytics 미연동. 내부 이벤트 로거는 Supabase `game_events`로 동작한다. 시험 데이터는 매 검증 뒤 지워 현재 수집 데이터는 없다 → PLAN-006, PLAN-005 Step 2
+- ISSUE-006: NAS GA4와 PocketBase `sm_events` 수집 및 독립 대시보드 기본 보고서는 완료. 동의/차단/처리 지연, 사용자/세션/표본 정의 차이로 수치를 동일하게 기대하지 않는다. 상세 분석 보고서와 native/intoss 연결은 후속 → PLAN-011
 
 ## Implementation Status
 - 주요 기능: 3모드 매치-3, 특수 보석 탭 발동, 레벨 런 인벤토리 2차, 선택형 광고, 랭킹, 다국어. F1, T1, T2, T3, T4a, T4b, T5 연출 통합 상태. hyper/supernova 레이어 후속 E2는 main `c3b64dd`에 반영했고 병합 후 데스크톱 검증을 통과했다. 버전 1.0.0+1
@@ -408,6 +424,8 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 | Last Hurrah 권장안 analyze / test | PASS | RECHECKED | 2026-09-24 11:30 KST | 이 문서를 포함한 Last Hurrah 권장안 커밋 | CURRENT | `flutter analyze lib test` 0건, 전체 441 tests PASS. 시드 보드 60판(bomb, hyper, star 배치) 비교: 마무리 중 새 특수 보석이 생긴 판 28 → 0, 추가 점수 최대 14,450 → 6,050(원격 현재값인 콤보 켬은 9,500). 저장소 루트 `flutter analyze`는 Git 제외 `tmp/` 옛 Dart 파일 247건이라 범위를 lib, test로 둔다. 웹 빌드와 실기기, NAS 배포는 미실행 |
 
 ## Next
+관측 후속: PLAN-011 Step 3의 상세 분석 보고서만 남는다. NAS GA4/Google Cloud 설정과 기본 대시보드 구축은 완료됐으며 재구축하지 않는다. 계정 연결은 PLAN-010 선행 결정, native/intoss는 별도 채널 작업이다.
+
 1. 사용자 플레이테스트: PLAN-005 하단 양식으로 기록하고 D7(시간 보상 T1)을 정한다. 구조 작업 중 코드로 남은 항목은 없다
 2. ISSUE-007은 Flutter 3.47.5 업그레이드로 해소했다. 같은 탭 재로드 멈춤이 다시 보이면 Flutter 이슈로 보고한다
 3. 플레이테스트 때 PLAN-008 스위치를 켜고 끄며 비교한다(원격은 모두 켜짐, `?exp=none`으로 기존 동작). Supabase는 무료 요금제 유지(2026-09-24 사용자 결정)

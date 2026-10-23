@@ -3,7 +3,7 @@
 > 프로젝트의 큰 Phase/Milestone만 기록한다. 상세 구현 계획은 `../plans/PLAN-xxx.md`로 분리한다. 현재 Task는 `PROJECT_STATUS.md`에서 관리한다.
 
 작성 기준일: 2026-08-23
-갱신: 2026-09-29 (PocketBase 전환과 기존 플랜 재검토)
+갱신: 2026-10-11 (GA4와 기본 대시보드 완료 범위 정합화)
 
 ## Phase 1 — Foundation
 - [x] Flutter+Flame 8×8 코어, 타이틀/게임/설정, 심플+타임, 웹 빌드
@@ -41,7 +41,7 @@
 
 - [x] [PLAN-009](../plans/PLAN-009-telemetry-foundation.md): 이벤트 식별, 판/시간 기준, 요약, 영속 전송과 일별 집계. Step 4 서버/NAS 배포와 브라우저 복원 검증 완료
 - [ ] [PLAN-010](../plans/PLAN-010-player-identity.md): 공통 사용자 식별 계약, 최소 프로필, 채널별 계정 연결과 기록 복구
-- [ ] [PLAN-011](../plans/PLAN-011-ga4-behavior-analytics.md): GA4 매핑과 NAS Step2 배포 완료. 나머지 채널 검증과 Step3 보고서 미완료
+- [ ] [PLAN-011](../plans/PLAN-011-ga4-behavior-analytics.md): NAS 수집, Google Cloud 읽기 설정과 기본 운영 대시보드 배포 완료(2026-10-11 소스 대조). 상세 분석 확장은 미완, native/intoss는 별도 후속
 - [x] [PLAN-012](../plans/PLAN-012-crash-observability.md): 승인된 NAS 웹 오류 수집 배포 완료. 실기기/네이티브/성능 운영은 후속 범위
 
 PLAN-009의 이벤트/판 기준과 PLAN-010 식별 계약이 외부 연동의 선행 조건이다. PLAN-010의 모든 채널 로그인 구현은 GA4/오류 연동의 필수 선행 조건이 아니다. 세부 구현과 병렬 소유권은 각 PLAN에 둔다.

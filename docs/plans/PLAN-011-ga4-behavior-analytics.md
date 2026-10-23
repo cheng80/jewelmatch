@@ -2,18 +2,24 @@
 
 ## Metadata
 - Plan ID: `PLAN-011`
-- Status: `IN_PROGRESS` (2026-09-30 NAS Step2 배포 및 검증 완료. Step3 분석 보고서와 native/intoss 연결은 후속 범위)
+- Status: `IN_PROGRESS` (NAS 수집, Google Cloud 읽기 설정과 기본 운영 대시보드 배포 완료. Step 3 상세 분석 확장 미완, native/intoss는 별도 후속 범위)
 - Related Requirement: 활성 사용자, 재방문, 유입, 퍼널과 게임 패턴
 - Related ADR: ADR-010(PocketBase 내부 이벤트), PLAN-010에서 확정할 식별 결정
 - Owner: 분석 연동 작업자와 독립 검수자
-- Updated: 2026-09-29
+- Updated: 2026-10-11
 
 ## 1. 목표
 기존 EventLogger를 통해 GA4에 필요한 행동을 전달하고, PocketBase `sm_events`의 판 요약과 연결해 해석 가능한 보고서를 만든다.
 
 ## 2. 범위
-- 포함: 전송 어댑터, 이벤트/필드 사전, 채널과 환경 구분, 보고서와 수집 검증.
-- 제외: 현재 실행의 SDK 설치/외부 프로젝트 생성/콘솔 설정, 모든 프레임/보석 입력 전수 전송, 이메일/닉네임/토스 원본키 전송.
+- 포함: 전송 어댑터, 이벤트/필드 사전, 채널과 환경 구분, 기본 운영 보고서와 상세 분석, 수집 검증. 후속 승인으로 Google Cloud Analytics Data API와 독립 대시보드 연결까지 완료했다(12절).
+- 제외: 모든 프레임/보석 입력 전수 전송, 이메일/닉네임/토스 원본키 전송, Search Console/BigQuery/유료 내보내기. native/intoss 연결은 별도 후속 범위다.
+
+### 현재 완료 범위 (2026-10-11 소스 대조)
+- NAS 게임의 선택 동의 기반 GA4 수집, 운영/QA 속성 분리와 배포 완료.
+- Google Cloud 프로젝트의 Analytics Data API 활성화, 서비스 계정과 두 속성의 Viewer 설정, Cloudflare Pages 서버 Secrets 적용은 2026-09-30 완료 기록으로 확인했다. 이번에 원격 설정을 다시 조회하지 않았다.
+- 독립 `stomematch_dashboard`의 실제 GA4 조회와 7/30일 기본 보고서, 오늘/최근 30분 빈 데이터 진단은 구현과 운영 배포가 완료됐다. 설정이나 기본 대시보드를 다시 만드는 작업은 남아 있지 않다.
+- 전체 PLAN은 상세 분석 보고서가 남아 `IN_PROGRESS`를 유지한다. 계측 필드 전송과 상세 보고서 구현은 구분한다.
 
 ## 3. 현재 상태 / 전제
 - 외부 분석 SDK 없음(`pubspec.yaml`). 내부 이벤트는 EventLogger가 PocketBase 전용 API `POST /api/stone-match/events`로 보내 `sm_events`에 저장한다. 백엔드 미설정(`BackendGateway.isConfigured` 거짓)이면 내부 수집을 하지 않으므로 GA4 활성화 조건은 독립시켜야 한다.
@@ -70,7 +76,7 @@ session_id, event_id, player_id, device_id는 GA4로 보내지 않는다. 현재
 | badge_earned | unlock_achievement(추천 이벤트) | achievement_id={badge}_{tier} | 권장안 |
 | rank_up | level_up(추천 이벤트) | level=rank, character=cumulative | 권장안 |
 | hyper_swap, speed_bonus_peak, last_hurrah | 보내지 않음 | 빈도와 해석 목적상 내부 전용 | 권장안 |
-| title_menu_action, game_menu_action, player_name_dialog | 같은 이름 | action 또는 step, mode | NEEDS-DECISION: 내부는 10% 표본, GA4는 전수 권장 |
+| title_menu_action, game_menu_action, player_name_dialog | 같은 이름 | action 또는 step, mode | 확정: 내부는 10% 표본, GA4는 전수 |
 
 추천 게임 이벤트와 파라미터는 [GA4 추천 이벤트 참조](https://developers.google.com/analytics/devguides/collection/ga4/reference/events)를 따른다: level_start(level_name), level_end(level_name, success boolean), post_score(score 필수, level, character), unlock_achievement(achievement_id 필수), level_up(level, character). 맞춤 파라미터는 같은 이벤트에 추가로 붙인다.
 
@@ -108,11 +114,16 @@ session_id, event_id, player_id, device_id는 GA4로 보내지 않는다. 현재
 - [x] 메뉴/게임 진입/판 종료와 allowlist 판 요약 연결. 선택 동의 기본off, 운영과 QA 프로젝트 분리, user_id 비전송.
 - [x] QA DebugView에서 명시적 page_view, title_menu_action, level_start, level_end 각1회 확인. GA 자체 first_visit/session_start 각1회는 정상 자동 이벤트다. 향상된 측정은 운영/QA 모두off.
 
-### Step 3: 상세 행동과 보고서
+### Step 3: 기본 운영 보고서 완료, 상세 분석 확장 미완
+- [x] Google Cloud Analytics Data API 활성화와 운영/QA 속성 읽기 전용 서비스 계정 설정, 서버 Secrets 적용.
+- [x] 독립 대시보드의 인증된 Pages Functions 조회, 운영/QA 및 최근 완료일 7/30일 지원.
+- [x] GA4 기간 활성 사용자/세션/이벤트 요약, 일별 추이와 이벤트 상위 30개 표/차트, 15분 캐시.
+- [x] 완료일 보고서가 비어 있을 때 오늘/최근 30분 수집 진단, empty/null/오류/실제 0 구분과 운영 배포.
+- [x] GA4 쿠키 사용자/자동 세션/전수 메뉴와 PocketBase 설치 사용자/앱 실행/표본 메뉴의 정의 차이, 동의/차단/처리 지연과 캐시 한계 문서화.
 - [ ] 판 요약 기반 숙련도/전략/재시도/아이템 지표.
-- [ ] 활성/대기 시간 구분, guest/연결 계정/채널 구분.
+- [ ] 활성/대기 시간과 guest/연결 계정/채널별 상세 보고서. 시간 계측/전송과 운영/QA 분리는 완료됐지만 이 보고서는 미구현이며 계정 연결은 PLAN-010 선행 결정이 필요하다.
 - [ ] 리텐션, 퍼널, 레벨별 실패/재시도, 버전/실험별 비교 보고서.
-- [ ] 첫 방문과 재방문, 차단/오프라인 누락을 포함해 내부 수집과 차이가 나는 이유 문서화.
+- [ ] 첫 플레이 기준 D1/D7 재방문과 첫 방문/재방문 비교 보고서, GA4 기본 리텐션과 내부 정의 차이의 실제 결과 해석.
 
 ## 6. 병렬 작업과 변경 범위
 - 계약 확정 뒤 GA4 어댑터와 보고서 설계는 독립 가능하다. 공통 로거는 한 명만 수정한다.
@@ -151,7 +162,7 @@ session_id, event_id, player_id, device_id는 GA4로 보내지 않는다. 현재
 - actual Wasm/COEP QA에서 명시적4이벤트 각1회, query/referrer 정제와 sentinel제거, 운영속성 미전송을 확인했다. DebugView에4이벤트+GA자동 first_visit/session_start가 표시됐다. 요청의 ep.debug_mode 표기도 실제 DebugView 인식됨을 확인했다.
 - 이벤트 수집은 동의율/차단/오프라인에 영향을 받는다. 내부 PocketBase 사용자/세션/표본 메뉴와 GA4의 쿠키 기반 사용자/세션/전수 메뉴를 같은 정의로 비교하지 않는다.
 - 전체 Flutter622, 관련 mapper20/adapter15 통과. QA 증거는 tmp/ga4-integration-20260929/browser-consent.json, debugview.json, cookie-tests.log, full-test-final.log.
-- Step3 상세 보고서, 네이티브/토스, Search Console, BigQuery는 미완료/범위 밖이다. 이 Step2 결과로 전체 PLAN 완료를 선언하지 않는다.
+- 당시에는 Step 3 보고서가 미구현이었다. 이후 기본 운영 대시보드와 Google Cloud 연결은 완료했으며 12절을 따른다. 상세 분석 보고서는 미완이고 네이티브/토스는 후속, Search Console/BigQuery는 범위 밖이다. 전체 PLAN은 완료로 선언하지 않는다.
 
 
 ### 11.1 NAS 운영 반영
@@ -161,3 +172,26 @@ session_id, event_id, player_id, device_id는 GA4로 보내지 않는다. 현재
 - Google태그/수집차단 상태 실제Wasm게임보드 확인. 전체Flutter622, 변경7파일analyze clean. 기존 사용자4파일해시불변, 게임커밋/push없음.
 - Sentry 기존오류수집을함께유지하고 새JS source map을운영/QA에올린뒤 공개패키지에서제외했다.
 - 브라우저환경초기viewport130x89로 screenshot timeout이 발생했으나 viewport조정후 실제게임보드와설정화면확인. 자동화실패를제품오류로단정하지않는다. 모바일실기기/토스/장시간성능은미검증.
+
+## 12. Google Cloud와 기본 운영 대시보드 완료 확인 (2026-10-11)
+
+### 구현과 운영 이력
+- 대시보드는 게임과 같은 상위 폴더의 독립 저장소 `stomematch_dashboard`다. [README](../../../stomematch_dashboard/README.md), [PLAN](../../../stomematch_dashboard/docs/PLAN.md), [HANDOFF](../../../stomematch_dashboard/docs/HANDOFF.md), [비용 설정 기록](../../../stomematch_dashboard/docs/COSTS.md)을 함께 확인했다. 이 저장소의 PLAN-014 대시보드와 게임의 PLAN-014 플레이 중 인벤토리는 서로 다른 작업이다.
+- 2026-09-30 Google Cloud 프로젝트 `serious-case-510202-u3`에 Analytics Data API를 활성화했다. 서비스 계정은 운영 `556597456`/QA `556615844` 속성의 Viewer이며 `analytics.readonly` scope를 사용한다. GCP IAM 역할 추가, 결제 계정 연결, BigQuery/GA360 설정은 하지 않았다. 자격정보는 서버 Secrets에만 보관하며 값은 이 문서에 기록하지 않는다.
+- [서버 소스](../../../stomematch_dashboard/server/observability.js)의 `createHandler`는 PocketBase 관리자 세션을 먼저 검증하고 고정된 속성만 조회한다. `gaRequest`의 `batchRunReports`는 최근 완료일 7/30일의 `activeUsers`, `sessions`, `eventCount`, 일별 추이와 `eventName` 상위 30개를 읽는다. 기간 사용자는 일별 합이 아니다. [Pages Function](../../../stomematch_dashboard/functions/api/observability.js)이 이 핸들러를 연결하고 [UI](../../../stomematch_dashboard/observability.js)가 요약/차트/표를 표시한다.
+- `empty` 완료일 보고서에만 `runReport` 오늘 조회와 `runRealtimeReport` 최근 30분 조회를 추가한다. 실패/빈 값은 null과 상태로 보존한다. 공급자/환경/기간별 15분 캐시이므로 자동 실시간 갱신이나 전역 호출량 상한으로 해석하지 않는다.
+- 2026-09-30 실제 GA4/Sentry 중계의 운영 배포와 인증된 8조합 조회가 완료됐고, 2026-10-01 빈 데이터 진단 개선 `4c7128c`의 CI/Pages 자동 배포와 운영/QA API200을 확인했다. 당시 QA는 활성 사용자4/세션4/이벤트18, production 완료일/오늘/최근 30분은 empty였다. 같은 날 별도22:02 KST 운영 대시보드 진단에서는 최근 30분 활성 사용자1/이벤트15로 최근 수집을 확인했다. 이 조회는 플레이 봇22:36~22:39보다 앞서므로 해당 봇 판의 수집 근거로 연결하지 않는다.
+
+### 남은 범위와 검증 구분
+- 서버의 GA4 조회 차원은 기간 요약, 날짜와 이벤트 이름이다. D1/D7 코호트, 퍼널, 레벨별 실패/재시도, 아이템 활용/숙련도, 버전/실험별 상세 비교는 현재 대시보드에 없다. 게임의 `round_summary`, `round_input`, 시간/시도/실험 필드 계측은 준비됐지만 보고서 완료를 뜻하지 않는다.
+- native/intoss GA4는 비활성이다. analytics_id/계정 연결은 PLAN-010 후속이며 현재 user_id를 보내지 않는다. 실기기/장시간 검증, 보존/공개 고지 최종 확정과 대시보드 Access/직접 관리자 로그인 대체는 각 후속 범위로 남긴다.
+- 이번 확인 기준: 게임 main `c1221b6`, 대시보드 main `f5d8796`. 대시보드 `npm test`는 Node v24.11.1에서 전체86테스트 통과(실패/skip0). [서버 회귀](../../../stomematch_dashboard/test/observability-server.test.js)와 [UI 회귀](../../../stomematch_dashboard/test/observability-ui.test.js)는 보고서 매핑, 인증/캐시, 빈 값과 오늘/실시간 진단을 검증한다.
+- 이 절의 확인은 문서 정합화다. Google Cloud/Secrets와 GA4 API는 재조회하지 않았다. 이후 사용자 요청의 PocketBase 조회와 일별 화면 개선 검증은 아래13절로 구분한다.
+
+## 13. 일별 지표 실사용 개선 (2026-10-11, 운영 배포 완료)
+
+- 사용자 제보의 라운드0을 검증 전용 관리자로 읽기 조회했다. production 최근7일(10-04~10-10)은 이벤트4/묶인판0이고 원본에도 판 시작이 없었다. 최근30일(09-11~10-10)은 이벤트457/묶인판63/종료확인40/미확인23, 집계30/30일이다. 실제 데이터와 다른0 표시 결함은 재현되지 않았으나 날짜 탐색과 표 필터가 부족했다. 종료 미확인은 실패/충돌이 아니다.
+- 독립 [대시보드](../../../stomematch_dashboard/README.md)에서 기본30일, KST 완료일 직접 범위(최대89일), 이전/다음/최신 기간, 활동/집계 상태 필터, 날짜/이벤트/판 시작 정렬, 마지막 활동일/연속0, 스크롤/고정 머리글과 날짜 열, 현재 표 CSV 및 URL 조건 복원을 구현했다. 집계 없음과 부분 집계는 활동0으로 판단하지 않고 원본보존90일 밖의 날짜 상세만 차단한다.
+- 표 필터는 표와 CSV에만 적용하며 개요/차트/라운드는 선택 기간 전체다. GA4/Sentry는 기존 독립7/30일 계약을 유지한다. Google Cloud 설정과 게임 계측은 바꾸지 않았다.
+- 검증: Node90테스트, build10공개파일/6vendor, 구문/diff와 에고 TaskSpace30 검수. 가짜응답으로 누락/부분/오류/빈 결과/CSV/조건 복원/89일 키보드 스크롤, 320px를 확인했다. 실제 운영 PocketBase를 로컬 수정본에서 읽어7일0/30일63판, 09-30상세34판/종료26판, 직접기간/이전다음/복원과375px를 확인했다. 원본/집계/계정 쓰기는 하지 않았다.
+- 사용자 후속 요청으로 대시보드 구현 `dfcf3b4`를 main에 커밋/push해 운영 Pages에 배포했다. GitHub CI와 Pages `c93b8386-355b-4be0-8e5e-e3cd0ca71788` 성공, 공개9파일 해시 일치. 운영 에고 TaskSpace31 최종 검수에서 검증 계정으로 필터/CSV/직접기간/기간이동/복원, 7일0판/30일63판/QA30일9판, 89일 실제 키보드/휠 및320px 고정 열 스크롤을 확인했다. 운영 검증 근거는 대시보드 `tmp/daily-deploy-20261011/RESULT.md`다. 게임 커밋/push/재배포는 하지 않았다. 근거는 대시보드 `tmp/daily-upgrade-20261011/RESULT.md`, 조사 근거는 게임 `tmp/rounds-zero-20261011/RESULT.md`다. Step3의 리텐션/퍼널 등 상세 분석은 계속 미완료다.
