@@ -1,5 +1,13 @@
 # Project Status
 
+## 앱인토스 최신 상태와 대화 인계 (2026-10-28)
+
+- 실제 개발 위치는 현재 게임 저장소다. `AppInToss_Flutter`는 Git 없는 조사 폴더이며 과거 전용 복제본은 단일 코드베이스 4채널 분기 결정으로 제거됐다. 대화3개/100턴, 현재 코드/로컬 Git과 콘솔을 대조한 [상세 핸드오프](HANDOFF_2026-10-28_INTOSS.md)를 보존했다. 문서 수정 전 main `e259e36`은 clean이고 로컬 origin/main과 일치했다(fetch 미실행).
+- 광고와 공식 레벨 리더보드는 구현돼 있다. 현재 런타임은 PocketBase(PLAN-013 DONE), PLAN-009 Step4와 승인된 NAS 오류 수집(PLAN-012)도 DONE이다. PLAN-005는 아이템/이어하기 이벤트 연결까지 완료했고 D7 사용자 플레이테스트가 남는다. GA4 기본 NAS 수집/대시보드는 완료이며 상세 보고서와 native/intoss는 후속이다.
+- 토스 콘솔 재조회: workspace28591/miniApp64685, appName `stonematch`. 최초 검토 전, 미출시, 제휴 약관 동의 필요다. 최신 `20260924-16`/`01a0cf90-3f74-7371-9055-43700af3daae`는 Supabase 테스트 번들이고 isTested=false다. PocketBase 전환 후 새 AIT와 실기기 검증이 필요하다. 광고 그룹은 광고 약관 미동의로 확인하지 못했다.
+- 다음 순서: D7 플레이테스트, 현재 main의 테스트 AIT 생성, 새 번들 실기기의 광고/자체 랭킹/공식 레벨 랭킹/복귀 오디오 확인, BGM/SFX ON 장시간 FPS, 출시 약관/등록값과 최초 검토. 과거 번들 테스트 이력을 최신 성공으로 취급하지 않는다.
+- 검증: 같은 날 최초 점검의 Node12테스트와 JS3파일 구문 통과. 문서 작업은 링크/펜스/공백/diff 검사로 검증한다. Flutter/analyze/AIT/실기기와 NAS 운영 상태는 재검증하지 않았다. 이번 변경은 문서 보존과 로컬 커밋이며 제품 코드/push/배포 변경은 없다.
+
 ## 운영 대시보드 일별 조회 개선 (2026-10-11, 운영 배포 완료)
 
 - 독립 `stomematch_dashboard`에 날짜 직접 선택/기간 이동, 활동/집계 상태 필터와 정렬, CSV/조회조건 복원, 스크롤/고정 열, 마지막 활동일/연속0 안내를 구현했다. 기본30일이고 집계 없음/부분을 활동0으로 판단하지 않는다. 게임 소스와 수집/집계 서버는 변경하지 않았다.
@@ -318,16 +326,17 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 이관 단계: 대체 가능(REPLACEABLE). 2026-08-23 표준 팩만으로 대체 가능성 점검 12항 통과. 정본은 docs/. 이전 문서는 archive/docs/. 릴리즈 준비와 분리.
 
 ## Active Plan
-- `PLAN-009` 기존 게임 통계 기반 보강 — IN_PROGRESS (Step 1~3 완료, 다음 Step 4 전송과 집계 신뢰성)
+- `PLAN-009` 기존 게임 통계 기반 보강 — DONE (Step 1~4 완료, PocketBase/NAS 배포와 영속 큐 복원 검증 완료)
 - `PLAN-010` 최소 사용자 식별과 기록 연결 — DRAFT
 - `PLAN-011` GA4와 상세 행동 분석 — IN_PROGRESS (NAS 수집, Google Cloud 읽기 설정과 기본 운영 대시보드 배포 완료. 남은 것은 Step 3 상세 분석 확장, native/intoss는 별도 후속)
-- `PLAN-012` 충돌과 오류 관측 — DRAFT
+- `PLAN-012` 충돌과 오류 관측 — DONE (승인된 NAS 웹 오류 수집 범위. 네이티브/실기기 성능/알림 운영은 별도 후속)
 - `PLAN-001` 모바일 웹 오디오/FPS 회귀 — IN_PROGRESS
 - `PLAN-004` 보드 연출 보강 — IN_PROGRESS (F1, T1, T2, T3, T4a, T4b, T5, T6 통합 완료, T6 및 독립 리뷰 수정 완료, 합본 HUD 잔상 가설은 픽셀 진단으로 기각, 기존 confetti 겹침)
-- `PLAN-005` Bejeweled Blitz 계승 게임 방향 개편 — IN_PROGRESS (ADR-008 Accepted. Step 1a, 1b, 1c, 3, 4, 5 main 반영. Step 2 아이템과 이어하기 이벤트, 1d(D7 플레이테스트) 남음. D8, D9 권장안 결정)
+- `PLAN-005` Bejeweled Blitz 계승 게임 방향 개편 — IN_PROGRESS (ADR-008 Accepted. Step 1a, 1b, 1c, 2 이벤트, 3, 4, 5 main 반영. 남은 것은 1d(D7 시간 보상) 사용자 플레이테스트와 기록. D8, D9 권장안 결정)
 - `PLAN-007` 일일 동일 보드와 주간 순위 — DONE
 - `PLAN-008` 실험 기능 일괄 도입과 스위치 — DONE(채택 판단은 플레이테스트 뒤)
-- `PLAN-006` Supabase 기반 구축 — IN_PROGRESS (Step 1~3 완료, Step 4 NAS 배포 완료(`b71ba31`). 앱인토스 QR 확인은 사용자 결정으로 보류. 남은 것: 익명 사용자 정리 정책, Supabase 요금제와 일시정지 정책)
+- `PLAN-006` Supabase 기반 구축 — 이전 구현 이력 (현재 런타임과 NAS는 PLAN-013 PocketBase 전환 완료. Supabase 요금제/일시정지 정책을 현재 작업으로 이어가지 않는다)
+- `PLAN-013` PocketBase 이전 — DONE (인증, 랭킹, 광고 제한, 이벤트/설정과 NAS 운영 전환 완료. 최신 앱인토스 실기기 검증은 별도 미완료)
 
 ## Current Tasks
 - [x] TASK-011a NAS GA4 운영/QA 수집, Google Cloud Analytics Data API/서비스 계정과 독립 대시보드 기본 보고서/빈 데이터 진단, 운영 배포
@@ -370,12 +379,12 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 - 기존 주제 본문·문서 자산 Detailed Migration
 
 ## Blocked / Known Issues
-- PLAN-002: 토스 사용자 식별과 서버 저장 정책 없음
-- 앱인토스 QR 확인: 연결된 Android 폰에 토스 앱이 없고, 사용자 결정으로 구조 개편 뒤로 보류. 테스트 빌드는 업로드됨(deploymentId `01a0cf90-3f74-7371-9055-43700af3daae`)
+- PLAN-002: 광고 보충 제한 서버 저장은 PocketBase/NAS 전환 완료. 토스 계정 연결/기기 간 복구는 PLAN-010 결정과 최신 토스 실기기 검증이 남음
+- 앱인토스 QR 확인: 최신 콘솔 번들은 2026-09-24 Supabase 테스트 버전(isTested=false, deploymentId `01a0cf90-3f74-7371-9055-43700af3daae`). PocketBase 전환 후 새 번들/토스 실기기 검증이 남음. 최초 검토 전이고 제휴 약관 동의 필요, 광고 그룹은 광고 약관 미동의로 확인 불가
 - TASK-004: Apple ID, 개인정보 URL, INTOSS 운영 광고 그룹은 제품 외부 결정
 - ISSUE-001: 모바일 웹 오디오 끊김 이력, 장시간 카운터 없음 → PLAN-001
 - ISSUE-002: 앱인토스 iPhone FPS 급락, GC 단정 금지 → PLAN-001
-- ISSUE-003: refill 3회 → Supabase 익명 사용자 기준으로 원격 적용과 NAS 배포 완료(PLAN-006). 저장소 삭제나 재설치 시 새 사용자라 제한이 새로 시작된다(BR-103)
+- ISSUE-003: refill 기본3회 제한은 PocketBase 익명 사용자 기준으로 원격/NAS 적용 완료(PLAN-013). 저장소 삭제나 재설치 시 새 사용자라 제한이 새로 시작된다(BR-103). 토스 계정 연계는 별도
 - ISSUE-004: RunInventory 비영속 → PLAN-003 (2차 범위로는 허용)
 - ISSUE-005: 빈 App Store ID
 - ISSUE-007(해소, 2026-09-24): 같은 탭에서 게임 문서를 다시 불러오면 멀티스레드 skwasm이 메모리 오류로 멈추던 문제. Flutter 3.47.5로 올린 뒤 격리 헤더를 켠 profile wasm 빌드로 같은 탭 연속 실행 6회(각 25초 자동 플레이) 모두 멈춤 없음(예전에는 1~2회 안에 멈춤). 20초 평균 86.8fps, p95 11.3ms로 이전(89.2fps, 11.2ms)과 같은 수준 → PLAN-001
@@ -428,8 +437,8 @@ Phase 5 게임 방향 개편 진행 중. PLAN-005 Step 1a, 1b, 1c, 3을 main에 
 
 1. 사용자 플레이테스트: PLAN-005 하단 양식으로 기록하고 D7(시간 보상 T1)을 정한다. 구조 작업 중 코드로 남은 항목은 없다
 2. ISSUE-007은 Flutter 3.47.5 업그레이드로 해소했다. 같은 탭 재로드 멈춤이 다시 보이면 Flutter 이슈로 보고한다
-3. 플레이테스트 때 PLAN-008 스위치를 켜고 끄며 비교한다(원격은 모두 켜짐, `?exp=none`으로 기존 동작). Supabase는 무료 요금제 유지(2026-09-24 사용자 결정)
-4. 구조 개편 뒤: 앱인토스 QR 확인(토스 앱이 있는 폰 필요), Play와 App Store용 Google AdMob 연결(ADR-003 개정). 웹(NAS)은 테스트 전용이라 광고 없음
+3. 플레이테스트 때 PLAN-008 스위치를 켜고 끄며 비교한다(`?exp=none`으로 기존 동작). 현재 백엔드는 PocketBase이며 원격 스위치 값은 이번 점검에서 재조회하지 않았다
+4. 구조 개편 뒤: PocketBase 설정으로 앱인토스 새 테스트 AIT와 QR 실기기 확인, 약관/등록값 확인 후 최초 검토. Play와 App Store용 Google AdMob은 ADR-003 개정을 따른다. 웹(NAS)은 테스트 전용이라 광고 없음
 5. 출시 값(운영 광고 그룹, Apple ID, URL)이 오면 TASK-004. PLAN-003 영속 인벤토리는 코인 경제 전 단계로 Phase 6
 6. PLAN-001 장시간 모바일 웹 오디오/FPS 측정은 별도 승인 작업
 
